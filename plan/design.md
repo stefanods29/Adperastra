@@ -7,9 +7,9 @@ The Figma file is an **example of the design style**, not a specification of con
 
 ## Rules
 
-1. **How to read it:** use the Figma MCP server or Dev Mode if available (design context, screenshots). Otherwise ask me for exported PNGs of each frame plus colors, fonts, and spacing. Never guess a design detail you can measure.
+1. **How to read it:** use `plan/design-spec.md` (every color, font, size, spacing, radius, shadow, and icon measured from the Figma file) and the screenshots in `plan/design/screens/`. Don't connect to Figma. If something you need isn't in the spec, ask me for an exported screenshot instead of guessing.
 2. **Step 00 deliverables:** an inventory of every frame and component; a table mapping each frame to the steps that build it; the list of screens the plan needs that Figma doesn't have (section "Screens still to design").
-3. **Tokens:** measure colors (with hover, pressed, disabled, focus states), type scale, spacing, radii, shadows, borders, motion, and icon sizes from the frames, and store them as design tokens (theme JSON, then CSS variables). The Figma look is the default theme. Every other theme uses the same token structure.
+3. **Tokens:** take colors, type scale, spacing, radii, shadows, borders, and icon sizes from `plan/design-spec.md` and store them as design tokens (theme JSON, then CSS variables). Derive hover, pressed, disabled, and focus states and motion consistently from them, and show me the derived values. The Figma look is the default theme. Every other theme uses the same token structure.
 4. **Component gallery:** before assembling screens, build a developer-only gallery of every base component in every state and compare it with the Figma screenshots.
 5. **Text:** the Figma text is Spanish example content. Never copy it as fixed text; every label comes from translation files (see `rules.md`, section 2).
 6. **Adapting open-source parts:** use each library's core and put our own UI and tokens on top; never ship a library's default look. Theme adapters cover editor syntax colors, PDF page background, scrollbars, selection colors, canvas tool chrome, and the Office engine's page surface. When something can't match the design, choose the closest option, log it in `DESIGN_DEVIATIONS.md`, and ask me to approve.
@@ -19,7 +19,7 @@ The Figma file is an **example of the design style**, not a specification of con
 
 ## What the Figma file contains (read on 27 Oct 2026)
 
-One page, six frames, all 1200 × 900, light theme only, window corner radius 10, white surfaces with a #E5E5E5 border. The file has no Figma variables or styles, so tokens must be measured from the frames. UI names below are given in English; the frames show them in Spanish.
+One page, six frames, all 1200 × 900, light theme only, window corner radius 10, white surfaces with a #E5E5E5 border. The file has no Figma variables or styles; all measured values are in `plan/design-spec.md`. UI names below are given in English; the frames show them in Spanish.
 
 | Frame | What it shows | Built in |
 |---|---|---|
