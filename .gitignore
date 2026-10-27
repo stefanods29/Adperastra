@@ -1,0 +1,54 @@
+﻿# Rust
+/target/
+**/*.rs.bk
+Cargo.lock.orig
+
+# Node / TypeScript / Tauri frontend
+node_modules/
+dist/
+.output/
+.cache/
+*.tsbuildinfo
+
+# Tauri build output
+src-tauri/target/
+src-tauri/gen/
+
+# Editors / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local settings, logs, secrets (never commit)
+.env
+.env.*
+!.env.example
+*.log
+*.local.json
+
+# Large files and AI model weights (plan/rules.md section 9: never in Git)
+*.gguf
+*.onnx
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+/packs/
+/models/
+*.msi
+*.dmg
+*.AppImage
+
+# Generated test corpus (scripts generate it; large files are not committed)
+test-files/generated/
+test-files/corpus/
+!test-files/.gitkeep
+
+# Local build output (only README and check script are committed)
+/build/*
+!/build/README.md
+!/build/check-environment.ps1
