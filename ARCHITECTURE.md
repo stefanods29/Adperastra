@@ -1,4 +1,4 @@
-﻿# Adperastra — Architecture (Step 00 proposal)
+# Adperastra — Architecture (Step 00 proposal)
 
 Status: **proposal for owner approval**. No app code exists yet. This document
 designs every contract in `plan/contracts.md` so later steps plug in instead of
@@ -66,11 +66,11 @@ Anything slow is cancellable and reports through the job runner.
 | 4 | Help system (01b) | `help/<lang>/<feature>.md`; `open_help(context_id)` via F1 and "?" buttons; sandboxed rendering; background search index |
 | 5 | Security base (01b, helpers 04a) | Tauri capability set per webview; isolation hook validates every invoke; `validate_path(tab_scope, path) -> CanonicalPath`; `spawn_helper(kind, files) -> Handle` with limits, no network |
 | 6 | Crash capture (01b) | Local panic log + minidump (never uploaded); `session.json` every few seconds — format must already fit tab groups/split (09a) and recovery UI (09c) |
-| 7 | Command registry (02) | `Command { id, label_key, icon, shortcut?, enabled_when(ctx), risk: ReadOnly/Change/Destructive, help_page, run(ctx) }`; context is focus-scoped (resolves Ctrl+Tab and Ctrl+1..n clashes later). Callers: bars, menus, ribbons, palette, DnD, assistant |
+| 7 | Command registry (02) | `Command { id, label_key, icon, shortcut?, enabled_when(ctx), risk: ReadOnly/Change/Recycle/Irreversible, help_page, run(ctx) }`; context is focus-scoped (resolves Ctrl+Tab and Ctrl+1..n clashes later). Callers: bars, menus, ribbons, palette, DnD, assistant. Recycle = undoable (Recycle Bin); the assistant may use it only after the two different confirmations. Irreversible = cannot be undone (permanent delete and similar); never exposed to the assistant, and the UI warns before running it. |
 | 8 | File-system service (02) | `list_dir(path) -> stream<Item>`, `stat`, `watch(path) -> stream<FsEvent>`, `read_range`. `Item { path, name, kind, size, mtime, attrs{hidden, system, link_target?, online_only, file_id} }`. Backing store is an enum from day one: `RealPath / ArchivePath / ContainerPath` (06c, 09e). `file_id` = stable Windows file ID (10b, 11b) |
 | 9 | Menus from commands (03a) | `MenuDef = [CommandRef / Submenu / Separator]` per surface; one renderer; user-editable in 10b without format change |
 | 10 | Job runner + scheduler (03b) | `submit(JobSpec{kind, priority, items}) -> JobId`; progress/pause/resume/cancel/per-item retry; per-drive serialization + verify hooks reserved (09c); background work obeys Background-work settings |
-| 11 | Undo stack (03b) | `push({label_key, undo, redo})`; one stack for Ctrl+Z, toasts, Recent actions, assistant |
+| 11 | Undo stack (03b) | `push({label_key, undo, redo, undoable})` plus `begin_group(label_key)/end_group()` grouping so bulk rename and batch actions undo as one step; entries with `undoable: false` make the UI warn before the action runs; one stack for Ctrl+Z, toasts, Recent actions, assistant |
 | 12 | Drag-and-drop service (03b) | `DragPayload = Files / Tabs / Content{text?, cells?, image?, pages?}` — content kinds reserved now (09a, 19a); drops resolve to undoable jobs |
 | 13 | Handler registry + open pipeline (04a) | `Handler { id, version, detect(head, ext) -> score, thumbnail?, metadata?, viewer(lazy), editor?(lazy), ribbon?, conversions[], help_page, speed_tier, tab_state{save, restore}, drop_behavior?, ai_actions? }`; pipeline detect -> preview -> mount -> upgrade; prefetch at ~150 ms hover; Mark-of-the-Web protected view is an input every handler honors. `tab_state`/`drop_behavior` are mandatory (09a/09d) |
 | 14 | Default apps (04a) | `open_with(path)` with per-extension remembered choice; Settings > Default apps; text/hex only as explicit commands |
@@ -95,7 +95,8 @@ Anything slow is cancellable and reports through the job runner.
 | 33 | Engine adapters (12b) | `EngineAdapter { command_map, state -> ribbon_state, helper lifecycle }` for FFmpeg and the Office engine; generic shape reused by 13/15/20a |
 | 34 | Local AI runtime (14c) | Helper process `load_model / run(streaming) / cancel / unload`; GPU (Vulkan/DirectML) with CPU fallback, memory limits, idle unload, no network; generic, not upscale-shaped (17a-d reuse it) |
 | 35 | AI evaluation harness (17a) | Versioned EN+ES sets per AI feature, automatic scoring in step reports; prompt-injection set must be refused |
-| 36 | Assistant tools (17a) | Generated from the command registry: typed args, risk enforced (read-only runs free; changes previewed; recycle needs two different confirmations; permanent delete never exposed) |
+| 36 | Assistant tools (17a) | Generated from the command registry: typed args, risk enforced (read-only runs free; changes previewed; recycle needs two different confirmations; permanent delete never exposed). Every tool call goes through `validate_path` with the **assistant scope**: the active tab, items the user mentions or selects, plus folders the user explicitly granted; anything outside that scope needs explicit permission first. |
+| 37 | Section registries: Home + navigation pane (shell in 02; late sections in 09a/10b/11b) | `SectionRegistry.register({ id, label_key, icon, order, render, visible_when })` — sections register late, like layout panels (contract 17): Saved groups (09a), customizable Home/nav pane (10b), Tags and Views sections (11b) plug in without touching the Explorer shell. |
 
 ## 4. Repository structure (proposed)
 

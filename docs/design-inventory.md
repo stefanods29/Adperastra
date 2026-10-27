@@ -1,16 +1,19 @@
-﻿# Design inventory — Figma file (Step 00)
+# Design inventory — Figma file (Step 00)
 
-Source: the Figma file linked in `plan/design.md`. **Access note:** no Figma
-MCP / Dev Mode is connected to this session, so this inventory is built from
-the frame-by-frame reading recorded in `plan/design.md` (27 Oct 2026). Exact
-token values must be measured in Step 01b — see the measurement plan below.
-Nothing is guessed.
+Source: the Figma file linked in `plan/design.md`. **Access note:** the owner
+has now provided `plan/design-spec.md` (every color, font, size, spacing,
+radius, shadow and icon measured from the Figma file) and screenshots in
+`plan/design-sc/screens/` (6 PNGs, 01-explorer-home.png through
+06-image-draw-toggle.png). No Figma connection is needed or used. Note one
+path discrepancy: design-spec.md/design.md refer to `plan/design/screens/`
+but the actual folder is `plan/design-sc/screens/` — the actual folder wins.
 
 ## Known global facts (measured, from design.md)
 
 - One page, six frames, each 1200 x 900, light theme only.
 - Window corner radius 10; white surfaces; border `#E5E5E5`.
 - No Figma variables or styles exist — tokens must be measured from frames.
+- Font is Inter (SIL OFL, bundleable); icons are Lucide (ISC, bundleable); measured accents — Explorer #0067C0, Excel-style #107C41, Word-style #185ABD, PDF #E4181F, image #0A8A93, PowerPoint-style #C43E1C, tab-group example #7F56D9; text primary #202020, secondary #616161. Full tables live in plan/design-spec.md.
 
 ## Frame inventory and frame-to-step map
 
@@ -94,23 +97,6 @@ and conflict windows; the shelf; empty states, errors, loading skeletons.
 Steps that own these designs say "show me first" (05, 08a, 09c, 12a, 14b, 15,
 19a, 22a) — they are schedule gates inside those steps, not afterthoughts.
 
-## Token-measurement plan (executed in Step 01b)
+## Token plan (Step 01b)
 
-1. Get access one of two ways (owner choice, question Q2 in the Step 00
-   report): Figma Dev Mode / MCP, or exported PNGs of every frame at 100%
-   and 150% plus the font name(s) used.
-2. Measure per component and state (default/hover/pressed/disabled/focus):
-   colors, type scale, spacing, radii, shadows, borders, motion durations,
-   icon sizes. Record into `themes/default.tokens.json`; generate CSS
-   variables; the Figma light look is the default theme.
-3. Check contrast and focus visibility while measuring — flag, never copy, a
-   low-contrast color or a missing focus state (`design.md` rule 8).
-4. Verify icon and font licenses before reuse; otherwise switch to Lucide
-   (ISC) / Phosphor (MIT) icons and an OFL font, and log it in
-   `DESIGN_DEVIATIONS.md` (created in 01b).
-5. Build the developer-only component gallery (01b) and screenshot-compare it
-   against the Figma frames at 100% and 150%.
-
-Known accent colors are described only by hue in the frames (Excel green,
-PDF red, image teal, blue for Explorer/Word); exact hex values come from
-measurement, not from this document.
+Tokens are copied from plan/design-spec.md into themes/default.tokens.json -> CSS variables; hover/pressed/disabled/focus states and motion are derived consistently from the measured values and shown to the owner; screenshot comparison uses plan/design-sc/screens/ at 100% and 150%; unknown values are asked for, never guessed.
