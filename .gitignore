@@ -47,3 +47,8 @@ Desktop.ini
 test-files/generated/
 test-files/corpus/
 !test-files/.gitkeep
+
+# Local build output (only README and check script are committed)
+/build/*
+!/build/README.md
+!/build/check-environment.ps1
