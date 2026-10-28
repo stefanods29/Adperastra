@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fileTile } from "../views/explorer/fileTile";
 import { formatDate, formatSize } from "../services/format";
+import { mergeRecentItems, type RecentItem } from "../services/explorer";
 
 describe("fileTile", () => {
   it("maps folders and known extensions to tones", () => {
@@ -29,5 +30,16 @@ describe("format helpers", () => {
     expect(formatDate(0, "en")).toBe("");
     const text = formatDate(1761696000, "en-US");
     expect(text).toContain("2025");
+  });
+});
+
+describe("mergeRecentItems", () => {
+  const item = (name: string, path: string, modified: number): RecentItem => ({ name, path, kind: "file", modified_unix: modified });
+  it("puts our own visited folders first and dedupes by path", () => {
+    const windows = [item("a.txt", "C:\\Docs\\a.txt", 50), item("docs", "C:\\Docs", 40)];
+    const merged = mergeRecentItems(windows, ["C:\\Docs", "D:\\Projects"]);
+    expect(merged.map((i) => i.path)).toEqual(["C:\\Docs", "D:\\Projects", "C:\\Docs\\a.txt"]);
+    expect(merged[1].kind).toBe("folder");
+    expect(merged[1].name).toBe("Projects");
   });
 });

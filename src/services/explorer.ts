@@ -126,6 +126,26 @@ export function samePath(a: string, b: string): boolean {
   return displayPath(a).toLowerCase() === displayPath(b).toLowerCase();
 }
 
+/** Merge Windows Recent items with our own visited folders (own history
+ * first, de-duplicated by path, Windows order preserved after that). */
+export function mergeRecentItems(windowsItems: RecentItem[], ownFolders: string[]): RecentItem[] {
+  const seen = new Set<string>();
+  const out: RecentItem[] = [];
+  for (const path of ownFolders) {
+    const key = displayPath(path).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const name = displayPath(path).split("\\").filter(Boolean).pop() ?? path;
+    out.push({ name, path: displayPath(path), kind: "folder", modified_unix: 0 });
+  }
+  for (const item of windowsItems) {
+    const key = displayPath(item.path).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+}
 // ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------

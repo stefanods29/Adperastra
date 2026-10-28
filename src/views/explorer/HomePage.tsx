@@ -1,9 +1,10 @@
 import { ChevronDown, ChevronRight, Clock3, Folder, Star } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import HelpButton from "../../components/HelpButton";
 import type { KnownFolder, RecentItem } from "../../services/explorer";
 import { formatDate } from "../../services/format";
-import { fileTile } from "./fileTile";
+import { fileExtension, fileTile } from "./fileTile";
 
 export interface HomePageProps {
   knownFolders: KnownFolder[];
@@ -11,6 +12,7 @@ export interface HomePageProps {
   recent: RecentItem[];
   onOpenFolder: (path: string) => void;
   onOpenRecent: (item: RecentItem) => void;
+  onOpenHelp?: () => void;
 }
 
 export default function HomePage(props: HomePageProps) {
@@ -42,7 +44,7 @@ export default function HomePage(props: HomePageProps) {
                 <span className="adp-file-name">{item.name}</span>
               </span>
               <span className="adp-col-date">{formatDate(item.modified_unix, i18n.language)}</span>
-              <span className="adp-col-type">{item.kind === "folder" ? t("explorer.folderType") : t("explorer.genericFile")}</span>
+              <span className="adp-col-type">{item.kind === "folder" ? t("explorer.folderType") : fileExtension(item.name) ? t("explorer.fileType", { ext: fileExtension(item.name).toUpperCase() }) : t("explorer.genericFile")}</span>
             </button>
           );
         })}
@@ -51,10 +53,13 @@ export default function HomePage(props: HomePageProps) {
   }
   return (
     <div className="adp-home">
-      <button type="button" className="adp-section-heading" aria-expanded={quickOpen} onClick={() => setQuickOpen((value) => !value)}>
-        {quickOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
-        <span>{t("explorer.quickAccess")}</span>
-      </button>
+      <div className="adp-view-header">
+        <button type="button" className="adp-section-heading" aria-expanded={quickOpen} onClick={() => setQuickOpen((value) => !value)}>
+          {quickOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+          <span>{t("explorer.quickAccess")}</span>
+        </button>
+        {props.onOpenHelp ? <HelpButton onOpenHelp={props.onOpenHelp} /> : null}
+      </div>
       {quickOpen ? (
         <div className="adp-quick-grid">
           {cards.map((card) => (

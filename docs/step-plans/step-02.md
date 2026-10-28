@@ -80,9 +80,9 @@
 
 **Files:** `src/i18n/locales/{en,es}.json`, `help/en/*.md`, `help/es/*.md`.
 
-- [ ] Home: collapsible Quick access cards (pinned folders), Recent (Windows Recent items + own history, existing only, newest first), Favorites empty placeholder; Gallery placeholder page.
-- [ ] Help pages EN+ES: browsing folders, Home page, pinning folders, address bar; F1/`?` wiring for Explorer contexts.
-- [ ] i18n lint, pseudo-locale run; commit.
+- [x] Home: collapsible Quick access cards (pinned folders), Recent (Windows Recent items + own history, existing only, newest first), Favorites empty placeholder; Gallery placeholder page.
+- [x] Help pages EN+ES: browsing folders, Home page, pinning folders, address bar; F1/`?` wiring for Explorer contexts.
+- [x] i18n lint, pseudo-locale run; commit.
 
 ### Slice 6: Benchmarks, screenshots, step report
 

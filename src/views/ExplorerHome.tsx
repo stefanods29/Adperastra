@@ -12,6 +12,7 @@ import {
   listDrives,
   listKnownFolders,
   listRecentItems,
+  mergeRecentItems,
   parentPathOf,
   pathSegments,
   pinFolder,
@@ -48,7 +49,7 @@ import NavPane from "./explorer/NavPane";
 
 export interface ExplorerHomeProps {
   onStatsChange?: (total: number, selected: number) => void;
-  onOpenHelp: () => void;
+  onOpenHelp: (slug?: string) => void;
 }
 
 function normalizeState(state: ExplorerStateData): ExplorerStateData {
@@ -328,9 +329,22 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     return items.filter((item) => item.name.toLowerCase().includes(query));
   }, [items, search]);
 
+  const recentMerged = useMemo(
+    () => mergeRecentItems(recent, stateData.recent_folders),
+    [recent, stateData.recent_folders],
+  );
+
   useEffect(() => {
-    onStatsChange?.(visibleItems.length, selectedPath ? 1 : 0);
-  }, [onStatsChange, visibleItems.length, selectedPath]);
+    const total =
+      location.type === "folder"
+        ? visibleItems.length
+        : location.type === "home"
+          ? recentMerged.length
+          : location.type === "drives"
+            ? drives.length
+            : 0;
+    onStatsChange?.(total, location.type === "folder" && selectedPath ? 1 : 0);
+  }, [onStatsChange, visibleItems.length, selectedPath, location.type, recentMerged.length, drives.length]);
 
   const onFirstPaint = useCallback(() => {
     const bench = benchRef.current;
@@ -471,7 +485,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
             >
               {currentPinned ? t("commands.unpinFolder") : t("commands.pinFolder")}
             </button>
-            <HelpButton onOpenHelp={onOpenHelp} />
+            <HelpButton onOpenHelp={() => onOpenHelp("browsing-folders")} />
           </div>
         ) : null}
 
@@ -479,11 +493,12 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
           <HomePage
             knownFolders={knownFolders}
             pinnedCards={pinnedCards}
-            recent={recent}
+            recent={recentMerged}
             onOpenFolder={goToFolder}
             onOpenRecent={(item) => {
               if (item.kind === "folder") goToFolder(item.path);
             }}
+            onOpenHelp={() => onOpenHelp("home-page")}
           />
         ) : null}
 
