@@ -459,6 +459,7 @@ impl Runner<'_> {
                 target.join(suffix)
             };
             self.current = entry.from.to_string_lossy().into_owned();
+            self.items_done += 1;
             if entry.is_dir {
                 match fs::create_dir_all(&dest) {
                     Ok(()) => copied.push(entry.from.clone()),
@@ -633,12 +634,13 @@ pub fn copy_items(
     for plan in &plans {
         report.skipped.extend(plan.skipped.iter().cloned());
     }
+    let entries_total: usize = plans.iter().map(|plan| plan.entries.len()).sum();
     let mut runner = Runner {
         policy,
         moving: false,
         token,
         progress,
-        items_total: sources.len(),
+        items_total: entries_total,
         items_done: 0,
         bytes_total: total_bytes,
         bytes_done: 0,
@@ -655,7 +657,7 @@ pub fn copy_items(
                 path: source.clone(),
                 reason: "into_itself".to_string(),
             });
-            runner.items_done += 1;
+            runner.items_done += plan.entries.len();
             runner.report();
             continue;
         }
@@ -672,7 +674,6 @@ pub fn copy_items(
                 });
             }
         }
-        runner.items_done += 1;
         runner.report();
     }
     report.cancelled = runner.cancelled;
@@ -700,12 +701,13 @@ pub fn move_items(
     for plan in &plans {
         report.skipped.extend(plan.skipped.iter().cloned());
     }
+    let entries_total: usize = plans.iter().map(|plan| plan.entries.len()).sum();
     let mut runner = Runner {
         policy,
         moving: true,
         token,
         progress,
-        items_total: sources.len(),
+        items_total: entries_total,
         items_done: 0,
         bytes_total: total_bytes,
         bytes_done: 0,
@@ -722,12 +724,12 @@ pub fn move_items(
                 path: source.clone(),
                 reason: "into_itself".to_string(),
             });
-            runner.items_done += 1;
+            runner.items_done += plan.entries.len();
             runner.report();
             continue;
         }
         let Some(target) = runner.target_for(source, dest_dir, &mut report) else {
-            runner.items_done += 1;
+            runner.items_done += plan.entries.len();
             continue;
         };
         // Fast path: a plain rename (same volume, nothing to merge).
@@ -736,11 +738,11 @@ pub fn move_items(
             match fs::rename(source, &target) {
                 Ok(()) => {
                     runner.bytes_done += plan.total_bytes;
+                    runner.items_done += plan.entries.len();
                     report.completed.push(CompletedItem {
                         from: source.clone(),
                         to: target,
                     });
-                    runner.items_done += 1;
                     runner.report();
                     continue;
                 }
@@ -757,7 +759,7 @@ pub fn move_items(
                     path: source.clone(),
                     reason: "exists".to_string(),
                 });
-                runner.items_done += 1;
+                runner.items_done += plan.entries.len();
                 continue;
             }
             if !target_is_dir {
@@ -766,7 +768,7 @@ pub fn move_items(
                         path: source.clone(),
                         reason: reason(&error),
                     });
-                    runner.items_done += 1;
+                    runner.items_done += plan.entries.len();
                     continue;
                 }
             }
@@ -807,7 +809,6 @@ pub fn move_items(
                 to: target,
             });
         }
-        runner.items_done += 1;
         runner.report();
     }
     report.cancelled = runner.cancelled;

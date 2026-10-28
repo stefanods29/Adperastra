@@ -87,7 +87,10 @@ fn copy_copies_files_and_trees_and_reports_totals() {
     assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"hello");
     assert_eq!(fs::read(dst.path().join("sub/b.bin")).unwrap().len(), 1000);
     let progress = last.unwrap();
-    assert_eq!(progress.items_total, 2);
+    // Progress counts every file and folder in the plan (a.txt, sub,
+    // sub/b.bin), not just the two top-level items.
+    assert_eq!(progress.items_total, 3);
+    assert_eq!(progress.items_done, 3);
     assert_eq!(progress.bytes_total, 1005);
     assert_eq!(progress.bytes_done, 1005);
 }
