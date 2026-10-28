@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { formatShortcut } from "../services/shortcuts";
 import KeyTip from "./KeyTip";
 
 export interface IconButtonProps {
@@ -37,7 +38,7 @@ export default function IconButton({
       disabled={disabled}
       aria-label={label}
       aria-pressed={pressed}
-      title={shortcut ? `${label} (${shortcut})` : label}
+      title={shortcut ? `${label} (${formatShortcut(shortcut, t)})` : label}
     >
       <Icon size={16} aria-hidden="true" />
       {keyTip ? <KeyTip letter={keyTip} visible={showKeyTip} /> : null}

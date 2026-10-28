@@ -22,6 +22,8 @@ export default function RenameInput({ item, showExtensions, onCommit, onCancel }
   const [error, setError] = useState<string | null>(null);
   const busy = useRef(false);
   const done = useRef(false);
+  // System files get a warning first; renaming one needs a second Enter.
+  const systemWarned = useRef(false);
 
   useLayoutEffect(() => {
     const input = inputRef.current;
@@ -46,6 +48,12 @@ export default function RenameInput({ item, showExtensions, onCommit, onCancel }
     if (newName === item.name) {
       done.current = true;
       onCancel();
+      return;
+    }
+    if (item.system && !systemWarned.current) {
+      systemWarned.current = true;
+      setError(t("explorer.rename.systemWarning"));
+      inputRef.current?.focus({ preventScroll: true });
       return;
     }
     busy.current = true;
@@ -84,7 +92,17 @@ export default function RenameInput({ item, showExtensions, onCommit, onCancel }
             onCancel();
           }
         }}
-        onBlur={() => void commit()}
+        onBlur={() => {
+          // A system file is renamed only with Enter, after the warning.
+          if (item.system) {
+            if (!done.current) {
+              done.current = true;
+              onCancel();
+            }
+            return;
+          }
+          void commit();
+        }}
       />
       {error ? (
         <span className="adp-rename-error" role="alert">

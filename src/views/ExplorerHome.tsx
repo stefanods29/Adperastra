@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { supportedLanguages } from "../i18n";
 import Menu, { type MenuAnchor } from "../components/Menu";
 import Skeleton from "../components/Skeleton";
 import ToastStack, { type ToastData } from "../components/Toast";
@@ -160,8 +161,13 @@ interface OpenMenu {
   focusFirst: boolean;
 }
 
+/** Accent- and case-insensitive text, for matching typed place names. */
+function plainText(text: string): string {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
 export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp, onViewChange }: ExplorerHomeProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const view = viewProp ?? DEFAULT_VIEW;
   const [history, setHistory] = useState<NavHistory>(() => createHistory({ type: "home" }));
   const location = history.current;
@@ -188,6 +194,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   const [menu, setMenu] = useState<OpenMenu | null>(null);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [busyNote, setBusyNote] = useState<string | null>(null);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
   const loadModeRef = useRef<"hard" | "soft">("hard");
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [homeNonce, setHomeNonce] = useState(0);
@@ -361,25 +368,29 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
           openOne(targets[0]);
           return;
         }
-        for (const item of targets.filter((entry) => entry.kind === "file").slice(0, OPEN_LIMIT)) openOne(item);
+        const files = targets.filter((entry) => entry.kind === "file");
+        for (const item of files.slice(0, OPEN_LIMIT)) openOne(item);
+        if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
       },
       goToPath: (path: string) => {
         const trimmed = path.trim();
         if (!trimmed) return;
-        const word = trimmed.toLowerCase();
-        if (word === "this pc" || word === "este equipo" || word === "this-pc") {
+        // Place names ("This PC", "Home"...) in any app language.
+        const word = plainText(trimmed);
+        const isPlace = (key: string) => supportedLanguages.some((lng) => plainText(i18n.t(key, { lng })) === word);
+        if (word === "this-pc" || isPlace("explorer.nav.thisPc")) {
           goToLocation({ type: "drives" });
           return;
         }
-        if (word === "home" || word === "inicio") {
+        if (isPlace("explorer.nav.home")) {
           goToLocation({ type: "home" });
           return;
         }
-        if (word === "gallery" || word === "galería" || word === "galeria") {
+        if (isPlace("explorer.nav.gallery")) {
           goToLocation({ type: "gallery" });
           return;
         }
-        if (word === "network" || word === "red") {
+        if (isPlace("explorer.nav.network")) {
           goToLocation({ type: "network" });
           return;
         }
@@ -457,13 +468,14 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
       invertSelection: () => setSelection((current) => invertSelection(current, live.current.orderPaths)),
       setSortKey: (key: SortKey) => {
         if (key === live.current.sortKey) return;
-        setItems([]);
+        // Re-sort in place: the list stays on screen and keeps the selection.
+        loadModeRef.current = "soft";
         setSortKey(key);
         setSortDirection("ascending");
       },
       setSortDirection: (direction: SortDirection) => {
         if (direction === live.current.sortDirection) return;
-        setItems([]);
+        loadModeRef.current = "soft";
         setSortDirection(direction);
       },
       setGroupBy: (groupBy) => onViewChange?.({ group_by: groupBy }),
@@ -476,6 +488,12 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         if (!isTauriRuntime()) return;
         const targets = paths.length > 0 ? paths : current.type === "folder" ? [current.path] : [];
         if (targets.length === 0) return;
+        // The classic menu works on one folder's items; never act on a part
+        // of the selection without saying so.
+        if (new Set(targets.map((path) => (parentPathOf(path) ?? path).toLowerCase())).size > 1) {
+          notify(t("errors.moreOptions.mixedFolders"));
+          return;
+        }
         const point = lastPointer.current;
         // Windows can take a moment to load other apps' menu items; say so.
         const timer = window.setTimeout(() => setBusyNote(t("explorer.loadingMoreOptions")), 300);
@@ -487,7 +505,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
           });
       },
     }),
-    [goToFolder, goToLocation, notify, notifyError, onViewChange, openOne, refresh, t],
+    [goToFolder, goToLocation, i18n, notify, notifyError, onViewChange, openOne, refresh, t],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);
@@ -597,13 +615,22 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   useEffect(() => {
     if (location.type !== "home" || homeTab !== "favorites" || !isTauriRuntime()) return;
     let cancelled = false;
+    // Skeleton rows if the list isn't back within 0.1 s.
+    const timer = window.setTimeout(() => {
+      if (!cancelled) setFavoritesLoading(true);
+    }, 100);
     listFavoriteItems()
       .then((list) => {
         if (!cancelled) setFavoriteItems(list);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        window.clearTimeout(timer);
+        if (!cancelled) setFavoritesLoading(false);
+      });
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [location.type, homeTab, favoritesNonce, homeNonce]);
 
@@ -756,7 +783,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   }, []);
 
   const onSort = (key: SortKey) => {
-    setItems([]);
+    loadModeRef.current = "soft";
     if (key === sortKey) {
       setSortDirection((value) => (value === "ascending" ? "descending" : "ascending"));
     } else {
@@ -787,6 +814,10 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         setSelection(selectOnly(newPath));
         setRenamingPath(null);
         if (live.current.location.type === "home") setHomeNonce((value) => value + 1);
+        // Rust moved any favorites along with the item.
+        void explorerStateGet()
+          .then((state) => setStateData(normalizeState(state)))
+          .catch(() => undefined);
         return null;
       } catch (error) {
         const reason = errorReason(error, "rename");
@@ -900,10 +931,13 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     }
   }
 
-  const homeList =
-    homeItems.length === 0 ? (
-      <p className="adp-empty-note">{t(homeTab === "favorites" ? "explorer.favoritesEmpty" : "explorer.recentEmpty")}</p>
-    ) : (
+  let homeList;
+  if (homeTab === "favorites" && favoritesLoading && homeItems.length === 0) {
+    homeList = <Skeleton variant="rows" count={5} />;
+  } else if (homeItems.length === 0) {
+    homeList = <p className="adp-empty-note">{t(homeTab === "favorites" ? "explorer.favoritesEmpty" : "explorer.recentEmpty")}</p>;
+  } else {
+    homeList = (
       <FileList
         {...listProps}
         items={homeItems}
@@ -912,6 +946,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         label={t(homeTab === "favorites" ? "explorer.favorites" : "explorer.recent")}
       />
     );
+  }
 
   const detailsFolder =
     location.type === "folder"
@@ -959,7 +994,18 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
             void unpinFolder(path).then((next) => setStateData(normalizeState(next))).catch(() => undefined);
           }}
         />
-        <section className="adp-explorer-content">
+        <section
+          className="adp-explorer-content"
+          onContextMenu={(event) => {
+            // The file list handles its own right-clicks; this covers empty
+            // folders, loading states, and messages.
+            if (event.defaultPrevented) return;
+            event.preventDefault();
+            if (live.current.location.type !== "folder") return;
+            setSelection((current) => clearSelection(current));
+            openContextMenu({ x: event.clientX, y: event.clientY }, null);
+          }}
+        >
           {location.type === "home" ? (
             <HomePage
               knownFolders={knownFolders}

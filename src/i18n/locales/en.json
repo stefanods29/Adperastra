@@ -124,10 +124,12 @@
         "invalidChars": "A name can't contain any of these characters: \\ / : * ? \" < > |",
         "reserved": "Windows reserves this name. Choose another one.",
         "tooLong": "This name is too long."
-      }
+      },
+      "systemWarning": "This is a Windows system item. Renaming it can stop apps or Windows from working. Press Enter again to rename it anyway, or Escape to cancel."
     },
     "shareTitle": "{count, plural, one {# file} other {# files}}",
-    "loadingMoreOptions": "Loading more options…"
+    "loadingMoreOptions": "Loading more options…",
+    "openedFirst": "Opened the first {count} files. Open the rest a few at a time."
   },
   "help": {
     "title": "Help",
@@ -305,7 +307,8 @@
     "moreOptions": {
       "timeout": "More options took too long to load, so it was closed.",
       "failed": "More options couldn't be shown.",
-      "other": "More options couldn't be shown."
+      "other": "More options couldn't be shown.",
+      "mixedFolders": "Select items from one folder to see more options."
     },
     "favorites": {
       "other": "Favorites couldn't be updated."
@@ -313,5 +316,17 @@
     "copyPath": {
       "other": "The path couldn't be copied."
     }
+  },
+  "keys": {
+    "ctrl": "Ctrl",
+    "shift": "Shift",
+    "alt": "Alt",
+    "enter": "Enter",
+    "delete": "Delete",
+    "left": "Left",
+    "right": "Right",
+    "up": "Up",
+    "down": "Down",
+    "space": "Space"
   }
 }

@@ -130,6 +130,28 @@ export default function App() {
     [applyVisual],
   );
 
+  // The Explorer's view options; stable, so the command list isn't rebuilt
+  // on every render.
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const onViewChange = useCallback(
+    (patch: Partial<AppSettings["explorer"]>) =>
+      applySettings({ ...settingsRef.current, explorer: { ...settingsRef.current.explorer, ...patch } }),
+    [applySettings],
+  );
+
+  // No browser menu (Back, Refresh, Print...) anywhere in the app; text
+  // boxes and help text keep their copy and paste menu.
+  useEffect(() => {
+    const onMenu = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, .adp-help-body")) return;
+      event.preventDefault();
+    };
+    document.addEventListener("contextmenu", onMenu);
+    return () => document.removeEventListener("contextmenu", onMenu);
+  }, []);
+
   const persistSession = useCallback(async () => {
     if (!readyRef.current) return;
     const data: SessionData = {
@@ -471,7 +493,7 @@ export default function App() {
             onStatsChange={setExplorerStats}
             onOpenHelp={(slug) => openTab("help", slug ?? "browsing-folders")}
             view={settings.explorer}
-            onViewChange={(patch) => applySettings({ ...settings, explorer: { ...settings.explorer, ...patch } })}
+            onViewChange={onViewChange}
           />
         ) : null}
         {activeTab.kind === "help" ? (

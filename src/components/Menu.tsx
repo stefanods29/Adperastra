@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { MenuEntry } from "../commands/menus";
 import { commandLabelKey, isCommandEnabled, type Command, type CommandContext } from "../commands/registry";
+import { formatShortcut } from "../services/shortcuts";
 
 /** Where a menu opens: at a point (right-click), below a button
  * (dropdowns), or beside a menu item (submenus). */
@@ -223,6 +224,9 @@ export default function Menu(props: MenuProps) {
     if (!command) return null;
     const enabled = isCommandEnabled(command, ctx);
     const label = t(commandLabelKey(command, ctx));
+    const shortcut = command.shortcut ? formatShortcut(command.shortcut, t) : "";
+    // Icon buttons have no visible label, so their tooltip says it all.
+    const hint = command.pending ? t("commands.comingLater", { label }) : shortcut ? `${label} (${shortcut})` : label;
     const checked = command.checkedWhen ? command.checkedWhen(ctx) : undefined;
     const role = command.checkKind === "toggle" ? "menuitemcheckbox" : command.checkKind === "radio" ? "menuitemradio" : "menuitem";
     const Icon = command.icon;
@@ -238,7 +242,7 @@ export default function Menu(props: MenuProps) {
         aria-checked={checked}
         aria-disabled={!enabled}
         aria-label={iconOnly ? label : undefined}
-        title={iconOnly ? (command.shortcut ? `${label} (${command.shortcut})` : label) : undefined}
+        title={iconOnly ? hint : undefined}
         className={className}
         onMouseEnter={() => onHover(index)}
         onClick={() => activate(index)}
@@ -251,7 +255,7 @@ export default function Menu(props: MenuProps) {
               {command.checkKind ? (checked ? <Check size={14} className="adp-ctxmenu-check" /> : null) : <Icon size={16} />}
             </span>
             <span className="adp-ctxmenu-label">{label}</span>
-            {command.shortcut ? <span className="adp-ctxmenu-shortcut">{command.shortcut}</span> : null}
+            {shortcut ? <span className="adp-ctxmenu-shortcut">{shortcut}</span> : null}
           </>
         )}
       </div>

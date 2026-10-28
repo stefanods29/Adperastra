@@ -23,8 +23,12 @@ export interface DetailsPaneProps {
 
 /** What still has to come from `item_details`: shown as a skeleton line
  * if it takes longer than 0.1 s (rules.md section 3). */
-function useItemDetails(path: string | null): { details: ItemDetails | null; slow: boolean } {
-  const [state, setState] = useState<{ path: string | null; details: ItemDetails | null }>({ path: null, details: null });
+function useItemDetails(path: string | null): { details: ItemDetails | null; failed: boolean; slow: boolean } {
+  const [state, setState] = useState<{ path: string | null; details: ItemDetails | null; failed: boolean }>({
+    path: null,
+    details: null,
+    failed: false,
+  });
   const [slow, setSlow] = useState(false);
   useEffect(() => {
     setSlow(false);
@@ -35,10 +39,11 @@ function useItemDetails(path: string | null): { details: ItemDetails | null; slo
     }, 100);
     itemDetails(path)
       .then((details) => {
-        if (!cancelled) setState({ path, details });
+        if (!cancelled) setState({ path, details, failed: false });
       })
       .catch(() => {
-        if (!cancelled) setState({ path, details: null });
+        // The skeleton must not stay forever: show a dash instead.
+        if (!cancelled) setState({ path, details: null, failed: true });
       })
       .finally(() => window.clearTimeout(timer));
     return () => {
@@ -46,7 +51,8 @@ function useItemDetails(path: string | null): { details: ItemDetails | null; slo
       window.clearTimeout(timer);
     };
   }, [path]);
-  return { details: state.path === path ? state.details : null, slow };
+  const current = state.path === path;
+  return { details: current ? state.details : null, failed: current && state.failed, slow };
 }
 
 /** The Details pane (Windows 11 style): one item, several items, or the
@@ -56,11 +62,11 @@ export default function DetailsPane(props: DetailsPaneProps) {
   const { t, i18n } = useTranslation();
   const single = props.selected.length === 1 ? props.selected[0] : null;
   const detailsPath = single ? single.path : props.selected.length === 0 && props.folder ? props.folder.path : null;
-  const { details, slow } = useItemDetails(detailsPath);
+  const { details, failed, slow } = useItemDetails(detailsPath);
 
   const date = (unix: number | undefined) => (unix ? formatDate(unix, i18n.language) : "");
   const pending = <span className="adp-details-skeleton" aria-label={t("explorer.details.loading")} />;
-  const later = (value: string | undefined) => (details ? value || "—" : slow ? pending : "");
+  const later = (value: string | undefined) => (details ? value || "—" : failed ? "—" : slow ? pending : "");
   const attributes = details
     ? details.attributes.length > 0
       ? details.attributes.map((id) => t(`explorer.details.attr.${id}`)).join(", ")
