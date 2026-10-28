@@ -369,7 +369,8 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       labelKey: "commands.showMoreOptions",
       icon: EllipsisVertical,
       shortcut: "Shift+F10",
-      risk: "read-only",
+      // The classic menu can delete or move items through Windows.
+      risk: "change",
       helpSlug: "right-click-menu",
       enabledWhen: (ctx) => hasSelection(ctx) || ctx.location === "folder",
       run: () => actions.showMoreOptions(),

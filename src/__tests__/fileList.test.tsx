@@ -154,6 +154,27 @@ describe("FileList", () => {
     expect(onRenameCancel).toHaveBeenCalledOnce();
   });
 
+  it("warns before renaming a system item and needs a second Enter", async () => {
+    const system = { ...item("boot.ini"), system: true };
+    const onRenameCommit = vi.fn(async () => null);
+    await renderList({ items: [system], renamingPath: system.path, onRenameCommit }, selectOnly(system.path));
+    const input = container!.querySelector<HTMLInputElement>(".adp-rename-input")!;
+    const enter = async () => {
+      await act(async () => {
+        input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+      });
+    };
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "boot2.ini");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await enter();
+    expect(onRenameCommit).not.toHaveBeenCalled();
+    expect(container!.querySelector("[role='alert']")?.textContent).toContain("system");
+    await enter();
+    expect(onRenameCommit).toHaveBeenCalledWith(system, "boot2.ini");
+  });
+
   it("hides extensions when asked and groups items under headers", async () => {
     await renderList({
       showExtensions: false,

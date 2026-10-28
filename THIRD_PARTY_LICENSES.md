@@ -1,4 +1,4 @@
-﻿# Third-party licenses
+# Third-party licenses
 
 Adperastra itself is MIT-licensed. The components below are bundled with
 the app (starting with the Step 01a setup launcher) and keep their own
@@ -54,5 +54,7 @@ file lists everything that ships inside the app folder.
 - **Lucide icons** (ISC) - icons in the interface.
 - **egui** (MIT / Apache-2.0) - setup window.
 - **notify** (CC0-1.0) - folder watching for the Explorer (Step 02).
+- **TanStack Virtual** (MIT) - virtualized file lists (Step 02).
+- **windows** 0.61 and **windows-collections** 0.2 (MIT / Apache-2.0) - Windows APIs: known folders, drives, file details, rename, Open, Open with, Properties, the share sheet and the classic menu (Steps 02 and 03a).
 - **minisign** (MIT) - manifest signatures.
 

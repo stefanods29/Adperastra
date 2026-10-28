@@ -147,6 +147,38 @@ fn favorites_add_remove_and_survive_a_save() {
 }
 
 #[test]
+fn favorites_follow_a_rename_of_the_item_or_its_folder() {
+    let mut state = ExplorerState::default();
+    state.add_favorite(r"C:\Work\Draft.docx".to_string());
+    state.add_favorite(r"C:\Work\Photos\Beach.jpg".to_string());
+    state.add_favorite(r"C:\Other\keep.txt".to_string());
+    state.move_favorites(r"c:\work\draft.docx", r"C:\Work\Final.docx");
+    assert!(state.is_favorite(r"C:\Work\Final.docx"));
+    assert!(!state.is_favorite(r"C:\Work\Draft.docx"));
+    state.move_favorites(r"C:\Work", r"C:\Projects");
+    assert_eq!(
+        state.favorites,
+        vec![
+            r"C:\Projects\Final.docx".to_string(),
+            r"C:\Projects\Photos\Beach.jpg".to_string(),
+            r"C:\Other\keep.txt".to_string(),
+        ]
+    );
+}
+
+#[test]
+fn moving_favorites_never_splits_a_character() {
+    // "İ" becomes two characters when lowercased; this must not panic.
+    let mut state = ExplorerState::default();
+    state.add_favorite("C:\\İstanbul\\plan.txt".to_string());
+    state.add_favorite("C:\\Ünïcode\\a.txt".to_string());
+    state.move_favorites("C:\\İstanbul", "C:\\Istanbul");
+    state.move_favorites("C:\\İ", "C:\\X");
+    assert_eq!(state.favorites[0], "C:\\Istanbul\\plan.txt");
+    assert_eq!(state.favorites[1], "C:\\Ünïcode\\a.txt");
+}
+
+#[test]
 fn schema_1_state_files_load_without_favorites() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("explorer-state.json");

@@ -124,10 +124,12 @@
         "invalidChars": "[Ä nämë cän't cøntäïn äny øf thësë chäräctërs: \\ / : * ? \" < > | ëxträ]",
         "reserved": "[Wïndøws rësërvës thïs nämë. Chøøsë änøthër ønë. ëxträ]",
         "tooLong": "[Thïs nämë ïs tøø løng. ëxträ]"
-      }
+      },
+      "systemWarning": "[Thïs ïs ä Wïndøws systëm ïtëm. Rënämïng ït cän støp äpps ør Wïndøws frøm wørkïng. Prëss Ëntër ägäïn tø rënämë ït änywäy, ør Ëscäpë tø cäncël. ëxträ]"
     },
     "shareTitle": "[{count, plural, one {# fïlë} other {# fïlës}} ëxträ]",
-    "loadingMoreOptions": "[Löädïng mörë öptïöns… ëxträ]"
+    "loadingMoreOptions": "[Löädïng mörë öptïöns… ëxträ]",
+    "openedFirst": "[Øpënëd thë fïrst {count} fïlës. Øpën thë rëst ä fëw ät ä tïmë. ëxträ]"
   },
   "help": {
     "title": "[Hëëlp Hëëlp]",
@@ -305,7 +307,8 @@
     "moreOptions": {
       "timeout": "[Mørë øptïøns tøøk tøø løng tø løäd, sø ït wäs cløsëd. ëxträ]",
       "failed": "[Mørë øptïøns cøüldn't bë shøwn. ëxträ]",
-      "other": "[Mørë øptïøns cøüldn't bë shøwn. ëxträ]"
+      "other": "[Mørë øptïøns cøüldn't bë shøwn. ëxträ]",
+      "mixedFolders": "[Sëlëct ïtëms frøm ønë føldër tø sëë mørë øptïøns. ëxträ]"
     },
     "favorites": {
       "other": "[Fävørïtës cøüldn't bë üpdätëd. ëxträ]"
@@ -313,5 +316,17 @@
     "copyPath": {
       "other": "[Thë päth cøüldn't bë cøpïëd. ëxträ]"
     }
+  },
+  "keys": {
+    "ctrl": "[Ctrl ëxträ]",
+    "shift": "[Shïft ëxträ]",
+    "alt": "[Ält ëxträ]",
+    "enter": "[Ëntër ëxträ]",
+    "delete": "[Dëlëtë ëxträ]",
+    "left": "[Lëft ëxträ]",
+    "right": "[Rïght ëxträ]",
+    "up": "[Üp ëxträ]",
+    "down": "[Døwn ëxträ]",
+    "space": "[Späcë ëxträ]"
   }
 }

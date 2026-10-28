@@ -124,10 +124,12 @@
         "invalidChars": "Un nombre no puede contener ninguno de estos caracteres: \\ / : * ? \" < > |",
         "reserved": "Windows reserva este nombre. Elige otro.",
         "tooLong": "Este nombre es demasiado largo."
-      }
+      },
+      "systemWarning": "Este es un elemento del sistema de Windows. Cambiarle el nombre puede hacer que apps o Windows dejen de funcionar. Presiona Entrar otra vez para cambiarlo de todos modos, o Esc para cancelar."
     },
     "shareTitle": "{count, plural, one {# archivo} other {# archivos}}",
-    "loadingMoreOptions": "Cargando más opciones…"
+    "loadingMoreOptions": "Cargando más opciones…",
+    "openedFirst": "Se abrieron los primeros {count} archivos. Abre el resto de a pocos."
   },
   "help": {
     "title": "Ayuda",
@@ -305,7 +307,8 @@
     "moreOptions": {
       "timeout": "Más opciones tardó demasiado en cargar y se cerró.",
       "failed": "No se pudieron mostrar más opciones.",
-      "other": "No se pudieron mostrar más opciones."
+      "other": "No se pudieron mostrar más opciones.",
+      "mixedFolders": "Selecciona elementos de una sola carpeta para ver más opciones."
     },
     "favorites": {
       "other": "No se pudieron actualizar los favoritos."
@@ -313,5 +316,17 @@
     "copyPath": {
       "other": "No se pudo copiar la ruta."
     }
+  },
+  "keys": {
+    "ctrl": "Ctrl",
+    "shift": "Mayús",
+    "alt": "Alt",
+    "enter": "Entrar",
+    "delete": "Supr",
+    "left": "Flecha izquierda",
+    "right": "Flecha derecha",
+    "up": "Flecha arriba",
+    "down": "Flecha abajo",
+    "space": "Espacio"
   }
 }

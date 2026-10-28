@@ -60,6 +60,18 @@ fn normalize_for_compare(path: &str) -> String {
     stripped.trim_end_matches('\\').to_lowercase()
 }
 
+/// The display form of a stored path (no `\\?\` prefix), original case.
+fn without_verbatim_prefix(path: &str) -> String {
+    let trimmed = path.trim();
+    if let Some(unc) = trimmed.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{unc}")
+    } else if let Some(rest) = trimmed.strip_prefix(r"\\?\") {
+        rest.to_string()
+    } else {
+        trimmed.to_string()
+    }
+}
+
 fn same_path(a: &str, b: &str) -> bool {
     normalize_for_compare(a) == normalize_for_compare(b)
 }
@@ -124,6 +136,31 @@ impl ExplorerState {
 
     pub fn remove_favorite(&mut self, path: &str) {
         self.favorites.retain(|p| !same_path(p, path));
+    }
+
+    /// After a rename: the item itself and anything inside a renamed
+    /// folder keep their place in favorites under the new path.
+    pub fn move_favorites(&mut self, old: &str, new: &str) {
+        let old_display = without_verbatim_prefix(old);
+        let old_display = old_display.trim_end_matches('\\');
+        let new_display = new.trim_end_matches('\\');
+        for favorite in &mut self.favorites {
+            if same_path(favorite, old) {
+                *favorite = new_display.to_string();
+                continue;
+            }
+            // Inside a renamed folder: compare the folder part without
+            // regard to case; `get` never splits a character.
+            let display = without_verbatim_prefix(favorite);
+            let inside = display
+                .get(..old_display.len())
+                .is_some_and(|head| head.to_lowercase() == old_display.to_lowercase())
+                && display[old_display.len()..].starts_with('\\');
+            if inside {
+                *favorite = format!("{new_display}{}", &display[old_display.len()..]);
+            }
+        }
+        self.favorites = clean(&self.favorites, MAX_FAVORITES);
     }
 
     /// Most-recent-first, de-duplicated, capped at MAX_RECENT.

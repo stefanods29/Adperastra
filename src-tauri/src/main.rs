@@ -1214,7 +1214,7 @@ async fn item_details(
     path: String,
 ) -> Result<fs_service::ItemDetails, String> {
     ensure_main(window.label())?;
-    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    validate_absolute_path(&path)?;
     tauri::async_runtime::spawn_blocking(move || {
         fs_service::item_details(Path::new(&path)).map_err(|e| e.to_string())
     })
@@ -1222,28 +1222,51 @@ async fn item_details(
     .map_err(|e| e.to_string())?
 }
 
-/// Rename in place; returns the new path. Errors are `rename.<reason>`
-/// codes the UI translates.
+/// Paths for the Step 03a commands must be absolute and have no `..`
+/// parts, so a path from the UI can only mean what it says. They are not
+/// resolved to a link's target: a link is renamed or described itself.
+fn validate_absolute_path(path: &str) -> Result<(), String> {
+    fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+    let parsed = Path::new(path);
+    let has_parent_part = parsed
+        .components()
+        .any(|part| matches!(part, std::path::Component::ParentDir));
+    if !parsed.is_absolute() || has_parent_part {
+        return Err("path must be absolute, without '..'".to_string());
+    }
+    Ok(())
+}
+
+/// Rename in place; returns the new path. Favorites follow the item.
+/// Errors are `rename.<reason>` codes the UI translates.
 #[tauri::command]
 async fn rename_item(
     window: WebviewWindow,
+    state: State<'_, AppState>,
     path: String,
     new_name: String,
 ) -> Result<String, String> {
     ensure_main(window.label())?;
-    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    validate_absolute_path(&path).map_err(|_| "rename.not_found".to_string())?;
     if new_name.chars().count() > 255 {
         return Err("rename.invalid_name".to_string());
     }
-    tauri::async_runtime::spawn_blocking(move || {
+    let old_path = path.clone();
+    let new_path = tauri::async_runtime::spawn_blocking(move || {
         fs_service::rename_in_place(Path::new(&path), &new_name)
             .map(|p| p.to_string_lossy().into_owned())
             .map_err(|e| format!("rename.{}", fs_service::rename_error_reason(&e)))
     })
     .await
-    .map_err(|e| e.to_string())?
+    .map_err(|e| e.to_string())??;
+    // The file is already renamed; a failure to update favorites must not
+    // turn that into an error.
+    let _ = update_explorer_state(&state, |s| s.move_favorites(&old_path, &new_path));
+    Ok(new_path)
 }
 
+/// Favorites are stored exactly as the list shows them (not resolved), so
+/// items on mapped drives, subst drives and junctions match later.
 #[tauri::command]
 async fn add_favorite(
     window: WebviewWindow,
@@ -1251,15 +1274,16 @@ async fn add_favorite(
     path: String,
 ) -> Result<fs_service::ExplorerState, String> {
     ensure_main(window.label())?;
-    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
-    let canonical = tauri::async_runtime::spawn_blocking(move || {
-        fs::canonicalize(Path::new(&path))
-            .map(|p| p.to_string_lossy().into_owned())
+    validate_absolute_path(&path)?;
+    let checked = path.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        fs::symlink_metadata(Path::new(&checked))
+            .map(|_| ())
             .map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| e.to_string())??;
-    update_explorer_state(&state, |s| s.add_favorite(canonical))
+    update_explorer_state(&state, |s| s.add_favorite(path))
 }
 
 #[tauri::command]
@@ -1269,7 +1293,7 @@ fn remove_favorite(
     path: String,
 ) -> Result<fs_service::ExplorerState, String> {
     ensure_main(window.label())?;
-    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    validate_absolute_path(&path)?;
     update_explorer_state(&state, |s| s.remove_favorite(&path))
 }
 
@@ -1306,7 +1330,7 @@ fn window_handle(_window: &WebviewWindow) -> isize {
 #[tauri::command]
 async fn open_item(window: WebviewWindow, path: String) -> Result<shell::OpenOutcome, String> {
     ensure_main(window.label())?;
-    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    validate_absolute_path(&path)?;
     tauri::async_runtime::spawn_blocking(move || shell::open_item(&path))
         .await
         .map_err(|e| e.to_string())?
@@ -1315,7 +1339,7 @@ async fn open_item(window: WebviewWindow, path: String) -> Result<shell::OpenOut
 #[tauri::command]
 async fn open_with_dialog(window: WebviewWindow, path: String) -> Result<(), String> {
     ensure_main(window.label())?;
-    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    validate_absolute_path(&path)?;
     let owner = window_handle(&window);
     tauri::async_runtime::spawn_blocking(move || shell::open_with_dialog(owner, &path))
         .await
@@ -1329,7 +1353,7 @@ async fn show_properties(window: WebviewWindow, paths: Vec<String>) -> Result<()
         return Err("properties.failed".to_string());
     }
     for path in &paths {
-        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+        validate_absolute_path(path)?;
     }
     let owner = window_handle(&window);
     tauri::async_runtime::spawn_blocking(move || shell::show_properties(owner, &paths))
@@ -1340,7 +1364,7 @@ async fn show_properties(window: WebviewWindow, paths: Vec<String>) -> Result<()
 #[tauri::command]
 async fn open_in_terminal(window: WebviewWindow, folder: String) -> Result<(), String> {
     ensure_main(window.label())?;
-    fs_service::validate_path_input(&folder).map_err(|e| e.to_string())?;
+    validate_absolute_path(&folder)?;
     tauri::async_runtime::spawn_blocking(move || shell::open_in_terminal(&folder))
         .await
         .map_err(|e| e.to_string())?
@@ -1361,7 +1385,7 @@ async fn share_items(
         return Err("share.failed".to_string());
     }
     for path in &paths {
-        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+        validate_absolute_path(path)?;
     }
     let owner = window_handle(&window);
     let (sender, receiver) = std::sync::mpsc::channel();
@@ -1394,7 +1418,7 @@ async fn show_classic_menu(
         return Err("moreOptions.failed".to_string());
     }
     for path in &paths {
-        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+        validate_absolute_path(path)?;
     }
     let origin = window
         .inner_position()
@@ -1801,6 +1825,16 @@ mod tests {
         assert!(parse_sort("bogus", "ascending").is_err());
         assert!(parse_sort("name", "sideways").is_err());
     }
+    #[test]
+    fn step_03a_commands_take_only_absolute_paths() {
+        assert!(validate_absolute_path(r"C:\Users\me\file.txt").is_ok());
+        assert!(validate_absolute_path(r"\\?\C:\Users\me").is_ok());
+        assert!(validate_absolute_path(r"\\server\share\a.txt").is_ok());
+        assert!(validate_absolute_path(r"relative\file.txt").is_err());
+        assert!(validate_absolute_path(r"C:\Users\..\Windows").is_err());
+        assert!(validate_absolute_path("").is_err());
+    }
+
     #[test]
     fn ensure_main_guard() {
         assert!(ensure_main("main").is_ok());

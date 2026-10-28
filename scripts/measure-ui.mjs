@@ -50,6 +50,7 @@ async function page(expression) {
 await page(`window.__m = {
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
   async time(fn) { const t0 = performance.now(); fn(); await this.frame(); return performance.now() - t0; },
+  async timeUntil(fn, done) { const t0 = performance.now(); fn(); while (!done()) await new Promise((r) => requestAnimationFrame(r)); await this.frame(); return performance.now() - t0; },
   async waitFor(pred, ms = 20000) { const t0 = performance.now(); while (!pred()) { if (performance.now() - t0 > ms) throw new Error("timeout"); await new Promise((r) => setTimeout(r, 20)); } },
   rows: () => [...document.querySelectorAll(".adp-filelist-scroll [role=option]")],
   list: () => document.querySelector(".adp-filelist-scroll"),
@@ -129,6 +130,20 @@ if (mode === "full") {
   results.push(await measure("right-click menu on empty space", `true`, `window.__m.list().dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 600, clientY: 700 }))`, `window.__m.closeMenus(); true`));
   results.push(await measure("command bar View menu", `true`, `window.__m.menuButton(2).click()`, `window.__m.closeMenus(); true`));
   results.push(await measure("rename box (F2)", `window.__m.click(window.__m.rows()[5]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "F2" })`, `document.querySelector(".adp-rename-input")?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); true`));
+  // Dates and attributes come from Windows a moment after the click.
+  {
+    const values = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      await page(`window.__m.click(window.__m.rows()[${run % 2 === 0 ? 7 : 8}]); true`);
+      await sleep(150);
+      values.push(
+        await page(`window.__m.timeUntil(() => window.__m.click(window.__m.rows()[${run % 2 === 0 ? 8 : 7}]), () => { const cells = [...document.querySelectorAll(".adp-details-grid dd")]; return cells.length > 0 && !document.querySelector(".adp-details-skeleton") && cells[cells.length - 1].textContent.trim().length > 0; })`),
+      );
+    }
+    const result = { name: "details pane filled (dates and attributes)", median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+    console.log(`${result.name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+    results.push(result);
+  }
   results.push(
     await measure(
       "details pane hide/show (Alt+Shift+P)",

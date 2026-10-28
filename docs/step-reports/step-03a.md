@@ -59,19 +59,20 @@ Packaged release build, measured inside the page from the action to the next pai
 
 | Interaction | Tier | Measured (median) | Result |
 |---|---|---|---|
-| Select an item (click) | Instant 0.1 s | 14 ms | Pass |
+| Select an item (click) | Instant 0.1 s | 8 ms | Pass |
 | Add an item (Ctrl+click) | Instant 0.1 s | 7 ms | Pass |
-| Type-ahead jump | Instant 0.1 s | 12 ms | Pass |
-| Right-click menu on a file | Instant 0.1 s | 9 ms | Pass |
-| Right-click menu on empty space | Instant 0.1 s | 15 ms | Pass |
-| Command bar View menu | Instant 0.1 s | 8 ms | Pass |
-| Rename box (F2) | Instant 0.1 s | 9 ms | Pass |
-| Details pane hide/show | Instant 0.1 s | 9 ms | Pass |
-| 100k folder: select an item | Instant 0.1 s | 8 ms | Pass |
-| 100k folder: arrow key move | Instant 0.1 s | 14 ms | Pass |
-| 100k folder: select all (Ctrl+A) | Instant 0.1 s | 30 ms | Pass |
-| 100k folder: right-click with all selected | Instant 0.1 s | 10 ms | Pass |
-| 100k folder: Shift+click range | Instant 0.1 s | 16 ms | Pass |
+| Type-ahead jump | Instant 0.1 s | 9 ms | Pass |
+| Right-click menu on a file | Instant 0.1 s | 7 ms | Pass |
+| Right-click menu on empty space | Instant 0.1 s | 7 ms | Pass |
+| Command bar View menu | Instant 0.1 s | 4 ms | Pass |
+| Rename box (F2) | Instant 0.1 s | 6 ms | Pass |
+| Details pane filled in (dates and attributes from Windows) | Instant 0.1 s | 8 ms | Pass |
+| Details pane hide/show | Instant 0.1 s | 7 ms | Pass |
+| 100k folder: select an item | Instant 0.1 s | 6 ms | Pass |
+| 100k folder: arrow key move | Instant 0.1 s | 11 ms | Pass |
+| 100k folder: select all (Ctrl+A) | Instant 0.1 s | 26 ms | Pass |
+| 100k folder: right-click with all selected | Instant 0.1 s | 8 ms | Pass |
+| 100k folder: Shift+click range | Instant 0.1 s | 13 ms | Pass |
 | Show more options (classic menu on screen) | Waiting with feedback 1-10 s | 0.55-0.74 s warm, 2.1 s first time | Pass (note after 0.3 s, timeout 5 s) |
 | App start, cold WebView2 (first paint / ready) | Fast 1 s | 83-99 ms / 702-870 ms, median 779 ms (5 runs; the `v0.0.4-step02` build: median 841 ms) | Pass, no slowdown vs Step 02 (KI-017 closed) |
 | First start of a freshly built exe | one-time | 0.7-2.1 s paint / 1.3-3.4 s ready | Known one-time cost (KI-002) |
@@ -80,8 +81,17 @@ Our own menus never touch shell extensions, so they stay instant however slow an
 
 ## Verification
 
-- `cargo test --workspace`: 70 pass (app 28 incl. classic-menu helper timeout/ready/crash and request checks; fs-service 26 incl. 10 new for rename, details and favorites); `cargo clippy --workspace --all-targets` and `cargo fmt --check` clean.
-- `npm test`: 46/46 (selection, names, grouping, commands and menus, FileList keys/type-ahead/rename/groups, help pages in both languages); `tsc` clean; `npm run lint:i18n` passes (263 keys); `npm audit`: 0 vulnerabilities; release build passes.
+- `cargo test --workspace`: 73 pass (app 29 incl. classic-menu helper timeout/ready/crash, request checks and absolute-path checks; fs-service 28 incl. 12 new for rename, details and favorites); `cargo clippy --workspace --all-targets` and `cargo fmt --check` clean.
+- `npm test`: 48/48 (selection, names, grouping, commands and menus, FileList keys/type-ahead/rename/groups, system-item rename warning, translated shortcut names, help pages in both languages); `tsc` clean; `npm run lint:i18n` passes (276 keys); `npm audit`: 0 vulnerabilities; release build passes.
+- Full local suite on `testing` (the checks above plus the release build): passed before the review and again after the review fixes.
+- Plan review (read-only): found one Blocker and ten should-fix items, all fixed on the step branch and re-checked:
+  - Blocker: right-click on empty space in an empty folder showed the webview's own menu, whose Refresh reloaded the app. Now the app's menu opens anywhere in a folder view and the webview menu is off app-wide (except in text boxes and help text). Verified in the packaged app.
+  - Sorting kept the selection only by luck; it now re-sorts in place.
+  - Favorites are stored as shown, follow renames, and always stay listed (network ones aren't checked, so an absent server can't stall Home).
+  - The Favorites tab shows skeleton rows while loading; the Details pane no longer keeps a skeleton forever when Windows can't answer.
+  - Shortcut key names are translated; hidden commands stay out of the bar; dropdowns have tooltips; placeholder icons say they come later.
+  - New commands take only absolute paths without `..`; renaming a system item warns first.
+  - THIRD_PARTY_LICENSES.md lists the windows crates; Show more options refuses a selection from several folders; opening more than 15 files says so.
 - Packaged app driven through the WebView2 debugging port (`scripts/measure-ui.ps1`): speed table above and the screenshots below. Fixed from that run: Ctrl+A selected the page's text, the Details pane's folder icon was invisible, the rename message was covered by the next row, and Home columns overflowed.
 - Startup: the `v0.0.4-step02` tag was built and measured next to Step 03a with `scripts/measure-startup.ps1` (which now takes `-Exe`, `-Step` and `-Runs`); Step 03a is not slower (KI-017 closed).
 
@@ -107,6 +117,16 @@ Still open: KI-001, KI-002, KI-004, KI-005 (Minor), KI-003 (Major, after-reboot 
 
 ## Commits (branch step-03a-selection-details-menus, from testing 69280e7)
 
+- `a462369` docs(reports): step-03a numbers, screenshots and review results after the fixes [step-03a]
+- `a5a8e2a` fix(bench): pass the row number into the details-fill measurement [step-03a]
+- `91dbea9` test(bench): measure how long the details pane takes to fill in [step-03a]
+- `a5399a6` docs: list the windows crates as third-party, and record the review fixes [step-03a]
+- `3138aa9` fix(explorer): absolute paths only, and favorites that follow renames and stay listed [step-03a]
+- `43b5270` fix(explorer): address the step-03a review in the UI [step-03a]
+- `e77a6a5` docs(issues): close KI-017 after measuring startup against Step 02 [step-03a]
+- `553cc24` fix(bench): rename the results list so -Runs works in measure-startup [step-03a]
+- `7385165` test(bench): let measure-startup take an exe, a step name and a run count [step-03a]
+- `4a9deef` docs(reports): step-03a report and startup check [step-03a]
 - `34ba3a5` docs(records): known issues, design deviation, decision record and changelog for step 03a [step-03a]
 - `f3fd280` docs(screenshots): add step-03a screenshots in English, Spanish and pseudo-locale [step-03a]
 - `5d35b31` test(bench): measure Explorer interactions in the packaged app [step-03a]
@@ -127,6 +147,7 @@ Still open: KI-001, KI-002, KI-004, KI-005 (Minor), KI-003 (Major, after-reboot 
 - `b1245ce` feat(fs): add item details, rename in place, and favorites [step-03a]
 - `5ba4b35` refactor: satisfy the newer clippy lints [step-03a]
 - `e965700` docs(plan): add step-03a implementation plan and owner decisions [step-03a]
+- (this commit) docs(reports): final step-03a commit list [step-03a]
 
 ## Proposal for the next step
 

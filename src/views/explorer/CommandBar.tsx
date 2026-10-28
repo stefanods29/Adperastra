@@ -5,7 +5,8 @@ import HelpButton from "../../components/HelpButton";
 import Menu, { type MenuAnchor } from "../../components/Menu";
 import Tooltip from "../../components/Tooltip";
 import { resolveMenu, type BarEntry, type MenuEntry } from "../../commands/menus";
-import { commandLabelKey, isCommandEnabled, type Command, type CommandContext } from "../../commands/registry";
+import { commandLabelKey, isCommandEnabled, isCommandVisible, type Command, type CommandContext } from "../../commands/registry";
+import { formatShortcut } from "../../services/shortcuts";
 
 export interface CommandBarProps {
   entries: BarEntry[];
@@ -117,20 +118,21 @@ export default function CommandBar(props: CommandBarProps) {
           const Icon = entry.icon;
           const key = `menu-${entry.id}`;
           return (
-            <button
-              key={key}
-              ref={setRef}
-              style={style}
-              type="button"
-              className="adp-cmd-text"
-              aria-haspopup="menu"
-              aria-expanded={menu?.key === key}
-              onClick={(event) => toggleMenu(key, event.currentTarget, entry.entries, label, event.detail === 0)}
-            >
-              <Icon size={16} aria-hidden="true" />
-              <span>{label}</span>
-              <ChevronDown size={11} aria-hidden="true" />
-            </button>
+            <span key={key} ref={setRef} style={style} className="adp-cmd-wrap">
+              <Tooltip label={label} placement="below">
+                <button
+                  type="button"
+                  className="adp-cmd-text"
+                  aria-haspopup="menu"
+                  aria-expanded={menu?.key === key}
+                  onClick={(event) => toggleMenu(key, event.currentTarget, entry.entries, label, event.detail === 0)}
+                >
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{label}</span>
+                  <ChevronDown size={11} aria-hidden="true" />
+                </button>
+              </Tooltip>
+            </span>
           );
         }
         if (entry.type === "overflow") {
@@ -155,7 +157,8 @@ export default function CommandBar(props: CommandBarProps) {
           );
         }
         const command = lookup(entry.id);
-        if (!command) return null;
+        // Commands can hide themselves (for example "Extract all" outside archives).
+        if (!command || !isCommandVisible(command, ctx)) return null;
         const label = t(commandLabelKey(command, ctx));
         const enabled = isCommandEnabled(command, ctx);
         const tooltip = command.pending ? t("commands.comingLater", { label }) : label;
@@ -163,7 +166,7 @@ export default function CommandBar(props: CommandBarProps) {
         const pressed = command.checkKind === "toggle" ? Boolean(command.checkedWhen?.(ctx)) : undefined;
         return (
           <span key={entry.id} ref={setRef} style={style} className="adp-cmd-wrap">
-            <Tooltip label={tooltip} shortcut={command.shortcut} placement="below">
+            <Tooltip label={tooltip} shortcut={command.shortcut ? formatShortcut(command.shortcut, t) : undefined} placement="below">
               <button
                 type="button"
                 className={`${entry.showLabel ? "adp-cmd-text" : "adp-cmd-icon"}${pressed ? " adp-cmd--pressed" : ""}`}
