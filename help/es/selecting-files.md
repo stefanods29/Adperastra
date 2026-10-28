@@ -22,6 +22,7 @@ Selecciona archivos y carpetas para trabajar con ellos: la barra de comandos, el
 - Selecciona un elemento y presiona **F2**, o vuelve a hacer clic en su nombre después de un momento (sin doble clic). Solo queda seleccionado el nombre, no la extensión, así que puedes escribir de inmediato.
 - Presiona **Entrar** o haz clic en otro lugar para guardar, o **Esc** para cancelar.
 - Si Windows no permite el nombre, o ya hay otro elemento con ese nombre, un mensaje explica por qué y no se cambia nada. Cambiar un nombre nunca reemplaza otro archivo.
+- Al cambiar el nombre de un elemento del sistema de Windows aparece primero una advertencia; presiona **Entrar** otra vez para cambiarlo de todos modos, o **Esc** para cancelar.
 - La opción de deshacer un cambio de nombre llega en la próxima versión.
 
 ## La barra de estado

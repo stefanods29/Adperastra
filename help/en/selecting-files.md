@@ -22,6 +22,7 @@ Select files and folders to work with them: the command bar, the right-click men
 - Select one item and press **F2**, or click its name again after a moment (not a double-click). Only the name is selected, not the extension, so you can type right away.
 - Press **Enter** or click elsewhere to save, or **Escape** to cancel.
 - If Windows doesn't allow the name, or another item already has it, a message explains why and nothing is changed. Renaming never replaces another file.
+- Renaming a Windows system item shows a warning first; press **Enter** again to rename it anyway, or **Escape** to cancel.
 - Undo for renaming arrives in the next version.
 
 ## The status bar
