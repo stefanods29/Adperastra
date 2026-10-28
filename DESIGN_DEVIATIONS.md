@@ -3,6 +3,12 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-28 - Command bar, Details pane, menus and rename (Step 03a) - approved by the owner on 2026-10-28
+
+- **What:** Figma shows the command bar only on the Home frame and has no Details toggle, Details pane, menus, or rename box (plan/design.md, "Screens still to design"). The owner approved a design preview before it was built, made from `plan/design-spec.md` tokens with the Windows 11 Explorer as functional reference: a Details toggle at the right end of the command bar (pressed state in the Explorer accent light), a 280 px Details pane with a 44 px file-type tile and a label/value list, menus 220-360 px wide with radius 8, the card shadow, 30 px items, 16 px icons, shortcuts at the right and an icon row (Cut, Copy, Rename, Share, Delete) on items, and a 22 px rename box with an accent border and a message bubble under it.
+- **Closest-option differences:** the address row and the command bar now span the window above the navigation pane, as in the Figma frame (Step 02 kept the navigation pane full height); the folder's Pin button moved into See more (•••), as in Windows 11; the "?" help button sits at the end of the command bar; check marks use the accent color; "Show more options" shows Windows' own classic menu in its classic style (owner decision: it runs in a separate process for safety, so it can't use our tokens).
+- **Evidence:** `docs/screenshots/step-03a/` - Home, a folder with the Details pane, item and empty-space menus (View submenu), several items selected, a refused rename, and the Sort menu, in English light, Spanish dark, and the pseudo-locale.
+
 ## 2026-10-28 - Explorer inside a folder and This PC (Step 02) - approved by the owner on 2026-10-28
 
 - **What:** Figma has the Explorer Home page but not the Explorer inside a folder, the Details-pane variant, menus, or This PC (plan/design.md, "Screens still to design"). Those views were designed from `plan/design-spec.md` tokens and the Windows 11 Explorer as functional reference: 196 px nav pane, 34 px address box on the chrome surface, 28 px file rows, column widths following the Home frame (Name flexible, Date 190, Type 180, Size 110 right-aligned), folder view without a command bar (that arrives in Step 03a).

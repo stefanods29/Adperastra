@@ -66,12 +66,32 @@ that fixed it.
 - **Workaround:** unpin the stale entry (open it fails, so use the unpin button next to it) and pin the renamed folder; or restart the app.
 - **Target:** Step 07a background refresh (the metadata service can verify pinned paths then).
 
-### KI-013 - Hidden and system files are always shown (Minor)
-- **Found in:** Step 02 (final review). **Severity:** Minor.
-- **What:** Hidden items are dimmed but always visible; there is no user setting yet (the settings schema predates Explorer options).
-- **Target:** Step 10b folder customization settings.
+### KI-014 - Renaming has no Undo yet (Major, deferral approved)
+- **Found in:** Step 03a. **Severity:** Major (rules.md section 3 asks for an undo toast after every rename).
+- **What:** Rename works (F2 or a second click on the name), never overwrites another item, and explains every refusal, but there is no Undo toast or Ctrl+Z for it yet.
+- **Workaround:** rename the item back.
+- **Approval:** the owner approved deferring it to Step 03b on 2026-10-28 (the undo stack arrives there).
+- **Target:** Step 03b (undo stack v1); must be fixed before v0.1.
+
+### KI-015 - Some command bar and menu entries are placeholders (Minor)
+- **Found in:** Step 03a. **Severity:** Minor (placeholders, by owner decision on 2026-10-28).
+- **What:** New, Cut, Copy, Paste and Delete are shown but disabled until the file-operation engine (Step 03b); the List and icon views under View are disabled until the view modes (Step 05). Their tooltips say they arrive in a later update.
+- **Workaround:** Windows' own commands are available through Show more options.
+- **Target:** Steps 03b and 05.
+
+### KI-016 - Some classic-menu commands may do nothing (Minor)
+- **Found in:** Step 03a. **Severity:** Minor (rare, Windows design).
+- **What:** "Show more options" hosts the classic Windows menu outside Windows Explorer. Commands that expect Explorer's own file list around them (for example Rename in the classic menu) may do nothing. Everything Adperastra's own menu offers works.
+- **Workaround:** use Adperastra's own Rename (F2) and menu commands.
+- **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-013 - Hidden and system files were always shown (fixed in Step 03a)
+Hidden items are now hidden by default, like Windows, and **View** >
+**Hidden items** shows them (dimmed); the choice is saved in settings
+(schema 3). Fixed in commit `08a6cef`, earlier than its 10b target because
+the Step 03a View menu asks for the toggle.
 
 ### KI-010 - Explorer-state save was not fully atomic and reads were unlocked (fixed in Step 02)
 When the first rename failed, the writer deleted `explorer-state.json`
