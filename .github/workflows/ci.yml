@@ -27,9 +27,10 @@ jobs:
       - name: Check for secrets
         shell: pwsh
         run: |
-          # Built at run time so this workflow file does not match itself.
+          # Built at run time so this workflow file does not match itself, and
+          # case-sensitive so the error message below does not match either.
           $marker = "PRIVATE" + " KEY"
-          if (Select-String -Path (Get-ChildItem -Recurse -File).FullName -Pattern $marker -SimpleMatch -List -ErrorAction SilentlyContinue) { Write-Error "Private key marker found"; exit 1 }
+          if (Select-String -Path (Get-ChildItem -Recurse -File).FullName -Pattern $marker -SimpleMatch -CaseSensitive -List -ErrorAction SilentlyContinue) { Write-Error "Private key marker found"; exit 1 }
           if (Get-ChildItem -Recurse -File -Filter "*.key" | Where-Object { $_.FullName -match "\.adperastra" }) { Write-Error "Signing key file found"; exit 1 }
 
       - name: Install dependencies
