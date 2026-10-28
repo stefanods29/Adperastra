@@ -247,6 +247,9 @@ span.adp-col-size { display:flex; }
 .adp-group-count { color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); font-weight:400; }
 .adp-group-rule { flex:1; height:1px; background:var(--adp-color-border-default); }
 .adp-file-name-cell:has(.adp-rename) { overflow:visible; }
+/* Each virtual row is its own layer; lift the one being renamed so its
+   message is not covered by the rows below it. */
+.adp-file-row:has(.adp-rename) { z-index:5; }
 .adp-rename { position:relative; display:inline-flex; flex:1; min-width:0; }
 .adp-rename-input { width:100%; max-width:420px; height:22px; padding:0 var(--adp-space-2); border:1px solid var(--adp-accent-current); border-radius:var(--adp-radius-sm); background:var(--adp-color-surface-window); color:var(--adp-color-text-primary); font:inherit; font-size:var(--adp-font-body); outline:none; }
 .adp-rename-error { position:absolute; top:calc(100% + 4px); left:0; z-index:20; width:max-content; max-width:360px; padding:var(--adp-space-2) var(--adp-space-4); background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-sm); box-shadow:var(--adp-shadow-card); color:var(--adp-color-text-primary); font-size:var(--adp-font-small); white-space:normal; }
@@ -257,6 +260,7 @@ span.adp-col-size { display:flex; }
 .adp-details-hero { display:flex; align-items:center; gap:var(--adp-space-5); }
 .adp-details-tile { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:var(--adp-radius-xs); color:#fff; flex:none; }
 .adp-details-tile--many { background:var(--adp-color-surface-selected); color:var(--adp-color-text-secondary); }
+.adp-details-tile.adp-file-tile--folder { color:#DFB22B; }
 .adp-details-title { display:flex; flex-direction:column; gap:var(--adp-space-1); min-width:0; }
 .adp-details-name { font-size:var(--adp-font-section); font-weight:600; overflow-wrap:anywhere; }
 .adp-details-sub { font-size:var(--adp-font-small); color:var(--adp-color-text-secondary); }
