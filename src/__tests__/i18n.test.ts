@@ -32,6 +32,16 @@ describe("locale parity", () => {
     expect(es.explorer.statusItems).toContain("plural");
   });
 
+  it("pseudo-locale ICU strings still format (no raw {count, plural} leaks)", async () => {
+    await i18n.changeLanguage("pseudo");
+    for (const key of ["jobs.copying", "jobs.skippedItems", "toast.copied", "dialogs.permanentBody"]) {
+      const text = i18n.t(key, { count: 3 });
+      expect(text, key).not.toContain("plural");
+      expect(text, key).toContain("3");
+    }
+    await i18n.changeLanguage("en");
+  });
+
   it("formats ICU plurals at runtime", async () => {
     await i18n.changeLanguage("en");
     expect(i18n.t("explorer.statusItems", { count: 0 })).toBe("No items");

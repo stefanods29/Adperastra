@@ -338,7 +338,8 @@ if (shotDir) {
   await sleep(300);
   await shot("07-delete-toast");
   await step(`[...document.querySelectorAll(".adp-toast button")].find((b) => b.querySelector("span"))?.click()`);
-  await sleep(400);
+  await page(`window.__m.waitFor(() => window.__m.rows().some((r) => r.textContent.includes("notes.txt")), 15000)`);
+  await sleep(300);
   await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
   await step(`window.__m.key(window, { key: "Delete", shiftKey: true })`);
   await sleep(300);
