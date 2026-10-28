@@ -73,8 +73,8 @@ Packaged release build, measured inside the page from the action to the next pai
 | 100k folder: right-click with all selected | Instant 0.1 s | 10 ms | Pass |
 | 100k folder: Shift+click range | Instant 0.1 s | 16 ms | Pass |
 | Show more options (classic menu on screen) | Waiting with feedback 1-10 s | 0.55-0.74 s warm, 2.1 s first time | Pass (note after 0.3 s, timeout 5 s) |
-| App start, cold WebView2 (first paint / ready) | Fast 1 s | 107-176 ms / 0.77-1.14 s (3 runs; Step 01b: 87 ms / 0.70 s) | Miss in 1 of 3 runs, logged as KI-017 |
-| First start of a freshly built exe | one-time | 1.14 s paint / 2.48 s ready | Known one-time cost (KI-002) |
+| App start, cold WebView2 (first paint / ready) | Fast 1 s | 83-99 ms / 702-870 ms, median 779 ms (5 runs; the `v0.0.4-step02` build: median 841 ms) | Pass, no slowdown vs Step 02 (KI-017 closed) |
+| First start of a freshly built exe | one-time | 0.7-2.1 s paint / 1.3-3.4 s ready | Known one-time cost (KI-002) |
 
 Our own menus never touch shell extensions, so they stay instant however slow an installed extension is; the classic menu is the only part that waits on extensions, and it can't block the app. Raw numbers: `docs/benchmarks/2026-10-28-ui-step03a.json`.
 
@@ -83,7 +83,7 @@ Our own menus never touch shell extensions, so they stay instant however slow an
 - `cargo test --workspace`: 70 pass (app 28 incl. classic-menu helper timeout/ready/crash and request checks; fs-service 26 incl. 10 new for rename, details and favorites); `cargo clippy --workspace --all-targets` and `cargo fmt --check` clean.
 - `npm test`: 46/46 (selection, names, grouping, commands and menus, FileList keys/type-ahead/rename/groups, help pages in both languages); `tsc` clean; `npm run lint:i18n` passes (263 keys); `npm audit`: 0 vulnerabilities; release build passes.
 - Packaged app driven through the WebView2 debugging port (`scripts/measure-ui.ps1`): speed table above and the screenshots below. Fixed from that run: Ctrl+A selected the page's text, the Details pane's folder icon was invisible, the rename message was covered by the next row, and Home columns overflowed.
-- Not done yet: the full suite on `testing` and the plan review (both stopped when the usage limit was reached); the Step 02 startup baseline for KI-017.
+- Startup: the `v0.0.4-step02` tag was built and measured next to Step 03a with `scripts/measure-startup.ps1` (which now takes `-Exe`, `-Step` and `-Runs`); Step 03a is not slower (KI-017 closed).
 
 ## Screenshots vs. Figma
 
