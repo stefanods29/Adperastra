@@ -1,0 +1,45 @@
+﻿{
+    "step":  "03b",
+    "machine":  "docs/benchmarks/MACHINE.md",
+    "note":  "Run right after a reboot for true cold-cache numbers. First-ever run (creates the WebView2 profile) is a one-time cost and is measured separately.",
+    "method":  "WebView2 children of Adperastra stopped before each run; first paint = PrintWindow pixel; content ready = session.json written",
+    "date":  "2026-10-28",
+    "runs":  [
+                 {
+                     "first_paint_ms":  2353,
+                     "run":  1,
+                     "window_handle_ms":  2309,
+                     "content_ready_ms":  3710
+                 },
+                 {
+                     "first_paint_ms":  126,
+                     "run":  2,
+                     "window_handle_ms":  101,
+                     "content_ready_ms":  821
+                 },
+                 {
+                     "first_paint_ms":  132,
+                     "run":  3,
+                     "window_handle_ms":  109,
+                     "content_ready_ms":  746
+                 },
+                 {
+                     "first_paint_ms":  116,
+                     "run":  4,
+                     "window_handle_ms":  76,
+                     "content_ready_ms":  822
+                 },
+                 {
+                     "first_paint_ms":  106,
+                     "run":  5,
+                     "window_handle_ms":  77,
+                     "content_ready_ms":  695
+                 },
+                 {
+                     "first_paint_ms":  104,
+                     "run":  6,
+                     "window_handle_ms":  76,
+                     "content_ready_ms":  732
+                 }
+             ]
+}

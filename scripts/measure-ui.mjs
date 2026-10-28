@@ -230,6 +230,33 @@ if (mode === "full") {
       await run("restore", [target]);
       return performance.now() - t0;
     })()`);
+    // Replace + Undo: the replaced file goes to the Recycle Bin and comes
+    // back from its exact bin entry (not the newer copy with its path).
+    await timed("replace a file, then undo it (jobs)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const source = ${JSON.stringify(join(demo, "notes.txt"))};
+      const dest = ${JSON.stringify(join(demo, "BenchCopy"))};
+      const target = dest + "\\\\notes.txt";
+      const run = async (request) => {
+        const id = "bench-" + request.kind + "-" + Math.random().toString(36).slice(2);
+        await invoke("file_op_start", { request: { dest_dir: null, conflict: "skip", ...request }, requestId: id });
+        for (let i = 0; i < 200; i += 1) {
+          const poll = await invoke("file_op_poll", { requestId: id });
+          if (poll.error) throw new Error(poll.error);
+          if (poll.done) return poll.report;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        throw new Error("timeout");
+      };
+      const t0 = performance.now();
+      const copied = await run({ kind: "copy", sources: [source], dest_dir: dest, conflict: "replace" });
+      const replaced = (copied.replaced ?? []).filter((item) => item.bin_id);
+      if (replaced.length !== 1) return "replaced item not reported: " + JSON.stringify(copied);
+      await run({ kind: "recycle", sources: [target] });
+      const restored = await run({ kind: "restore", sources: replaced.map((r) => r.path), bin_ids: replaced.map((r) => r.bin_id) });
+      if (restored.completed.length !== 1) return "restore failed: " + JSON.stringify(restored);
+      return performance.now() - t0;
+    })()`);
     cleanup03b();
   } catch (error) {
     console.log(`step 03b measurements failed: ${error.message ?? error}`);
@@ -371,7 +398,7 @@ if (shotDir) {
   await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Archive 2025")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
   await sleep(600);
   await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
-  await sleep(1600);
+  await sleep(4500);
   await shot("11-jobs-panel");
   await step(`document.querySelector(".adp-jobs-panel .adp-job-row .adp-btn")?.click()`);
   await sleep(800);
