@@ -189,6 +189,71 @@ pub fn show_properties(_owner: isize, _paths: &[String]) -> Result<(), String> {
     Err("properties.failed".to_string())
 }
 
+/// The Windows share sheet for files, owned by the app window. Must run on
+/// the window's own (main) thread. The files are resolved on a worker
+/// thread after Windows asks for them, so the UI never waits.
+#[cfg(windows)]
+pub fn show_share_sheet(owner: isize, paths: Vec<String>, title: String) -> Result<(), String> {
+    use std::cell::Cell;
+    use windows::core::{Interface, HSTRING};
+    use windows::ApplicationModel::DataTransfer::{DataRequestedEventArgs, DataTransferManager};
+    use windows::Foundation::TypedEventHandler;
+    use windows::Storage::{IStorageItem, StorageFile};
+    use windows::Win32::UI::Shell::IDataTransferManagerInterop;
+
+    thread_local! {
+        static TOKEN: Cell<Option<i64>> = const { Cell::new(None) };
+    }
+    let failed = |_| "share.failed".to_string();
+    let interop: IDataTransferManagerInterop =
+        windows::core::factory::<DataTransferManager, IDataTransferManagerInterop>()
+            .map_err(failed)?;
+    // SAFETY: `owner` is the live main window and this is its thread.
+    let manager: DataTransferManager =
+        unsafe { interop.GetForWindow(hwnd_from(owner)) }.map_err(failed)?;
+    if let Some(previous) = TOKEN.with(Cell::take) {
+        let _ = manager.RemoveDataRequested(previous);
+    }
+    let handler =
+        TypedEventHandler::<DataTransferManager, DataRequestedEventArgs>::new(move |_, args| {
+            let Some(args) = args.as_ref() else {
+                return Ok(());
+            };
+            let request = args.Request()?;
+            let data = request.Data()?;
+            data.Properties()?
+                .SetTitle(&HSTRING::from(title.as_str()))?;
+            let deferral = request.GetDeferral()?;
+            let paths = paths.clone();
+            std::thread::spawn(move || {
+                let items: Vec<Option<IStorageItem>> = paths
+                    .iter()
+                    .filter_map(|path| {
+                        let file = StorageFile::GetFileFromPathAsync(&HSTRING::from(path.as_str()))
+                            .ok()?
+                            .get()
+                            .ok()?;
+                        file.cast::<IStorageItem>().ok()
+                    })
+                    .map(Some)
+                    .collect();
+                let list = windows_collections::IIterable::<IStorageItem>::from(items);
+                let _ = data.SetStorageItemsReadOnly(&list);
+                let _ = deferral.Complete();
+            });
+            Ok(())
+        });
+    let token = manager.DataRequested(&handler).map_err(failed)?;
+    TOKEN.with(|slot| slot.set(Some(token)));
+    // SAFETY: same window and thread as GetForWindow above.
+    unsafe { interop.ShowShareUIForWindow(hwnd_from(owner)) }.map_err(failed)
+}
+
+#[cfg(not(windows))]
+pub fn show_share_sheet(_owner: isize, _paths: Vec<String>, _title: String) -> Result<(), String> {
+    Err("share.failed".to_string())
+}
+
 /// Open Windows Terminal in `folder`, or PowerShell when Windows Terminal is
 /// not installed. The folder becomes the new process's working directory;
 /// it is never put on a command line.

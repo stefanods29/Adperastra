@@ -41,8 +41,9 @@ export interface FileListProps {
   onOpen: (item: ExplorerItem) => void;
   /** Right-click or the Menu key; `item` is null for empty space. */
   onContextMenu: (point: { x: number; y: number }, item: ExplorerItem | null) => void;
-  /** Keys that run registry commands (Enter, F2, Alt+Enter, ...). */
-  onCommandKey: (commandId: string) => void;
+  /** Keys that run registry commands (Enter, F2, Alt+Enter, ...); the
+   * point says where a keyboard-opened menu should appear. */
+  onCommandKey: (commandId: string, point?: { x: number; y: number }) => void;
   onFirstPaint?: () => void;
   /** Short Home lists render every row; folders virtualize. */
   virtual?: boolean;
@@ -238,7 +239,7 @@ export default function FileList(props: FileListProps) {
     }
     if (event.key === "F10" && event.shiftKey) {
       event.preventDefault();
-      props.onCommandKey("explorer.showMoreOptions");
+      props.onCommandKey("explorer.showMoreOptions", menuPointForFocus().point);
       return;
     }
     if (event.key === "ContextMenu") {

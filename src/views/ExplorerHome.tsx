@@ -403,8 +403,10 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         if (paths.length === 1) setRenamingPath(paths[0]);
       },
       share: () => {
-        const paths = live.current.selectedPaths;
-        if (paths.length > 0 && isTauriRuntime()) void shareItems(paths).catch((error: unknown) => notifyError(error, "share"));
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        if (paths.length === 0 || !isTauriRuntime()) return;
+        const title = paths.length === 1 ? (byPath.get(paths[0])?.name ?? paths[0]) : t("explorer.shareTitle", { count: paths.length });
+        void shareItems(paths, title).catch((error: unknown) => notifyError(error, "share"));
       },
       openWith: () => {
         const paths = live.current.selectedPaths;
@@ -492,7 +494,8 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     if (isCommandEnabled(command, commandCtxRef.current)) command.run(commandCtxRef.current, arg);
   }, []);
   const runById = useCallback(
-    (id: string) => {
+    (id: string, point?: { x: number; y: number }) => {
+      if (point) lastPointer.current = point;
       const command = registry.get(id);
       if (command) runCommand(command);
     },

@@ -310,9 +310,10 @@ export async function openInTerminal(folder: string): Promise<void> {
   await invoke("open_in_terminal", { folder });
 }
 
-/** The Windows share sheet for files (rejects with `share.<reason>`). */
-export async function shareItems(paths: string[]): Promise<void> {
-  await invoke("share_items", { paths });
+/** The Windows share sheet for files (rejects with `share.<reason>`). The
+ * title is shown at the top of the sheet. */
+export async function shareItems(paths: string[], title: string): Promise<void> {
+  await invoke("share_items", { paths, title });
 }
 
 /** The classic Windows menu ("Show more options") at a screen point, run

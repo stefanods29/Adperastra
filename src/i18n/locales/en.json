@@ -125,7 +125,8 @@
         "reserved": "Windows reserves this name. Choose another one.",
         "tooLong": "This name is too long."
       }
-    }
+    },
+    "shareTitle": "{count, plural, one {# file} other {# files}}"
   },
   "help": {
     "title": "Help",

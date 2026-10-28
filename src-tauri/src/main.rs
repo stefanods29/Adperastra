@@ -18,6 +18,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
+mod classic_menu;
 mod explorer;
 mod shell;
 
@@ -1345,6 +1346,73 @@ async fn open_in_terminal(window: WebviewWindow, folder: String) -> Result<(), S
         .map_err(|e| e.to_string())?
 }
 
+/// The Windows share sheet for files. Windows UI for a window has to be
+/// shown from that window's thread, so the work hops to the main thread.
+#[tauri::command]
+async fn share_items(
+    app: AppHandle,
+    window: WebviewWindow,
+    paths: Vec<String>,
+    title: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > shell::MAX_PROPERTIES_ITEMS || title.chars().count() > 260
+    {
+        return Err("share.failed".to_string());
+    }
+    for path in &paths {
+        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+    }
+    let owner = window_handle(&window);
+    let (sender, receiver) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        let _ = sender.send(shell::show_share_sheet(owner, paths, title));
+    })
+    .map_err(|_| "share.failed".to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        receiver
+            .recv_timeout(std::time::Duration::from_secs(10))
+            .unwrap_or_else(|_| Err("share.failed".to_string()))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// "Show more options": the classic Windows menu at a point in the window
+/// (CSS pixels), run by a helper process with a timeout.
+#[tauri::command]
+async fn show_classic_menu(
+    window: WebviewWindow,
+    paths: Vec<String>,
+    background: bool,
+    x: i32,
+    y: i32,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > classic_menu::MAX_ITEMS || (background && paths.len() != 1)
+    {
+        return Err("moreOptions.failed".to_string());
+    }
+    for path in &paths {
+        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+    }
+    let origin = window
+        .inner_position()
+        .map_err(|_| "moreOptions.failed".to_string())?;
+    let scale = window
+        .scale_factor()
+        .map_err(|_| "moreOptions.failed".to_string())?;
+    let request = classic_menu::MenuRequest {
+        paths,
+        background,
+        x: origin.x + (f64::from(x) * scale).round() as i32,
+        y: origin.y + (f64::from(y) * scale).round() as i32,
+    };
+    tauri::async_runtime::spawn_blocking(move || classic_menu::show(&request))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 async fn watch_start(
     window: WebviewWindow,
@@ -1421,6 +1489,11 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     Ok(())
 }
 fn main() {
+    // The classic-menu helper is this executable started with a flag; it
+    // never starts the app itself.
+    if std::env::args().nth(1).as_deref() == Some(classic_menu::HELPER_FLAG) {
+        std::process::exit(classic_menu::run_helper());
+    }
     let data_dir = resolve_data_dir();
     let _ = fs::create_dir_all(&data_dir);
     let logs = logs_dir(&data_dir);
@@ -1481,7 +1554,9 @@ fn main() {
             open_item,
             open_with_dialog,
             show_properties,
-            open_in_terminal
+            open_in_terminal,
+            share_items,
+            show_classic_menu
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
