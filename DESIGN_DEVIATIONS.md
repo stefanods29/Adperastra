@@ -21,3 +21,14 @@ is recorded here for owner approval (plan/design.md rule 6). Newest first.
   offline/missing component, signature error, and the first-run window
   (language/theme and packs checklist), in English and Spanish, light and
   dark.
+
+## 2026-10-28 - Derived dark theme (Step 01b) - for owner approval
+
+- **What:** The Figma design is light-only. The dark theme is derived from the same tokens (surfaces `#202020`-`#333`, Explorer accent lightened to `#4CC2FF` for contrast).
+- **Evidence:** Screenshots will be in the step report; values live in `themes/dark.tokens.json`.
+
+## 2026-10-28 - Custom title bar and Windows snap layouts (Step 01b)
+
+- **What:** The window uses a custom title bar (decorations off) with our tab bar inside; window buttons call the Windows API.
+- **Open question:** Whether the Windows 11 snap-layouts hover menu appears on the maximize button must be confirmed on the owner's PC. If it does not, the fallback is restoring the native frame.
+

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Check for files over 50 MB
+        shell: pwsh
+        run: |
+          $big = Get-ChildItem -Recurse -File | Where-Object { $_.Length -gt 50MB }
+          if ($big) { $big | ForEach-Object { Write-Error $_.FullName }; exit 1 }
+
+      - name: Check for secrets
+        shell: pwsh
+        run: |
+          if (Select-String -Path (Get-ChildItem -Recurse -File).FullName -Pattern "PRIVATE KEY" -List -ErrorAction SilentlyContinue) { Write-Error "Private key marker found"; exit 1 }
+          if (Get-ChildItem -Recurse -File -Filter "*.key" | Where-Object { $_.FullName -match "\.adperastra" }) { Write-Error "Signing key file found"; exit 1 }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check translations
+        run: npm run lint:i18n
+
+      - name: Run UI tests
+        run: npm test
+
+      - name: Build UI
+        run: npm run build
+
+      - name: Run Rust tests
+        run: cargo test --workspace
+
+      - name: Build app (no bundle)
+        run: npx tauri build --no-bundle
+
+      - name: Package portable zip
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Recurse -Filter "Adperastra.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Adperastra.exe not found" }
+          Compress-Archive -Path $exe.FullName, "dependencies.json" -DestinationPath "adperastra-portable.zip"
+
+      - name: Upload portable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: adperastra-portable
+          path: adperastra-portable.zip
