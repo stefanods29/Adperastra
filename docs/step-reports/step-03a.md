@@ -117,6 +117,16 @@ Still open: KI-001, KI-002, KI-004, KI-005 (Minor), KI-003 (Major, after-reboot 
 
 ## Commits (branch step-03a-selection-details-menus, from testing 69280e7)
 
+- `a462369` docs(reports): step-03a numbers, screenshots and review results after the fixes [step-03a]
+- `a5a8e2a` fix(bench): pass the row number into the details-fill measurement [step-03a]
+- `91dbea9` test(bench): measure how long the details pane takes to fill in [step-03a]
+- `a5399a6` docs: list the windows crates as third-party, and record the review fixes [step-03a]
+- `3138aa9` fix(explorer): absolute paths only, and favorites that follow renames and stay listed [step-03a]
+- `43b5270` fix(explorer): address the step-03a review in the UI [step-03a]
+- `e77a6a5` docs(issues): close KI-017 after measuring startup against Step 02 [step-03a]
+- `553cc24` fix(bench): rename the results list so -Runs works in measure-startup [step-03a]
+- `7385165` test(bench): let measure-startup take an exe, a step name and a run count [step-03a]
+- `4a9deef` docs(reports): step-03a report and startup check [step-03a]
 - `34ba3a5` docs(records): known issues, design deviation, decision record and changelog for step 03a [step-03a]
 - `f3fd280` docs(screenshots): add step-03a screenshots in English, Spanish and pseudo-locale [step-03a]
 - `5d35b31` test(bench): measure Explorer interactions in the packaged app [step-03a]
@@ -137,6 +147,7 @@ Still open: KI-001, KI-002, KI-004, KI-005 (Minor), KI-003 (Major, after-reboot 
 - `b1245ce` feat(fs): add item details, rename in place, and favorites [step-03a]
 - `5ba4b35` refactor: satisfy the newer clippy lints [step-03a]
 - `e965700` docs(plan): add step-03a implementation plan and owner decisions [step-03a]
+- (this commit) docs(reports): final step-03a commit list [step-03a]
 
 ## Proposal for the next step
 
