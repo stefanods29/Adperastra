@@ -51,10 +51,10 @@
 **Interfaces:**
 - Produces Tauri commands: `list_dir_start` (Channel batches + request id), `list_dir_cancel`, `fs_stat`, `explorer_state_get/pin/unpin/record_recent`, `list_known_folders`, `list_drives` (fast, metadata-free), `drive_info` (async, timeout), `watch_start/watch_stop` (batched events via Channel), `drives_changed` polling/event source.
 
-- [ ] Tests first: command validation (empty/overlong path rejected, non-main window rejected).
-- [ ] Implement; drive enumeration never waits on a sleeping drive (label/free-space fetched per drive with timeout on a blocking thread).
-- [ ] Watch: one watcher for the open folder; nav-pane pins watched as one set; batch 250 ms, coalesce, cap with rescan fallback; stop on folder change.
-- [ ] Commit per logical unit.
+- [x] Tests first: command validation (empty/overlong path rejected, non-main window rejected).
+- [x] Implement; drive enumeration never waits on a sleeping drive (label/free-space fetched per drive; UI applies the timeout, see Slice 4). Ruling: This PC updates by polling list_drives (cheap logical-drive bitmask, 2 s in the UI) instead of WM_DEVICECHANGE - one mechanism, no window-proc plumbing.
+- [x] Watch: one watcher for the open folder (nav pane items do not change when files inside pinned folders change; drives update by polling); polling drain every 250 ms, coalesce, cap with rescan fallback; watch_start replaces and stops the previous watcher.
+- [x] Commit per logical unit.
 
 ### Slice 3: TS service + command registry
 
