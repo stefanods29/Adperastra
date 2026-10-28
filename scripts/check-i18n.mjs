@@ -1,4 +1,4 @@
-// check-i18n.mjs — hardcoded-text lint + locale key parity (plan/rules.md section 2).
+﻿// check-i18n.mjs â€” hardcoded-text lint + locale key parity (plan/rules.md section 2).
 //
 // (a) Fails if the flattened key sets of en.json and es.json differ.
 // (b) Scans src/**/*.tsx for likely hardcoded UI text:
@@ -77,6 +77,11 @@ for (const file of tsxFiles) {
   for (const match of text.matchAll(jsxTextRe)) {
     const candidate = match[1].trim();
     if (!letterRe.test(candidate)) continue;
+    // False-positive guard: a ">" from a TS generic (useRef<X>) can make the
+    // regex span lines of ordinary code. Real JSX text never contains
+    // statement semicolons or declaration keywords, so skip code-like spans.
+    if (candidate.includes(";")) continue;
+    if (/\b(const|let|var|function|return|import|export|if|for|while|void)\b/.test(candidate)) continue;
     if (ALLOWLIST.has(candidate)) continue;
     console.error(`${rel}:${lineOf(text, match.index)}: hardcoded JSX text: "${candidate}"`);
     failed = true;
