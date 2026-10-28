@@ -1,4 +1,5 @@
-import { Channel, invoke } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "./settings";
 
 /** Typed wrapper over the Step 02 Tauri commands (slice 2). All disk
@@ -136,15 +137,43 @@ function newRequestId(): string {
   return `list-${Date.now().toString(36)}-${requestCounter}`;
 }
 
-export async function listDir(
+export interface ListDirHandle {
+  requestId: string;
+  cancel: () => Promise<void>;
+  completion: Promise<ListDirOutcome>;
+}
+
+interface ListPoll {
+  batches: ExplorerItem[][];
+  done: boolean;
+  outcome: ListDirOutcome | null;
+  error: string | null;
+}
+
+const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+/**
+ * Start a streaming listing. Transport ruling (Step 02): Tauri Channel
+ * messages never arrived under the app's isolation pattern (Rust listed
+ * 57 items, sends succeeded, JS received 0), so batches move through
+ * plain invoke commands instead: list_dir_start runs the listing in
+ * Rust, list_dir_poll drains queued batches until done.
+ */
+export async function startListDir(
   path: string,
   sort: SortSpec,
   onBatch: (items: ExplorerItem[]) => void,
-): Promise<{ outcome: ListDirOutcome; requestId: string; cancel: () => Promise<void> }> {
+): Promise<ListDirHandle> {
   const requestId = newRequestId();
-  const channel = new Channel<ExplorerItem[]>();
-  channel.onmessage = onBatch;
+  let cancelled = false;
+  await invoke("list_dir_start", {
+    path,
+    sortKey: sort.key,
+    sortDirection: sort.direction,
+    requestId,
+  });
   const cancel = async () => {
+    cancelled = true;
     if (!isTauriRuntime()) return;
     try {
       await invoke("list_dir_cancel", { requestId });
@@ -152,16 +181,20 @@ export async function listDir(
       // Best effort: the listing may already have finished.
     }
   };
-  const outcome = (await invoke("list_dir_start", {
-    path,
-    sortKey: sort.key,
-    sortDirection: sort.direction,
-    requestId,
-    onBatch: channel,
-  })) as ListDirOutcome;
-  return { outcome: { ...outcome, path: displayPath(outcome.path) }, requestId, cancel };
+  const completion = (async (): Promise<ListDirOutcome> => {
+    for (;;) {
+      if (cancelled) throw new Error("cancelled");
+      const poll = (await invoke("list_dir_poll", { requestId })) as ListPoll;
+      for (const batch of poll.batches) onBatch(batch);
+      if (poll.error) throw new Error(poll.error);
+      if (poll.done && poll.outcome) {
+        return { ...poll.outcome, path: displayPath(poll.outcome.path) };
+      }
+      await sleep(25);
+    }
+  })();
+  return { requestId, cancel, completion };
 }
-
 export async function fsStat(path: string): Promise<ExplorerItem> {
   return (await invoke("fs_stat", { path })) as ExplorerItem;
 }
@@ -198,10 +231,18 @@ export async function recordRecentFolder(path: string): Promise<ExplorerStateDat
   return (await invoke("record_recent_folder", { path })) as ExplorerStateData;
 }
 
-export async function watchStart(path: string, onEvent: (events: FsEventDto[]) => void): Promise<void> {
-  const channel = new Channel<FsEventDto[]>();
-  channel.onmessage = onEvent;
-  await invoke("watch_start", { path, onEvent: channel });
+export async function watchStart(
+  path: string,
+  onEvent: (events: FsEventDto[]) => void,
+): Promise<UnlistenFn> {
+  const unlisten = await listen<FsEventDto[]>("watch-events", (event) => onEvent(event.payload));
+  try {
+    await invoke("watch_start", { path });
+  } catch (error) {
+    unlisten();
+    throw error;
+  }
+  return unlisten;
 }
 
 export async function watchStop(): Promise<void> {

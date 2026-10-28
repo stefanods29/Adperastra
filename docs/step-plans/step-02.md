@@ -70,11 +70,11 @@
 
 **Files:** Rewrite `src/views/ExplorerHome.tsx`; create `src/views/explorer/{NavPane,AddressBar,FileList,HomePage,DriveList}.tsx` as needed; styles in `src/styles/components.css`; add `@tanstack/react-virtual` (`deps:` commit, MIT).
 
-- [ ] Virtualized Details list (Name, Date modified, Type, Size), natural sort via Rust order, column-header sorting, locale-aware formatting, Figma tiles, cloud icon for online-only, skeleton rows after 0.1 s.
-- [ ] Editable breadcrumb (segment jump, sibling chevron menu, click-empty-space path typing, history dropdown, This PC root), search box filtering filenames in the current folder.
-- [ ] Nav pane: Home, Gallery placeholder, pinned known folders with pin icons, This PC drives (live add/remove, still-loading/not-available states), Network placeholder. Pin/Unpin for current folder.
-- [ ] Live updates from watch events without losing selection/scroll; double-click folder navigates; files do not open yet (04a).
-- [ ] Tests + `npm run build`; commit per unit.
+- [x] Virtualized Details list (Name, Date modified, Type, Size), natural sort via Rust order, column-header sorting, locale-aware formatting, Figma tiles, cloud icon for online-only, skeleton rows after 0.1 s.
+- [x] Editable breadcrumb (segment jump, sibling chevron menu, click-empty-space path typing, history dropdown, This PC root), search box filtering filenames in the current folder.
+- [x] Nav pane: Home, Gallery placeholder, pinned known folders with pin icons, This PC drives (live add/remove, still-loading/not-available states), Network placeholder. Pin/Unpin for current folder.
+- [x] Live updates from watch events without losing selection/scroll; double-click folder navigates; files do not open yet (04a).
+- [x] Tests + `npm run build`; commit per unit.
 
 ### Slice 5: Home page, help, i18n
 
