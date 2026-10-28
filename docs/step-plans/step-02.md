@@ -63,8 +63,8 @@
 **Interfaces:**
 - Produces: TS mirrors of `Item/Listing/DriveInfo/ExplorerState`; `Command { id, labelKey, icon, shortcut?, risk, helpSlug, enabledWhen(ctx), run(ctx) }`; commands Back, Forward, Up, Refresh, Open, Go to path, Pin/Unpin; navigation history reducer (back/forward stacks).
 
-- [ ] Tests first: registry shape (every command has label key/icon/risk/help), enabled-when rules, history reducer.
-- [ ] Implement; commit.
+- [x] Tests first: registry shape (every command has label key/icon/risk/help), enabled-when rules, history reducer.
+- [x] Implement; commit.
 
 ### Slice 4: Explorer UI
 
