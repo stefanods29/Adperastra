@@ -1,6 +1,6 @@
 # Step 03a report - Selection, Details pane, command bar, and right-click menu
 
-Dates: 2026-10-28. Status: implemented on branch `step-03a-selection-details-menus`, awaiting owner approval. Proposed tag after approval: `v0.0.5-step03a`.
+Dates: 2026-10-28. Status: done, approved by the owner on 2026-10-28. Tag: `v0.0.5-step03a`.
 
 ## Owner decisions and additions (all implemented)
 
