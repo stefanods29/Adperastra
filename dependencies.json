@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "app": {
+    "name": "Adperastra",
+    "version": "0.0.1"
+  },
+  "signature": {
+    "algorithm": "minisig",
+    "public_key": "",
+    "value": ""
+  },
+  "components": [
+    {
+      "id": "webview2",
+      "name_key": "comp.webview2",
+      "version": "109+",
+      "kind": {
+        "type": "any_path",
+        "paths": [
+          "%ProgramFiles(x86)%/Microsoft/EdgeWebView/Application",
+          "%ProgramFiles%/Microsoft/EdgeWebView/Application"
+        ]
+      },
+      "required": true,
+      "size": null,
+      "sha256": null,
+      "source": null
+    },
+    {
+      "id": "vcredist",
+      "name_key": "comp.vcredist",
+      "version": "14.40+",
+      "kind": {
+        "type": "any_path",
+        "paths": [
+          "%SystemRoot%/System32/vcruntime140.dll"
+        ]
+      },
+      "required": true,
+      "size": null,
+      "sha256": null,
+      "source": null
+    }
+  ],
+  "optional_packs": [
+    {
+      "id": "office",
+      "name_key": "pack.office.name",
+      "desc_key": "pack.office",
+      "download_size": 900000000,
+      "install_size": 2600000000
+    },
+    {
+      "id": "media",
+      "name_key": "pack.media.name",
+      "desc_key": "pack.media",
+      "download_size": 120000000,
+      "install_size": 350000000
+    },
+    {
+      "id": "ocr",
+      "name_key": "pack.ocr.name",
+      "desc_key": "pack.ocr",
+      "download_size": 60000000,
+      "install_size": 180000000
+    },
+    {
+      "id": "ai_image",
+      "name_key": "pack.ai_image.name",
+      "desc_key": "pack.ai_image",
+      "download_size": 700000000,
+      "install_size": 1400000000
+    },
+    {
+      "id": "ai_upscaler",
+      "name_key": "pack.ai_upscaler.name",
+      "desc_key": "pack.ai_upscaler",
+      "download_size": 500000000,
+      "install_size": 900000000
+    },
+    {
+      "id": "ai_assistant",
+      "name_key": "pack.ai_assistant.name",
+      "desc_key": "pack.ai_assistant",
+      "note_key": null,
+      "download_size": 3800000000,
+      "install_size": 4200000000
+    },
+    {
+      "id": "photo_search",
+      "name_key": "pack.photo_search.name",
+      "desc_key": "pack.photo_search",
+      "download_size": 400000000,
+      "install_size": 800000000
+    }
+  ]
+}
