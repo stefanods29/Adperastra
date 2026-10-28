@@ -20,4 +20,6 @@ Like Windows:
 
 Every drop runs like a copy or move: name conflicts ask first, progress shows for big operations, and you can undo it afterwards.
 
+When you move files out of here into another app, that app does the work, so the move can't be undone from here. Undo it in that app (for example Ctrl+Z in Windows Explorer). If the originals had to be removed here, they went to the Recycle Bin.
+
 See also: "Copying and moving files" and "Undo".

@@ -1334,10 +1334,12 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     finishExternalMove: (paths: string[]) => {
       // The drop target copied the files; a Windows move is finished by
       // removing the sources. Where they went is not reported back, so
-      // this one action cannot be offered as an undo.
+      // this one action cannot be offered as an undo - the sources go to
+      // the Recycle Bin, never away for good, in case the target failed.
+      // (After an optimized same-drive move they are already gone.)
       void (async () => {
         try {
-          const report = await runFileJob("permanent", paths);
+          const report = await runFileJob("recycle", paths);
           if (report.completed.length > 0) notify(t("toast.moved", { count: report.completed.length }));
           refreshAfterOp();
         } catch (error) {

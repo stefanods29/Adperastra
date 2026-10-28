@@ -20,4 +20,6 @@ Como en Windows:
 
 Cada acción de soltar funciona como una copia o un movimiento: los conflictos de nombres preguntan antes, el progreso se muestra en las operaciones grandes y después puedes deshacerlo.
 
+Cuando mueves archivos desde aquí a otra app, esa app hace el trabajo, así que el movimiento no se puede deshacer desde aquí. Deshazlo en esa app (por ejemplo, con Ctrl+Z en el Explorador de Windows). Si hubo que quitar los originales aquí, fueron a la Papelera de reciclaje.
+
 Consulta también: «Copiar y mover archivos» y «Deshacer».
