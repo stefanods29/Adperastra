@@ -1,0 +1,41 @@
+{
+  "productName": "Adperastra",
+  "version": "0.1.0",
+  "identifier": "app.adperastra.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Adperastra",
+        "width": 1200,
+        "height": 900,
+        "minWidth": 720,
+        "minHeight": 480,
+        "decorations": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'",
+      "pattern": {
+        "use": "isolation",
+        "options": {
+          "dir": "../src-tauri/isolation"
+        }
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "resources": {
+      "../help": "help"
+    },
+    "icon": []
+  }
+}

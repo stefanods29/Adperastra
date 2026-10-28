@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Adperastra Isolation</title>
+  </head>
+  <body>
+    <script>
+      // Tauri 2 isolation hook: receives the IPC payload object
+      // ({ cmd, callback, error, payload, options }) and must return it
+      // unchanged for allowed calls. Throwing blocks the call entirely:
+      // the payload handler in Tauri's isolation runtime awaits this hook
+      // before encrypting/sending, so a throw means nothing reaches Core.
+      (function () {
+        var ALLOWED = new Set([
+          'get_settings', 'set_maximize_rect',
+          'save_settings',
+          'get_session',
+          'save_session',
+          'list_help',
+          'get_help_page',
+          'search_help',
+          'get_windows_accent',
+          'open_help_window'
+        ]);
+        // Core commands used by the JS window/event APIs we grant in
+        // capabilities/main.json (plugin:window|*, plugin:event|*).
+        function isCoreAllowed(cmd) {
+          return (
+            cmd.indexOf('plugin:window|') === 0 ||
+            cmd.indexOf('plugin:event|') === 0 ||
+            cmd.indexOf('plugin:webview|') === 0
+          );
+        }
+        window.__TAURI_ISOLATION_HOOK__ = function (payload) {
+          if (!payload || typeof payload !== 'object' || typeof payload.cmd !== 'string') {
+            throw new Error('isolation: malformed IPC payload');
+          }
+          if (ALLOWED.has(payload.cmd) || isCoreAllowed(payload.cmd)) {
+            return payload;
+          }
+          throw new Error('isolation: blocked IPC command ' + payload.cmd);
+        };
+      })();
+    </script>
+  </body>
+</html>

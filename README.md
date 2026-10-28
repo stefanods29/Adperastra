@@ -1,37 +1,39 @@
-# Adperastra build plan
+# Adperastra
 
-This folder is the complete build plan for Adperastra, split into small files so a coding AI can follow it without losing details.
+Adperastra is a fast, free, open-source file explorer for Windows 11 that opens, converts, and edits your files in one window with browser-style tabs.
 
-## How to use it
+> Status: early development. Step 01b adds the app shell (tabs, themes, languages, settings, and help). Browsing folders arrives in Step 02.
 
-1. Create an empty folder for the project and copy everything from this zip into it (keep the folder structure).
-2. Open the folder in OpenCode and say: **"Follow AGENTS.md. Start with Step 00."** OpenCode loads `AGENTS.md` and the shared rule files listed in `opencode.json` automatically.
-3. The AI works one step at a time. At the end of each step it gives you a report and waits. Test what it built, then reply **"go"** or tell it what to fix.
+## Build from source
 
-## What's inside
+You need: Git, Rust (stable), Node.js 22, and the Microsoft C++ Build Tools. The GitHub CLI (`gh`) is optional.
 
-| File | What it is | When the AI reads it |
-|---|---|---|
-| `AGENTS.md` | The core: goal, decisions, how to work, roadmap, milestones | Always |
-| `opencode.json` | Tells OpenCode to also load the shared rule files below | Automatically |
-| `plan/rules.md` | Rules that apply to every step (settings, language, safety, sandboxing, file-system edge cases, help pages, licenses, large files) | Always |
-| `plan/speed.md` | Speed standard and how to meet it | Always |
-| `plan/git-and-testing.md` | Git workflow, branches, commits, local test suite | Always |
-| `plan/contracts.md` | The plug-in points every feature builds on | Always |
-| `plan/design.md` | What the Figma file contains and the screens still to design | When building UI |
-| `plan/ai.md` | AI models, quality rules, evaluation | Steps 14c and 17a-22b |
-| `plan/steps/step-XX.md` | One file per step | Only the current step |
-| `plan/backlog.md` | Ideas for later, not to build yet | When planning |
+```powershell
+npm install
+npm run build
+npx tauri build --no-bundle
+```
 
-## Release plan (milestones)
+Note for this PC: Windows security blocks Cargo under `Documents`, so build output goes to `%TEMP%\adperastra-target` (the scripts set `CARGO_TARGET_DIR` for you).
 
-| Version | After step | What people get |
-|---|---|---|
-| v0.1 | 08c | Fast explorer with tabs, viewers for most files, converter, first downloadable release on GitHub |
-| v0.2 | 10c | Power features, tab groups, full customization, accessibility |
-| v0.3 | 13 | Search, tags, views, storage tools, optional packs, Office viewing |
-| v0.4 | 16 | PDF and image editing, audio/video basics, Windows integration |
-| v0.5 | 17d | Optional offline AI features |
-| v1.0 | 22b | Advanced image and video editing, Office-style editing |
+To run the setup launcher, package it first (the result is in `build\Adperastra`):
 
-Each release is published on GitHub Releases as a free download (installer and portable zip), with no accounts needed.
+```powershell
+.\scripts\package-setup.ps1
+```
+
+## Verify a download
+
+Each release file has a `.sha256` file next to it on the release page. Check your download like this:
+
+```powershell
+Get-FileHash .\file.zip -Algorithm SHA256
+```
+
+Compare the result with the text in the `.sha256` file. They must match exactly.
+
+## License and contributing
+
+Adperastra is under the MIT license (see `LICENSE`). Want to help? See `CONTRIBUTING.md`.
+
+The full build plan lives in `plan/` and `AGENTS.md`.

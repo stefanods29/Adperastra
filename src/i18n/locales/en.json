@@ -1,0 +1,113 @@
+{
+  "tabs": {
+    "explorer": "Explorer",
+    "newTab": "New tab",
+    "close": "Close tab"
+  },
+  "window": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close"
+  },
+  "explorer": {
+    "quickAccess": "Quick access",
+    "recent": "Recent",
+    "favorites": "Favorites",
+    "pinned": "Pinned",
+    "nav": {
+      "home": "Home",
+      "gallery": "Gallery",
+      "thisPc": "This PC",
+      "network": "Network"
+    },
+    "statusItems": "{count, plural, =0 {No items} one {# item} other {# items}}",
+    "statusSelected": "{count, plural, =0 {None selected} one {# item selected} other {# items selected}}"
+  },
+  "help": {
+    "title": "Help",
+    "searchPlaceholder": "Search help",
+    "whatsNew": "What's new",
+    "noResults": "No help pages found.",
+    "selectPage": "Choose a topic to read.",
+    "loadError": "This help page could not be loaded."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageEnglish": "English",
+    "languageSpanish": "Español",
+    "languagePseudo": "Pseudo-locale (testing)",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "accent": "Accent",
+    "accentDesign": "Design",
+    "accentWindows": "Windows",
+    "accentCustom": "Custom",
+    "customColor": "Custom color",
+    "persistNote": "Settings are saved automatically and apply right away."
+  },
+  "gallery": {
+    "title": "Gallery",
+    "devBadge": "Dev",
+    "buttons": "Buttons",
+    "primaryAction": "Primary action",
+    "defaultAction": "Default action",
+    "subtleAction": "Subtle action",
+    "splitAction": "Split action",
+    "iconButtons": "Icon buttons",
+    "inputs": "Inputs",
+    "samplePlaceholder": "Type here",
+    "breadcrumb": "Breadcrumb",
+    "listRows": "List rows",
+    "navItems": "Navigation items",
+    "menuDemo": "Menu",
+    "openMenu": "Open menu",
+    "dialogDemo": "Dialog",
+    "openDialog": "Open dialog",
+    "dialogBody": "This dialog closes with the close button, Escape, or a click outside.",
+    "tooltipDemo": "Tooltip",
+    "tooltipText": "Save your work",
+    "keyTipsDemo": "Key tips",
+    "keyTipsHint": "Hold Alt to show key tips.",
+    "toastDemo": "Toast",
+    "showToast": "Show toast",
+    "toastUndone": "Action undone.",
+    "skeletons": "Skeletons",
+    "progress": "Progress",
+    "switches": "Switches",
+    "featureToggle": "Enable feature",
+    "sliders": "Sliders",
+    "sliderLabel": "Demo slider",
+    "dropdownDemo": "Dropdown",
+    "dropdownLabel": "Choose an option",
+    "optionOne": "First option",
+    "optionTwo": "Second option",
+    "optionThree": "Third option"
+  },
+  "components": {
+    "breadcrumb": "Breadcrumb",
+    "clearSearch": "Clear search",
+    "closeDialog": "Close dialog",
+    "loading": "Loading",
+    "slider": "Slider",
+    "switch": "Switch",
+    "progress": "Progress"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "undo": "Undo",
+    "search": "Search",
+    "ready": "Ready",
+    "moreOptions": "More options",
+    "dismiss": "Dismiss",
+    "open": "Open"
+  },
+  "toast": {
+    "sampleUndo": "Sample action completed."
+  }
+}
