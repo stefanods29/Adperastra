@@ -1,0 +1,29 @@
+﻿{
+    "machine":  "docs/benchmarks/MACHINE.md",
+    "method":  "Simulated cold on the dev PC (no reboot): Adperastra WebView2 child processes stopped, profile kept. first_paint = PrintWindow pixel of the startup skeleton/content; content_ready = session.json written by the app. True after-reboot numbers: run scripts/measure-startup.ps1 after a reboot.",
+    "step":  "01b",
+    "warm_runs":  {
+                      "window_handle_ms":  "78-151"
+                  },
+    "first_ever_run":  {
+                           "note":  "One-time: creates the WebView2 profile. Documented one-time cost; the startup skeleton is inline in index.html and paints before any JS loads.",
+                           "window_handle_ms":  2210
+                       },
+    "date":  "2026-10-28",
+    "tier":  "Fast (\u003c=1 s to usable Explorer)",
+    "verdict":  "Warm and cold-process starts are inside the Fast tier. Worst-case first execution after an install/rebuild is over 1 s on this PC; it is a one-time cost (profile creation / first scan), mitigated by the inline skeleton. After-reboot confirmation pending owner run of scripts/measure-startup.ps1.",
+    "cold_runs":  [
+                      {
+                          "first_paint_ms":  1623,
+                          "run":  1,
+                          "content_ready_ms":  2429,
+                          "context":  "first execution of the freshly built LTO exe (Defender scan + cold caches)"
+                      },
+                      {
+                          "first_paint_ms":  87,
+                          "run":  2,
+                          "content_ready_ms":  699,
+                          "context":  "cold WebView2 processes, warm OS caches"
+                      }
+                  ]
+}

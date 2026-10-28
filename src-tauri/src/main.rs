@@ -583,6 +583,121 @@ fn install_panic_hook(logs_dir: PathBuf) {
 }
 
 // ---------------------------------------------------------------------------
+// Windows snap layouts (custom maximize button)
+// ---------------------------------------------------------------------------
+
+/// Screen rectangle of the custom maximize button, in physical pixels
+/// relative to the main window's client area: `[x, y, width, height]`.
+/// Written by the frontend (`set_maximize_rect`) on mount and on window
+/// resize; read by the window subclass below on every `WM_NCHITTEST`.
+static MAXIMIZE_RECT: Mutex<Option<[f64; 4]>> = Mutex::new(None);
+
+/// Half-open hit test: left/top edges inclusive, right/bottom exclusive,
+/// so two buttons sharing an edge can never both claim the same pixel.
+pub fn point_in_rect(x: f64, y: f64, rect: [f64; 4]) -> bool {
+    x >= rect[0] && x < rect[0] + rect[2] && y >= rect[1] && y < rect[1] + rect[3]
+}
+
+#[tauri::command]
+fn set_maximize_rect(
+    window: WebviewWindow,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if !x.is_finite() || !y.is_finite() || !width.is_finite() || !height.is_finite() {
+        return Err("maximize rect values must be finite".to_string());
+    }
+    if x < 0.0 || y < 0.0 {
+        return Err("maximize rect origin must not be negative".to_string());
+    }
+    if width <= 0.0 || height <= 0.0 {
+        return Err("maximize rect size must be positive".to_string());
+    }
+    let mut stored = MAXIMIZE_RECT
+        .lock()
+        .map_err(|_| "maximize rect lock poisoned".to_string())?;
+    *stored = Some([x, y, width, height]);
+    Ok(())
+}
+
+#[cfg(windows)]
+const SNAP_SUBCLASS_ID: usize = 1;
+
+/// Make Windows treat the custom maximize button as the native maximize
+/// caption button. With a borderless window (`decorations: false`) the
+/// button is plain HTML, so Windows would never show the Windows 11
+/// snap-layouts flyout for it; answering `WM_NCHITTEST` with `HTMAXBUTTON`
+/// for its rectangle is what makes the flyout appear on hover and makes
+/// the system (not the page) handle the click.
+#[cfg(windows)]
+fn install_snap_subclass(window: &tauri::WebviewWindow) {
+    use windows::Win32::UI::Shell::SetWindowSubclass;
+
+    let Ok(raw_hwnd) = window.hwnd() else {
+        return;
+    };
+    // `window.hwnd()` returns the `windows` 0.62 `HWND` that Tauri uses,
+    // while this crate pins `windows` 0.61; both are a transparent wrapper
+    // around the same raw pointer, so re-wrap the pointer instead of
+    // pretending the two types are identical.
+    let hwnd = windows::Win32::Foundation::HWND(raw_hwnd.0);
+    // SAFETY: `hwnd` is the live main window during `setup`, and the
+    // subclass proc only reads `MAXIMIZE_RECT` and forwards everything
+    // else to `DefSubclassProc`.
+    unsafe {
+        let _ = SetWindowSubclass(hwnd, Some(snap_subclass_proc), SNAP_SUBCLASS_ID, 0);
+    }
+}
+
+#[cfg(windows)]
+unsafe extern "system" fn snap_subclass_proc(
+    hwnd: windows::Win32::Foundation::HWND,
+    msg: u32,
+    wparam: windows::Win32::Foundation::WPARAM,
+    lparam: windows::Win32::Foundation::LPARAM,
+    _subclass_id: usize,
+    _ref_data: usize,
+) -> windows::Win32::Foundation::LRESULT {
+    use windows::Win32::Foundation::{LRESULT, POINT};
+    use windows::Win32::Graphics::Gdi::ScreenToClient;
+    use windows::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass};
+    use windows::Win32::UI::WindowsAndMessaging::{HTMAXBUTTON, WM_NCDESTROY, WM_NCHITTEST};
+
+    if msg == WM_NCHITTEST {
+        // `lparam` packs the cursor position in screen coordinates as two
+        // signed 16-bit values (low = x, high = y); the truncating casts
+        // keep negative coordinates on monitors left of / above the
+        // primary one.
+        let mut point = POINT {
+            x: i32::from(lparam.0 as i16),
+            y: i32::from((lparam.0 >> 16) as i16),
+        };
+        // SAFETY: `hwnd` is the window this subclass is installed on, and
+        // `point` is a local that stays valid for the call.
+        if unsafe { ScreenToClient(hwnd, &mut point) }.as_bool() {
+            let inside = MAXIMIZE_RECT
+                .lock()
+                .ok()
+                .and_then(|stored| *stored)
+                .is_some_and(|rect| point_in_rect(f64::from(point.x), f64::from(point.y), rect));
+            if inside {
+                return LRESULT(HTMAXBUTTON as isize);
+            }
+        }
+    } else if msg == WM_NCDESTROY {
+        // SAFETY: same window/subclass pair as `install_snap_subclass`.
+        unsafe {
+            let _ = RemoveWindowSubclass(hwnd, Some(snap_subclass_proc), SNAP_SUBCLASS_ID);
+        }
+    }
+    // SAFETY: forwarding unhandled messages is the subclass contract.
+    unsafe { DefSubclassProc(hwnd, msg, wparam, lparam) }
+}
+
+// ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
 
@@ -720,6 +835,15 @@ fn main() {
             data_dir,
             settings: Mutex::new(initial_settings),
         })
+        .setup(|app| {
+            // Snap layouts: subclass the main window so Windows treats the
+            // custom maximize button as the native maximize button.
+            #[cfg(windows)]
+            if let Some(window) = app.get_webview_window("main") {
+                install_snap_subclass(&window);
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_settings,
             save_settings,
@@ -729,7 +853,8 @@ fn main() {
             get_help_page,
             search_help,
             get_windows_accent,
-            open_help_window
+            open_help_window,
+            set_maximize_rect
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
@@ -855,6 +980,31 @@ mod tests {
         assert!(validate_slug("").is_err());
         assert!(validate_slug("Getting-Started").is_err());
         assert!(validate_slug("a b").is_err());
+    }
+
+    #[test]
+    fn point_in_rect_inside_and_outside() {
+        let rect = [100.0, 10.0, 46.0, 32.0];
+        assert!(point_in_rect(100.0, 10.0, rect));
+        assert!(point_in_rect(120.0, 25.0, rect));
+        assert!(point_in_rect(145.0, 41.0, rect));
+        assert!(!point_in_rect(99.0, 25.0, rect));
+        assert!(!point_in_rect(120.0, 9.0, rect));
+        assert!(!point_in_rect(200.0, 25.0, rect));
+        assert!(!point_in_rect(120.0, 100.0, rect));
+    }
+
+    #[test]
+    fn point_in_rect_edges() {
+        // Left/top edges are inside; right/bottom edges are outside, so
+        // the close button next to the maximize button never overlaps it.
+        let rect = [100.0, 10.0, 46.0, 32.0];
+        assert!(point_in_rect(100.0, 25.0, rect));
+        assert!(point_in_rect(120.0, 10.0, rect));
+        assert!(!point_in_rect(146.0, 25.0, rect));
+        assert!(!point_in_rect(120.0, 42.0, rect));
+        assert!(!point_in_rect(146.0, 42.0, rect));
+        assert!(point_in_rect(145.5, 41.5, rect));
     }
 
     #[test]
