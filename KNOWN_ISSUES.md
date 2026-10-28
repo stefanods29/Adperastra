@@ -85,6 +85,12 @@ that fixed it.
 - **Workaround:** use Adperastra's own Rename (F2) and menu commands.
 - **Target:** review with Windows integration (Step 16).
 
+### KI-017 - App start may be slower than Step 01b (Major, being checked)
+- **Found in:** Step 03a. **Severity:** Major until checked (app start is a daily action; rules.md section 11).
+- **What:** With WebView2 cold, the app was ready in 0.77-1.14 s over three runs (one run over the 1 s Fast tier); Step 01b measured 0.70 s. Step 02 never measured startup, so it isn't known yet whether Step 02 or 03a added the time.
+- **Next action:** build the `v0.0.4-step02` tag and measure both with `scripts/measure-startup.ps1`; if 03a is the cause, lazy-load the Details pane and the menu renderer after first paint.
+- **Target:** before Step 03a is closed.
+
 ## Fixed
 
 ### KI-013 - Hidden and system files were always shown (fixed in Step 03a)
