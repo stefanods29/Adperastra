@@ -67,6 +67,25 @@ export interface ExplorerStateData {
   schema_version: number;
   pinned_folders: string[];
   recent_folders: string[];
+  /** Files and folders added with "Add to favorites" (schema 2). */
+  favorites: string[];
+}
+
+/** Item details for the Details pane (no file is opened to read them). */
+export interface ItemDetails {
+  kind: ItemKind;
+  size: number;
+  created_unix: number;
+  modified_unix: number;
+  accessed_unix: number;
+  /** Stable ids: read_only, hidden, system, archive, compressed, encrypted,
+   * online_only, always_available, link, sparse, temporary, not_indexed. */
+  attributes: string[];
+}
+
+export interface OpenOutcome {
+  /** Set when the item is (or points to) a folder: open it in the app. */
+  navigate_to: string | null;
 }
 
 export interface FsEventDto {
@@ -251,6 +270,60 @@ export async function unpinFolder(path: string): Promise<ExplorerStateData> {
 
 export async function recordRecentFolder(path: string): Promise<ExplorerStateData> {
   return (await invoke("record_recent_folder", { path })) as ExplorerStateData;
+}
+
+export async function itemDetails(path: string): Promise<ItemDetails> {
+  return (await invoke("item_details", { path })) as ItemDetails;
+}
+
+/** Rename in place; resolves to the new path. Rejects with a
+ * `rename.<reason>` code (translated under `errors.rename`). */
+export async function renameItem(path: string, newName: string): Promise<string> {
+  return (await invoke("rename_item", { path, newName })) as string;
+}
+
+export async function addFavorite(path: string): Promise<ExplorerStateData> {
+  return (await invoke("add_favorite", { path })) as ExplorerStateData;
+}
+
+export async function removeFavorite(path: string): Promise<ExplorerStateData> {
+  return (await invoke("remove_favorite", { path })) as ExplorerStateData;
+}
+
+export async function listFavoriteItems(): Promise<RecentItem[]> {
+  return (await invoke("list_favorite_items")) as RecentItem[];
+}
+
+export async function openItem(path: string): Promise<OpenOutcome> {
+  return (await invoke("open_item", { path })) as OpenOutcome;
+}
+
+export async function openWithDialog(path: string): Promise<void> {
+  await invoke("open_with_dialog", { path });
+}
+
+export async function showProperties(paths: string[]): Promise<void> {
+  await invoke("show_properties", { paths });
+}
+
+export async function openInTerminal(folder: string): Promise<void> {
+  await invoke("open_in_terminal", { folder });
+}
+
+/** The Windows share sheet for files (rejects with `share.<reason>`). */
+export async function shareItems(paths: string[]): Promise<void> {
+  await invoke("share_items", { paths });
+}
+
+/** The classic Windows menu ("Show more options") at a screen point, run
+ * in a separate process; `background` asks for the folder's own menu. */
+export async function showClassicMenu(paths: string[], background: boolean, x: number, y: number): Promise<void> {
+  await invoke("show_classic_menu", { paths, background, x: Math.round(x), y: Math.round(y) });
+}
+
+/** Windows "Copy as path": each path in quotes, one per line. */
+export function pathsForClipboard(paths: string[]): string {
+  return paths.map((path) => `"${displayPath(path)}"`).join("\r\n");
 }
 
 export async function watchStart(

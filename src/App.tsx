@@ -14,7 +14,8 @@ import {
   saveSettings,
   type AppSettings,
 } from "./services/settings";
-import ExplorerHome from "./views/ExplorerHome";
+import { formatSize } from "./services/format";
+import ExplorerHome, { type ExplorerStats } from "./views/ExplorerHome";
 const GalleryView = lazy(() => import("./views/GalleryView"));
 const HelpCenter = lazy(() => import("./views/HelpCenter"));
 const SettingsView = lazy(() => import("./views/SettingsView"));
@@ -77,7 +78,7 @@ function requestedView(): TabState | null {
 }
 
 export default function App() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(() => defaultSettings());
   const [tabs, setTabs] = useState([EXPLORER_TAB]);
   const [activeId, setActiveId] = useState("explorer");
@@ -85,8 +86,7 @@ export default function App() {
   const [showKeyTips, setShowKeyTips] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const maximizeRef = useRef<HTMLButtonElement | null>(null);
-  const [explorerTotal, setExplorerTotal] = useState(0);
-  const [explorerSelected, setExplorerSelected] = useState(0);
+  const [explorerStats, setExplorerStats] = useState<ExplorerStats>({ total: 0, selected: 0, selectedBytes: 0, selectedFiles: 0 });
   const readyRef = useRef(false);
   const tabsRef = useRef(tabs);
   const activeRef = useRef(activeId);
@@ -468,11 +468,10 @@ export default function App() {
       <main className="adp-main">
         {activeTab.kind === "explorer" ? (
           <ExplorerHome
-            onStatsChange={(total, selected) => {
-              setExplorerTotal(total);
-              setExplorerSelected(selected);
-            }}
+            onStatsChange={setExplorerStats}
             onOpenHelp={(slug) => openTab("help", slug ?? "browsing-folders")}
+            view={settings.explorer}
+            onViewChange={(patch) => applySettings({ ...settings, explorer: { ...settings.explorer, ...patch } })}
           />
         ) : null}
         {activeTab.kind === "help" ? (
@@ -497,8 +496,16 @@ export default function App() {
       <footer className="adp-statusbar">
         {activeTab.kind === "explorer" ? (
           <>
-            <span>{t("explorer.statusItems", { count: explorerTotal })}</span>
-            <span>{t("explorer.statusSelected", { count: explorerSelected })}</span>
+            <span>{t("explorer.statusItems", { count: explorerStats.total })}</span>
+            {explorerStats.selected > 0 ? (
+              <>
+                <span className="adp-status-divider" aria-hidden="true" />
+                <span>
+                  {t("explorer.statusSelected", { count: explorerStats.selected })}
+                  {explorerStats.selectedFiles > 0 ? <span className="adp-status-size">{formatSize(explorerStats.selectedBytes, i18n.language)}</span> : null}
+                </span>
+              </>
+            ) : null}
           </>
         ) : (
           <span>{t("common.ready")}</span>
