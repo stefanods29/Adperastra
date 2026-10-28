@@ -79,6 +79,8 @@ Deferred Minors (recorded, not silently dropped): KI-010 to KI-013 below.
 New: KI-009 (Minor) - a pinned folder renamed/deleted outside the app stays stale in the nav pane until unpinned or restarted; target 07a. KI-010 (Minor) - explorer-state save has a brief crash window in its replace fallback and state reads are not locked; target the next state-store hardening. KI-011 (Minor) - file IDs cross to TypeScript as JSON numbers, losing precision above 2^53; must become strings before tags consume them in 11b. KI-012 (Minor) - Home resolves every Recent shortcut before applying the limit, so a huge Recent folder can delay Home; target 07a caching. KI-013 (Minor) - hidden/system files are always shown dimmed because the settings toggle does not exist yet; target 10b.
 Open from before: KI-001/KI-002 (Minor, one-time start costs), KI-003 (Major, after-reboot cold start still unmeasured - owner runs scripts\measure-startup.ps1 after a reboot; due before v0.1), KI-004 (Minor, placeholder icon), KI-005 (Minor, snap flyout visual confirmation).
 
+Fixed later in Step 02 (known-issues pass): KI-010 in `4f774c3` (one-step replace with retry, locked state reads; also covers settings and session saves), KI-011 in `5cc8df0` (file IDs sent as strings), KI-012 in `e6074a3` (recent shortcuts resolved newest-first with an early stop). Still open from this step: KI-009 (target 07a) and KI-013 (target 10b).
+
 ## Design deviations and licenses
 
 DESIGN_DEVIATIONS.md: two new entries (Explorer folder view/This PC designed from tokens, pending approval here; file-type tiles instead of shell icons, owner-approved 2026-10-28).

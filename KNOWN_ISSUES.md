@@ -65,21 +65,6 @@ that fixed it.
 - **What:** The open folder and This PC update live (watch + drive polling), but a pinned folder itself being renamed or deleted in another app is not noticed; the nav pane keeps the old entry until you unpin it or restart. Clicking it shows "This folder could not be opened."
 - **Workaround:** unpin the stale entry (open it fails, so use the unpin button next to it) and pin the renamed folder; or restart the app.
 - **Target:** Step 07a background refresh (the metadata service can verify pinned paths then).
-### KI-010 - Explorer-state save is not fully atomic and reads are unlocked (Minor)
-- **Found in:** Step 02 (final review). **Severity:** Minor.
-- **What:** If the app crashes in the brief moment between deleting `explorer-state.json` and renaming its replacement, pins/recent folders revert to empty. A settings read during a save can also observe the file mid-replace.
-- **Workaround:** none needed in practice; worst case is re-pinning folders.
-- **Target:** next state-store hardening (atomic replace via ReplaceFileW, locked reads).
-
-### KI-011 - File IDs lose precision crossing to TypeScript (Minor)
-- **Found in:** Step 02 (final review). **Severity:** Minor (latent until 11b).
-- **What:** `file_id` is serialized as a JSON number; IDs above 2^53 cannot be represented exactly in JavaScript. Nothing consumes IDs yet.
-- **Workaround:** none needed now. **Target:** serialize as string before tags (Step 11b) use them.
-
-### KI-012 - A very large Windows Recent folder can delay Home (Minor)
-- **Found in:** Step 02 (final review). **Severity:** Minor.
-- **What:** Every `.lnk` in the Windows Recent folder is resolved (plus a target stat) before the 30-item limit applies.
-- **Target:** Step 07a metadata/cache work (resolve newest-first with an early stop).
 
 ### KI-013 - Hidden and system files are always shown (Minor)
 - **Found in:** Step 02 (final review). **Severity:** Minor.
@@ -87,6 +72,26 @@ that fixed it.
 - **Target:** Step 10b folder customization settings.
 
 ## Fixed
+
+### KI-010 - Explorer-state save was not fully atomic and reads were unlocked (fixed in Step 02)
+When the first rename failed, the writer deleted `explorer-state.json`
+before renaming its replacement, so a crash in between lost pins and
+recent folders; the settings and session files used the same writer. The
+shared writer now flushes the temp file, replaces the target in one rename
+step, and retries a busy target instead of deleting it; state reads take
+the writers' lock. Fixed in commit `4f774c3` (tested: replace without
+leftovers, target never deleted when it cannot be replaced).
+
+### KI-011 - File IDs lost precision crossing to TypeScript (fixed in Step 02)
+`file_id` was a JSON number, which JavaScript cannot hold exactly above
+2^53. It is now a decimal string on both sides, before tags (Step 11b)
+rely on it. Fixed in commit `5cc8df0` (tested with an ID above 2^53).
+
+### KI-012 - A very large Windows Recent folder could delay Home (fixed in Step 02)
+Every shortcut was resolved before the 30-item limit applied. Shortcuts are
+now sorted by their own time and resolved newest-first until 30 live
+targets are found. Fixed in commit `e6074a3` (tested: 5,000 shortcuts, 31
+resolved).
 
 ### KI-006 - Help center showed no pages in the packaged app (fixed in Step 01b)
 The help client sent `language` where the Rust commands expect `lang`, so
