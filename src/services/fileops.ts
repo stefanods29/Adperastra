@@ -174,6 +174,38 @@ export async function executeFileAction(action: FileAction): Promise<void> {
   }
 }
 
+export interface ClipboardData {
+  files: string[];
+  cut: boolean;
+  has_text: boolean;
+  has_image: boolean;
+}
+
+export async function clipboardSetFiles(paths: string[], cut: boolean): Promise<void> {
+  await invoke("clipboard_set_files", { paths, cut });
+}
+
+export async function clipboardRead(): Promise<ClipboardData> {
+  const data = (await invoke("clipboard_read")) as ClipboardData;
+  return { ...data, files: data.files.map(displayPath) };
+}
+
+export async function clipboardText(): Promise<string | null> {
+  return (await invoke("clipboard_text")) as string | null;
+}
+
+/** Write clipboard text as a new file; returns the created path. */
+export async function createTextFile(parent: string, name: string, contents: string): Promise<string> {
+  return displayPath((await invoke("create_text_file", { parent, name, contents })) as string);
+}
+
+/** Save the clipboard image in `parent`; returns the created path. */
+export async function clipboardImageFile(parent: string, baseName: string, format: "png" | "jpg"): Promise<string> {
+  return displayPath(
+    (await invoke("clipboard_image_file", { parent, baseName, format })) as string,
+  );
+}
+
 /** Undo/redo entries for a finished job, or null when nothing changed. */
 export function entryForJob(
   kind: "copy" | "move" | "recycle",

@@ -1420,6 +1420,38 @@ fn default_conflict_policy() -> String {
     "skip".to_string()
 }
 
+/// Create a text file with contents (Paste as file for clipboard text).
+/// The wanted name is numbered when taken. Errors are `ops.<reason>`.
+#[tauri::command]
+async fn create_text_file(
+    window: WebviewWindow,
+    parent: String,
+    name: String,
+    contents: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    validate_absolute_path(&parent).map_err(|_| "ops.not_found".to_string())?;
+    if contents.len() > clipboard::MAX_CLIPBOARD_TEXT_BYTES {
+        return Err("ops.too_large".to_string());
+    }
+    fs_service::validate_new_name(&name).map_err(|_| "ops.invalid_name".to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let dir = Path::new(&parent);
+        let target = fs_service::unique_destination(dir, &name);
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&target)
+            .map_err(|e| format!("ops.{}", fs_service::op_error_reason(&e.into())))?;
+        use std::io::Write;
+        file.write_all(contents.as_bytes())
+            .map_err(|e| format!("ops.{}", fs_service::op_error_reason(&e.into())))?;
+        Ok::<String, String>(target.to_string_lossy().into_owned())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Start a file operation as a background job (contract 10). Kinds:
 /// copy, move, recycle, restore, permanent. Progress and the final
 /// report are drained with `file_op_poll`; `file_op_cancel` asks the
@@ -1968,6 +2000,7 @@ fn main() {
             rename_item,
             check_conflicts,
             create_item,
+            create_text_file,
             file_op_start,
             file_op_poll,
             file_op_cancel,
