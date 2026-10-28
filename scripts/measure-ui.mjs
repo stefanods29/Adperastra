@@ -134,7 +134,7 @@ if (mode === "full") {
   {
     const values = [];
     for (let run = 0; run < RUNS; run += 1) {
-      await page(`window.__m.click(window.__m.rows()[run % 2 === 0 ? 7 : 8]); true`);
+      await page(`window.__m.click(window.__m.rows()[${run % 2 === 0 ? 7 : 8}]); true`);
       await sleep(150);
       values.push(
         await page(`window.__m.timeUntil(() => window.__m.click(window.__m.rows()[${run % 2 === 0 ? 8 : 7}]), () => { const cells = [...document.querySelectorAll(".adp-details-grid dd")]; return cells.length > 0 && !document.querySelector(".adp-details-skeleton") && cells[cells.length - 1].textContent.trim().length > 0; })`),
