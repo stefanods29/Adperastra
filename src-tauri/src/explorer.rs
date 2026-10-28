@@ -409,26 +409,63 @@ pub fn display_path(path: &str) -> String {
     }
 }
 
-/// Favorites for the Home page, in the order they were added. Items that
-/// cannot be found right now (for example on an unplugged drive) are left
-/// out of the list but stay saved.
+/// True for UNC paths and mapped network drives: checking those can take
+/// many seconds when the server is away, so lists never wait on them.
+#[cfg(windows)]
+pub fn is_network_path(path: &str) -> bool {
+    use windows::Win32::Storage::FileSystem::GetDriveTypeW;
+    if path.starts_with(r"\\") {
+        return true;
+    }
+    let bytes = path.as_bytes();
+    if bytes.len() < 2 || bytes[1] != b':' {
+        return false;
+    }
+    let root = wide_null(&format!("{}:\\", &path[..1]));
+    // SAFETY: `root` is a NUL-terminated drive root; the call reads only the
+    // logical-drive table, never the drive itself.
+    unsafe { GetDriveTypeW(windows::core::PCWSTR(root.as_ptr())) == 4 }
+}
+
+#[cfg(not(windows))]
+pub fn is_network_path(path: &str) -> bool {
+    path.starts_with(r"\\")
+}
+
+/// Favorites for the Home page, in the order they were added. Every
+/// favorite stays listed so it can always be removed: network items are
+/// listed without being checked (an absent server must not stall Home),
+/// and items that can't be found are listed without a date or size.
 pub fn favorite_items(paths: &[String]) -> Vec<RecentItem> {
     paths
         .iter()
-        .filter_map(|stored| {
+        .map(|stored| {
             let path = display_path(stored);
-            let details = fs_service::item_details(Path::new(&path)).ok()?;
             let name = Path::new(&path)
                 .file_name()
                 .map(|n| n.to_string_lossy().into_owned())
                 .unwrap_or_else(|| path.clone());
-            Some(RecentItem {
-                name,
-                path,
-                kind: details.kind,
-                modified_unix: details.modified_unix,
-                size: details.size,
-            })
+            let details = if is_network_path(&path) {
+                None
+            } else {
+                fs_service::item_details(Path::new(&path)).ok()
+            };
+            match details {
+                Some(details) => RecentItem {
+                    name,
+                    path,
+                    kind: details.kind,
+                    modified_unix: details.modified_unix,
+                    size: details.size,
+                },
+                None => RecentItem {
+                    name,
+                    path,
+                    kind: ItemKind::Other,
+                    modified_unix: 0,
+                    size: 0,
+                },
+            }
         })
         .collect()
 }
@@ -525,7 +562,7 @@ mod tests {
     }
 
     #[test]
-    fn favorite_items_skip_missing_and_keep_order() {
+    fn favorite_items_keep_missing_ones_listed_and_keep_order() {
         let dir =
             std::env::temp_dir().join(format!("adperastra-test-{}-favorites", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
@@ -541,10 +578,16 @@ mod tests {
         ];
         let items = super::favorite_items(&stored);
         let _ = std::fs::remove_dir_all(&dir);
-        assert_eq!(items.len(), 2);
+        assert_eq!(items.len(), 3);
         assert_eq!(items[0].name, "b.txt");
         assert_eq!(items[0].size, 5);
-        assert_eq!(items[1].kind, ItemKind::Folder);
+        // Missing: still listed (so it can be removed), with no date or size.
+        assert_eq!(items[1].name, "gone.txt");
+        assert_eq!(items[1].kind, ItemKind::Other);
+        assert_eq!(items[1].modified_unix, 0);
+        assert_eq!(items[2].kind, ItemKind::Folder);
+        assert!(super::is_network_path(r"\\server\share\file.txt"));
+        assert!(!super::is_network_path(&dir.to_string_lossy()));
     }
 
     #[test]
