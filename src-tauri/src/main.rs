@@ -20,7 +20,7 @@ use thiserror::Error;
 
 mod explorer;
 
-pub const CURRENT_SCHEMA: u32 = 2;
+pub const CURRENT_SCHEMA: u32 = 3;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -125,6 +125,44 @@ impl Default for ThemeSettings {
     }
 }
 
+fn default_true() -> bool {
+    true
+}
+
+fn default_group_by() -> String {
+    "none".to_string()
+}
+
+/// Explorer view options (schema 3, Step 03a): the View menu's toggles and
+/// the Sort menu's grouping. Defaults follow the Figma frame (extensions
+/// shown) and Windows (hidden items hidden, no check boxes, no Details
+/// pane).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExplorerViewSettings {
+    #[serde(default)]
+    pub show_hidden: bool,
+    #[serde(default = "default_true")]
+    pub show_extensions: bool,
+    #[serde(default)]
+    pub item_checkboxes: bool,
+    #[serde(default)]
+    pub details_pane: bool,
+    #[serde(default = "default_group_by")]
+    pub group_by: String,
+}
+
+impl Default for ExplorerViewSettings {
+    fn default() -> Self {
+        Self {
+            show_hidden: false,
+            show_extensions: true,
+            item_checkboxes: false,
+            details_pane: false,
+            group_by: default_group_by(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default = "default_schema_version")]
@@ -133,6 +171,8 @@ pub struct Settings {
     pub language: String,
     #[serde(default)]
     pub theme: ThemeSettings,
+    #[serde(default)]
+    pub explorer: ExplorerViewSettings,
 }
 
 impl Default for Settings {
@@ -141,6 +181,7 @@ impl Default for Settings {
             schema_version: CURRENT_SCHEMA,
             language: default_language(),
             theme: ThemeSettings::default(),
+            explorer: ExplorerViewSettings::default(),
         }
     }
 }
@@ -183,6 +224,15 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             settings.theme.accent_custom
         )));
     }
+    if !matches!(
+        settings.explorer.group_by.as_str(),
+        "none" | "name" | "modified" | "type" | "size"
+    ) {
+        return Err(AppError::Validation(format!(
+            "unsupported group_by {:?} (expected none, name, modified, type or size)",
+            settings.explorer.group_by
+        )));
+    }
     Ok(())
 }
 
@@ -206,6 +256,24 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
             mode,
             ..ThemeSettings::default()
         },
+        explorer: ExplorerViewSettings::default(),
+    }
+}
+
+/// Schema 2 had language and theme only; schema 3 adds the Explorer view
+/// options with their defaults. A v2 file keeps its language and theme.
+fn migrate_v2(value: serde_json::Value) -> Settings {
+    match serde_json::from_value::<Settings>(value) {
+        Ok(mut settings) => {
+            settings.schema_version = CURRENT_SCHEMA;
+            settings.explorer = ExplorerViewSettings::default();
+            if validate(&settings).is_ok() {
+                settings
+            } else {
+                Settings::default()
+            }
+        }
+        Err(_) => Settings::default(),
     }
 }
 
@@ -226,6 +294,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
+            Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
             _ => Ok(Settings::default()),
         }
@@ -1281,7 +1350,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 2);
+        assert_eq!(settings.schema_version, 3);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -1293,7 +1362,7 @@ mod tests {
     fn migrate_v1_flat_json() {
         let value = serde_json::json!({ "language": "es", "theme": "dark" });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 2);
+        assert_eq!(settings.schema_version, 3);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_source, "design");
@@ -1309,13 +1378,48 @@ mod tests {
     }
 
     #[test]
-    fn migrate_v2_round_trips() {
+    fn migrate_v2_keeps_language_and_theme_and_adds_view_options() {
+        let value = serde_json::json!({
+            "schema_version": 2,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#112233" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 3);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.theme.accent_custom, "#112233");
+        assert_eq!(settings.explorer, ExplorerViewSettings::default());
+        assert!(settings.explorer.show_extensions);
+        assert!(!settings.explorer.show_hidden);
+    }
+
+    #[test]
+    fn view_options_validate_group_by() {
+        let mut settings = Settings::default();
+        for ok in ["none", "name", "modified", "type", "size"] {
+            settings.explorer.group_by = ok.to_string();
+            assert!(validate(&settings).is_ok(), "{ok}");
+        }
+        settings.explorer.group_by = "colour".to_string();
+        assert!(validate(&settings).is_err());
+    }
+
+    #[test]
+    fn migrate_v3_round_trips() {
         let original = Settings {
             language: "es".to_string(),
             theme: ThemeSettings {
                 mode: "light".to_string(),
                 accent_source: "custom".to_string(),
                 accent_custom: "#FF00AA".to_string(),
+            },
+            explorer: ExplorerViewSettings {
+                show_hidden: true,
+                show_extensions: false,
+                item_checkboxes: true,
+                details_pane: true,
+                group_by: "type".to_string(),
             },
             ..Settings::default()
         };
