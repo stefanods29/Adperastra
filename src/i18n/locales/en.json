@@ -22,7 +22,43 @@
       "network": "Network"
     },
     "statusItems": "{count, plural, =0 {No items} one {# item} other {# items}}",
-    "statusSelected": "{count, plural, =0 {None selected} one {# item selected} other {# items selected}}"
+    "statusSelected": "{count, plural, =0 {None selected} one {# item selected} other {# items selected}}",
+    "addressLabel": "Address",
+    "searchIn": "Search in {name}",
+    "history": "History",
+    "siblingFolders": "Folders in {name}",
+    "columnName": "Name",
+    "columnModified": "Date modified",
+    "columnType": "Type",
+    "columnSize": "Size",
+    "folderType": "Folder",
+    "fileType": "{ext} file",
+    "genericFile": "File",
+    "onlineOnly": "Online only",
+    "isLink": "Link",
+    "loadingFolder": "Loading folder...",
+    "stillLoading": "Still loading...",
+    "loadError": "This folder could not be opened.",
+    "emptyFolder": "This folder is empty.",
+    "noSearchResults": "No items match your search.",
+    "notAvailable": "Not available",
+    "driveStillLoading": "Still loading...",
+    "driveNotAvailable": "Drive not available",
+    "drivesTitle": "This PC",
+    "galleryPlaceholder": "Gallery arrives in a later step.",
+    "networkPlaceholder": "Network browsing is not available yet.",
+    "favoritesEmpty": "No favorites yet.",
+    "recentEmpty": "No recent items yet.",
+    "browserPreview": "File browsing is only available in the desktop app.",
+    "pinnedFolders": "Pinned",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "sortBy": "Sort by {name}",
+    "driveSpace": "{free} free of {total}",
+    "openDrive": "Open {name}",
+    "homeLocation": "Home",
+    "someItemsUnreadable": "Some items in this folder could not be read.",
+    "fileListLabel": "Files in this folder"
   },
   "help": {
     "title": "Help",
@@ -109,5 +145,16 @@
   },
   "toast": {
     "sampleUndo": "Sample action completed."
+  },
+  "commands": {
+    "back": "Back",
+    "forward": "Forward",
+    "up": "Up",
+    "refresh": "Refresh",
+    "open": "Open",
+    "goToPath": "Go to path",
+    "pinUnpin": "Pin or unpin this folder",
+    "pinFolder": "Pin folder",
+    "unpinFolder": "Unpin folder"
   }
 }

@@ -11,6 +11,7 @@
     "tokens": "node scripts/build-tokens.mjs"
   },
   "dependencies": {
+    "@tanstack/react-virtual": "^3.14.23",
     "@tauri-apps/api": "^2.12.4",
     "dompurify": "^3.4.17",
     "i18next": "^26.5.11",

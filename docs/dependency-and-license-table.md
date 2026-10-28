@@ -14,7 +14,7 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | Setup launcher (01a) | egui (MIT/Apache-2.0) | Win32 via windows crate | Never Slint (conditional license) |
 | Downloads (01a) | reqwest + sha2 + minisign (MIT/Apache-2.0) | OS downloader | Verify manifest signature first |
 | Windows APIs (02+) | windows crate (MIT/Apache-2.0) | hand-written FFI | Known folders, shell, OCR seams |
-| FS walk/watch (02) | walkdir + notify + rayon + tokio (MIT/Apache-2.0) | std only | Behind FS-service trait |
+| FS walk/watch (02) | notify 8.2.1 (CC0-1.0, adopted in Step 02 for `watch(path)`); walkdir/rayon/tokio not adopted - `std::fs` listing is enough so far | std only | Behind FS-service trait |
 | Virtual lists (02/05) | TanStack Virtual/Table (MIT) | custom | 100k items at 16 ms/frame |
 | Docking (05) | dockview (MIT) | FlexLayout (MIT); custom | Layout stays our JSON |
 | Text editor (04b/06a) | CodeMirror 6 (MIT) | Monaco (MIT) | Streamed large-file mode is ours |
