@@ -19,6 +19,7 @@ use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
 mod classic_menu;
+mod clipboard;
 mod explorer;
 mod shell;
 
@@ -1648,6 +1649,48 @@ async fn open_in_terminal(window: WebviewWindow, folder: String) -> Result<(), S
         .map_err(|e| e.to_string())?
 }
 
+/// Put files on the Windows clipboard (Cut or Copy), so Paste works in
+/// Explorer and other apps. Errors are `clipboard.<reason>` codes.
+#[tauri::command]
+async fn clipboard_set_files(
+    window: WebviewWindow,
+    paths: Vec<String>,
+    cut: bool,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > clipboard::MAX_CLIPBOARD_FILES {
+        return Err("clipboard.failed".to_string());
+    }
+    for path in &paths {
+        validate_absolute_path(path)?;
+    }
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || clipboard::set_files(owner, &paths, cut))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// What the Windows clipboard holds right now (files and how they got
+/// there, or text/image flags), without reading any file contents.
+#[tauri::command]
+async fn clipboard_read(window: WebviewWindow) -> Result<clipboard::ClipboardData, String> {
+    ensure_main(window.label())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || clipboard::read(owner))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// The clipboard's text (size-limited in Rust), for Paste and Paste as file.
+#[tauri::command]
+async fn clipboard_text(window: WebviewWindow) -> Result<Option<String>, String> {
+    ensure_main(window.label())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || clipboard::text(owner))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
 /// The Windows share sheet for files. Windows UI for a window has to be
 /// shown from that window's thread, so the work hops to the main thread.
 #[tauri::command]
@@ -1864,7 +1907,10 @@ fn main() {
             show_properties,
             open_in_terminal,
             share_items,
-            show_classic_menu
+            show_classic_menu,
+            clipboard_set_files,
+            clipboard_read,
+            clipboard_text
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
