@@ -53,5 +53,6 @@ file lists everything that ships inside the app folder.
 - **markdown-it** (MIT) + **DOMPurify** (Apache-2.0) - safe rendering of help pages.
 - **Lucide icons** (ISC) - icons in the interface.
 - **egui** (MIT / Apache-2.0) - setup window.
+- **notify** (CC0-1.0) - folder watching for the Explorer (Step 02).
 - **minisign** (MIT) - manifest signatures.
 
