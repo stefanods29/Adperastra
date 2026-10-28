@@ -20,6 +20,32 @@ pub fn list_dir_with_ids(path: &Path, sort: SortSpec) -> Result<Listing> {
     crate::list::list_dir_std(path, sort)
 }
 
+#[cfg(not(windows))]
+pub fn list_dir_with_ids_cancellable(
+    path: &Path,
+    sort: SortSpec,
+    _token: &crate::list::CancellationToken,
+) -> Result<Listing> {
+    crate::list::list_dir_std(path, sort)
+}
+
+#[cfg(windows)]
+pub fn list_dir_with_ids_cancellable(
+    path: &Path,
+    sort: SortSpec,
+    token: &crate::list::CancellationToken,
+) -> Result<Listing> {
+    validate_path_input(&path.to_string_lossy())?;
+    let metadata = std::fs::symlink_metadata(path)?;
+    if !metadata.is_dir() {
+        return Err(FsError::Validation(format!(
+            "{} is not a folder",
+            path.display()
+        )));
+    }
+    win::enumerate(path, sort, Some(token))
+}
+
 #[cfg(windows)]
 pub fn list_dir_with_ids(path: &Path, sort: SortSpec) -> Result<Listing> {
     validate_path_input(&path.to_string_lossy())?;
@@ -30,7 +56,7 @@ pub fn list_dir_with_ids(path: &Path, sort: SortSpec) -> Result<Listing> {
             path.display()
         )));
     }
-    win::enumerate(path, sort)
+    win::enumerate(path, sort, None)
 }
 
 #[cfg(windows)]
@@ -185,6 +211,7 @@ mod win {
         class: FILE_INFO_BY_HANDLE_CLASS,
         stable: bool,
         extended: bool,
+        token: Option<&crate::list::CancellationToken>,
     ) -> Result<Vec<Item>> {
         let handle = open_dir(dir)?;
         let mut buffer: Vec<u64> = vec![0; 8192]; // 64 KiB, 8-byte aligned
@@ -205,12 +232,17 @@ mod win {
                 if error.code().0 == ERROR_NO_MORE_FILES_HRESULT && !items.is_empty() {
                     break;
                 }
-                if items.is_empty() {
-                    return Err(FsError::Validation(format!(
-                        "directory enumeration failed: {error}"
-                    )));
+                // Any other mid-enumeration failure (a drive vanishing,
+                // a device error) must not present a partial folder as
+                // complete: fail so the caller can fall back / report.
+                return Err(FsError::Validation(format!(
+                    "directory enumeration failed: {error}"
+                )));
+            }
+            if let Some(token) = token {
+                if token.load(std::sync::atomic::Ordering::Relaxed) {
+                    return Err(FsError::Cancelled);
                 }
-                break;
             }
             let base = buffer.as_ptr() as *const u8;
             let mut offset = 0usize;
@@ -267,7 +299,11 @@ mod win {
         Ok(items)
     }
 
-    pub fn enumerate(dir: &Path, sort: SortSpec) -> Result<Listing> {
+    pub fn enumerate(
+        dir: &Path,
+        sort: SortSpec,
+        token: Option<&crate::list::CancellationToken>,
+    ) -> Result<Listing> {
         let probe = open_dir(dir)?;
         let fs_name = filesystem_name(probe.0);
         let stable = file_id_is_stable(&fs_name, is_remote(dir));
@@ -275,9 +311,10 @@ mod win {
 
         // FileIdExtdDirectoryInfo = 19, FileIdBothDirectoryInfo = 10
         // (FILE_INFO_BY_HANDLE_CLASS, winbase.h).
-        let items = match enumerate_class(dir, FILE_INFO_BY_HANDLE_CLASS(19), stable, true) {
+        let items = match enumerate_class(dir, FILE_INFO_BY_HANDLE_CLASS(19), stable, true, token) {
             Ok(items) => items,
-            Err(_) => enumerate_class(dir, FILE_INFO_BY_HANDLE_CLASS(10), stable, false)?,
+            Err(FsError::Cancelled) => return Err(FsError::Cancelled),
+            Err(_) => enumerate_class(dir, FILE_INFO_BY_HANDLE_CLASS(10), stable, false, token)?,
         };
         let mut items = items;
         sort_items(&mut items, sort);

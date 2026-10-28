@@ -150,6 +150,14 @@ pub fn item_from_metadata(path: &Path, metadata: &fs::Metadata) -> Item {
 /// List one folder (never recursive, so link loops cannot form), sorted as
 /// requested. Unreadable entries are reported in `skipped`, not fatal.
 pub fn list_dir_std(path: &Path, sort: SortSpec) -> Result<Listing> {
+    list_dir_std_inner(path, sort, None)
+}
+
+fn list_dir_std_inner(
+    path: &Path,
+    sort: SortSpec,
+    token: Option<&CancellationToken>,
+) -> Result<Listing> {
     validate_path_input(&path.to_string_lossy())?;
     let metadata = fs::symlink_metadata(path)?;
     if !metadata.is_dir() {
@@ -160,7 +168,16 @@ pub fn list_dir_std(path: &Path, sort: SortSpec) -> Result<Listing> {
     }
     let mut items = Vec::new();
     let mut skipped = Vec::new();
+    let mut seen = 0usize;
     for entry in fs::read_dir(path)? {
+        seen += 1;
+        if seen % 512 == 0 {
+            if let Some(token) = token {
+                if token.load(Ordering::Relaxed) {
+                    return Err(FsError::Cancelled);
+                }
+            }
+        }
         match entry {
             Ok(entry) => match entry.metadata() {
                 Ok(md) => items.push(item_from_metadata(&entry.path(), &md)),
@@ -208,6 +225,22 @@ pub fn list_dir(path: &Path, sort: SortSpec) -> Result<Listing> {
     }
 }
 
+/// Like `list_dir`, but the enumeration itself honours the cancellation
+/// token (checked between directory buffers/entries), so navigating away
+/// stops the work instead of merely discarding its result. A cancelled
+/// enumeration never falls back to a second full listing.
+pub fn list_dir_cancellable(
+    path: &Path,
+    sort: SortSpec,
+    token: &CancellationToken,
+) -> Result<Listing> {
+    match crate::winlist::list_dir_with_ids_cancellable(path, sort, token) {
+        Ok(listing) => Ok(listing),
+        Err(FsError::Cancelled) => Err(FsError::Cancelled),
+        Err(_) => list_dir_std_inner(path, sort, Some(token)),
+    }
+}
+
 /// List, then deliver the sorted items in batches, checking `token`
 /// between batches. Slice 2 streams these batches to the UI.
 pub fn list_dir_batched(
@@ -217,7 +250,7 @@ pub fn list_dir_batched(
     token: &CancellationToken,
     mut on_batch: impl FnMut(&[Item]),
 ) -> Result<Listing> {
-    let listing = list_dir(path, sort)?;
+    let listing = list_dir_cancellable(path, sort, token)?;
     let batch_size = batch_size.max(1);
     for chunk in listing.items.chunks(batch_size) {
         if token.load(Ordering::Relaxed) {

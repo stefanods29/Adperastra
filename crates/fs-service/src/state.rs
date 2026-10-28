@@ -34,8 +34,24 @@ impl Default for ExplorerState {
     }
 }
 
+/// Compare two Windows paths the way a user means them: the app's pin
+/// command stores `fs::canonicalize` output (`\\?\C:\...` or
+/// `\\?\UNC\server\...`), while the UI sends the display form. Both must
+/// match, case-insensitively.
+fn normalize_for_compare(path: &str) -> String {
+    let trimmed = path.trim();
+    let stripped = if let Some(unc) = trimmed.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{unc}")
+    } else if let Some(rest) = trimmed.strip_prefix(r"\\?\") {
+        rest.to_string()
+    } else {
+        trimmed.to_string()
+    };
+    stripped.trim_end_matches('\\').to_lowercase()
+}
+
 fn same_path(a: &str, b: &str) -> bool {
-    a.trim().eq_ignore_ascii_case(b.trim())
+    normalize_for_compare(a) == normalize_for_compare(b)
 }
 
 fn clean(list: &[String], cap: usize) -> Vec<String> {
@@ -72,6 +88,10 @@ impl ExplorerState {
             self.pinned_folders.push(path);
             self.pinned_folders = clean(&self.pinned_folders, MAX_PINNED);
         }
+    }
+
+    pub fn is_pinned(&self, path: &str) -> bool {
+        self.pinned_folders.iter().any(|p| same_path(p, path))
     }
 
     pub fn unpin(&mut self, path: &str) {

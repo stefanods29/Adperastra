@@ -270,3 +270,35 @@ fn listing_with_ids_matches_std_listing_and_fills_ids() {
         assert!(id_items.iter().all(|i| !i.attrs.online_only));
     }
 }
+
+#[test]
+fn unpin_matches_the_canonical_path_the_app_stores() {
+    // pin_folder in the app stores fs::canonicalize output (\\?\C:\...),
+    // while the UI sends the display path (C:\...). They must compare equal.
+    let mut state = ExplorerState::default();
+    state.pin(r"\\?\C:\Users\me\Docs".to_string());
+    state.unpin(r"C:\Users\me\Docs");
+    assert!(
+        state.pinned_folders.is_empty(),
+        "unpin with the display path must remove the canonical entry"
+    );
+    state.pin(r"C:\Users\me\Docs".to_string());
+    assert!(state.is_pinned(r"\\?\c:\users\me\docs"));
+}
+
+#[test]
+fn sort_by_kind_orders_files_by_extension() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::write(dir.path().join("a.png"), b"x").unwrap();
+    fs::write(dir.path().join("b.txt"), b"x").unwrap();
+    fs::write(dir.path().join("c.pdf"), b"x").unwrap();
+    let mut items = list_dir(dir.path(), SortSpec::default()).unwrap().items;
+    sort_items(
+        &mut items,
+        SortSpec {
+            key: SortKey::Kind,
+            direction: SortDirection::Ascending,
+        },
+    );
+    assert_eq!(names(&items), vec!["c.pdf", "a.png", "b.txt"]);
+}

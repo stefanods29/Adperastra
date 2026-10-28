@@ -36,47 +36,57 @@ impl Default for SortSpec {
 /// Natural, case-insensitive name comparison: runs of digits compare by
 /// numeric value (`file2 < file10`), letters ignore case. Leading zeros do
 /// not affect the result (`a01 == a1`), matching Windows Explorer ordering.
+/// Allocation-free: sorting 100,000 names calls this per comparison.
 pub fn natural_cmp(a: &str, b: &str) -> Ordering {
-    let a: Vec<char> = a.chars().collect();
-    let b: Vec<char> = b.chars().collect();
     let (mut i, mut j) = (0usize, 0usize);
     while i < a.len() && j < b.len() {
-        if a[i].is_ascii_digit() && b[j].is_ascii_digit() {
-            let start_a = i;
-            while i < a.len() && a[i].is_ascii_digit() {
-                i += 1;
-            }
-            let start_b = j;
-            while j < b.len() && b[j].is_ascii_digit() {
-                j += 1;
-            }
-            let num_a: String = a[start_a..i]
-                .iter()
-                .collect::<String>()
-                .trim_start_matches('0')
-                .to_string();
-            let num_b: String = b[start_b..j]
-                .iter()
-                .collect::<String>()
-                .trim_start_matches('0')
-                .to_string();
-            let ord = num_a
-                .len()
-                .cmp(&num_b.len())
-                .then_with(|| num_a.cmp(&num_b));
+        let ca = a[i..].chars().next().expect("i is a char boundary");
+        let cb = b[j..].chars().next().expect("j is a char boundary");
+        if ca.is_ascii_digit() && cb.is_ascii_digit() {
+            let run_a = digit_run_end(a, i);
+            let run_b = digit_run_end(b, j);
+            let num_a = a[i..run_a].trim_start_matches('0');
+            let num_b = b[j..run_b].trim_start_matches('0');
+            let ord = num_a.len().cmp(&num_b.len()).then_with(|| num_a.cmp(num_b));
             if ord != Ordering::Equal {
                 return ord;
             }
+            i = run_a;
+            j = run_b;
         } else {
-            let ord = a[i].to_lowercase().cmp(b[j].to_lowercase());
-            if ord != Ordering::Equal {
-                return ord;
+            let lower_a = ca.to_lowercase().next().unwrap_or(ca);
+            let lower_b = cb.to_lowercase().next().unwrap_or(cb);
+            match lower_a.cmp(&lower_b) {
+                Ordering::Equal => {
+                    i += ca.len_utf8();
+                    j += cb.len_utf8();
+                }
+                ord => return ord,
             }
-            i += 1;
-            j += 1;
         }
     }
     (a.len() - i).cmp(&(b.len() - j))
+}
+
+fn digit_run_end(text: &str, start: usize) -> usize {
+    let mut end = start;
+    for ch in text[start..].chars() {
+        if !ch.is_ascii_digit() {
+            break;
+        }
+        end += ch.len_utf8();
+    }
+    end
+}
+/// What the Type column groups by: the file extension, lowercased.
+fn type_key(item: &Item) -> String {
+    if item.kind == ItemKind::Folder {
+        return String::new();
+    }
+    item.name
+        .rsplit_once('.')
+        .map(|(_, ext)| ext.to_lowercase())
+        .unwrap_or_default()
 }
 
 /// Sort in place: folders always group first (Windows Explorer behaviour,
@@ -92,7 +102,7 @@ pub fn sort_items(items: &mut [Item], spec: SortSpec) {
             SortKey::Name => natural_cmp(&x.name, &y.name),
             SortKey::Modified => x.modified_unix.cmp(&y.modified_unix),
             SortKey::Size => x.size.cmp(&y.size),
-            SortKey::Kind => format!("{:?}", x.kind).cmp(&format!("{:?}", y.kind)),
+            SortKey::Kind => type_key(x).cmp(&type_key(y)),
         };
         let directed = match spec.direction {
             SortDirection::Ascending => key_ord,
