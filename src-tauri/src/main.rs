@@ -756,6 +756,7 @@ pub struct AppState {
     data_dir: PathBuf,
     settings: Mutex<Settings>,
     list_jobs: Mutex<HashMap<String, ListJob>>,
+    file_jobs: Mutex<HashMap<String, FileJob>>,
     explorer_state_lock: Mutex<()>,
     watch: Mutex<Option<WatchControl>>,
     watch_next_id: AtomicU64,
@@ -1265,6 +1266,283 @@ async fn rename_item(
     Ok(new_path)
 }
 
+/// Most sources one file operation may name at once.
+pub const MAX_OP_SOURCES: usize = 10_000;
+
+pub struct FileJob {
+    progress: fs_service::OpProgress,
+    done: bool,
+    report: Option<fs_service::OpReport>,
+    error: Option<String>,
+    token: fs_service::CancellationToken,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileOpPoll {
+    pub progress: fs_service::OpProgress,
+    pub done: bool,
+    pub report: Option<fs_service::OpReport>,
+    pub error: Option<String>,
+}
+
+fn parse_conflict_policy(value: &str) -> Result<fs_service::ConflictPolicy, String> {
+    match value {
+        "replace" => Ok(fs_service::ConflictPolicy::Replace),
+        "skip" => Ok(fs_service::ConflictPolicy::Skip),
+        "keepBoth" => Ok(fs_service::ConflictPolicy::KeepBoth),
+        _ => Err(format!("invalid conflict policy {value:?}")),
+    }
+}
+
+fn validate_op_sources(sources: &[String]) -> Result<Vec<PathBuf>, String> {
+    if sources.is_empty() || sources.len() > MAX_OP_SOURCES {
+        return Err("ops.invalid_request".to_string());
+    }
+    let mut paths = Vec::with_capacity(sources.len());
+    for source in sources {
+        validate_absolute_path(source).map_err(|_| "ops.not_found".to_string())?;
+        paths.push(PathBuf::from(source));
+    }
+    Ok(paths)
+}
+
+/// Existing items a copy/move would land on; the UI asks the user first.
+#[tauri::command]
+async fn check_conflicts(
+    window: WebviewWindow,
+    sources: Vec<String>,
+    dest_dir: String,
+) -> Result<Vec<String>, String> {
+    ensure_main(window.label())?;
+    let sources = validate_op_sources(&sources)?;
+    validate_absolute_path(&dest_dir).map_err(|_| "ops.not_found".to_string())?;
+    let dest = PathBuf::from(dest_dir);
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::check_conflicts(&sources, &dest)
+            .iter()
+            .map(|path| path.to_string_lossy().into_owned())
+            .collect::<Vec<String>>()
+    })
+    .await
+    .map_err(|e| e.to_string())
+}
+
+/// Create an empty folder or file ("New"); returns its real path, which
+/// has a numbered name if the wanted name was taken. Errors are
+/// `ops.<reason>` codes the UI translates.
+#[tauri::command]
+async fn create_item(
+    window: WebviewWindow,
+    parent: String,
+    name: String,
+    kind: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    validate_absolute_path(&parent).map_err(|_| "ops.not_found".to_string())?;
+    if name.chars().count() > 255 {
+        return Err("ops.invalid_name".to_string());
+    }
+    let kind = match kind.as_str() {
+        "folder" => fs_service::CreateKind::Folder,
+        "file" => fs_service::CreateKind::File,
+        _ => return Err("ops.invalid_request".to_string()),
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::create_item(Path::new(&parent), &name, kind)
+            .map(|path| path.to_string_lossy().into_owned())
+            .map_err(|e| format!("ops.{}", fs_service::op_error_reason(&e)))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// One file-operation request (a single argument keeps the command
+/// inside clippy's argument limit and groups what belongs together).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileOpRequest {
+    pub kind: String,
+    pub sources: Vec<String>,
+    pub dest_dir: Option<String>,
+    #[serde(default = "default_conflict_policy")]
+    pub conflict: String,
+}
+
+fn default_conflict_policy() -> String {
+    "skip".to_string()
+}
+
+/// Start a file operation as a background job (contract 10). Kinds:
+/// copy, move, recycle, restore, permanent. Progress and the final
+/// report are drained with `file_op_poll`; `file_op_cancel` asks the
+/// engine to stop between chunks and items.
+#[tauri::command]
+fn file_op_start(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    app: AppHandle,
+    request: FileOpRequest,
+    request_id: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    let FileOpRequest {
+        kind,
+        sources,
+        dest_dir,
+        conflict,
+    } = request;
+    if !matches!(
+        kind.as_str(),
+        "copy" | "move" | "recycle" | "restore" | "permanent"
+    ) {
+        return Err("ops.invalid_request".to_string());
+    }
+    let sources = validate_op_sources(&sources)?;
+    let policy = parse_conflict_policy(&conflict).map_err(|_| "ops.invalid_request".to_string())?;
+    let dest = match (kind.as_str(), dest_dir) {
+        ("copy" | "move", Some(dest)) => {
+            validate_absolute_path(&dest).map_err(|_| "ops.not_found".to_string())?;
+            Some(PathBuf::from(dest))
+        }
+        ("copy" | "move", None) => return Err("ops.invalid_request".to_string()),
+        _ => None,
+    };
+    let token = fs_service::new_cancellation_token();
+    {
+        let mut jobs = state
+            .file_jobs
+            .lock()
+            .map_err(|_| "file jobs lock poisoned".to_string())?;
+        jobs.insert(
+            request_id.clone(),
+            FileJob {
+                progress: fs_service::OpProgress {
+                    items_done: 0,
+                    items_total: sources.len(),
+                    bytes_done: 0,
+                    bytes_total: 0,
+                    current: String::new(),
+                },
+                done: false,
+                report: None,
+                error: None,
+                token: token.clone(),
+            },
+        );
+    }
+    let job_id = request_id;
+    tauri::async_runtime::spawn_blocking(move || {
+        let job_state = app.state::<AppState>();
+        let set_progress = |progress: &fs_service::OpProgress| {
+            if let Ok(mut jobs) = job_state.file_jobs.lock() {
+                if let Some(job) = jobs.get_mut(&job_id) {
+                    job.progress = progress.clone();
+                }
+            }
+        };
+        let result = match kind.as_str() {
+            "copy" => fs_service::copy_items(
+                &sources,
+                dest.as_ref().expect("dest checked"),
+                policy,
+                &token,
+                &mut |p| set_progress(p),
+            ),
+            "move" => fs_service::move_items(
+                &sources,
+                dest.as_ref().expect("dest checked"),
+                policy,
+                &token,
+                &mut |p| set_progress(p),
+            ),
+            "recycle" => fs_service::recycle_items(&sources, &token, &mut |p| set_progress(p)),
+            "restore" => fs_service::restore_items(&sources),
+            _ => fs_service::delete_permanently(&sources, &token, &mut |p| set_progress(p)),
+        };
+        let (report, error) = match result {
+            Ok(report) => (Some(report), None),
+            Err(error) => (
+                None,
+                Some(format!("ops.{}", fs_service::op_error_reason(&error))),
+            ),
+        };
+        // Favorites follow moved items, like they follow a rename. The
+        // operation already happened; a state failure must not fail it.
+        if kind == "move" {
+            if let Some(report) = &report {
+                let pairs: Vec<(String, String)> = report
+                    .completed
+                    .iter()
+                    .map(|item| {
+                        (
+                            item.from.to_string_lossy().into_owned(),
+                            item.to.to_string_lossy().into_owned(),
+                        )
+                    })
+                    .collect();
+                if !pairs.is_empty() {
+                    let _ = update_explorer_state(&job_state, |state| {
+                        for (from, to) in &pairs {
+                            state.move_favorites(from, to);
+                        }
+                    });
+                }
+            }
+        }
+        if let Ok(mut jobs) = job_state.file_jobs.lock() {
+            if let Some(job) = jobs.get_mut(&job_id) {
+                job.done = true;
+                job.report = report;
+                job.error = error;
+            }
+        };
+    });
+    Ok(())
+}
+
+#[tauri::command]
+fn file_op_poll(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    request_id: String,
+) -> Result<FileOpPoll, String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    let mut jobs = state
+        .file_jobs
+        .lock()
+        .map_err(|_| "file jobs lock poisoned".to_string())?;
+    let Some(job) = jobs.get(&request_id) else {
+        return Err(format!("unknown file job {request_id:?}"));
+    };
+    let poll = FileOpPoll {
+        progress: job.progress.clone(),
+        done: job.done,
+        report: job.report.clone(),
+        error: job.error.clone(),
+    };
+    if poll.done {
+        jobs.remove(&request_id);
+    }
+    Ok(poll)
+}
+
+#[tauri::command]
+fn file_op_cancel(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    request_id: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    if let Ok(jobs) = state.file_jobs.lock() {
+        if let Some(job) = jobs.get(&request_id) {
+            job.token.store(true, Ordering::Relaxed);
+        }
+    }
+    Ok(())
+}
+
 /// Favorites are stored exactly as the list shows them (not resolved), so
 /// items on mapped drives, subst drives and junctions match later.
 #[tauri::command]
@@ -1532,6 +1810,7 @@ fn main() {
             data_dir,
             settings: Mutex::new(initial_settings),
             list_jobs: Mutex::new(HashMap::new()),
+            file_jobs: Mutex::new(HashMap::new()),
             explorer_state_lock: Mutex::new(()),
             watch: Mutex::new(None),
             watch_next_id: AtomicU64::new(0),
@@ -1572,6 +1851,11 @@ fn main() {
             watch_stop,
             item_details,
             rename_item,
+            check_conflicts,
+            create_item,
+            file_op_start,
+            file_op_poll,
+            file_op_cancel,
             add_favorite,
             remove_favorite,
             list_favorite_items,
@@ -1833,6 +2117,30 @@ mod tests {
         assert!(validate_absolute_path(r"relative\file.txt").is_err());
         assert!(validate_absolute_path(r"C:\Users\..\Windows").is_err());
         assert!(validate_absolute_path("").is_err());
+    }
+
+    #[test]
+    fn file_op_request_parsing() {
+        assert_eq!(
+            parse_conflict_policy("replace").unwrap(),
+            fs_service::ConflictPolicy::Replace
+        );
+        assert_eq!(
+            parse_conflict_policy("keepBoth").unwrap(),
+            fs_service::ConflictPolicy::KeepBoth
+        );
+        assert!(parse_conflict_policy("mergeEverything").is_err());
+        // The conflict policy defaults to the safe choice.
+        let request: FileOpRequest = serde_json::from_value(serde_json::json!({
+            "kind": "copy", "sources": ["C:\\a.txt"], "dest_dir": "D:\\out"
+        }))
+        .unwrap();
+        assert_eq!(request.conflict, "skip");
+        let sources = validate_op_sources(&[r"C:\a.txt".to_string()]).unwrap();
+        assert_eq!(sources.len(), 1);
+        assert!(validate_op_sources(&[]).is_err());
+        assert!(validate_op_sources(&[r"relative\a.txt".to_string()]).is_err());
+        assert!(validate_op_sources(&[r"C:\a\..\b.txt".to_string()]).is_err());
     }
 
     #[test]
