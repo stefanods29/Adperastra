@@ -47,7 +47,7 @@
     "drivesTitle": "This PC",
     "galleryPlaceholder": "Gallery arrives in a later step.",
     "networkPlaceholder": "Network browsing is not available yet.",
-    "favoritesEmpty": "No favorites yet.",
+    "favoritesEmpty": "No favorites yet. Right-click a file or folder and choose Add to favorites.",
     "recentEmpty": "No recent items yet.",
     "browserPreview": "File browsing is only available in the desktop app.",
     "pinnedFolders": "Pinned",
@@ -58,7 +58,76 @@
     "openDrive": "Open {name}",
     "homeLocation": "Home",
     "someItemsUnreadable": "Some items in this folder could not be read.",
-    "fileListLabel": "Files in this folder"
+    "fileListLabel": "Files in this folder",
+    "commandBar": "Commands",
+    "contextMenu": "Menu",
+    "group": {
+      "digits": "0–9",
+      "aToH": "A–H",
+      "iToP": "I–P",
+      "qToZ": "Q–Z",
+      "other": "Other",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "earlierThisWeek": "Earlier this week",
+      "lastWeek": "Last week",
+      "earlierThisMonth": "Earlier this month",
+      "lastMonth": "Last month",
+      "earlierThisYear": "Earlier this year",
+      "longAgo": "A long time ago",
+      "unknownDate": "Unknown date",
+      "folders": "Folders",
+      "empty": "Empty (0 KB)",
+      "tiny": "Tiny (0–16 KB)",
+      "small": "Small (16 KB–1 MB)",
+      "medium": "Medium (1–128 MB)",
+      "large": "Large (128 MB–1 GB)",
+      "huge": "Huge (1–4 GB)",
+      "gigantic": "Gigantic (over 4 GB)"
+    },
+    "details": {
+      "title": "Details",
+      "size": "Size",
+      "location": "Location",
+      "modified": "Date modified",
+      "created": "Date created",
+      "accessed": "Date accessed",
+      "attributes": "Attributes",
+      "noAttributes": "None",
+      "loading": "Loading details",
+      "itemsSelected": "{count, plural, one {# item selected} other {# items selected}}",
+      "filesAndFolders": "{files, plural, one {# file} other {# files}}, {folders, plural, one {# folder} other {# folders}}",
+      "totalSize": "Total size",
+      "foldersNotCounted": "Folder sizes aren't counted.",
+      "folderItems": "{count, plural, =0 {Empty folder} one {# item} other {# items}}",
+      "selectHint": "Select an item to see its details.",
+      "copyPath": "Copy path",
+      "attr": {
+        "read_only": "Read-only",
+        "hidden": "Hidden",
+        "system": "System",
+        "archive": "Ready for archiving",
+        "compressed": "Compressed",
+        "encrypted": "Encrypted",
+        "online_only": "Online only",
+        "always_available": "Always kept on this device",
+        "link": "Link",
+        "sparse": "Sparse",
+        "temporary": "Temporary",
+        "not_indexed": "Not indexed"
+      }
+    },
+    "rename": {
+      "label": "New name",
+      "problem": {
+        "empty": "Type a name.",
+        "invalidChars": "A name can't contain any of these characters: \\ / : * ? \" < > |",
+        "reserved": "Windows reserves this name. Choose another one.",
+        "tooLong": "This name is too long."
+      }
+    },
+    "shareTitle": "{count, plural, one {# file} other {# files}}",
+    "loadingMoreOptions": "Loading more options…"
   },
   "help": {
     "title": "Help",
@@ -144,7 +213,8 @@
     "open": "Open"
   },
   "toast": {
-    "sampleUndo": "Sample action completed."
+    "sampleUndo": "Sample action completed.",
+    "pathsCopied": "{count, plural, one {Path copied} other {# paths copied}}"
   },
   "commands": {
     "back": "Back",
@@ -155,6 +225,93 @@
     "goToPath": "Go to path",
     "pinUnpin": "Pin or unpin this folder",
     "pinFolder": "Pin folder",
-    "unpinFolder": "Unpin folder"
+    "unpinFolder": "Unpin folder",
+    "newFolder": "New folder",
+    "newTextFile": "Text file",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "delete": "Delete",
+    "rename": "Rename",
+    "share": "Share",
+    "openWith": "Open with…",
+    "copyPath": "Copy as path",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
+    "showInFolder": "Show in folder",
+    "properties": "Properties",
+    "openInTerminal": "Open in Terminal",
+    "selectAll": "Select all",
+    "selectNone": "Select none",
+    "invertSelection": "Invert selection",
+    "sort": "Sort",
+    "sortBy": "Sort by",
+    "sortName": "Name",
+    "sortModified": "Date modified",
+    "sortType": "Type",
+    "sortSize": "Size",
+    "sortAscending": "Ascending",
+    "sortDescending": "Descending",
+    "groupBy": "Group by",
+    "groupNone": "(None)",
+    "view": "View",
+    "new": "New",
+    "viewDetails": "Details",
+    "viewList": "List",
+    "viewSmallIcons": "Small icons",
+    "viewMediumIcons": "Medium icons",
+    "viewLargeIcons": "Large icons",
+    "detailsPane": "Details pane",
+    "hiddenItems": "Hidden items",
+    "fileExtensions": "File name extensions",
+    "itemCheckboxes": "Item check boxes",
+    "showMoreOptions": "Show more options",
+    "more": "See more",
+    "details": "Details",
+    "comingLater": "{label} (coming in a later update)"
+  },
+  "errors": {
+    "rename": {
+      "exists": "There's already an item with this name here.",
+      "invalid_name": "Windows doesn't allow this name.",
+      "access_denied": "You don't have permission to rename this item.",
+      "in_use": "This item is open in another app. Close it and try again.",
+      "not_found": "This item no longer exists.",
+      "too_long": "The new path would be too long.",
+      "other": "This item couldn't be renamed."
+    },
+    "open": {
+      "not_found": "This item no longer exists.",
+      "failed": "This file couldn't be opened.",
+      "other": "This file couldn't be opened."
+    },
+    "openWith": {
+      "failed": "The app chooser couldn't be opened.",
+      "other": "The app chooser couldn't be opened."
+    },
+    "properties": {
+      "failed": "Properties couldn't be shown.",
+      "other": "Properties couldn't be shown."
+    },
+    "terminal": {
+      "notFolder": "The terminal opens in folders only.",
+      "failed": "The terminal couldn't be opened.",
+      "other": "The terminal couldn't be opened."
+    },
+    "share": {
+      "failed": "These files couldn't be shared.",
+      "other": "These files couldn't be shared."
+    },
+    "moreOptions": {
+      "timeout": "More options took too long to load, so it was closed.",
+      "failed": "More options couldn't be shown.",
+      "other": "More options couldn't be shown."
+    },
+    "favorites": {
+      "other": "Favorites couldn't be updated."
+    },
+    "copyPath": {
+      "other": "The path couldn't be copied."
+    }
   }
 }

@@ -47,7 +47,7 @@
     "drivesTitle": "Este equipo",
     "galleryPlaceholder": "La galería llegará en un paso posterior.",
     "networkPlaceholder": "La exploración de red aún no está disponible.",
-    "favoritesEmpty": "Aún no hay favoritos.",
+    "favoritesEmpty": "Aún no tienes favoritos. Haz clic derecho en un archivo o carpeta y elige Agregar a favoritos.",
     "recentEmpty": "Aún no hay elementos recientes.",
     "browserPreview": "La exploración de archivos solo está disponible en la aplicación de escritorio.",
     "pinnedFolders": "Ancladas",
@@ -58,7 +58,76 @@
     "openDrive": "Abrir {name}",
     "homeLocation": "Inicio",
     "someItemsUnreadable": "Algunos elementos de esta carpeta no se pudieron leer.",
-    "fileListLabel": "Archivos en esta carpeta"
+    "fileListLabel": "Archivos en esta carpeta",
+    "commandBar": "Comandos",
+    "contextMenu": "Menú",
+    "group": {
+      "digits": "0–9",
+      "aToH": "A–H",
+      "iToP": "I–P",
+      "qToZ": "Q–Z",
+      "other": "Otros",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "earlierThisWeek": "Esta semana",
+      "lastWeek": "La semana pasada",
+      "earlierThisMonth": "Este mes",
+      "lastMonth": "El mes pasado",
+      "earlierThisYear": "Este año",
+      "longAgo": "Hace mucho tiempo",
+      "unknownDate": "Fecha desconocida",
+      "folders": "Carpetas",
+      "empty": "Vacíos (0 KB)",
+      "tiny": "Diminutos (0–16 KB)",
+      "small": "Pequeños (16 KB–1 MB)",
+      "medium": "Medianos (1–128 MB)",
+      "large": "Grandes (128 MB–1 GB)",
+      "huge": "Enormes (1–4 GB)",
+      "gigantic": "Gigantescos (más de 4 GB)"
+    },
+    "details": {
+      "title": "Detalles",
+      "size": "Tamaño",
+      "location": "Ubicación",
+      "modified": "Fecha de modificación",
+      "created": "Fecha de creación",
+      "accessed": "Fecha de acceso",
+      "attributes": "Atributos",
+      "noAttributes": "Ninguno",
+      "loading": "Cargando detalles",
+      "itemsSelected": "{count, plural, one {# elemento seleccionado} other {# elementos seleccionados}}",
+      "filesAndFolders": "{files, plural, one {# archivo} other {# archivos}}, {folders, plural, one {# carpeta} other {# carpetas}}",
+      "totalSize": "Tamaño total",
+      "foldersNotCounted": "No se cuenta el tamaño de las carpetas.",
+      "folderItems": "{count, plural, =0 {Carpeta vacía} one {# elemento} other {# elementos}}",
+      "selectHint": "Selecciona un elemento para ver sus detalles.",
+      "copyPath": "Copiar ruta",
+      "attr": {
+        "read_only": "Solo lectura",
+        "hidden": "Oculto",
+        "system": "Sistema",
+        "archive": "Listo para archivar",
+        "compressed": "Comprimido",
+        "encrypted": "Cifrado",
+        "online_only": "Solo en línea",
+        "always_available": "Siempre disponible en este dispositivo",
+        "link": "Vínculo",
+        "sparse": "Disperso",
+        "temporary": "Temporal",
+        "not_indexed": "No indexado"
+      }
+    },
+    "rename": {
+      "label": "Nuevo nombre",
+      "problem": {
+        "empty": "Escribe un nombre.",
+        "invalidChars": "Un nombre no puede contener ninguno de estos caracteres: \\ / : * ? \" < > |",
+        "reserved": "Windows reserva este nombre. Elige otro.",
+        "tooLong": "Este nombre es demasiado largo."
+      }
+    },
+    "shareTitle": "{count, plural, one {# archivo} other {# archivos}}",
+    "loadingMoreOptions": "Cargando más opciones…"
   },
   "help": {
     "title": "Ayuda",
@@ -144,7 +213,8 @@
     "open": "Abrir"
   },
   "toast": {
-    "sampleUndo": "Acción de ejemplo completada."
+    "sampleUndo": "Acción de ejemplo completada.",
+    "pathsCopied": "{count, plural, one {Ruta copiada} other {# rutas copiadas}}"
   },
   "commands": {
     "back": "Atrás",
@@ -155,6 +225,93 @@
     "goToPath": "Ir a la ruta",
     "pinUnpin": "Anclar o desanclar esta carpeta",
     "pinFolder": "Anclar carpeta",
-    "unpinFolder": "Desanclar carpeta"
+    "unpinFolder": "Desanclar carpeta",
+    "newFolder": "Nueva carpeta",
+    "newTextFile": "Archivo de texto",
+    "cut": "Cortar",
+    "copy": "Copiar",
+    "paste": "Pegar",
+    "delete": "Eliminar",
+    "rename": "Cambiar nombre",
+    "share": "Compartir",
+    "openWith": "Abrir con…",
+    "copyPath": "Copiar como ruta",
+    "addFavorite": "Agregar a favoritos",
+    "removeFavorite": "Quitar de favoritos",
+    "showInFolder": "Mostrar en la carpeta",
+    "properties": "Propiedades",
+    "openInTerminal": "Abrir en Terminal",
+    "selectAll": "Seleccionar todo",
+    "selectNone": "No seleccionar nada",
+    "invertSelection": "Invertir selección",
+    "sort": "Ordenar",
+    "sortBy": "Ordenar por",
+    "sortName": "Nombre",
+    "sortModified": "Fecha de modificación",
+    "sortType": "Tipo",
+    "sortSize": "Tamaño",
+    "sortAscending": "Ascendente",
+    "sortDescending": "Descendente",
+    "groupBy": "Agrupar por",
+    "groupNone": "(Ninguno)",
+    "view": "Ver",
+    "new": "Nuevo",
+    "viewDetails": "Detalles",
+    "viewList": "Lista",
+    "viewSmallIcons": "Iconos pequeños",
+    "viewMediumIcons": "Iconos medianos",
+    "viewLargeIcons": "Iconos grandes",
+    "detailsPane": "Panel de detalles",
+    "hiddenItems": "Elementos ocultos",
+    "fileExtensions": "Extensiones de nombre de archivo",
+    "itemCheckboxes": "Casillas de elementos",
+    "showMoreOptions": "Mostrar más opciones",
+    "more": "Ver más",
+    "details": "Detalles",
+    "comingLater": "{label} (llega en una próxima actualización)"
+  },
+  "errors": {
+    "rename": {
+      "exists": "Ya hay un elemento con este nombre aquí.",
+      "invalid_name": "Windows no permite este nombre.",
+      "access_denied": "No tienes permiso para cambiar el nombre de este elemento.",
+      "in_use": "Este elemento está abierto en otra app. Ciérrala y vuelve a intentarlo.",
+      "not_found": "Este elemento ya no existe.",
+      "too_long": "La nueva ruta sería demasiado larga.",
+      "other": "No se pudo cambiar el nombre de este elemento."
+    },
+    "open": {
+      "not_found": "Este elemento ya no existe.",
+      "failed": "No se pudo abrir este archivo.",
+      "other": "No se pudo abrir este archivo."
+    },
+    "openWith": {
+      "failed": "No se pudo abrir el selector de apps.",
+      "other": "No se pudo abrir el selector de apps."
+    },
+    "properties": {
+      "failed": "No se pudieron mostrar las propiedades.",
+      "other": "No se pudieron mostrar las propiedades."
+    },
+    "terminal": {
+      "notFolder": "La terminal solo se abre en carpetas.",
+      "failed": "No se pudo abrir la terminal.",
+      "other": "No se pudo abrir la terminal."
+    },
+    "share": {
+      "failed": "No se pudieron compartir estos archivos.",
+      "other": "No se pudieron compartir estos archivos."
+    },
+    "moreOptions": {
+      "timeout": "Más opciones tardó demasiado en cargar y se cerró.",
+      "failed": "No se pudieron mostrar más opciones.",
+      "other": "No se pudieron mostrar más opciones."
+    },
+    "favorites": {
+      "other": "No se pudieron actualizar los favoritos."
+    },
+    "copyPath": {
+      "other": "No se pudo copiar la ruta."
+    }
   }
 }

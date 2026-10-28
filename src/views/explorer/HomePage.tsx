@@ -1,58 +1,27 @@
 import { ChevronDown, ChevronRight, Clock3, Folder, Star } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import HelpButton from "../../components/HelpButton";
-import type { KnownFolder, RecentItem } from "../../services/explorer";
-import { formatDate, formatSize } from "../../services/format";
-import { fileExtension, fileTile } from "./fileTile";
+import type { KnownFolder } from "../../services/explorer";
+
+export type HomeTab = "recent" | "favorites";
 
 export interface HomePageProps {
   knownFolders: KnownFolder[];
   pinnedCards: { name: string; path: string; location: string }[];
-  recent: RecentItem[];
   onOpenFolder: (path: string) => void;
-  onOpenRecent: (item: RecentItem) => void;
   onOpenHelp?: () => void;
+  tab: HomeTab;
+  onTabChange: (tab: HomeTab) => void;
+  /** The Recent or Favorites list (the shared file list). */
+  children: ReactNode;
 }
 
 export default function HomePage(props: HomePageProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [quickOpen, setQuickOpen] = useState(true);
-  const [tab, setTab] = useState<"recent" | "favorites">("recent");
   const cards = props.pinnedCards;
 
-  let recentSection;
-  if (tab === "favorites") {
-    recentSection = <p className="adp-empty-note">{t("explorer.favoritesEmpty")}</p>;
-  } else if (props.recent.length === 0) {
-    recentSection = <p className="adp-empty-note">{t("explorer.recentEmpty")}</p>;
-  } else {
-    recentSection = (
-      <div className="adp-recent-list">
-        <div className="adp-filelist-header adp-recent-header">
-          <span className="adp-col-name">{t("explorer.columnName")}</span>
-          <span className="adp-col-date">{t("explorer.columnModified")}</span>
-          <span className="adp-col-type">{t("explorer.columnType")}</span>
-          <span className="adp-col-size">{t("explorer.columnSize")}</span>
-        </div>
-        {props.recent.map((item) => {
-          const tile = fileTile(item.name, item.kind);
-          const Icon = tile.icon;
-          return (
-            <button key={item.path} type="button" className="adp-recent-row" onClick={() => props.onOpenRecent(item)}>
-              <span className="adp-col-name adp-file-name-cell">
-                <span className={`adp-file-tile adp-file-tile--${tile.tone}`}><Icon size={13} aria-hidden="true" /></span>
-                <span className="adp-file-name">{item.name}</span>
-              </span>
-              <span className="adp-col-date">{formatDate(item.modified_unix, i18n.language)}</span>
-              <span className="adp-col-type">{item.kind === "folder" ? t("explorer.folderType") : fileExtension(item.name) ? t("explorer.fileType", { ext: fileExtension(item.name).toUpperCase() }) : t("explorer.genericFile")}</span>
-              <span className="adp-col-size">{item.kind === "folder" ? "" : formatSize(item.size, i18n.language)}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
   return (
     <div className="adp-home">
       <div className="adp-view-header">
@@ -77,15 +46,15 @@ export default function HomePage(props: HomePageProps) {
       ) : null}
 
       <div className="adp-segment" role="tablist" aria-label={t("explorer.recent")}>
-        <button type="button" role="tab" aria-selected={tab === "recent"} className={`adp-segment-btn${tab === "recent" ? " adp-segment-btn--active" : ""}`} onClick={() => setTab("recent")}>
+        <button type="button" role="tab" aria-selected={props.tab === "recent"} className={`adp-segment-btn${props.tab === "recent" ? " adp-segment-btn--active" : ""}`} onClick={() => props.onTabChange("recent")}>
           <Clock3 size={13} aria-hidden="true" /> {t("explorer.recent")}
         </button>
-        <button type="button" role="tab" aria-selected={tab === "favorites"} className={`adp-segment-btn${tab === "favorites" ? " adp-segment-btn--active" : ""}`} onClick={() => setTab("favorites")}>
+        <button type="button" role="tab" aria-selected={props.tab === "favorites"} className={`adp-segment-btn${props.tab === "favorites" ? " adp-segment-btn--active" : ""}`} onClick={() => props.onTabChange("favorites")}>
           <Star size={13} aria-hidden="true" /> {t("explorer.favorites")}
         </button>
       </div>
 
-      {recentSection}
+      {props.children}
     </div>
   );
 }

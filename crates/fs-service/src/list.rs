@@ -60,6 +60,10 @@ pub fn validate_new_name(name: &str) -> Result<()> {
             "name is empty or has surrounding spaces".to_string(),
         ));
     }
+    // NTFS and ReFS allow at most 255 UTF-16 units per name.
+    if name.encode_utf16().count() > 255 {
+        return Err(FsError::Validation("name is too long".to_string()));
+    }
     if name.ends_with('.') {
         return Err(FsError::Validation(
             "name must not end with a dot".to_string(),
@@ -171,7 +175,7 @@ fn list_dir_std_inner(
     let mut seen = 0usize;
     for entry in fs::read_dir(path)? {
         seen += 1;
-        if seen % 512 == 0 {
+        if seen.is_multiple_of(512) {
             if let Some(token) = token {
                 if token.load(Ordering::Relaxed) {
                     return Err(FsError::Cancelled);

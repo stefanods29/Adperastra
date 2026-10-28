@@ -144,16 +144,18 @@ pub fn fs_event_dto(event: fs_service::FsEvent) -> FsEventDto {
 // ---------------------------------------------------------------------------
 
 #[cfg(windows)]
-fn wide_null(text: &str) -> Vec<u16> {
+pub(crate) fn wide_null(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
+/// Initializes COM (single-threaded apartment, as the shell requires) for
+/// the current thread and undoes it on drop.
 #[cfg(windows)]
-struct ComGuard(bool);
+pub(crate) struct ComGuard(bool);
 
 #[cfg(windows)]
 impl ComGuard {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         use windows::Win32::System::Com::{CoInitializeEx, COINIT_APARTMENTTHREADED};
         // SAFETY: balanced by CoUninitialize in Drop when init succeeded.
         let hr = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
@@ -369,7 +371,7 @@ pub fn drive_info(root: &str) -> DriveInfo {
 }
 
 #[cfg(windows)]
-fn resolve_shortcut(path: &Path) -> Option<PathBuf> {
+pub(crate) fn resolve_shortcut(path: &Path) -> Option<PathBuf> {
     use windows::core::Interface;
     use windows::Win32::System::Com::{
         CoCreateInstance, IPersistFile, CLSCTX_INPROC_SERVER, STGM_READ,
@@ -393,6 +395,42 @@ fn resolve_shortcut(path: &Path) -> Option<PathBuf> {
             Some(PathBuf::from(target))
         }
     }
+}
+
+/// The display form of a stored path: favorites and pins are stored as
+/// canonical `\\?\` paths, the UI shows them without the prefix.
+pub fn display_path(path: &str) -> String {
+    if let Some(unc) = path.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{unc}")
+    } else if let Some(rest) = path.strip_prefix(r"\\?\") {
+        rest.to_string()
+    } else {
+        path.to_string()
+    }
+}
+
+/// Favorites for the Home page, in the order they were added. Items that
+/// cannot be found right now (for example on an unplugged drive) are left
+/// out of the list but stay saved.
+pub fn favorite_items(paths: &[String]) -> Vec<RecentItem> {
+    paths
+        .iter()
+        .filter_map(|stored| {
+            let path = display_path(stored);
+            let details = fs_service::item_details(Path::new(&path)).ok()?;
+            let name = Path::new(&path)
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| path.clone());
+            Some(RecentItem {
+                name,
+                path,
+                kind: details.kind,
+                modified_unix: details.modified_unix,
+                size: details.size,
+            })
+        })
+        .collect()
 }
 
 /// Recent items from the Windows Recent folder (shortcuts resolved,
@@ -477,6 +515,36 @@ mod tests {
             modified_unix: modified,
             size: 0,
         }
+    }
+
+    #[test]
+    fn display_path_strips_the_verbatim_prefix() {
+        assert_eq!(super::display_path(r"\\?\C:\Users\me"), r"C:\Users\me");
+        assert_eq!(super::display_path(r"\\?\UNC\nas\share"), r"\\nas\share");
+        assert_eq!(super::display_path(r"D:\Photos"), r"D:\Photos");
+    }
+
+    #[test]
+    fn favorite_items_skip_missing_and_keep_order() {
+        let dir =
+            std::env::temp_dir().join(format!("adperastra-test-{}-favorites", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("b.txt");
+        std::fs::write(&file, b"12345").unwrap();
+        let folder = dir.join("a folder");
+        std::fs::create_dir(&folder).unwrap();
+        let stored = vec![
+            file.to_string_lossy().into_owned(),
+            dir.join("gone.txt").to_string_lossy().into_owned(),
+            folder.to_string_lossy().into_owned(),
+        ];
+        let items = super::favorite_items(&stored);
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].name, "b.txt");
+        assert_eq!(items[0].size, 5);
+        assert_eq!(items[1].kind, ItemKind::Folder);
     }
 
     #[test]

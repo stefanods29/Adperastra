@@ -1,4 +1,4 @@
-﻿# Dependency and license table (Step 00 proposal)
+# Dependency and license table (Step 00 proposal)
 
 Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unlicense, SIL OFL fonts, MPL-2.0. LGPL only as separate user-replaceable program/DLL with notices + source links. GPL/AGPL/source-available/non-commercial/paid never bundled. Every row re-verified (license + maintenance) in its own deps: commit when adopted; this is a shortlist, not a version approval.
 
@@ -13,7 +13,7 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | Storage (01b/04a) | rusqlite/SQLite (MIT; SQLite public domain) | plain JSON + files | Cache, indexes, tags |
 | Setup launcher (01a) | egui (MIT/Apache-2.0) | Win32 via windows crate | Never Slint (conditional license) |
 | Downloads (01a) | reqwest + sha2 + minisign (MIT/Apache-2.0) | OS downloader | Verify manifest signature first |
-| Windows APIs (02+) | windows crate (MIT/Apache-2.0) | hand-written FFI | Known folders, shell, OCR seams |
+| Windows APIs (02+) | windows crate (MIT/Apache-2.0); windows-collections 0.2 (MIT/Apache-2.0, same project, adopted in Step 03a for the share sheet's item list) | hand-written FFI | Known folders, shell, share sheet, classic menu, OCR seams |
 | FS walk/watch (02) | notify 8.2.1 (CC0-1.0, adopted in Step 02 for `watch(path)`); walkdir/rayon/tokio not adopted - `std::fs` listing is enough so far | std only | Behind FS-service trait |
 | Virtual lists (02/05) | TanStack Virtual/Table (MIT) | custom | 100k items at 16 ms/frame |
 | Docking (05) | dockview (MIT) | FlexLayout (MIT); custom | Layout stays our JSON |

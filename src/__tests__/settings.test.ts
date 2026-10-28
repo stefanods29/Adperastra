@@ -20,7 +20,23 @@ describe("normalizeSettings", () => {
       schema_version: 1,
       language: "es",
       theme: { mode: "dark", accent_source: "custom", accent_custom: "#0067C0" },
+      explorer: defaultSettings().explorer,
     });
+  });
+
+  it("keeps valid Explorer view options and repairs invalid ones", () => {
+    const result = normalizeSettings({
+      explorer: { show_hidden: true, show_extensions: false, item_checkboxes: "yes", group_by: "colour" },
+    });
+    expect(result.explorer).toEqual({
+      show_hidden: true,
+      show_extensions: false,
+      item_checkboxes: false,
+      details_pane: false,
+      group_by: "none",
+    });
+    expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
+    expect(defaultSettings().schema_version).toBe(3);
   });
 
   it("falls back per-field for invalid values", () => {

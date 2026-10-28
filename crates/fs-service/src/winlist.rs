@@ -86,23 +86,10 @@ mod win {
         }
     }
 
+    use crate::winpath::long_path_wide;
+
     fn wide_null(text: &str) -> Vec<u16> {
         text.encode_utf16().chain(std::iter::once(0)).collect()
-    }
-
-    /// CreateFileW only honours >260-char paths with the `\\?\` prefix.
-    fn long_path_wide(path: &Path) -> Vec<u16> {
-        let text = path.to_string_lossy().into_owned();
-        let prefixed = if text.starts_with(r"\\?\") || text.starts_with(r"\\.\") {
-            text
-        } else if let Some(unc) = text.strip_prefix(r"\\") {
-            format!(r"\\?\UNC\{unc}")
-        } else if text.len() >= 2 && text.as_bytes()[1] == b':' {
-            format!(r"\\?\{text}")
-        } else {
-            text
-        };
-        wide_null(&prefixed)
     }
 
     fn open_dir(path: &Path) -> Result<DirHandle> {

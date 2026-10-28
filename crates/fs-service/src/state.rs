@@ -7,9 +7,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
 use std::time::Duration;
 
-pub const EXPLORER_STATE_SCHEMA: u32 = 1;
+pub const EXPLORER_STATE_SCHEMA: u32 = 2;
 pub const MAX_PINNED: usize = 200;
 pub const MAX_RECENT: usize = 20;
+pub const MAX_FAVORITES: usize = 500;
 const MAX_PATH_LEN: usize = 32767;
 
 fn default_schema() -> u32 {
@@ -18,6 +19,8 @@ fn default_schema() -> u32 {
 
 /// Explorer-owned state kept beside (not inside) settings.json by owner
 /// decision in Step 02: pinned folders and our own recent-folder history.
+/// Schema 2 (Step 03a) adds favorites (files and folders); schema 1 files
+/// load unchanged with no favorites.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExplorerState {
     #[serde(default = "default_schema")]
@@ -26,6 +29,8 @@ pub struct ExplorerState {
     pub pinned_folders: Vec<String>,
     #[serde(default)]
     pub recent_folders: Vec<String>,
+    #[serde(default)]
+    pub favorites: Vec<String>,
 }
 
 impl Default for ExplorerState {
@@ -34,6 +39,7 @@ impl Default for ExplorerState {
             schema_version: EXPLORER_STATE_SCHEMA,
             pinned_folders: Vec::new(),
             recent_folders: Vec::new(),
+            favorites: Vec::new(),
         }
     }
 }
@@ -81,6 +87,7 @@ impl ExplorerState {
         self.schema_version = EXPLORER_STATE_SCHEMA;
         self.pinned_folders = clean(&self.pinned_folders, MAX_PINNED);
         self.recent_folders = clean(&self.recent_folders, MAX_RECENT);
+        self.favorites = clean(&self.favorites, MAX_FAVORITES);
         self
     }
 
@@ -100,6 +107,23 @@ impl ExplorerState {
 
     pub fn unpin(&mut self, path: &str) {
         self.pinned_folders.retain(|p| !same_path(p, path));
+    }
+
+    /// Newest favorites last, like pins; adding one twice keeps one entry.
+    pub fn add_favorite(&mut self, path: String) {
+        if path.trim().is_empty() || self.is_favorite(&path) {
+            return;
+        }
+        self.favorites.push(path);
+        self.favorites = clean(&self.favorites, MAX_FAVORITES);
+    }
+
+    pub fn is_favorite(&self, path: &str) -> bool {
+        self.favorites.iter().any(|p| same_path(p, path))
+    }
+
+    pub fn remove_favorite(&mut self, path: &str) {
+        self.favorites.retain(|p| !same_path(p, path));
     }
 
     /// Most-recent-first, de-duplicated, capped at MAX_RECENT.

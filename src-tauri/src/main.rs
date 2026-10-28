@@ -18,9 +18,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
+mod classic_menu;
 mod explorer;
+mod shell;
 
-pub const CURRENT_SCHEMA: u32 = 2;
+pub const CURRENT_SCHEMA: u32 = 3;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -125,6 +127,44 @@ impl Default for ThemeSettings {
     }
 }
 
+fn default_true() -> bool {
+    true
+}
+
+fn default_group_by() -> String {
+    "none".to_string()
+}
+
+/// Explorer view options (schema 3, Step 03a): the View menu's toggles and
+/// the Sort menu's grouping. Defaults follow the Figma frame (extensions
+/// shown) and Windows (hidden items hidden, no check boxes, no Details
+/// pane).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExplorerViewSettings {
+    #[serde(default)]
+    pub show_hidden: bool,
+    #[serde(default = "default_true")]
+    pub show_extensions: bool,
+    #[serde(default)]
+    pub item_checkboxes: bool,
+    #[serde(default)]
+    pub details_pane: bool,
+    #[serde(default = "default_group_by")]
+    pub group_by: String,
+}
+
+impl Default for ExplorerViewSettings {
+    fn default() -> Self {
+        Self {
+            show_hidden: false,
+            show_extensions: true,
+            item_checkboxes: false,
+            details_pane: false,
+            group_by: default_group_by(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default = "default_schema_version")]
@@ -133,6 +173,8 @@ pub struct Settings {
     pub language: String,
     #[serde(default)]
     pub theme: ThemeSettings,
+    #[serde(default)]
+    pub explorer: ExplorerViewSettings,
 }
 
 impl Default for Settings {
@@ -141,6 +183,7 @@ impl Default for Settings {
             schema_version: CURRENT_SCHEMA,
             language: default_language(),
             theme: ThemeSettings::default(),
+            explorer: ExplorerViewSettings::default(),
         }
     }
 }
@@ -183,6 +226,15 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             settings.theme.accent_custom
         )));
     }
+    if !matches!(
+        settings.explorer.group_by.as_str(),
+        "none" | "name" | "modified" | "type" | "size"
+    ) {
+        return Err(AppError::Validation(format!(
+            "unsupported group_by {:?} (expected none, name, modified, type or size)",
+            settings.explorer.group_by
+        )));
+    }
     Ok(())
 }
 
@@ -206,6 +258,24 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
             mode,
             ..ThemeSettings::default()
         },
+        explorer: ExplorerViewSettings::default(),
+    }
+}
+
+/// Schema 2 had language and theme only; schema 3 adds the Explorer view
+/// options with their defaults. A v2 file keeps its language and theme.
+fn migrate_v2(value: serde_json::Value) -> Settings {
+    match serde_json::from_value::<Settings>(value) {
+        Ok(mut settings) => {
+            settings.schema_version = CURRENT_SCHEMA;
+            settings.explorer = ExplorerViewSettings::default();
+            if validate(&settings).is_ok() {
+                settings
+            } else {
+                Settings::default()
+            }
+        }
+        Err(_) => Settings::default(),
     }
 }
 
@@ -226,6 +296,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
+            Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
             _ => Ok(Settings::default()),
         }
@@ -515,7 +586,7 @@ fn write_minidump(logs_dir: &Path, timestamp: u64) {
         .open(&path)
     {
         unsafe {
-            let handle = HANDLE(file.as_raw_handle() as *mut std::ffi::c_void);
+            let handle = HANDLE(file.as_raw_handle());
             let _ = MiniDumpWriteDump(
                 GetCurrentProcess(),
                 GetCurrentProcessId(),
@@ -1136,6 +1207,212 @@ fn record_recent_folder(
     update_explorer_state(&state, |s| s.record_recent(path))
 }
 
+/// Size, times, and attributes for the Details pane (no file is opened).
+#[tauri::command]
+async fn item_details(
+    window: WebviewWindow,
+    path: String,
+) -> Result<fs_service::ItemDetails, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::item_details(Path::new(&path)).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Rename in place; returns the new path. Errors are `rename.<reason>`
+/// codes the UI translates.
+#[tauri::command]
+async fn rename_item(
+    window: WebviewWindow,
+    path: String,
+    new_name: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    if new_name.chars().count() > 255 {
+        return Err("rename.invalid_name".to_string());
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::rename_in_place(Path::new(&path), &new_name)
+            .map(|p| p.to_string_lossy().into_owned())
+            .map_err(|e| format!("rename.{}", fs_service::rename_error_reason(&e)))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn add_favorite(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<fs_service::ExplorerState, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    let canonical = tauri::async_runtime::spawn_blocking(move || {
+        fs::canonicalize(Path::new(&path))
+            .map(|p| p.to_string_lossy().into_owned())
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    update_explorer_state(&state, |s| s.add_favorite(canonical))
+}
+
+#[tauri::command]
+fn remove_favorite(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<fs_service::ExplorerState, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    update_explorer_state(&state, |s| s.remove_favorite(&path))
+}
+
+#[tauri::command]
+async fn list_favorite_items(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+) -> Result<Vec<explorer::RecentItem>, String> {
+    ensure_main(window.label())?;
+    let favorites = {
+        let _guard = state
+            .explorer_state_lock
+            .lock()
+            .map_err(|_| "explorer state lock poisoned".to_string())?;
+        fs_service::ExplorerState::load(&explorer_state_file(&state.data_dir)).favorites
+    };
+    tauri::async_runtime::spawn_blocking(move || explorer::favorite_items(&favorites))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// The main window's handle as a plain number, so it can cross into the
+/// blocking thread that shows a Windows dialog owned by it.
+#[cfg(windows)]
+fn window_handle(window: &WebviewWindow) -> isize {
+    window.hwnd().map(|hwnd| hwnd.0 as isize).unwrap_or(0)
+}
+
+#[cfg(not(windows))]
+fn window_handle(_window: &WebviewWindow) -> isize {
+    0
+}
+
+#[tauri::command]
+async fn open_item(window: WebviewWindow, path: String) -> Result<shell::OpenOutcome, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || shell::open_item(&path))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn open_with_dialog(window: WebviewWindow, path: String) -> Result<(), String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || shell::open_with_dialog(owner, &path))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn show_properties(window: WebviewWindow, paths: Vec<String>) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > shell::MAX_PROPERTIES_ITEMS {
+        return Err("properties.failed".to_string());
+    }
+    for path in &paths {
+        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+    }
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || shell::show_properties(owner, &paths))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn open_in_terminal(window: WebviewWindow, folder: String) -> Result<(), String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&folder).map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || shell::open_in_terminal(&folder))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// The Windows share sheet for files. Windows UI for a window has to be
+/// shown from that window's thread, so the work hops to the main thread.
+#[tauri::command]
+async fn share_items(
+    app: AppHandle,
+    window: WebviewWindow,
+    paths: Vec<String>,
+    title: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > shell::MAX_PROPERTIES_ITEMS || title.chars().count() > 260
+    {
+        return Err("share.failed".to_string());
+    }
+    for path in &paths {
+        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+    }
+    let owner = window_handle(&window);
+    let (sender, receiver) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        let _ = sender.send(shell::show_share_sheet(owner, paths, title));
+    })
+    .map_err(|_| "share.failed".to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        receiver
+            .recv_timeout(std::time::Duration::from_secs(10))
+            .unwrap_or_else(|_| Err("share.failed".to_string()))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// "Show more options": the classic Windows menu at a point in the window
+/// (CSS pixels), run by a helper process with a timeout.
+#[tauri::command]
+async fn show_classic_menu(
+    window: WebviewWindow,
+    paths: Vec<String>,
+    background: bool,
+    x: i32,
+    y: i32,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > classic_menu::MAX_ITEMS || (background && paths.len() != 1)
+    {
+        return Err("moreOptions.failed".to_string());
+    }
+    for path in &paths {
+        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+    }
+    let origin = window
+        .inner_position()
+        .map_err(|_| "moreOptions.failed".to_string())?;
+    let scale = window
+        .scale_factor()
+        .map_err(|_| "moreOptions.failed".to_string())?;
+    let request = classic_menu::MenuRequest {
+        paths,
+        background,
+        x: origin.x + (f64::from(x) * scale).round() as i32,
+        y: origin.y + (f64::from(y) * scale).round() as i32,
+    };
+    tauri::async_runtime::spawn_blocking(move || classic_menu::show(&request))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 async fn watch_start(
     window: WebviewWindow,
@@ -1212,6 +1489,11 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     Ok(())
 }
 fn main() {
+    // The classic-menu helper is this executable started with a flag; it
+    // never starts the app itself.
+    if std::env::args().nth(1).as_deref() == Some(classic_menu::HELPER_FLAG) {
+        std::process::exit(classic_menu::run_helper());
+    }
     let data_dir = resolve_data_dir();
     let _ = fs::create_dir_all(&data_dir);
     let logs = logs_dir(&data_dir);
@@ -1263,7 +1545,18 @@ fn main() {
             unpin_folder,
             record_recent_folder,
             watch_start,
-            watch_stop
+            watch_stop,
+            item_details,
+            rename_item,
+            add_favorite,
+            remove_favorite,
+            list_favorite_items,
+            open_item,
+            open_with_dialog,
+            show_properties,
+            open_in_terminal,
+            share_items,
+            show_classic_menu
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
@@ -1281,7 +1574,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 2);
+        assert_eq!(settings.schema_version, 3);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -1293,7 +1586,7 @@ mod tests {
     fn migrate_v1_flat_json() {
         let value = serde_json::json!({ "language": "es", "theme": "dark" });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 2);
+        assert_eq!(settings.schema_version, 3);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_source, "design");
@@ -1309,13 +1602,48 @@ mod tests {
     }
 
     #[test]
-    fn migrate_v2_round_trips() {
+    fn migrate_v2_keeps_language_and_theme_and_adds_view_options() {
+        let value = serde_json::json!({
+            "schema_version": 2,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#112233" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 3);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.theme.accent_custom, "#112233");
+        assert_eq!(settings.explorer, ExplorerViewSettings::default());
+        assert!(settings.explorer.show_extensions);
+        assert!(!settings.explorer.show_hidden);
+    }
+
+    #[test]
+    fn view_options_validate_group_by() {
+        let mut settings = Settings::default();
+        for ok in ["none", "name", "modified", "type", "size"] {
+            settings.explorer.group_by = ok.to_string();
+            assert!(validate(&settings).is_ok(), "{ok}");
+        }
+        settings.explorer.group_by = "colour".to_string();
+        assert!(validate(&settings).is_err());
+    }
+
+    #[test]
+    fn migrate_v3_round_trips() {
         let original = Settings {
             language: "es".to_string(),
             theme: ThemeSettings {
                 mode: "light".to_string(),
                 accent_source: "custom".to_string(),
                 accent_custom: "#FF00AA".to_string(),
+            },
+            explorer: ExplorerViewSettings {
+                show_hidden: true,
+                show_extensions: false,
+                item_checkboxes: true,
+                details_pane: true,
+                group_by: "type".to_string(),
             },
             ..Settings::default()
         };
@@ -1325,8 +1653,10 @@ mod tests {
 
     #[test]
     fn validation_rejects_bad_language() {
-        let mut settings = Settings::default();
-        settings.language = "fr".to_string();
+        let mut settings = Settings {
+            language: "fr".to_string(),
+            ..Settings::default()
+        };
         assert!(validate(&settings).is_err());
         settings.language = "".to_string();
         assert!(validate(&settings).is_err());
