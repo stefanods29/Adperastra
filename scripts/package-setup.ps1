@@ -36,6 +36,23 @@ Copy-Item $fontFile $payloadFonts -Force
 New-Item -ItemType Directory -Force (Join-Path $out "payload-source\fonts") | Out-Null
 Copy-Item $fontFile (Join-Path $out "payload-source\fonts\Inter.ttf") -Force
 
+# Bundle the pinned WebView2 bootstrapper inside the app folder (Microsoft
+# allows redistribution). The fwlink download stays as a runtime fallback;
+# if Microsoft changes the file, this hash check fails loudly instead of
+# shipping a mismatched installer.
+$rtDir = Join-Path $root "build\payload-source\runtimes"
+New-Item -ItemType Directory -Force $rtDir | Out-Null
+$rtFile = Join-Path $rtDir "MicrosoftEdgeWebview2Setup.exe"
+$pinnedWebViewHash = "13f6d9cdc8c3e7186e4b180db7f48e199ee97d631480e8391fb3106f338fb21a"
+if (-not (Test-Path $rtFile)) {
+    Write-Host "Downloading WebView2 bootstrapper (pinned build)..."
+    Invoke-WebRequest "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile $rtFile -UseBasicParsing
+}
+if ((Get-FileHash $rtFile -Algorithm SHA256).Hash.ToLower() -ne $pinnedWebViewHash) {
+    throw "WebView2 bootstrapper hash does not match dependencies.json. Microsoft may have updated the bootstrapper: verify the new file and re-pin its version and SHA-256."
+}
+New-Item -ItemType Directory -Force (Join-Path $out "runtimes") | Out-Null
+Copy-Item $rtFile (Join-Path $out "runtimes\MicrosoftEdgeWebview2Setup.exe") -Force
 # Build-folder manifest = repo manifest + the font file component.
 $manifest = Get-Content (Join-Path $root "dependencies.json") -Raw | ConvertFrom-Json
 $fontInfo = Get-Item $fontFile
@@ -76,6 +93,7 @@ $run = @(
 "   AdperastraSetup.exe --first-run     show the first-run window again"
 "   AdperastraSetup.exe --reset-profile forget first-run choices"
 "   AdperastraSetup.exe --headless --repair   repair without a window"
+"   (--simulate-missing <id> exists only in development/test builds)"
 ""
 "Settings and the log are in data\ (next to this file when run with"
 "--data-dir data) or in %LOCALAPPDATA%\Adperastra by default."
