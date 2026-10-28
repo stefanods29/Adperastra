@@ -126,7 +126,8 @@
         "tooLong": "[Thïs nämë ïs tøø løng. ëxträ]"
       }
     },
-    "shareTitle": "[{count, plural, one {# fïlë} other {# fïlës}} ëxträ]"
+    "shareTitle": "[{count, plural, one {# fïlë} other {# fïlës}} ëxträ]",
+    "loadingMoreOptions": "[Löädïng mörë öptïöns… ëxträ]"
   },
   "help": {
     "title": "[Hëëlp Hëëlp]",

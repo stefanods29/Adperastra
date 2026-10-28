@@ -187,6 +187,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [menu, setMenu] = useState<OpenMenu | null>(null);
   const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [busyNote, setBusyNote] = useState<string | null>(null);
   const loadModeRef = useRef<"hard" | "soft">("hard");
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [homeNonce, setHomeNonce] = useState(0);
@@ -476,7 +477,14 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         const targets = paths.length > 0 ? paths : current.type === "folder" ? [current.path] : [];
         if (targets.length === 0) return;
         const point = lastPointer.current;
-        void showClassicMenu(targets, paths.length === 0, point.x, point.y).catch((error: unknown) => notifyError(error, "moreOptions"));
+        // Windows can take a moment to load other apps' menu items; say so.
+        const timer = window.setTimeout(() => setBusyNote(t("explorer.loadingMoreOptions")), 300);
+        void showClassicMenu(targets, paths.length === 0, point.x, point.y)
+          .catch((error: unknown) => notifyError(error, "moreOptions"))
+          .finally(() => {
+            window.clearTimeout(timer);
+            setBusyNote(null);
+          });
       },
     }),
     [goToFolder, goToLocation, notify, notifyError, onViewChange, openOne, refresh, t],
@@ -507,7 +515,11 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
-      if (event.altKey && event.shiftKey && (event.key === "p" || event.key === "P")) {
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && (event.key === "a" || event.key === "A")) {
+        // Select all files, never the page's own text.
+        event.preventDefault();
+        runById("explorer.selectAll");
+      } else if (event.altKey && event.shiftKey && (event.key === "p" || event.key === "P")) {
         event.preventDefault();
         runById("explorer.toggleDetailsPane");
       } else if (event.altKey && event.key === "ArrowLeft") {
@@ -1001,6 +1013,11 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
           onClose={closeMenu}
           onShown={onMenuShown}
         />
+      ) : null}
+      {busyNote ? (
+        <div className="adp-busy-note" role="status">
+          {busyNote}
+        </div>
       ) : null}
       <ToastStack toasts={toasts} onDismiss={(id) => setToasts((list) => list.filter((toast) => toast.id !== id))} />
     </div>

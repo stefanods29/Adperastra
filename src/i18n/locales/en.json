@@ -126,7 +126,8 @@
         "tooLong": "This name is too long."
       }
     },
-    "shareTitle": "{count, plural, one {# file} other {# files}}"
+    "shareTitle": "{count, plural, one {# file} other {# files}}",
+    "loadingMoreOptions": "Loading more options…"
   },
   "help": {
     "title": "Help",

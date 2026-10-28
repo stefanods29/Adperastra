@@ -269,6 +269,11 @@ span.adp-col-size { display:flex; }
 .adp-details-skeleton { display:inline-block; width:110px; height:10px; border-radius:var(--adp-radius-xs); background:linear-gradient(100deg, var(--adp-color-surface-selected) 40%, var(--adp-color-surface-pane) 50%, var(--adp-color-surface-selected) 60%); background-size:200% 100%; animation:adp-shimmer 1.2s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .adp-details-skeleton { animation:none; } }
 
+/* Interface text is not selectable, like a desktop app; content stays selectable. */
+.adp-shell { user-select:none; }
+.adp-shell input, .adp-shell textarea, .adp-help-body, .adp-details-grid dd, .adp-details-name { user-select:text; }
+.adp-busy-note { position:fixed; left:50%; bottom:40px; transform:translateX(-50%); z-index:70; padding:var(--adp-space-2) var(--adp-space-5); background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-sm); box-shadow:var(--adp-shadow-card); color:var(--adp-color-text-primary); font-size:var(--adp-font-body); }
+
 /* Status bar selection size (Step 03a) */
 .adp-status-divider { width:1px; height:12px; align-self:center; background:var(--adp-color-border-default); }
 .adp-status-size { margin-left:var(--adp-space-5); }
