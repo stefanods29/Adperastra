@@ -65,6 +65,27 @@ that fixed it.
 - **What:** The open folder and This PC update live (watch + drive polling), but a pinned folder itself being renamed or deleted in another app is not noticed; the nav pane keeps the old entry until you unpin it or restart. Clicking it shows "This folder could not be opened."
 - **Workaround:** unpin the stale entry (open it fails, so use the unpin button next to it) and pin the renamed folder; or restart the app.
 - **Target:** Step 07a background refresh (the metadata service can verify pinned paths then).
+### KI-010 - Explorer-state save is not fully atomic and reads are unlocked (Minor)
+- **Found in:** Step 02 (final review). **Severity:** Minor.
+- **What:** If the app crashes in the brief moment between deleting `explorer-state.json` and renaming its replacement, pins/recent folders revert to empty. A settings read during a save can also observe the file mid-replace.
+- **Workaround:** none needed in practice; worst case is re-pinning folders.
+- **Target:** next state-store hardening (atomic replace via ReplaceFileW, locked reads).
+
+### KI-011 - File IDs lose precision crossing to TypeScript (Minor)
+- **Found in:** Step 02 (final review). **Severity:** Minor (latent until 11b).
+- **What:** `file_id` is serialized as a JSON number; IDs above 2^53 cannot be represented exactly in JavaScript. Nothing consumes IDs yet.
+- **Workaround:** none needed now. **Target:** serialize as string before tags (Step 11b) use them.
+
+### KI-012 - A very large Windows Recent folder can delay Home (Minor)
+- **Found in:** Step 02 (final review). **Severity:** Minor.
+- **What:** Every `.lnk` in the Windows Recent folder is resolved (plus a target stat) before the 30-item limit applies.
+- **Target:** Step 07a metadata/cache work (resolve newest-first with an early stop).
+
+### KI-013 - Hidden and system files are always shown (Minor)
+- **Found in:** Step 02 (final review). **Severity:** Minor.
+- **What:** Hidden items are dimmed but always visible; there is no user setting yet (the settings schema predates Explorer options).
+- **Target:** Step 10b folder customization settings.
+
 ## Fixed
 
 ### KI-006 - Help center showed no pages in the packaged app (fixed in Step 01b)

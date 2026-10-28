@@ -16,6 +16,7 @@ Status: accepted (Step 02, owner decisions 2026-10-28).
 - **Explorer state:** pinned folders and our own recent-folder history live
   in a separate `explorer-state.json` beside `settings.json` (schema v1,
   atomic write), not inside the settings file.
+- **Clarification (final review):** "the navigation pane updates live" means the open folder's view, the pin/unpin state, and the This PC drive list update live. Changes *inside* a pinned folder do not alter the nav pane (its entries are folder names, not contents), so pinned folders' contents are not watched; a pinned folder itself being renamed externally is KI-009.
 - **Watching:** `watch(path)` is implemented in Step 02 with the `notify`
   crate (8.2.1, CC0-1.0). The open folder and navigation pane update live;
   events are coalesced and batched; watching stops when leaving a folder.
