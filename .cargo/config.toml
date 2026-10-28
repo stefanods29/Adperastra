@@ -1,0 +1,4 @@
+﻿# Link the Microsoft C runtime statically into our Rust binaries, so users
+# do not need the Visual C++ Redistributable installed (Step 01a).
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

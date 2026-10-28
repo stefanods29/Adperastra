@@ -52,3 +52,8 @@ test-files/corpus/
 /build/*
 !/build/README.md
 !/build/check-environment.ps1
+
+# Signing keys: NEVER commit (private key lives outside the repo)
+*.key
+*.minisig*
+.adperastra/

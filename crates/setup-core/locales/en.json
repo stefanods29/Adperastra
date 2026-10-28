@@ -36,5 +36,10 @@
   "pack.ai_image.name": "AI image tools",
   "pack.ai_upscaler.name": "AI upscaler",
   "pack.ai_assistant.name": "AI assistant",
-  "pack.photo_search.name": "Photo search by content"
+  "pack.photo_search.name": "Photo search by content",
+  "signature.title": "This copy of Adperastra cannot be verified",
+  "signature.body": "The component list (dependencies.json) is missing its signature or the signature does not match. Adperastra will not start, so nothing can be installed or changed without your knowledge.",
+  "signature.repair": "Repair: check again",
+  "signature.close": "Close",
+  "repair.runtime": "Installing {name} (system component)..."
 }

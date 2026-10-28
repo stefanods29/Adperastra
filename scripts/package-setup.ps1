@@ -49,6 +49,16 @@ $fontComponent = [ordered]@{
 $manifest.components += [pscustomobject]$fontComponent
 $json = $manifest | ConvertTo-Json -Depth 8
 [IO.File]::WriteAllText((Join-Path $out "dependencies.json"), $json, (New-Object Text.UTF8Encoding($false)))
+# Sign the build-folder manifest with the development key (outside the repo).
+# The signer runs on a Temp copy: native Rust binaries cannot write under
+# this PC's Documents folder (Windows security), PowerShell copies it back.
+$keyFile = if ($env:ADPERASTRA_SIGNING_KEY) { $env:ADPERASTRA_SIGNING_KEY } else { Join-Path $env:USERPROFILE ".adperastra\dev-signing.key" }
+if (-not (Test-Path $keyFile)) { throw "Signing key not found: $keyFile - run: manifest-tool keygen <keyfile>" }
+$signTmp = Join-Path $env:TEMP "adperastra-build-manifest.json"
+Copy-Item (Join-Path $out "dependencies.json") $signTmp -Force
+& (Join-Path $env:CARGO_TARGET_DIR "release\manifest-tool.exe") sign $signTmp $keyFile
+if ($LASTEXITCODE -ne 0) { throw "manifest signing failed" }
+Copy-Item $signTmp (Join-Path $out "dependencies.json") -Force
 
 $run = @(
 "Adperastra - Step 01a test build"

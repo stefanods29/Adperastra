@@ -37,6 +37,8 @@ pub struct Component {
     pub size: Option<u64>,
     pub sha256: Option<String>,
     pub source: Option<Source>,
+    #[serde(default)]
+    pub installer: Option<Installer>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -51,6 +53,15 @@ pub enum ComponentKind {
 pub enum Source {
     Local { path: String },
     Url { url: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Installer {
+    pub source: Source,
+    pub sha256: String,
+    pub size: u64,
+    #[serde(default)]
+    pub args: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

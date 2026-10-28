@@ -1,7 +1,8 @@
 use setup_core::{
-    expand_env, free_disk_space, install_component, is_first_run, keys_for, load_profile,
-    parse_manifest, profile_path, save_profile, t, verify_component, Component, ComponentKind,
-    Profile, Source, Status,
+    expand_env, fetch_installer, free_disk_space, generate_keypair, install_component,
+    is_first_run, keys_for, load_profile, parse_manifest, profile_path, save_profile,
+    sign_manifest, signature_status, t, verify_component, AppInfo, Component, ComponentKind,
+    Installer, Manifest, Profile, SignatureStatus, Source, Status,
 };
 use sha2::{Digest, Sha256};
 use std::fs;
@@ -21,6 +22,7 @@ fn file_comp(path: &str, size: Option<u64>, sha: Option<String>, src: Option<Sou
         size,
         sha256: sha,
         source: src,
+        installer: None,
     }
 }
 #[test]
@@ -98,6 +100,7 @@ fn anypath_and_expand_env() {
         size: None,
         sha256: None,
         source: None,
+        installer: None,
     };
     assert_eq!(
         verify_component(&existing, dir.path(), false).status,
@@ -192,4 +195,74 @@ fn manifest_with_utf8_bom_parses() {
     let text = format!("\u{FEFF}{json}");
     let m = setup_core::parse_manifest(&text).expect("manifest with UTF-8 BOM should parse");
     assert_eq!(m.app.name, "Adperastra");
+}
+
+#[test]
+fn signing_valid_tampered_missing() {
+    let (public_key, secret_key) = generate_keypair().unwrap();
+    assert!(!public_key.is_empty());
+    assert!(!secret_key.is_empty());
+    let mut m = Manifest {
+        schema: 1,
+        app: AppInfo {
+            name: "Adperastra".into(),
+            version: "0.1.0".into(),
+        },
+        signature: None,
+        components: vec![],
+        optional_packs: vec![],
+    };
+    assert_eq!(signature_status(&m, &public_key), SignatureStatus::Missing);
+    sign_manifest(&mut m, &secret_key).unwrap();
+    assert_eq!(signature_status(&m, &public_key), SignatureStatus::Valid);
+    let mut tampered = m.clone();
+    tampered.app.version = "9.9.9".into();
+    assert_eq!(
+        signature_status(&tampered, &public_key),
+        SignatureStatus::Invalid
+    );
+    let fresh = Manifest {
+        schema: 1,
+        app: AppInfo {
+            name: "Adperastra".into(),
+            version: "0.1.0".into(),
+        },
+        signature: None,
+        components: vec![],
+        optional_packs: vec![],
+    };
+    assert_eq!(
+        signature_status(&fresh, &public_key),
+        SignatureStatus::Missing
+    );
+    assert_eq!(signature_status(&m, ""), SignatureStatus::Missing);
+}
+
+#[test]
+fn fetch_installer_local_ok_and_bad_hash() {
+    let src_dir = tempfile::tempdir().unwrap();
+    let dst_dir = tempfile::tempdir().unwrap();
+    let data = b"fake-installer-bytes";
+    fs::write(src_dir.path().join("setup.exe"), data).unwrap();
+    let inst = Installer {
+        source: Source::Local {
+            path: "setup.exe".into(),
+        },
+        sha256: sha256_hex(data),
+        size: data.len() as u64,
+        args: vec![],
+    };
+    let mut noop = |_p: f32| {};
+    let path = fetch_installer(&inst, src_dir.path(), dst_dir.path(), &mut noop).unwrap();
+    assert_eq!(path, dst_dir.path().join("installer.exe"));
+    assert_eq!(fs::read(&path).unwrap(), data);
+
+    let bad_dir = tempfile::tempdir().unwrap();
+    let bad = Installer {
+        sha256: "0".repeat(64),
+        ..inst
+    };
+    let mut noop2 = |_p: f32| {};
+    assert!(fetch_installer(&bad, src_dir.path(), bad_dir.path(), &mut noop2).is_err());
+    assert!(!bad_dir.path().join("installer.exe").exists());
 }

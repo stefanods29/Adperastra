@@ -6,6 +6,7 @@ pub mod install;
 pub mod logfile;
 pub mod manifest;
 pub mod profile;
+pub mod signing;
 pub mod verify;
 
 use thiserror::Error;
@@ -31,14 +32,18 @@ pub enum SetupError {
 pub type Result<T> = std::result::Result<T, SetupError>;
 
 pub use i18n::{available_keys, keys_for, t};
-pub use install::install_component;
+pub use install::{fetch_installer, install_component, install_runtime};
 pub use logfile::append_log;
 pub use manifest::{
-    load_manifest, parse_manifest, AppInfo, Component, ComponentKind, Manifest, Pack, Signature,
-    Source,
+    load_manifest, parse_manifest, AppInfo, Component, ComponentKind, Installer, Manifest, Pack,
+    Signature, Source,
 };
 pub use profile::{
     free_disk_space, is_first_run, load_profile, profile_path, save_profile, Profile,
+};
+pub use signing::{
+    canonical_manifest_bytes, generate_keypair, sign_manifest, signature_status, SignatureStatus,
+    DEVELOPMENT_PUBLIC_KEY,
 };
 pub use verify::{
     expand_env, missing_required, verify_all, verify_component, ComponentReport, Status,

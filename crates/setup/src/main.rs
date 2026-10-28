@@ -25,6 +25,7 @@ struct Args {
     data_dir: Option<PathBuf>,
     manifest: Option<PathBuf>,
     app_exe: Option<PathBuf>,
+    simulate_missing: Vec<String>,
 }
 
 fn parse_args() -> Args {
@@ -39,6 +40,11 @@ fn parse_args() -> Args {
             "--data-dir" => a.data_dir = it.next().map(PathBuf::from),
             "--manifest" => a.manifest = it.next().map(PathBuf::from),
             "--app-exe" => a.app_exe = it.next().map(PathBuf::from),
+            "--simulate-missing" => {
+                if let Some(id) = it.next() {
+                    a.simulate_missing.push(id);
+                }
+            }
             other => eprintln!("ignoring unknown argument: {other}"),
         }
     }
@@ -127,11 +133,25 @@ fn run_headless_repair(cfg: &Cfg, missing: &[String]) -> i32 {
                 }
             }
             ComponentKind::AnyPath { .. } => {
-                append_log(
-                    &cfg.data_dir,
-                    &format!("cannot auto-install runtime component {id} yet"),
-                );
-                failed = true;
+                if comp.installer.is_some() {
+                    let res =
+                        setup_core::install_runtime(comp, &cfg.base_dir, &cfg.data_dir, &mut |f| {
+                            append_log(&cfg.data_dir, &format!("runtime {id}: {:.0}%", f * 100.0))
+                        });
+                    match res {
+                        Ok(()) => append_log(&cfg.data_dir, &format!("runtime installed {id}")),
+                        Err(e) => {
+                            append_log(&cfg.data_dir, &format!("runtime install failed {id}: {e}"));
+                            failed = true;
+                        }
+                    }
+                } else {
+                    append_log(
+                        &cfg.data_dir,
+                        &format!("cannot auto-install runtime component {id} yet"),
+                    );
+                    failed = true;
+                }
             }
         }
     }
@@ -196,6 +216,57 @@ fn main() {
     let lang = load_profile(&data)
         .map(|p| p.language)
         .unwrap_or_else(|| "en".into());
+    let theme_name = load_profile(&data)
+        .map(|p| p.theme)
+        .unwrap_or_else(|| "system".into());
+    // Signature gate: never trust an unsigned or tampered manifest.
+    let sig_status =
+        setup_core::signature_status(&manifest, setup_core::signing::DEVELOPMENT_PUBLIC_KEY);
+    let manifest = if sig_status != setup_core::SignatureStatus::Valid {
+        append_log(
+            &data,
+            &format!("manifest signature rejected: {sig_status:?}"),
+        );
+        if args.headless {
+            eprintln!("Adperastra setup: manifest signature missing or invalid ({sig_status:?}); refusing to start.");
+            std::process::exit(4);
+        }
+        let fixed = Arc::new(AtomicBool::new(false));
+        let app = SignatureApp::new(
+            manifest_path.clone(),
+            data.clone(),
+            lang.clone(),
+            theme_name.clone(),
+            fixed.clone(),
+        );
+        let options = eframe::NativeOptions {
+            viewport: egui::ViewportBuilder::default()
+                .with_title(t(&lang, "signature.title"))
+                .with_inner_size([520.0, 340.0]),
+            ..Default::default()
+        };
+        let _ = eframe::run_native(
+            "adperastra-setup",
+            options,
+            Box::new(|_cc| Ok(Box::new(app))),
+        );
+        if !fixed.load(Ordering::Relaxed) {
+            std::process::exit(4);
+        }
+        match setup_core::load_manifest(&manifest_path) {
+            Ok(m) => m,
+            Err(e) => {
+                append_log(
+                    &data,
+                    &format!("manifest reload after signature fix failed: {e}"),
+                );
+                std::process::exit(2);
+            }
+        }
+    } else {
+        manifest
+    };
+
     let cfg = Cfg {
         manifest,
         base_dir,
@@ -203,7 +274,14 @@ fn main() {
         lang,
     };
 
-    let reports = verify_all(&cfg.manifest, &cfg.base_dir, args.repair);
+    let mut reports = verify_all(&cfg.manifest, &cfg.base_dir, args.repair);
+    for id in &args.simulate_missing {
+        // Test flag: pretend a component is missing without touching the PC.
+        if let Some(r) = reports.iter_mut().find(|r| &r.id == id) {
+            r.status = Status::Broken("simulated missing (test flag)".into());
+            append_log(&data, &format!("simulating missing component: {id}"));
+        }
+    }
     let missing = missing_required(&cfg.manifest, &reports);
     append_log(
         &data,
@@ -223,7 +301,7 @@ fn main() {
             .filter(|r| r.status != Status::Ok)
             .map(|r| r.id.clone())
             .collect();
-        let app = RepairApp::new(&cfg, bad);
+        let app = RepairApp::new(&cfg, bad, theme_name.clone());
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
                 .with_title(t(&cfg.lang, "window.preparing"))
@@ -247,7 +325,7 @@ fn main() {
             append_log(&data, "first run required (headless: not completing it)");
             std::process::exit(3);
         }
-        let app = WizardApp::new(&cfg);
+        let app = WizardApp::new(&cfg, theme_name.clone());
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
                 .with_title(t(&cfg.lang, "window.welcome"))
@@ -300,6 +378,7 @@ struct RepairApp {
     manifest: Manifest,
     base_dir: PathBuf,
     lang: String,
+    theme_name: String,
     fonts_done: bool,
     rows: Vec<Row>,
     rx: Option<mpsc::Receiver<Msg>>,
@@ -309,7 +388,7 @@ struct RepairApp {
 }
 
 impl RepairApp {
-    fn new(cfg: &Cfg, bad: HashSet<String>) -> Self {
+    fn new(cfg: &Cfg, bad: HashSet<String>, theme_name: String) -> Self {
         let rows = cfg
             .manifest
             .components
@@ -328,6 +407,7 @@ impl RepairApp {
             manifest: cfg.manifest.clone(),
             base_dir: cfg.base_dir.clone(),
             lang: cfg.lang.clone(),
+            theme_name,
             fonts_done: false,
             rows,
             rx: None,
@@ -367,7 +447,18 @@ impl RepairApp {
                         let _ = tx.send(Msg::Done(id, res));
                     }
                     ComponentKind::AnyPath { .. } => {
-                        let _ = tx.send(Msg::Done(id, Err("not-installable".into())));
+                        if comp.installer.is_some() {
+                            let tx2 = tx.clone();
+                            let id2 = id.clone();
+                            let work = std::env::temp_dir().join("adperastra-installers");
+                            let res = setup_core::install_runtime(comp, &base, &work, &mut |f| {
+                                let _ = tx2.send(Msg::Progress(id2.clone(), f));
+                            })
+                            .map_err(|e| e.to_string());
+                            let _ = tx.send(Msg::Done(id, res));
+                        } else {
+                            let _ = tx.send(Msg::Done(id, Err("not-installable".into())));
+                        }
                     }
                 }
             }
@@ -385,7 +476,11 @@ impl eframe::App for RepairApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.fonts_done {
             theme::install_fonts(ctx, &self.base_dir);
-            theme::apply(ctx, false);
+            theme::apply(
+                ctx,
+                self.theme_name == "dark"
+                    || (self.theme_name == "system" && theme::system_dark(ctx)),
+            );
             self.fonts_done = true;
         }
         if !self.started {
@@ -476,12 +571,12 @@ struct WizardApp {
 }
 
 impl WizardApp {
-    fn new(cfg: &Cfg) -> Self {
+    fn new(cfg: &Cfg, theme_name: String) -> Self {
         Self {
             base_dir: cfg.base_dir.clone(),
             data_dir: cfg.data_dir.clone(),
             lang: cfg.lang.clone(),
-            theme: "system".into(),
+            theme: theme_name,
             packs: cfg.manifest.optional_packs.clone(),
             required: cfg
                 .manifest
@@ -579,6 +674,90 @@ impl eframe::App for WizardApp {
                         Ok(()) => append_log(&self.data_dir, "first-run choices saved"),
                         Err(e) => append_log(&self.data_dir, &format!("profile save failed: {e}")),
                     }
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                }
+            });
+        });
+    }
+}
+
+// ---------- Signature error window ----------
+
+struct SignatureApp {
+    manifest_path: PathBuf,
+    data_dir: PathBuf,
+    lang: String,
+    theme_name: String,
+    fixed: Arc<AtomicBool>,
+    note: String,
+    fonts_done: bool,
+}
+
+impl SignatureApp {
+    fn new(
+        manifest_path: PathBuf,
+        data_dir: PathBuf,
+        lang: String,
+        theme_name: String,
+        fixed: Arc<AtomicBool>,
+    ) -> Self {
+        Self {
+            manifest_path,
+            data_dir,
+            lang,
+            theme_name,
+            fixed,
+            note: String::new(),
+            fonts_done: false,
+        }
+    }
+}
+
+impl eframe::App for SignatureApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if !self.fonts_done {
+            theme::install_fonts(ctx, &exe_dir());
+            let dark = self.theme_name == "dark"
+                || (self.theme_name == "system" && theme::system_dark(ctx));
+            theme::apply(ctx, dark);
+            self.fonts_done = true;
+        }
+        let lang = self.lang.clone();
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading(t(&lang, "signature.title"));
+            ui.add_space(8.0);
+            ui.label(t(&lang, "signature.body"));
+            if !self.note.is_empty() {
+                ui.add_space(6.0);
+                ui.label(&self.note);
+            }
+            ui.add_space(10.0);
+            ui.horizontal(|ui| {
+                if ui.button(t(&lang, "signature.repair")).clicked() {
+                    match setup_core::load_manifest(&self.manifest_path) {
+                        Ok(m) => {
+                            let status = setup_core::signature_status(
+                                &m,
+                                setup_core::signing::DEVELOPMENT_PUBLIC_KEY,
+                            );
+                            if status == setup_core::SignatureStatus::Valid {
+                                append_log(&self.data_dir, "signature ok after repair check");
+                                self.fixed.store(true, Ordering::Relaxed);
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                            } else {
+                                append_log(
+                                    &self.data_dir,
+                                    &format!("signature still invalid: {status:?}"),
+                                );
+                                self.note = format!("{status:?}");
+                            }
+                        }
+                        Err(e) => {
+                            self.note = e.to_string();
+                        }
+                    }
+                }
+                if ui.button(t(&lang, "signature.close")).clicked() {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
             });

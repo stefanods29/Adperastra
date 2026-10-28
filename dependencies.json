@@ -5,9 +5,9 @@
     "version": "0.0.1"
   },
   "signature": {
-    "algorithm": "minisig",
-    "public_key": "",
-    "value": ""
+    "algorithm": "minisign",
+    "public_key": "RWQ7PAFi7vjiH8xlY9hiOp3x69dWA2PwyqXgza8C45h2qD6gAgohb/tt",
+    "value": "untrusted comment: signature from rsign secret key\nRUQ7PAFi7vjiH/Tm2NsCFrG5nVkg03ZFCkWyHTpKffZJZWeCE6/eY8L/yMIiNOvoqrM9YE9MvMCwwwclpt0TgEonDbE1vwMyLg8=\ntrusted comment: timestamp:1793158801\nDQN13pXanEG4SqnAP1wdK4qv3L0uyfIivxMUeqe7Vbm8aCTkdwSlT2evydLnlYdaV8bmRE2PKNEjldwu4XExAw=="
   },
   "components": [
     {
@@ -24,22 +24,19 @@
       "required": true,
       "size": null,
       "sha256": null,
-      "source": null
-    },
-    {
-      "id": "vcredist",
-      "name_key": "comp.vcredist",
-      "version": "14.40+",
-      "kind": {
-        "type": "any_path",
-        "paths": [
-          "%SystemRoot%/System32/vcruntime140.dll"
+      "source": null,
+      "installer": {
+        "source": {
+          "type": "url",
+          "url": "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+        },
+        "sha256": "13f6d9cdc8c3e7186e4b180db7f48e199ee97d631480e8391fb3106f338fb21a",
+        "size": 1889488,
+        "args": [
+          "/silent",
+          "/install"
         ]
-      },
-      "required": true,
-      "size": null,
-      "sha256": null,
-      "source": null
+      }
     }
   ],
   "optional_packs": [
@@ -47,6 +44,7 @@
       "id": "office",
       "name_key": "pack.office.name",
       "desc_key": "pack.office",
+      "note_key": null,
       "download_size": 900000000,
       "install_size": 2600000000
     },
@@ -54,6 +52,7 @@
       "id": "media",
       "name_key": "pack.media.name",
       "desc_key": "pack.media",
+      "note_key": null,
       "download_size": 120000000,
       "install_size": 350000000
     },
@@ -61,6 +60,7 @@
       "id": "ocr",
       "name_key": "pack.ocr.name",
       "desc_key": "pack.ocr",
+      "note_key": null,
       "download_size": 60000000,
       "install_size": 180000000
     },
@@ -68,6 +68,7 @@
       "id": "ai_image",
       "name_key": "pack.ai_image.name",
       "desc_key": "pack.ai_image",
+      "note_key": null,
       "download_size": 700000000,
       "install_size": 1400000000
     },
@@ -75,6 +76,7 @@
       "id": "ai_upscaler",
       "name_key": "pack.ai_upscaler.name",
       "desc_key": "pack.ai_upscaler",
+      "note_key": null,
       "download_size": 500000000,
       "install_size": 900000000
     },
@@ -90,6 +92,7 @@
       "id": "photo_search",
       "name_key": "pack.photo_search.name",
       "desc_key": "pack.photo_search",
+      "note_key": null,
       "download_size": 400000000,
       "install_size": 800000000
     }

@@ -36,5 +36,10 @@
   "pack.ai_image.name": "Herramientas de imagen con IA",
   "pack.ai_upscaler.name": "Escalador con IA",
   "pack.ai_assistant.name": "Asistente de IA",
-  "pack.photo_search.name": "Búsqueda de fotos por contenido"
+  "pack.photo_search.name": "Búsqueda de fotos por contenido",
+  "signature.title": "No se puede verificar esta copia de Adperastra",
+  "signature.body": "A la lista de componentes (dependencies.json) le falta la firma o la firma no coincide. Adperastra no se iniciará, para que nada se pueda instalar ni cambiar sin que lo sepas.",
+  "signature.repair": "Reparar: volver a comprobar",
+  "signature.close": "Cerrar",
+  "repair.runtime": "Instalando {name} (componente del sistema)..."
 }
