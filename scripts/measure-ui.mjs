@@ -5,7 +5,7 @@
 //
 // node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme>
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const args = process.argv.slice(2).map((value) => (value === "-" ? "" : value));
@@ -182,12 +182,69 @@ if (mode === "full") {
     "Get-CimInstance Win32_Process -Filter \"Name = 'Adperastra.exe'\" | Where-Object { $_.CommandLine -like '*--classic-menu*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
   ]);
   await sleep(500);
+
+  // Step 03b: file operations. These mutate the demo folder, so they run
+  // once (not a median loop) and clean up after themselves with node fs.
+  const cleanup03b = () => {
+    for (const target of [
+      join(demo, "New folder"),
+      join(demo, "Invoices", "notes.txt"),
+      join(demo, "Invoices", "notes (2).txt"),
+      join(demo, "folder-100k"),
+    ]) {
+      try { rmSync(target, { recursive: true, force: true }); } catch { /* best effort */ }
+    }
+  };
+  cleanup03b();
+  await openFolder(demo);
+  const once = async (name, action, donePredicate) => {
+    const value = await page(`window.__m.timeUntil(() => { ${action} }, () => (${donePredicate}))`);
+    const result = { name, median_ms: Math.round(value * 10) / 10, max_ms: Math.round(value * 10) / 10, runs: 1 };
+    console.log(`${name}: ${result.median_ms} ms`);
+    results.push(result);
+    await sleep(300);
+  };
+  // Ctrl+Shift+N creates a folder and opens its rename box.
+  await once(
+    "new folder + rename box (Ctrl+Shift+N)",
+    `window.__m.key(window, { key: "N", ctrlKey: true, shiftKey: true })`,
+    `Boolean(document.querySelector(".adp-rename-input"))`,
+  );
+  await page(`document.querySelector(".adp-rename-input")?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); true`);
+  await sleep(400);
+  // Delete a file (Recycle Bin) and undo it from the toast.
+  await page(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))); true`);
+  await once(
+    "delete + undo toast",
+    `window.__m.key(window, { key: "Delete" })`,
+    `Boolean(document.querySelector(".adp-toast"))`,
+  );
+  await once(
+    "undo from toast (file returns)",
+    `[...document.querySelectorAll(".adp-toast button")].find((b) => b.querySelector("span"))?.click()`,
+    `window.__m.rows().some((r) => r.textContent.includes("notes.txt"))`,
+  );
+  // Pasting onto an existing name (from another folder) asks first.
+  await page(`window.__TAURI_INTERNALS__.invoke("clipboard_set_files", { paths: [${JSON.stringify(join(demo, "notes.txt"))}], cut: false }).then(() => true)`);
+  await page(`window.__m.click(window.__m.rows()[0]); true`);
+  await page(`(async () => { const row = [...window.__m.rows()].find((r) => r.textContent.includes("Invoices")); row.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); return true; })()`);
+  await sleep(700);
+  await page(`window.__m.key(window, { key: "v", ctrlKey: true }); true`);
+  await sleep(700);
+  await once(
+    "conflict dialog on paste",
+    `window.__m.key(window, { key: "v", ctrlKey: true })`,
+    `Boolean(document.querySelector(".adp-dialog"))`,
+  );
+  await page(`document.querySelectorAll(".adp-dialog-actions .adp-btn")[1]?.click(); true`);
+  await sleep(400);
+  cleanup03b();
 }
 
 if (outFile && results.length > 0) {
   const record = {
     date: new Date().toISOString(),
-    step: "03a",
+    step: "03b",
     build: "release (tauri build --no-bundle)",
     method: "Inside the packaged app's page: action dispatched, clock stopped at the next painted frame (two animation frames). Median of 7 runs.",
     language: lang,
@@ -256,6 +313,42 @@ if (shotDir) {
   await sleep(200);
   await shot("06-sort-menu");
   await step(`window.__m.closeMenus()`);
+  // Step 03b screens: undo toast, permanent-delete warning, conflict,
+  // Recent actions, and the jobs panel.
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
+  await step(`window.__m.key(window, { key: "Delete" })`);
+  await sleep(300);
+  await shot("07-delete-toast");
+  await step(`[...document.querySelectorAll(".adp-toast button")].find((b) => b.querySelector("span"))?.click()`);
+  await sleep(400);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
+  await step(`window.__m.key(window, { key: "Delete", shiftKey: true })`);
+  await sleep(300);
+  await shot("08-permanent-delete");
+  await step(`document.querySelector(".adp-dialog-actions .adp-btn--primary")?.click()`);
+  await page(`window.__TAURI_INTERNALS__.invoke("clipboard_set_files", { paths: [${JSON.stringify(join(demo, "notes.txt"))}], cut: false }).then(() => true)`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Invoices")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await sleep(700);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(700);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(400);
+  await shot("09-conflict");
+  await step(`document.querySelectorAll(".adp-dialog-actions .adp-btn")[1]?.click()`);
+  await sleep(300);
+  await step(`document.querySelectorAll(".adp-commandbar .adp-cmd-icon")[6]?.click()`);
+  await sleep(300);
+  await step(`[...document.querySelectorAll(".adp-ctxmenu-item")].pop()?.click()`);
+  await sleep(300);
+  await shot("10-recent-actions");
+  await step(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
+  await page(`window.__TAURI_INTERNALS__.invoke("file_op_start", { request: { kind: "copy", sources: [${JSON.stringify(big)}], dest_dir: ${JSON.stringify(demo)}, conflict: "skip" }, requestId: "shot-job" }).then(() => true)`);
+  await sleep(1200);
+  await shot("11-jobs-panel");
+  await page(`window.__TAURI_INTERNALS__.invoke("file_op_cancel", { requestId: "shot-job" }).then(() => true).catch(() => true)`);
+  await sleep(600);
+  try { rmSync(join(demo, "folder-100k"), { recursive: true, force: true }); } catch { /* best effort */ }
+  try { rmSync(join(demo, "Invoices", "notes.txt"), { force: true }); } catch { /* best effort */ }
 }
 
 cdp.close();

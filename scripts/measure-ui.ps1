@@ -46,7 +46,8 @@ if (-not (Test-Path $demo)) {
 $dataDir = Join-Path $env:TEMP ("adperastra-ui-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force $dataDir | Out-Null
 $settings = @{
-  schema_version = 3; language = $Language
+  schema_version = 4; language = $Language
+  files = @{ paste_image_format = "png" }
   theme = @{ mode = $Theme; accent_source = "design"; accent_custom = "#0067C0" }
   explorer = @{ show_hidden = $false; show_extensions = $true; item_checkboxes = $false; details_pane = $true; group_by = "none" }
 }
