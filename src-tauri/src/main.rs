@@ -235,34 +235,9 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
     }
 }
 
+/// Crash-safe replace (see `fs_service::atomic_write`).
 pub fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), AppError> {
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)?;
-        }
-    }
-    let file_name = path
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "file".to_string());
-    let tmp_path = path.with_file_name(format!(".{file_name}.tmp-{}", std::process::id()));
-    fs::write(&tmp_path, contents)?;
-    match fs::rename(&tmp_path, path) {
-        Ok(()) => Ok(()),
-        Err(first_error) => {
-            // Windows rename does not replace an existing destination.
-            if path.exists() {
-                let _ = fs::remove_file(path);
-                fs::rename(&tmp_path, path).map_err(|_| {
-                    let _ = fs::remove_file(&tmp_path);
-                    AppError::Io(first_error)
-                })
-            } else {
-                let _ = fs::remove_file(&tmp_path);
-                Err(AppError::Io(first_error))
-            }
-        }
-    }
+    Ok(fs_service::atomic_write(path, contents)?)
 }
 
 pub fn load_settings(data_dir: &Path) -> Settings {
@@ -1094,6 +1069,11 @@ fn explorer_state_get(
     state: State<'_, AppState>,
 ) -> Result<fs_service::ExplorerState, String> {
     ensure_main(window.label())?;
+    // Same lock as writers, so a read never races a save.
+    let _guard = state
+        .explorer_state_lock
+        .lock()
+        .map_err(|_| "explorer state lock poisoned".to_string())?;
     Ok(fs_service::ExplorerState::load(&explorer_state_file(
         &state.data_dir,
     )))

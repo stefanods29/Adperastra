@@ -1,7 +1,7 @@
 use fs_service::{
-    coalesce_events, file_id_is_stable, list_dir, list_dir_std, list_dir_with_ids, natural_cmp,
-    read_range, sort_items, stat_path, validate_new_name, validate_path_input, ExplorerState,
-    FsEvent, FsEventKind, ItemKind, SortDirection, SortKey, SortSpec,
+    atomic_write, coalesce_events, file_id_is_stable, list_dir, list_dir_std, list_dir_with_ids,
+    natural_cmp, read_range, sort_items, stat_path, validate_new_name, validate_path_input,
+    ExplorerState, FsEvent, FsEventKind, ItemKind, SortDirection, SortKey, SortSpec,
 };
 use std::cmp::Ordering;
 use std::fs;
@@ -106,6 +106,34 @@ fn validate_path_input_rejects_empty_and_overlong() {
     assert!(validate_path_input("   ").is_err());
     assert!(validate_path_input(&"a".repeat(32768)).is_err());
     assert!(validate_path_input("C:\\Users").is_ok());
+}
+
+#[test]
+fn atomic_write_replaces_existing_file_and_leaves_no_temp_files() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("explorer-state.json");
+    atomic_write(&path, b"old").unwrap();
+    atomic_write(&path, b"new").unwrap();
+    assert_eq!(fs::read(&path).unwrap(), b"new");
+    let leftovers: Vec<_> = fs::read_dir(dir.path())
+        .unwrap()
+        .map(|e| e.unwrap().file_name())
+        .filter(|n| n != "explorer-state.json")
+        .collect();
+    assert!(leftovers.is_empty(), "temp files left: {leftovers:?}");
+}
+
+#[test]
+fn atomic_write_never_deletes_target_when_it_cannot_replace_it() {
+    // The target is a folder, so the rename can never succeed: the old
+    // content must survive and the temp file must be cleaned up.
+    let dir = tempfile::tempdir().unwrap();
+    let target = dir.path().join("busy");
+    fs::create_dir(&target).unwrap();
+    fs::write(target.join("keep.txt"), b"keep").unwrap();
+    assert!(atomic_write(&target, b"new").is_err());
+    assert_eq!(fs::read(target.join("keep.txt")).unwrap(), b"keep");
+    assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
 }
 
 #[test]

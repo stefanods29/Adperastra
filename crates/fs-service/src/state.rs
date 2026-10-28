@@ -1,7 +1,11 @@
-use crate::{FsError, Result};
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::io::Write;
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::thread;
+use std::time::Duration;
 
 pub const EXPLORER_STATE_SCHEMA: u32 = 1;
 pub const MAX_PINNED: usize = 200;
@@ -121,12 +125,21 @@ impl ExplorerState {
 
     pub fn save(&self, path: &Path) -> Result<()> {
         let json = serde_json::to_string_pretty(&self.clone().normalized())?;
-        atomic_write(path, json.as_bytes())
+        Ok(atomic_write(path, json.as_bytes())?)
     }
 }
 
-/// Same temp-file-then-rename pattern as the app settings writer.
-pub fn atomic_write(path: &Path, contents: &[u8]) -> Result<()> {
+const RENAME_ATTEMPTS: u32 = 5;
+static TMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+/// Crash-safe file replace, shared by the Explorer state and the app
+/// settings/session writers: write a temp file, flush it to disk, then
+/// rename it over the target. `fs::rename` replaces an existing file in
+/// one step on Windows (MOVEFILE_REPLACE_EXISTING / POSIX rename), so a
+/// crash or a concurrent reader sees either the old or the new file, never
+/// a missing one. The target is never deleted first: when another process
+/// (antivirus, indexer) briefly holds it open, the rename is retried.
+pub fn atomic_write(path: &Path, contents: &[u8]) -> std::io::Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
             fs::create_dir_all(parent)?;
@@ -136,21 +149,31 @@ pub fn atomic_write(path: &Path, contents: &[u8]) -> Result<()> {
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_else(|| "file".to_string());
-    let tmp_path = path.with_file_name(format!(".{file_name}.tmp-{}", std::process::id()));
-    fs::write(&tmp_path, contents)?;
-    match fs::rename(&tmp_path, path) {
-        Ok(()) => Ok(()),
-        Err(first_error) => {
-            // Windows rename does not replace an existing destination.
-            if path.exists() {
-                let _ = fs::remove_file(path);
-                fs::rename(&tmp_path, path).map_err(|_| {
-                    let _ = fs::remove_file(&tmp_path);
-                    FsError::Io(first_error)
-                })
-            } else {
+    let tmp_path = path.with_file_name(format!(
+        ".{file_name}.tmp-{}-{}",
+        std::process::id(),
+        TMP_COUNTER.fetch_add(1, Ordering::Relaxed)
+    ));
+    let written = (|| {
+        let mut file = fs::File::create(&tmp_path)?;
+        file.write_all(contents)?;
+        file.sync_all()
+    })();
+    if let Err(error) = written {
+        let _ = fs::remove_file(&tmp_path);
+        return Err(error);
+    }
+    let mut attempt = 1;
+    loop {
+        match fs::rename(&tmp_path, path) {
+            Ok(()) => return Ok(()),
+            Err(error) if attempt >= RENAME_ATTEMPTS => {
                 let _ = fs::remove_file(&tmp_path);
-                Err(FsError::Io(first_error))
+                return Err(error);
+            }
+            Err(_) => {
+                thread::sleep(Duration::from_millis(20 * u64::from(attempt)));
+                attempt += 1;
             }
         }
     }

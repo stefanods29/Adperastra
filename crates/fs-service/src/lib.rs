@@ -35,6 +35,6 @@ pub use list::{
     CancellationToken, ListIssue, Listing, MAX_PATH_INPUT, MAX_READ_RANGE,
 };
 pub use sort::{natural_cmp, sort_items, SortDirection, SortKey, SortSpec};
-pub use state::ExplorerState;
+pub use state::{atomic_write, ExplorerState};
 pub use watch::{coalesce_events, FsEvent, FsEventKind, FsWatcher, MAX_WATCH_BATCH};
 pub use winlist::list_dir_with_ids;
