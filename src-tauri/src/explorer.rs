@@ -88,7 +88,9 @@ pub struct ExplorerItem {
     pub system: bool,
     pub is_link: bool,
     pub online_only: bool,
-    pub file_id: Option<u64>,
+    /// Decimal string: Windows file IDs can exceed 2^53, which a
+    /// JavaScript number cannot hold exactly.
+    pub file_id: Option<String>,
     pub file_id_stable: bool,
 }
 
@@ -103,7 +105,7 @@ pub fn explorer_item(item: fs_service::Item) -> ExplorerItem {
         system: item.attrs.system,
         is_link: item.attrs.is_link,
         online_only: item.attrs.online_only,
-        file_id: item.attrs.file_id,
+        file_id: item.attrs.file_id.map(|id| id.to_string()),
         file_id_stable: item.attrs.file_id_stable,
     }
 }
@@ -484,7 +486,8 @@ mod tests {
                 system: false,
                 is_link: false,
                 online_only: true,
-                file_id: Some(7),
+                // Above 2^53: must survive the trip to JavaScript exactly.
+                file_id: Some(u64::MAX - 1),
                 file_id_stable: true,
             },
         };
@@ -492,8 +495,10 @@ mod tests {
         assert_eq!(dto.path, "C:\\Temp\\a.txt");
         assert_eq!(dto.size, 42);
         assert!(dto.hidden && dto.online_only);
-        assert_eq!(dto.file_id, Some(7));
+        assert_eq!(dto.file_id.as_deref(), Some("18446744073709551614"));
         assert!(dto.file_id_stable);
+        let json = serde_json::to_string(&dto).unwrap();
+        assert!(json.contains(r#""file_id":"18446744073709551614""#));
     }
     #[test]
     fn recent_items_are_newest_first_deduped_and_capped() {

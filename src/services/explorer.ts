@@ -24,7 +24,8 @@ export interface ExplorerItem {
   system: boolean;
   is_link: boolean;
   online_only: boolean;
-  file_id: number | null;
+  /** Decimal string: Windows file IDs can exceed Number.MAX_SAFE_INTEGER. */
+  file_id: string | null;
   file_id_stable: boolean;
 }
 
