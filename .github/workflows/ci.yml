@@ -27,7 +27,9 @@ jobs:
       - name: Check for secrets
         shell: pwsh
         run: |
-          if (Select-String -Path (Get-ChildItem -Recurse -File).FullName -Pattern "PRIVATE KEY" -List -ErrorAction SilentlyContinue) { Write-Error "Private key marker found"; exit 1 }
+          # Built at run time so this workflow file does not match itself.
+          $marker = "PRIVATE" + " KEY"
+          if (Select-String -Path (Get-ChildItem -Recurse -File).FullName -Pattern $marker -SimpleMatch -List -ErrorAction SilentlyContinue) { Write-Error "Private key marker found"; exit 1 }
           if (Get-ChildItem -Recurse -File -Filter "*.key" | Where-Object { $_.FullName -match "\.adperastra" }) { Write-Error "Signing key file found"; exit 1 }
 
       - name: Install dependencies
@@ -46,7 +48,7 @@ jobs:
         run: cargo test --workspace
 
       - name: Build app (no bundle)
-        run: npx tauri build --no-bundle
+        run: npx -y @tauri-apps/cli@2 build --no-bundle
 
       - name: Package portable zip
         shell: pwsh
