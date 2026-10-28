@@ -66,18 +66,11 @@ that fixed it.
 - **Workaround:** unpin the stale entry (open it fails, so use the unpin button next to it) and pin the renamed folder; or restart the app.
 - **Target:** Step 07a background refresh (the metadata service can verify pinned paths then).
 
-### KI-014 - Renaming has no Undo yet (Major, deferral approved)
-- **Found in:** Step 03a. **Severity:** Major (rules.md section 3 asks for an undo toast after every rename).
-- **What:** Rename works (F2 or a second click on the name), never overwrites another item, and explains every refusal, but there is no Undo toast or Ctrl+Z for it yet.
-- **Workaround:** rename the item back.
-- **Approval:** the owner approved deferring it to Step 03b on 2026-10-28 (the undo stack arrives there).
-- **Target:** Step 03b (undo stack v1); must be fixed before v0.1.
-
 ### KI-015 - Some command bar and menu entries are placeholders (Minor)
 - **Found in:** Step 03a. **Severity:** Minor (placeholders, by owner decision on 2026-10-28).
-- **What:** New, Cut, Copy, Paste and Delete are shown but disabled until the file-operation engine (Step 03b); the List and icon views under View are disabled until the view modes (Step 05). Their tooltips say they arrive in a later update.
+- **What:** The List and icon views under View are disabled until the view modes (Step 05); their tooltips say they arrive in a later update. (New, Cut, Copy, Paste and Delete were placeholders too until Step 03b turned them on.)
 - **Workaround:** Windows' own commands are available through Show more options.
-- **Target:** Steps 03b and 05.
+- **Target:** Step 05.
 
 ### KI-016 - Some classic-menu commands may do nothing (Minor)
 - **Found in:** Step 03a. **Severity:** Minor (rare, Windows design).
@@ -86,6 +79,9 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-014 - Renaming had no Undo (fixed in Step 03b)
+Rename now pushes an undo entry: the toast after a rename has an Undo button (Ctrl+Z), Ctrl+Y redoes it, and Recent actions lists it. The undo stack (contract 11) is shared by rename, copy, move, delete, create, and paste. Fixed in commit `815731b` (engine and jobs in `4330f4b`/`ec167e4`).
 
 ### KI-017 - App start looked slower than Step 01b (closed after measuring, Step 03a)
 One early 03a run took 1.14 s to be ready. Measured side by side with

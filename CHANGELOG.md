@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- File operations (Step 03b): New folder and text file, Cut, Copy, Paste, and Delete through the command bar, menus, and keyboard; big copies and moves run as background jobs with progress and Cancel; name conflicts ask first (Replace, Skip, or Keep both).
+- Undo for almost everything: Ctrl+Z / Ctrl+Y, an Undo button on the toast after each action, and a Recent actions list. Deleting goes to the Recycle Bin and restores from it; Shift+Delete deletes permanently after a warning that it cannot be undone.
+- Drag and drop: drag items onto folders in the list, navigation pane, address bar, or drives (Ctrl copies, Shift moves, Alt creates a shortcut), drag files in from Windows Explorer or the desktop, and drag files out to them.
+- Paste as file: pasted text becomes a .txt, .md, or .csv file and a pasted screenshot becomes a .png (or .jpg, chosen in Settings), with the name ready to edit.
+- Help pages for copying and moving, deleting and the Recycle Bin, undo, drag and drop, and paste as file, in English and Spanish.
+
 ## [v0.0.5-step03a] - 2026-10-28
 
 ### Added
