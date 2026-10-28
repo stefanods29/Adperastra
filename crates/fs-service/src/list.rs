@@ -60,6 +60,10 @@ pub fn validate_new_name(name: &str) -> Result<()> {
             "name is empty or has surrounding spaces".to_string(),
         ));
     }
+    // NTFS and ReFS allow at most 255 UTF-16 units per name.
+    if name.encode_utf16().count() > 255 {
+        return Err(FsError::Validation("name is too long".to_string()));
+    }
     if name.ends_with('.') {
         return Err(FsError::Validation(
             "name must not end with a dot".to_string(),
