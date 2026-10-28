@@ -32,6 +32,9 @@ function percent(progress: OpProgress | null): number | undefined {
   if (!progress) return undefined;
   // Whichever measure is actually advancing: bytes say nothing for a
   // job copying many empty files, items say nothing inside one big file.
+  // Nothing has landed yet (the engine is still walking the source):
+  // an indeterminate bar says "working" better than a stuck 0%.
+  if (progress.items_done === 0 && progress.bytes_done === 0) return undefined;
   const byBytes = progress.bytes_total > 0 ? (progress.bytes_done / progress.bytes_total) * 100 : 0;
   const byItems = progress.items_total > 0 ? (progress.items_done / progress.items_total) * 100 : 0;
   if (byBytes === 0 && byItems === 0 && progress.items_total === 0 && progress.bytes_total === 0) return undefined;

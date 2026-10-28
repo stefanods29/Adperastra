@@ -255,29 +255,40 @@ fn expand_dir(dir: &Path, rel: &Path, plan: &mut Plan, visited: &mut HashSet<Str
             return;
         }
     };
-    let mut children: Vec<PathBuf> = read.flatten().map(|entry| entry.path()).collect();
-    children.sort_by_key(|path| path.file_name().map(|n| n.to_string_lossy().to_lowercase()));
-    for child in children {
-        let Some(name) = child.file_name().map(|n| n.to_string_lossy().into_owned()) else {
-            continue;
-        };
-        let child_rel = rel.join(&name);
-        let metadata = match fs::symlink_metadata(&child) {
-            Ok(metadata) => metadata,
+    // Directory entries carry their type (and, on Windows, their size)
+    // from the enumeration itself, so the walk needs no per-item
+    // metadata call - that keeps a 100,000-item walk at enumeration speed.
+    let mut children: Vec<(PathBuf, std::fs::FileType, u64)> = Vec::new();
+    for entry in read.flatten() {
+        let file_type = match entry.file_type() {
+            Ok(file_type) => file_type,
             Err(error) => {
                 plan.skipped.push(SkippedItem {
-                    path: child.clone(),
+                    path: entry.path(),
                     reason: reason(&FsError::from(error)),
                 });
                 continue;
             }
         };
+        let size = if file_type.is_dir() {
+            0
+        } else {
+            entry.metadata().map(|m| m.len()).unwrap_or(0)
+        };
+        children.push((entry.path(), file_type, size));
+    }
+    children.sort_by_key(|(path, _, _)| path.file_name().map(|n| n.to_string_lossy().to_lowercase()));
+    for (child, file_type, size) in children {
+        let Some(name) = child.file_name().map(|n| n.to_string_lossy().into_owned()) else {
+            continue;
+        };
+        let child_rel = rel.join(&name);
         // A link that points at a directory counts as a directory here;
         // the visited set below decides whether it may be followed.
-        let is_dir = if metadata.file_type().is_symlink() {
+        let is_dir = if file_type.is_symlink() {
             child.is_dir()
         } else {
-            metadata.is_dir()
+            file_type.is_dir()
         };
         if is_dir {
             match fs::canonicalize(&child) {
@@ -301,7 +312,6 @@ fn expand_dir(dir: &Path, rel: &Path, plan: &mut Plan, visited: &mut HashSet<Str
             }
             expand_dir(&child, &child_rel, plan, visited);
         } else {
-            let size = metadata.len();
             plan.total_bytes += size;
             plan.entries.push(PlanEntry {
                 from: child,
