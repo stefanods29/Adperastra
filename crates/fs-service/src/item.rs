@@ -29,8 +29,13 @@ pub struct ItemAttrs {
     /// Windows recall-on-data-access / offline attribute: background work
     /// must never read these files (it would trigger a cloud download).
     pub online_only: bool,
-    /// Stable Windows file ID when available (tags/views key on it later).
+    /// Windows file ID from the directory enumeration, when the volume
+    /// provides one. Only meaningful together with `file_id_stable`.
     pub file_id: Option<u64>,
+    /// True only when `file_id` can be trusted across renames and time:
+    /// NTFS/ReFS on a local drive. FAT/exFAT and network drives report
+    /// false and callers (tags, Step 11b) must fall back to the path.
+    pub file_id_stable: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

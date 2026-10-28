@@ -142,13 +142,14 @@ pub fn item_from_metadata(path: &Path, metadata: &fs::Metadata) -> Item {
                     | FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS)
                 != 0,
             file_id,
+            file_id_stable: false,
         },
     }
 }
 
 /// List one folder (never recursive, so link loops cannot form), sorted as
 /// requested. Unreadable entries are reported in `skipped`, not fatal.
-pub fn list_dir(path: &Path, sort: SortSpec) -> Result<Listing> {
+pub fn list_dir_std(path: &Path, sort: SortSpec) -> Result<Listing> {
     validate_path_input(&path.to_string_lossy())?;
     let metadata = fs::symlink_metadata(path)?;
     if !metadata.is_dir() {
@@ -180,6 +181,31 @@ pub fn list_dir(path: &Path, sort: SortSpec) -> Result<Listing> {
         items,
         skipped,
     })
+}
+
+/// Whether a volume's file IDs can be trusted as stable keys: NTFS and
+/// ReFS on local drives only. FAT generates IDs from directory-entry
+/// offsets (they change after defragmentation), exFAT is similar, and
+/// network drives answer for a file system we cannot verify - tags
+/// (Step 11b) fall back to the path in all those cases.
+/// Source: Microsoft Learn, FILE_ID_BOTH_DIR_INFO remarks
+/// (https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_id_both_dir_info).
+pub fn file_id_is_stable(filesystem: &str, is_remote: bool) -> bool {
+    !is_remote
+        && matches!(
+            filesystem.trim().to_ascii_uppercase().as_str(),
+            "NTFS" | "REFS"
+        )
+}
+
+/// List one folder, filling file IDs from the directory enumeration
+/// itself on Windows (`list_dir_with_ids`); falls back to `list_dir_std`
+/// when the fast enumeration is unavailable on a volume.
+pub fn list_dir(path: &Path, sort: SortSpec) -> Result<Listing> {
+    match crate::winlist::list_dir_with_ids(path, sort) {
+        Ok(listing) => Ok(listing),
+        Err(_) => list_dir_std(path, sort),
+    }
 }
 
 /// List, then deliver the sorted items in batches, checking `token`

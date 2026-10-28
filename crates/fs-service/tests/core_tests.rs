@@ -1,7 +1,7 @@
 use fs_service::{
-    coalesce_events, list_dir, natural_cmp, read_range, sort_items, stat_path, validate_new_name,
-    validate_path_input, ExplorerState, FsEvent, FsEventKind, ItemKind, SortDirection, SortKey,
-    SortSpec,
+    coalesce_events, file_id_is_stable, list_dir, list_dir_std, list_dir_with_ids, natural_cmp,
+    read_range, sort_items, stat_path, validate_new_name, validate_path_input, ExplorerState,
+    FsEvent, FsEventKind, ItemKind, SortDirection, SortKey, SortSpec,
 };
 use std::cmp::Ordering;
 use std::fs;
@@ -213,4 +213,60 @@ fn watcher_reports_a_new_file_and_stops_on_unwatch() {
 
     watcher.unwatch();
     assert_eq!(watcher.current(), None);
+}
+
+#[test]
+fn file_id_stability_rules() {
+    assert!(file_id_is_stable("NTFS", false));
+    assert!(file_id_is_stable("ntfs", false));
+    assert!(file_id_is_stable("ReFS", false));
+    assert!(!file_id_is_stable("FAT32", false));
+    assert!(!file_id_is_stable("exFAT", false));
+    assert!(
+        !file_id_is_stable("NTFS", true),
+        "network drives fall back to path keys"
+    );
+    assert!(!file_id_is_stable("", false));
+}
+
+#[test]
+fn listing_with_ids_matches_std_listing_and_fills_ids() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::write(dir.path().join("one.txt"), b"12345").unwrap();
+    fs::write(dir.path().join("two.txt"), b"xy").unwrap();
+    fs::create_dir(dir.path().join("sub")).unwrap();
+
+    let std_items = list_dir_std(dir.path(), SortSpec::default()).unwrap().items;
+    let id_items = list_dir_with_ids(dir.path(), SortSpec::default())
+        .unwrap()
+        .items;
+    assert_eq!(names(&id_items), names(&std_items));
+    assert_eq!(
+        id_items
+            .iter()
+            .map(|i| (i.size, i.kind))
+            .collect::<Vec<_>>(),
+        std_items
+            .iter()
+            .map(|i| (i.size, i.kind))
+            .collect::<Vec<_>>()
+    );
+    #[cfg(windows)]
+    {
+        // On the dev machine (NTFS C:) every entry must carry a file ID
+        // from the same enumeration - no per-file opens.
+        assert!(
+            id_items.iter().all(|i| i.attrs.file_id.is_some()),
+            "file IDs must be filled: {id_items:?}"
+        );
+        let ids: std::collections::HashSet<u64> =
+            id_items.iter().filter_map(|i| i.attrs.file_id).collect();
+        assert_eq!(
+            ids.len(),
+            id_items.len(),
+            "file IDs must be distinct per entry"
+        );
+        assert!(id_items.iter().all(|i| i.attrs.file_id_stable));
+        assert!(id_items.iter().all(|i| !i.attrs.online_only));
+    }
 }
