@@ -1795,6 +1795,16 @@ async fn clipboard_image_file(
     .map_err(|e| e.to_string())?
 }
 
+/// Empty the Windows clipboard (a cut-paste clears what it consumed).
+#[tauri::command]
+async fn clipboard_clear(window: WebviewWindow) -> Result<(), String> {
+    ensure_main(window.label())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || clipboard::clear(owner))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
 /// The Windows share sheet for files. Windows UI for a window has to be
 /// shown from that window's thread, so the work hops to the main thread.
 #[tauri::command]
@@ -2016,7 +2026,8 @@ fn main() {
             clipboard_set_files,
             clipboard_read,
             clipboard_text,
-            clipboard_image_file
+            clipboard_image_file,
+            clipboard_clear
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

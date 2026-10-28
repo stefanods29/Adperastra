@@ -242,6 +242,15 @@ mod imp {
         result
     }
 
+    /// Empty the clipboard (after a cut-paste consumed it).
+    pub fn clear(owner: isize) -> Result<(), String> {
+        open(owner)?;
+        // SAFETY: this thread opened the clipboard.
+        let result = unsafe { EmptyClipboard() }.map_err(|_| "clipboard.failed".to_string());
+        close();
+        result
+    }
+
     /// Save the clipboard image as PNG or JPG in `parent` under
     /// `base_name` (a numbered name is chosen when taken). Screenshots
     /// usually arrive as a bitmap; browsers may also offer ready PNG
@@ -404,4 +413,14 @@ pub fn save_image(
     _format: &str,
 ) -> Result<String, String> {
     Err("image.failed".to_string())
+}
+
+#[cfg(windows)]
+pub fn clear(owner: isize) -> Result<(), String> {
+    imp::clear(owner)
+}
+
+#[cfg(not(windows))]
+pub fn clear(_owner: isize) -> Result<(), String> {
+    Ok(())
 }
