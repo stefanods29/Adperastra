@@ -1,8 +1,8 @@
-import { invoke } from "@tauri-apps/api/core";
+﻿import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { CircleHelp, Copy, Home, LayoutGrid, Minus, Plus, Settings as SettingsIcon, Square, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import DropdownMenu from "./components/DropdownMenu";
 import IconButton from "./components/IconButton";
@@ -15,9 +15,9 @@ import {
   type AppSettings,
 } from "./services/settings";
 import ExplorerHome from "./views/ExplorerHome";
-import GalleryView from "./views/GalleryView";
-import HelpCenter from "./views/HelpCenter";
-import SettingsView from "./views/SettingsView";
+const GalleryView = lazy(() => import("./views/GalleryView"));
+const HelpCenter = lazy(() => import("./views/HelpCenter"));
+const SettingsView = lazy(() => import("./views/SettingsView"));
 
 type TabKind = "explorer" | "help" | "settings" | "gallery";
 interface TabState {
@@ -84,6 +84,7 @@ export default function App() {
   const [helpSlug, setHelpSlug] = useState("getting-started");
   const [showKeyTips, setShowKeyTips] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const maximizeRef = useRef<HTMLButtonElement | null>(null);
   const [explorerTotal, setExplorerTotal] = useState(0);
   const [explorerSelected, setExplorerSelected] = useState(0);
   const readyRef = useRef(false);
@@ -305,6 +306,27 @@ export default function App() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  // Snap layouts: tell Windows where the custom maximize button is, so it
+  // can treat that area as the native maximize button (HTMAXBUTTON).
+  useEffect(() => {
+    if (!isTauriRuntime()) return;
+    const report = () => {
+      const el = maximizeRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const s = window.devicePixelRatio || 1;
+      void invoke("set_maximize_rect", {
+        x: r.x * s,
+        y: r.y * s,
+        width: r.width * s,
+        height: r.height * s,
+      }).catch(() => undefined);
+    };
+    report();
+    window.addEventListener("resize", report);
+    return () => window.removeEventListener("resize", report);
+  }, []);
+
   const windowAction = (action: "minimize" | "toggle-maximize" | "close") => {
     if (!isTauriRuntime()) return;
     try {
@@ -423,7 +445,7 @@ export default function App() {
             className="adp-icon-btn adp-window-btn"
             aria-label={isMaximized ? t("window.restore") : t("window.maximize")}
             title={isMaximized ? t("window.restore") : t("window.maximize")}
-            onClick={() => windowAction("toggle-maximize")}
+            onClick={() => windowAction("toggle-maximize")} ref={maximizeRef}
           >
             {isMaximized ? (
               <Copy size={13} aria-hidden="true" />
@@ -454,21 +476,21 @@ export default function App() {
           />
         ) : null}
         {activeTab.kind === "help" ? (
-          <HelpCenter
+          <Suspense fallback={null}><HelpCenter
             lang={settings.language}
             requestedSlug={helpSlug}
             onOpenHelp={(slug) => openTab("help", slug)}
-          />
+          /></Suspense>
         ) : null}
         {activeTab.kind === "settings" ? (
-          <SettingsView
+          <Suspense fallback={null}><SettingsView
             settings={settings}
             onApply={applySettings}
             onOpenHelp={() => openTab("help", "changing-language-and-theme")}
-          />
+          /></Suspense>
         ) : null}
         {activeTab.kind === "gallery" ? (
-          <GalleryView onOpenHelp={() => openTab("help", "using-help")} />
+          <Suspense fallback={null}><GalleryView onOpenHelp={() => openTab("help", "using-help")} /></Suspense>
         ) : null}
       </main>
 
