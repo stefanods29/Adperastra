@@ -22,7 +22,7 @@ is recorded here for owner approval (plan/design.md rule 6). Newest first.
   (language/theme and packs checklist), in English and Spanish, light and
   dark.
 
-## 2026-10-28 - Derived dark theme (Step 01b) - for owner approval
+## 2026-10-28 - Derived dark theme (Step 01b) - approved by the owner on 2026-10-28
 
 - **What:** The Figma design is light-only. The dark theme is derived from the same tokens (surfaces `#202020`-`#333`, Explorer accent lightened to `#4CC2FF` for contrast).
 - **Evidence:** Screenshots will be in the step report; values live in `themes/dark.tokens.json`.
