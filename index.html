@@ -1,12 +1,40 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Adperastra</title>
+    <style>
+      /* Startup skeleton: paints before the JS bundle loads, replaced by
+         React on first render. Shapes only (no text, so no language is
+         assumed). Colors from plan/design-spec.md. */
+      body { margin: 0; background: #f3f3f3; }
+      .skl { display: flex; flex-direction: column; height: 100vh; background: #fff; }
+      .skl-bar { height: 40px; background: #f3f3f3; border-bottom: 1px solid #e5e5e5; display: flex; gap: 6px; padding: 3px 12px; box-sizing: border-box; }
+      .skl-tab { width: 180px; height: 34px; border-radius: 7px; background: #e1e1e1; }
+      .skl-main { flex: 1; display: flex; }
+      .skl-side { width: 196px; background: #fafafa; border-right: 1px solid #e5e5e5; padding: 12px 8px; box-sizing: border-box; }
+      .skl-row { height: 28px; border-radius: 4px; background: #eaeaea; margin-bottom: 8px; }
+      .skl-content { flex: 1; padding: 18px 24px; }
+      .skl-line { height: 14px; width: 40%; border-radius: 4px; background: #eaeaea; margin-bottom: 16px; }
+      .skl-cards { display: flex; gap: 12px; }
+      .skl-card { width: 180px; height: 64px; border-radius: 6px; background: #f3f3f3; border: 1px solid #e5e5e5; }
+      @media (prefers-reduced-motion: no-preference) {
+        .skl-tab, .skl-row, .skl-line, .skl-card { animation: skl-shimmer 1.2s ease-in-out infinite alternate; }
+        @keyframes skl-shimmer { from { opacity: .55; } to { opacity: 1; } }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="skl" aria-hidden="true">
+        <div class="skl-bar"><div class="skl-tab"></div></div>
+        <div class="skl-main">
+          <div class="skl-side"><div class="skl-row"></div><div class="skl-row"></div><div class="skl-row"></div><div class="skl-row"></div></div>
+          <div class="skl-content"><div class="skl-line"></div><div class="skl-cards"><div class="skl-card"></div><div class="skl-card"></div><div class="skl-card"></div></div></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
