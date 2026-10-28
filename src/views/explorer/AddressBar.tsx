@@ -39,6 +39,21 @@ export default function AddressBar(props: AddressBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const isAddressShortcut =
+        ((event.ctrlKey || event.metaKey) && (event.key === "l" || event.key === "L")) ||
+        (event.altKey && (event.key === "d" || event.key === "D"));
+      if (!isAddressShortcut || props.editablePath === null) return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "TEXTAREA" || (target.tagName === "INPUT" && target !== inputRef.current))) return;
+      event.preventDefault();
+      setDraft(props.editablePath);
+      setEditing(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [props.editablePath]);
+  useEffect(() => {
     if (editing) inputRef.current?.select();
   }, [editing]);
 
