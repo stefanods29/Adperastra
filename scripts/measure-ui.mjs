@@ -43,14 +43,17 @@ async function connect() {
 const cdp = await connect();
 async function page(expression) {
   const result = await cdp.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
-  if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+  if (result.exceptionDetails) {
+    console.error("page error:", result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+    throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+  }
   return result.result.value;
 }
 
 await page(`window.__m = {
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
   async time(fn) { const t0 = performance.now(); fn(); await this.frame(); return performance.now() - t0; },
-  async timeUntil(fn, done) { const t0 = performance.now(); fn(); while (!done()) await new Promise((r) => requestAnimationFrame(r)); await this.frame(); return performance.now() - t0; },
+  async timeUntil(fn, done) { const t0 = performance.now(); fn(); while (!done()) { if (performance.now() - t0 > 20000) throw new Error('timeUntil timeout'); await new Promise((r) => requestAnimationFrame(r)); } await this.frame(); return performance.now() - t0; },
   async waitFor(pred, ms = 20000) { const t0 = performance.now(); while (!pred()) { if (performance.now() - t0 > ms) throw new Error("timeout"); await new Promise((r) => setTimeout(r, 20)); } },
   rows: () => [...document.querySelectorAll(".adp-filelist-scroll [role=option]")],
   list: () => document.querySelector(".adp-filelist-scroll"),
@@ -163,6 +166,77 @@ if (mode === "full") {
   const menuMs = await page(`Number(document.querySelector(".adp-explorer").dataset.lastMenuOpenMs ?? -1)`);
   console.log(`last instrumented menu open: ${menuMs} ms`);
 
+  // Step 03b: file operations, driven through the app's own commands
+  // with hard deadlines (a failure is recorded, never a hang). These
+  // mutate the demo folder and clean up after themselves with node fs.
+  const cleanup03b = () => {
+    for (const target of [
+      join(demo, "BenchCopy"),
+      join(demo, "Invoices", "notes.txt"),
+      join(demo, "Invoices", "notes (2).txt"),
+    ]) {
+      try { rmSync(target, { recursive: true, force: true }); } catch { /* best effort */ }
+    }
+  };
+  try {
+    cleanup03b();
+    await openFolder(demo);
+    const timed = async (name, expression) => {
+      try {
+        const value = await page(expression);
+        const result = { name, median_ms: typeof value === "number" ? Math.round(value * 10) / 10 : null, max_ms: typeof value === "number" ? Math.round(value * 10) / 10 : null, runs: 1, note: typeof value === "number" ? undefined : String(value) };
+        console.log(`${name}: ${result.median_ms ?? result.note}`);
+        results.push(result);
+      } catch (error) {
+        console.log(`${name}: FAILED ${error.message ?? error}`);
+        results.push({ name, median_ms: null, max_ms: null, runs: 1, note: String(error.message ?? error) });
+      }
+      await sleep(300);
+    };
+    // Instant tier: the New menu in the command bar.
+    await timed("command bar New menu", `window.__m.time(() => { window.__m.menuButton(0).click(); })`);
+    await page(`window.__m.closeMenus(); true`);
+    // Fast tier: a small copy job (all demo files) start-to-report.
+    await timed("copy demo files (job, start to report)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const fs = ${JSON.stringify(["Q4 Budget 2026.xlsx", "Meeting Notes.docx", "notes.txt"])};
+      const dest = ${JSON.stringify(join(demo, "BenchCopy"))};
+      const t0 = performance.now();
+      const id = "bench-copy";
+      await invoke("file_op_start", { request: { kind: "copy", sources: fs.map((f) => ${JSON.stringify(demo)} + "\\\\" + f), dest_dir: dest, conflict: "skip" }, requestId: id });
+      for (let i = 0; i < 200; i += 1) {
+        const poll = await invoke("file_op_poll", { requestId: id });
+        if (poll.done) return performance.now() - t0;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      return "timeout";
+    })()`);
+    // Recycle + restore round trip through the job commands.
+    await timed("recycle + restore one file (jobs)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const target = ${JSON.stringify(join(demo, "BenchCopy", "notes.txt"))};
+      const run = async (kind, sources) => {
+        const id = "bench-" + kind;
+        await invoke("file_op_start", { request: { kind, sources, dest_dir: null, conflict: "skip" }, requestId: id });
+        for (let i = 0; i < 200; i += 1) {
+          const poll = await invoke("file_op_poll", { requestId: id });
+          if (poll.done) return poll.report;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        throw new Error("timeout");
+      };
+      const t0 = performance.now();
+      await run("recycle", [target]);
+      await run("restore", [target]);
+      return performance.now() - t0;
+    })()`);
+    cleanup03b();
+  } catch (error) {
+    console.log(`step 03b measurements failed: ${error.message ?? error}`);
+  }
+
+
+
   // Classic menu: time until the helper's menu is on screen. The runner
   // closes it afterwards.
   await openFolder(demo);
@@ -183,62 +257,6 @@ if (mode === "full") {
   ]);
   await sleep(500);
 
-  // Step 03b: file operations. These mutate the demo folder, so they run
-  // once (not a median loop) and clean up after themselves with node fs.
-  const cleanup03b = () => {
-    for (const target of [
-      join(demo, "New folder"),
-      join(demo, "Invoices", "notes.txt"),
-      join(demo, "Invoices", "notes (2).txt"),
-      join(demo, "folder-100k"),
-    ]) {
-      try { rmSync(target, { recursive: true, force: true }); } catch { /* best effort */ }
-    }
-  };
-  cleanup03b();
-  await openFolder(demo);
-  const once = async (name, action, donePredicate) => {
-    const value = await page(`window.__m.timeUntil(() => { ${action} }, () => (${donePredicate}))`);
-    const result = { name, median_ms: Math.round(value * 10) / 10, max_ms: Math.round(value * 10) / 10, runs: 1 };
-    console.log(`${name}: ${result.median_ms} ms`);
-    results.push(result);
-    await sleep(300);
-  };
-  // Ctrl+Shift+N creates a folder and opens its rename box.
-  await once(
-    "new folder + rename box (Ctrl+Shift+N)",
-    `window.__m.key(window, { key: "N", ctrlKey: true, shiftKey: true })`,
-    `Boolean(document.querySelector(".adp-rename-input"))`,
-  );
-  await page(`document.querySelector(".adp-rename-input")?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); true`);
-  await sleep(400);
-  // Delete a file (Recycle Bin) and undo it from the toast.
-  await page(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))); true`);
-  await once(
-    "delete + undo toast",
-    `window.__m.key(window, { key: "Delete" })`,
-    `Boolean(document.querySelector(".adp-toast"))`,
-  );
-  await once(
-    "undo from toast (file returns)",
-    `[...document.querySelectorAll(".adp-toast button")].find((b) => b.querySelector("span"))?.click()`,
-    `window.__m.rows().some((r) => r.textContent.includes("notes.txt"))`,
-  );
-  // Pasting onto an existing name (from another folder) asks first.
-  await page(`window.__TAURI_INTERNALS__.invoke("clipboard_set_files", { paths: [${JSON.stringify(join(demo, "notes.txt"))}], cut: false }).then(() => true)`);
-  await page(`window.__m.click(window.__m.rows()[0]); true`);
-  await page(`(async () => { const row = [...window.__m.rows()].find((r) => r.textContent.includes("Invoices")); row.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); return true; })()`);
-  await sleep(700);
-  await page(`window.__m.key(window, { key: "v", ctrlKey: true }); true`);
-  await sleep(700);
-  await once(
-    "conflict dialog on paste",
-    `window.__m.key(window, { key: "v", ctrlKey: true })`,
-    `Boolean(document.querySelector(".adp-dialog"))`,
-  );
-  await page(`document.querySelectorAll(".adp-dialog-actions .adp-btn")[1]?.click(); true`);
-  await sleep(400);
-  cleanup03b();
 }
 
 if (outFile && results.length > 0) {
@@ -342,12 +360,21 @@ if (shotDir) {
   await sleep(300);
   await shot("10-recent-actions");
   await step(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
-  await page(`window.__TAURI_INTERNALS__.invoke("file_op_start", { request: { kind: "copy", sources: [${JSON.stringify(big)}], dest_dir: ${JSON.stringify(demo)}, conflict: "skip" }, requestId: "shot-job" }).then(() => true)`);
-  await sleep(1200);
-  await shot("11-jobs-panel");
-  await page(`window.__TAURI_INTERNALS__.invoke("file_op_cancel", { requestId: "shot-job" }).then(() => true).catch(() => true)`);
+  // A real UI copy of the 100k corpus folder into Archive 2025: long
+  // enough for the jobs panel to open over it; cancelled right after.
+  await openFolder(join(big, ".."), 4000);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("folder-100k")))`);
+  await step(`window.__m.key(window, { key: "c", ctrlKey: true })`);
+  await sleep(400);
+  await openFolder(demo);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Archive 2025")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
   await sleep(600);
-  try { rmSync(join(demo, "folder-100k"), { recursive: true, force: true }); } catch { /* best effort */ }
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(1600);
+  await shot("11-jobs-panel");
+  await step(`document.querySelector(".adp-jobs-panel .adp-job-row .adp-btn")?.click()`);
+  await sleep(800);
+  try { rmSync(join(demo, "Archive 2025", "folder-100k"), { recursive: true, force: true }); } catch { /* best effort */ }
   try { rmSync(join(demo, "Invoices", "notes.txt"), { force: true }); } catch { /* best effort */ }
 }
 

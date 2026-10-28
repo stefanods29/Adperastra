@@ -30,9 +30,12 @@ function baseName(path: string): string {
 
 function percent(progress: OpProgress | null): number | undefined {
   if (!progress) return undefined;
-  if (progress.bytes_total > 0) return Math.floor((progress.bytes_done / progress.bytes_total) * 100);
-  if (progress.items_total > 0) return Math.floor((progress.items_done / progress.items_total) * 100);
-  return undefined;
+  // Whichever measure is actually advancing: bytes say nothing for a
+  // job copying many empty files, items say nothing inside one big file.
+  const byBytes = progress.bytes_total > 0 ? (progress.bytes_done / progress.bytes_total) * 100 : 0;
+  const byItems = progress.items_total > 0 ? (progress.items_done / progress.items_total) * 100 : 0;
+  if (byBytes === 0 && byItems === 0 && progress.items_total === 0 && progress.bytes_total === 0) return undefined;
+  return Math.floor(Math.max(byBytes, byItems));
 }
 
 /** Background-job progress (contract 10): what's running, how far, and

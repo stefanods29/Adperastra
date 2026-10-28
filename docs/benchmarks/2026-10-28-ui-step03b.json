@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-28T21:25:42.369Z",
+  "step": "03b",
+  "build": "release (tauri build --no-bundle)",
+  "method": "Inside the packaged app's page: action dispatched, clock stopped at the next painted frame (two animation frames). Median of 7 runs.",
+  "language": "en",
+  "theme": "light",
+  "results": [
+    {
+      "name": "select item (click)",
+      "median_ms": 9.1,
+      "max_ms": 14.1,
+      "runs": 7
+    },
+    {
+      "name": "add item (Ctrl+click)",
+      "median_ms": 8,
+      "max_ms": 9.2,
+      "runs": 7
+    },
+    {
+      "name": "type-ahead jump",
+      "median_ms": 9,
+      "max_ms": 9.7,
+      "runs": 7
+    },
+    {
+      "name": "right-click menu on a file",
+      "median_ms": 6.7,
+      "max_ms": 10.5,
+      "runs": 7
+    },
+    {
+      "name": "right-click menu on empty space",
+      "median_ms": 5.8,
+      "max_ms": 10.6,
+      "runs": 7
+    },
+    {
+      "name": "command bar View menu",
+      "median_ms": 3.3,
+      "max_ms": 9.5,
+      "runs": 7
+    },
+    {
+      "name": "rename box (F2)",
+      "median_ms": 6.6,
+      "max_ms": 8.2,
+      "runs": 7
+    },
+    {
+      "name": "details pane filled (dates and attributes)",
+      "median_ms": 8.2,
+      "max_ms": 9.2,
+      "runs": 7
+    },
+    {
+      "name": "details pane hide/show (Alt+Shift+P)",
+      "median_ms": 5.8,
+      "max_ms": 8.9,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: select item (click)",
+      "median_ms": 6,
+      "max_ms": 11.2,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: arrow key move",
+      "median_ms": 10.9,
+      "max_ms": 12.4,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: select all (Ctrl+A)",
+      "median_ms": 30.2,
+      "max_ms": 34.8,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: right-click with all selected",
+      "median_ms": 6.8,
+      "max_ms": 14.5,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: Shift+click range",
+      "median_ms": 12.6,
+      "max_ms": 12.7,
+      "runs": 7
+    },
+    {
+      "name": "command bar New menu",
+      "median_ms": 3.4,
+      "max_ms": 3.4,
+      "runs": 1
+    },
+    {
+      "name": "copy demo files (job, start to report)",
+      "median_ms": 60.6,
+      "max_ms": 60.6,
+      "runs": 1
+    },
+    {
+      "name": "recycle + restore one file (jobs)",
+      "median_ms": 310.7,
+      "max_ms": 310.7,
+      "runs": 1
+    },
+    {
+      "name": "Show more options (classic menu, separate process)",
+      "median_ms": null,
+      "runs": 1,
+      "note": "error: moreOptions.failed"
+    }
+  ]
+}
