@@ -199,6 +199,11 @@ span.adp-col-size { display:flex; }
 .adp-explorer-body { display:flex; flex:1; min-height:0; }
 .adp-explorer-body > .adp-explorer-content { flex:1; }
 .adp-home .adp-filelist { flex:none; }
+/* Narrow layouts (Details pane open, small windows): dates and types give
+   up room before names do, instead of pushing sizes out of view. */
+.adp-col-date { flex:0 1 190px; min-width:120px; }
+.adp-col-type { flex:0 1 180px; min-width:90px; }
+.adp-home { overflow-x:hidden; }
 
 /* Command bar (Step 03a) */
 .adp-commandbar { display:flex; align-items:center; gap:5px; height:48px; flex:none; padding:0 var(--adp-space-5); background:var(--adp-color-surface-window); border-bottom:1px solid var(--adp-color-border-default); }
