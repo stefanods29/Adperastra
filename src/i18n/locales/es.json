@@ -1,0 +1,113 @@
+{
+  "tabs": {
+    "explorer": "Explorador",
+    "newTab": "Nueva pestaña",
+    "close": "Cerrar pestaña"
+  },
+  "window": {
+    "minimize": "Minimizar",
+    "maximize": "Maximizar",
+    "restore": "Restaurar",
+    "close": "Cerrar"
+  },
+  "explorer": {
+    "quickAccess": "Acceso rápido",
+    "recent": "Recientes",
+    "favorites": "Favoritos",
+    "pinned": "Anclados",
+    "nav": {
+      "home": "Inicio",
+      "gallery": "Galería",
+      "thisPc": "Este equipo",
+      "network": "Red"
+    },
+    "statusItems": "{count, plural, =0 {Sin elementos} one {# elemento} other {# elementos}}",
+    "statusSelected": "{count, plural, =0 {Ninguno seleccionado} one {# elemento seleccionado} other {# elementos seleccionados}}"
+  },
+  "help": {
+    "title": "Ayuda",
+    "searchPlaceholder": "Buscar en la ayuda",
+    "whatsNew": "Novedades",
+    "noResults": "No se encontraron páginas de ayuda.",
+    "selectPage": "Elige un tema para leer.",
+    "loadError": "No se pudo cargar esta página de ayuda."
+  },
+  "settings": {
+    "title": "Configuración",
+    "language": "Idioma",
+    "languageEnglish": "English",
+    "languageSpanish": "Español",
+    "languagePseudo": "Pseudolocalización (pruebas)",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeSystem": "Sistema",
+    "accent": "Acento",
+    "accentDesign": "Diseño",
+    "accentWindows": "Windows",
+    "accentCustom": "Personalizado",
+    "customColor": "Color personalizado",
+    "persistNote": "Los ajustes se guardan automáticamente y se aplican al instante."
+  },
+  "gallery": {
+    "title": "Galería",
+    "devBadge": "Desarrollo",
+    "buttons": "Botones",
+    "primaryAction": "Acción principal",
+    "defaultAction": "Acción predeterminada",
+    "subtleAction": "Acción sutil",
+    "splitAction": "Acción dividida",
+    "iconButtons": "Botones de icono",
+    "inputs": "Campos de texto",
+    "samplePlaceholder": "Escribe aquí",
+    "breadcrumb": "Ruta de navegación",
+    "listRows": "Filas de lista",
+    "navItems": "Elementos de navegación",
+    "menuDemo": "Menú",
+    "openMenu": "Abrir menú",
+    "dialogDemo": "Diálogo",
+    "openDialog": "Abrir diálogo",
+    "dialogBody": "Este diálogo se cierra con el botón de cerrar, Escape o un clic fuera.",
+    "tooltipDemo": "Información emergente",
+    "tooltipText": "Guarda tu trabajo",
+    "keyTipsDemo": "Teclas de acceso",
+    "keyTipsHint": "Mantén Alt para mostrar las teclas de acceso.",
+    "toastDemo": "Aviso",
+    "showToast": "Mostrar aviso",
+    "toastUndone": "Acción deshecha.",
+    "skeletons": "Marcadores de carga",
+    "progress": "Progreso",
+    "switches": "Interruptores",
+    "featureToggle": "Activar función",
+    "sliders": "Controles deslizantes",
+    "sliderLabel": "Control deslizante de ejemplo",
+    "dropdownDemo": "Lista desplegable",
+    "dropdownLabel": "Elige una opción",
+    "optionOne": "Primera opción",
+    "optionTwo": "Segunda opción",
+    "optionThree": "Tercera opción"
+  },
+  "components": {
+    "breadcrumb": "Ruta de navegación",
+    "clearSearch": "Borrar búsqueda",
+    "closeDialog": "Cerrar diálogo",
+    "loading": "Cargando",
+    "slider": "Control deslizante",
+    "switch": "Interruptor",
+    "progress": "Progreso"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "undo": "Deshacer",
+    "search": "Buscar",
+    "ready": "Listo",
+    "moreOptions": "Más opciones",
+    "dismiss": "Descartar",
+    "open": "Abrir"
+  },
+  "toast": {
+    "sampleUndo": "Acción de ejemplo completada."
+  }
+}

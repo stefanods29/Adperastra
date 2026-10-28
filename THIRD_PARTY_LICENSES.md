@@ -44,3 +44,14 @@ file lists everything that ships inside the app folder.
   MIT license.
 - **Source:** the Inter project (https://rsms.me/inter/), served via
   Google Fonts.
+
+## App shell libraries (Step 01b)
+
+- **Tauri 2** (MIT / Apache-2.0) - app shell; runs the UI in the system webview.
+- **React** (MIT) - user interface components.
+- **i18next + i18next-icu** (MIT) - translations with locale-aware messages.
+- **markdown-it** (MIT) + **DOMPurify** (Apache-2.0) - safe rendering of help pages.
+- **Lucide icons** (ISC) - icons in the interface.
+- **egui** (MIT / Apache-2.0) - setup window.
+- **minisign** (MIT) - manifest signatures.
+
