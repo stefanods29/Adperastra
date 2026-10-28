@@ -34,7 +34,7 @@ describe("format helpers", () => {
 });
 
 describe("mergeRecentItems", () => {
-  const item = (name: string, path: string, modified: number): RecentItem => ({ name, path, kind: "file", modified_unix: modified });
+  const item = (name: string, path: string, modified: number): RecentItem => ({ name, path, kind: "file", modified_unix: modified, size: 0 });
   it("puts our own visited folders first and dedupes by path", () => {
     const windows = [item("a.txt", "C:\\Docs\\a.txt", 50), item("docs", "C:\\Docs", 40)];
     const merged = mergeRecentItems(windows, ["C:\\Docs", "D:\\Projects"]);

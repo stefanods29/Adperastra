@@ -38,6 +38,7 @@ pub struct RecentItem {
     pub path: String,
     pub kind: ItemKind,
     pub modified_unix: u64,
+    pub size: u64,
 }
 
 pub fn drive_kind_name(code: u32) -> &'static str {
@@ -423,11 +424,13 @@ pub fn recent_items(limit: usize) -> Vec<RecentItem> {
                 .file_name()
                 .map(|n| n.to_string_lossy().into_owned())
                 .unwrap_or_else(|| target.to_string_lossy().into_owned());
+            let size = std::fs::metadata(&target).map(|m| if m.is_file() { m.len() } else { 0 }).unwrap_or(0);
             items.push(RecentItem {
                 name,
                 path: target.to_string_lossy().into_owned(),
                 kind,
                 modified_unix: entry.modified_unix,
+                size,
             });
         }
         dedup_sort_recent(items, limit)
@@ -461,6 +464,7 @@ mod tests {
             path: path.to_string(),
             kind: ItemKind::File,
             modified_unix: modified,
+            size: 0,
         }
     }
 

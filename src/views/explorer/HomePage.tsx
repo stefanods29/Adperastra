@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import HelpButton from "../../components/HelpButton";
 import type { KnownFolder, RecentItem } from "../../services/explorer";
-import { formatDate } from "../../services/format";
+import { formatDate, formatSize } from "../../services/format";
 import { fileExtension, fileTile } from "./fileTile";
 
 export interface HomePageProps {
@@ -33,6 +33,7 @@ export default function HomePage(props: HomePageProps) {
           <span className="adp-col-name">{t("explorer.columnName")}</span>
           <span className="adp-col-date">{t("explorer.columnModified")}</span>
           <span className="adp-col-type">{t("explorer.columnType")}</span>
+          <span className="adp-col-size">{t("explorer.columnSize")}</span>
         </div>
         {props.recent.map((item) => {
           const tile = fileTile(item.name, item.kind);
@@ -45,6 +46,7 @@ export default function HomePage(props: HomePageProps) {
               </span>
               <span className="adp-col-date">{formatDate(item.modified_unix, i18n.language)}</span>
               <span className="adp-col-type">{item.kind === "folder" ? t("explorer.folderType") : fileExtension(item.name) ? t("explorer.fileType", { ext: fileExtension(item.name).toUpperCase() }) : t("explorer.genericFile")}</span>
+              <span className="adp-col-size">{item.kind === "folder" ? "" : formatSize(item.size, i18n.language)}</span>
             </button>
           );
         })}

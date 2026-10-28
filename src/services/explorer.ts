@@ -59,6 +59,7 @@ export interface RecentItem {
   path: string;
   kind: ItemKind;
   modified_unix: number;
+  size: number;
 }
 
 export interface ExplorerStateData {
@@ -136,7 +137,7 @@ export function mergeRecentItems(windowsItems: RecentItem[], ownFolders: string[
     if (seen.has(key)) continue;
     seen.add(key);
     const name = displayPath(path).split("\\").filter(Boolean).pop() ?? path;
-    out.push({ name, path: displayPath(path), kind: "folder", modified_unix: 0 });
+    out.push({ name, path: displayPath(path), kind: "folder", modified_unix: 0, size: 0 });
   }
   for (const item of windowsItems) {
     const key = displayPath(item.path).toLowerCase();
