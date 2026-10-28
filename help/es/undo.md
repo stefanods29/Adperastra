@@ -12,7 +12,7 @@ Casi todo lo que cambias se puede deshacer: copiar, mover, cambiar el nombre, el
 
 - Las acciones se deshacen de la más reciente a la más antigua, como en otras apps: si copiaste un archivo y luego le cambiaste el nombre, primero se deshace el cambio de nombre y después la copia.
 - Al deshacer una eliminación, los elementos vuelven desde la Papelera. Si un elemento nuevo está usando el nombre del eliminado, ese elemento se queda en la Papelera y se omite.
-- Al deshacer una copia, las copias van a la Papelera, así que incluso deshacer se puede recuperar.
+- Al deshacer una copia, las copias van a la Papelera, así que incluso deshacer se puede recuperar. Si la copia reemplazó elementos, estos vuelven desde la Papelera. Si se combinó con una carpeta que ya existía, solo se quita lo que la copia agregó.
 - Los elementos eliminados permanentemente (Mayús+Supr) no se pueden deshacer. Siempre se te avisa antes.
 - La lista guarda las últimas 100 acciones de esta sesión.
 

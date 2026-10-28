@@ -30,10 +30,22 @@ export interface SkippedItem {
   reason: string;
 }
 
+/** An existing item a Replace sent to the Recycle Bin. */
+export interface ReplacedItem {
+  path: string;
+  /** Its own Recycle Bin entry, when it was found. */
+  bin_id: string | null;
+}
+
 export interface OpReport {
   completed: CompletedItem[];
   skipped: SkippedItem[];
   cancelled: boolean;
+  /** Items Replace sent to the Recycle Bin (Undo brings them back). */
+  replaced: ReplacedItem[];
+  /** Top-most items the operation made at the destination (only the new
+   * ones inside a merged folder); Undo removes or moves back just these. */
+  created: CompletedItem[];
 }
 
 interface FileOpPoll {
@@ -70,6 +82,8 @@ export async function startFileJob(
   options: {
     destDir?: string;
     conflict?: ConflictPolicy;
+    /** For "restore": the exact bin entries, one per source. */
+    binIds?: string[];
     onProgress?: (progress: OpProgress) => void;
   } = {},
 ): Promise<RunningJob> {
@@ -82,6 +96,7 @@ export async function startFileJob(
       sources,
       dest_dir: options.destDir ?? null,
       conflict: options.conflict ?? "skip",
+      bin_ids: options.binIds ?? null,
     },
     requestId,
   });
@@ -110,6 +125,14 @@ export async function startFileJob(
             reason: item.reason,
           })),
           cancelled: poll.report.cancelled || cancelled,
+          replaced: (poll.report.replaced ?? []).map((item) => ({
+            path: displayPath(item.path),
+            bin_id: item.bin_id,
+          })),
+          created: (poll.report.created ?? []).map((item) => ({
+            from: displayPath(item.from),
+            to: displayPath(item.to),
+          })),
         };
       }
       await sleep(100);
@@ -121,7 +144,12 @@ export async function startFileJob(
 export async function runFileJob(
   kind: FileOpKind,
   sources: string[],
-  options: { destDir?: string; conflict?: ConflictPolicy; onProgress?: (progress: OpProgress) => void } = {},
+  options: {
+    destDir?: string;
+    conflict?: ConflictPolicy;
+    binIds?: string[];
+    onProgress?: (progress: OpProgress) => void;
+  } = {},
 ): Promise<OpReport> {
   const job = await startFileJob(kind, sources, options);
   return job.completion;
@@ -164,7 +192,7 @@ export async function executeFileAction(action: FileAction): Promise<void> {
       await runFileJob("recycle", action.paths);
       return;
     case "restore":
-      await runFileJob("restore", action.originals);
+      await runFileJob("restore", action.originals, { binIds: action.binIds });
       return;
     case "sequence":
       for (const step of action.actions) {
@@ -228,11 +256,28 @@ export function entryForJob(
 ): UndoEntryInput | null {
   if (report.completed.length === 0) return null;
   const count = report.completed.length;
+  // Items a Replace sent to the Recycle Bin come back after the new ones
+  // are out of the way (exact bin entries, so never the new copy itself).
+  const replaced = report.replaced.filter((item): item is ReplacedItem & { bin_id: string } => !!item.bin_id);
+  const withReplaced = (first: FileAction): FileAction =>
+    replaced.length === 0
+      ? first
+      : {
+          type: "sequence",
+          actions: [
+            first,
+            {
+              type: "restore",
+              originals: replaced.map((item) => item.path),
+              binIds: replaced.map((item) => item.bin_id),
+            },
+          ],
+        };
   if (kind === "copy" && destDir) {
     return {
       labelKey: "toast.copied",
       labelArgs: { count },
-      undo: { type: "recycle", paths: report.completed.map((item) => item.to) },
+      undo: withReplaced({ type: "recycle", paths: report.created.map((item) => item.to) }),
       redo: {
         type: "copy",
         sources: report.completed.map((item) => item.from),
@@ -245,10 +290,10 @@ export function entryForJob(
     return {
       labelKey: "toast.moved",
       labelArgs: { count },
-      undo: {
+      undo: withReplaced({
         type: "movePairs",
-        pairs: report.completed.map((item) => ({ from: item.to, to: item.from })),
-      },
+        pairs: report.created.map((item) => ({ from: item.to, to: item.from })),
+      }),
       redo: {
         type: "movePairs",
         pairs: report.completed.map((item) => ({ from: item.from, to: item.to })),

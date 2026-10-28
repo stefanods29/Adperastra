@@ -12,7 +12,7 @@ Almost everything you change can be undone: copying, moving, renaming, deleting,
 
 - Actions undo newest first, like other apps: if you copied a file and then renamed it, the rename is undone before the copy.
 - Undoing a delete puts the items back from the Recycle Bin. If a new item is using the deleted item's name, that item stays in the Recycle Bin and is skipped.
-- Undoing a copy sends the copies to the Recycle Bin, so even an undo can be recovered.
+- Undoing a copy sends the copies to the Recycle Bin, so even an undo can be recovered. If the copy replaced items, they come back from the Recycle Bin. If it was merged into a folder that already existed, only what the copy added is removed.
 - Deleted-permanently items (Shift+Delete) cannot be undone. You are always warned before that happens.
 - The list holds the last 100 actions from this session.
 

@@ -12,8 +12,10 @@ export type FileAction =
   | { type: "copy"; sources: string[]; destDir: string; conflict: "replace" | "skip" | "keepBoth" }
   /** Send items to the Recycle Bin (undo of copy/new). */
   | { type: "recycle"; paths: string[] }
-  /** Restore items from the Recycle Bin to these original paths. */
-  | { type: "restore"; originals: string[] }
+  /** Restore items from the Recycle Bin to these original paths. With
+   * `binIds` (one per original), restore exactly those bin entries: the
+   * items a Replace sent there, never a newer item with the same path. */
+  | { type: "restore"; originals: string[]; binIds?: string[] }
   /** Run actions one after another (a grouped entry). */
   | { type: "sequence"; actions: FileAction[] };
 

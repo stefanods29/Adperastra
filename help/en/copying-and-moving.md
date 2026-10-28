@@ -13,11 +13,11 @@ Copy, move, and rename files and folders with the command bar, the right-click m
 
 If an item with the same name is already in the folder, you are asked what to do:
 
-- **Replace** uses your item instead of the one that is there.
+- **Replace** uses your item instead of the one that is there. The item that was there goes to the Recycle Bin, so Undo (Ctrl+Z) brings it back. Two folders with the same name are merged: your files are added to the existing folder.
 - **Skip** leaves both alone.
 - **Keep both** keeps the existing item and adds yours with a number, like "report (2)".
 
-Tick **Do this for all conflicts** to use the same answer for the whole operation. Nothing is ever replaced without asking.
+Tick **Do this for all conflicts** to use the same answer for the whole operation. Nothing is ever replaced without asking. A file and a folder with the same name never replace each other; that item is skipped and listed when the operation ends.
 
 ## New items
 

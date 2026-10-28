@@ -2,7 +2,8 @@
 //! permanent delete. Copying is chunked so progress and Cancel work on
 //! files of any size; a cancelled or failed copy never leaves a partial
 //! file behind, and nothing is ever overwritten unless the caller chose
-//! the `Replace` policy (the UI asks the user first).
+//! the `Replace` policy (the UI asks the user first). Even then the old
+//! item goes to the Recycle Bin, so Undo can bring it back.
 //!
 //! Recursive walks never follow a directory link into a folder that is
 //! already being copied, so link loops terminate with a skipped item
@@ -55,11 +56,28 @@ pub struct SkippedItem {
     pub reason: String,
 }
 
+/// An existing item that `Replace` sent to the Recycle Bin before the new
+/// one took its place, so Undo can bring it back.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReplacedItem {
+    pub path: PathBuf,
+    /// The item's own entry in the Recycle Bin (`$R...` path), when found.
+    pub bin_id: Option<String>,
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OpReport {
     pub completed: Vec<CompletedItem>,
     pub skipped: Vec<SkippedItem>,
     pub cancelled: bool,
+    #[serde(default)]
+    pub replaced: Vec<ReplacedItem>,
+    /// The top-most items this operation made at the destination, each
+    /// with the source it came from. Usually the same as `completed`; for
+    /// a merge into an existing folder it lists only the new items inside
+    /// it, so Undo never touches what was already there.
+    #[serde(default)]
+    pub created: Vec<CompletedItem>,
 }
 
 /// Short, stable reason for a failed operation (`errors.ops.<reason>`).
@@ -356,6 +374,8 @@ struct Runner<'a> {
     bytes_done: u64,
     current: String,
     cancelled: bool,
+    /// Items `Replace` sent to the Recycle Bin, in order.
+    replaced: Vec<PathBuf>,
 }
 
 impl Runner<'_> {
@@ -472,14 +492,35 @@ impl Runner<'_> {
                 let _ = fs::set_permissions(&partial, metadata.permissions());
             }
         }
-        // Renaming onto a file replaces it in one step (MoveFileEx with
-        // MOVEFILE_REPLACE_EXISTING on Windows).
-        let result = result.and_then(|()| fs::rename(&partial, to).map_err(FsError::from));
+        // The complete copy takes the old file's place only after the old
+        // file is safely in the Recycle Bin (Undo restores it).
+        let result = result
+            .and_then(|()| self.recycle_replaced(to))
+            .and_then(|()| fs::rename(&partial, to).map_err(FsError::from));
         if let Err(error) = result {
             let _ = remove_file_forced(&partial);
             self.bytes_done = started_at;
             return Err(error);
         }
+        Ok(())
+    }
+
+    /// Send an item about to be replaced to the Recycle Bin and remember
+    /// it. Nothing to do when the target does not exist.
+    fn recycle_replaced(&mut self, target: &Path) -> std::result::Result<(), FsError> {
+        if !exists(target) {
+            return Ok(());
+        }
+        trash::delete(target).map_err(|error| {
+            let code = recycle_reason(&error);
+            let kind = match code.as_str() {
+                "access_denied" => std::io::ErrorKind::PermissionDenied,
+                "not_found" => std::io::ErrorKind::NotFound,
+                _ => std::io::ErrorKind::Other,
+            };
+            FsError::Io(kind.into())
+        })?;
+        self.replaced.push(target.to_path_buf());
         Ok(())
     }
 
@@ -492,6 +533,9 @@ impl Runner<'_> {
     ) -> Vec<PathBuf> {
         // Plan entries copied successfully (files and folders), for moves.
         let mut copied: Vec<PathBuf> = Vec::new();
+        // Folders this copy created; anything inside them is new too.
+        let mut new_dirs: HashSet<String> = HashSet::new();
+        let key = |path: &Path| path.to_string_lossy().to_lowercase();
         let name = item_name(source).unwrap_or_default();
         for entry in &plan.entries {
             if self.cancelled() {
@@ -505,11 +549,26 @@ impl Runner<'_> {
             } else {
                 target.join(suffix)
             };
+            let inside_new = dest
+                .parent()
+                .is_some_and(|parent| new_dirs.contains(&key(parent)));
             self.current = entry.from.to_string_lossy().into_owned();
             self.items_done += 1;
             if entry.is_dir {
+                let existed = exists(&dest);
                 match fs::create_dir_all(&dest) {
-                    Ok(()) => copied.push(entry.from.clone()),
+                    Ok(()) => {
+                        copied.push(entry.from.clone());
+                        if !existed {
+                            new_dirs.insert(key(&dest));
+                            if !inside_new {
+                                report.created.push(CompletedItem {
+                                    from: entry.from.clone(),
+                                    to: dest.clone(),
+                                });
+                            }
+                        }
+                    }
                     Err(error) => report.skipped.push(SkippedItem {
                         path: entry.from.clone(),
                         reason: reason(&FsError::from(error)),
@@ -522,19 +581,17 @@ impl Runner<'_> {
                     continue;
                 }
                 // A file conflict inside a merged folder follows the policy.
+                let mut written = dest.clone();
                 if exists(&dest) && dest != entry.from {
                     match self.policy {
                         ConflictPolicy::Skip => {
-                            report.skipped.push(SkippedItem {
-                                path: entry.from.clone(),
-                                reason: "exists".to_string(),
-                            });
+                            skip(report, &entry.from, "exists");
                             self.bytes_done += entry.size;
                             continue;
                         }
                         ConflictPolicy::KeepBoth => {
                             // Numbered name inside the merged folder.
-                            let renamed = unique_destination(
+                            written = unique_destination(
                                 dest.parent().unwrap_or(target),
                                 &entry
                                     .from
@@ -542,26 +599,22 @@ impl Runner<'_> {
                                     .map(|n| n.to_string_lossy().into_owned())
                                     .unwrap_or_default(),
                             );
-                            match self.copy_file(&entry.from, &renamed) {
-                                Ok(()) => copied.push(entry.from.clone()),
-                                Err(FsError::Cancelled) => break,
-                                Err(error) => report.skipped.push(SkippedItem {
-                                    path: entry.from.clone(),
-                                    reason: reason(&error),
-                                }),
-                            }
-                            continue;
                         }
                         ConflictPolicy::Replace => {}
                     }
                 }
-                match self.copy_file(&entry.from, &dest) {
-                    Ok(()) => copied.push(entry.from.clone()),
+                match self.copy_file(&entry.from, &written) {
+                    Ok(()) => {
+                        copied.push(entry.from.clone());
+                        if !inside_new {
+                            report.created.push(CompletedItem {
+                                from: entry.from.clone(),
+                                to: written,
+                            });
+                        }
+                    }
                     Err(FsError::Cancelled) => break,
-                    Err(error) => report.skipped.push(SkippedItem {
-                        path: entry.from.clone(),
-                        reason: reason(&error),
-                    }),
+                    Err(error) => skip(report, &entry.from, &reason(&error)),
                 }
             }
             self.report();
@@ -698,6 +751,7 @@ pub fn copy_items(
         bytes_done: 0,
         current: String::new(),
         cancelled: false,
+        replaced: Vec::new(),
     };
     for (source, plan) in sources.iter().zip(plans.iter()) {
         if runner.cancelled() {
@@ -729,6 +783,7 @@ pub fn copy_items(
         runner.report();
     }
     report.cancelled = runner.cancelled;
+    report.replaced = find_in_bin(&runner.replaced);
     Ok(report)
 }
 
@@ -765,6 +820,7 @@ pub fn move_items(
         bytes_done: 0,
         current: String::new(),
         cancelled: false,
+        replaced: Vec::new(),
     };
     for (source, plan) in sources.iter().zip(plans.iter()) {
         if runner.cancelled() {
@@ -789,12 +845,23 @@ pub fn move_items(
             runner.items_done += plan.entries.len();
             continue;
         };
-        // Fast path: a plain rename (same volume). Renaming a file onto a
-        // file the user chose to replace swaps it in one step; a folder
-        // that already exists is merged below instead.
+        // Fast path: a plain rename (same volume). A file the user chose to
+        // replace goes to the Recycle Bin first; a folder that already
+        // exists is merged below instead.
+        if !is_real_dir(&target) {
+            if let Err(error) = runner.recycle_replaced(&target) {
+                skip(&mut report, source, &reason(&error));
+                runner.items_done += plan.entries.len();
+                continue;
+            }
+        }
         if !is_real_dir(&target) && fs::rename(source, &target).is_ok() {
             runner.bytes_done += plan.total_bytes;
             runner.items_done += plan.entries.len();
+            report.created.push(CompletedItem {
+                from: source.clone(),
+                to: target.clone(),
+            });
             report.completed.push(CompletedItem {
                 from: source.clone(),
                 to: target,
@@ -844,6 +911,7 @@ pub fn move_items(
         runner.report();
     }
     report.cancelled = runner.cancelled;
+    report.replaced = find_in_bin(&runner.replaced);
     Ok(report)
 }
 
@@ -904,6 +972,71 @@ fn recycle_reason(error: &trash::Error) -> String {
     } else {
         "other".to_string()
     }
+}
+
+/// Look up the Recycle Bin entries of items just sent there (newest
+/// match per path), listing the bin once.
+fn find_in_bin(paths: &[PathBuf]) -> Vec<ReplacedItem> {
+    if paths.is_empty() {
+        return Vec::new();
+    }
+    let bin = trash::os_limited::list().unwrap_or_default();
+    paths
+        .iter()
+        .map(|path| {
+            let wanted = path.to_string_lossy();
+            let bin_id = bin
+                .iter()
+                .filter(|item| {
+                    bin_original_path(item)
+                        .is_some_and(|full| full.to_string_lossy().eq_ignore_ascii_case(&wanted))
+                })
+                .max_by_key(|item| item.time_deleted)
+                .map(|item| item.id.to_string_lossy().into_owned());
+            ReplacedItem {
+                path: path.clone(),
+                bin_id,
+            }
+        })
+        .collect()
+}
+
+/// Restore exact Recycle Bin entries (from `OpReport::replaced`) to their
+/// original paths. Never overwrites; an entry no longer in the bin is
+/// skipped as `not_found`.
+pub fn restore_bin_items(items: &[ReplacedItem]) -> Result<OpReport> {
+    let mut report = OpReport::default();
+    let bin = match trash::os_limited::list() {
+        Ok(bin) => bin,
+        Err(error) => {
+            for item in items {
+                skip(&mut report, &item.path, &recycle_reason(&error));
+            }
+            return Ok(report);
+        }
+    };
+    for wanted in items {
+        if exists(&wanted.path) {
+            skip(&mut report, &wanted.path, "exists");
+            continue;
+        }
+        let found = wanted.bin_id.as_ref().and_then(|id| {
+            bin.iter()
+                .find(|item| item.id.to_string_lossy().eq_ignore_ascii_case(id))
+        });
+        let Some(item) = found else {
+            skip(&mut report, &wanted.path, "not_found");
+            continue;
+        };
+        match restore_one(item, &wanted.path) {
+            Ok(()) => report.completed.push(CompletedItem {
+                from: wanted.path.clone(),
+                to: wanted.path.clone(),
+            }),
+            Err(code) => skip(&mut report, &wanted.path, &code),
+        }
+    }
+    Ok(report)
 }
 
 /// Restore previously recycled items to their original locations. Never

@@ -13,11 +13,11 @@ Copia, mueve y cambia el nombre de archivos y carpetas con la barra de comandos,
 
 Si ya hay un elemento con el mismo nombre en la carpeta, se te pregunta qué hacer:
 
-- **Reemplazar** usa tu elemento en lugar del que está ahí.
+- **Reemplazar** usa tu elemento en lugar del que está ahí. El elemento que estaba ahí va a la Papelera de reciclaje, así que Deshacer (Ctrl+Z) lo recupera. Dos carpetas con el mismo nombre se combinan: tus archivos se agregan a la carpeta existente.
 - **Omitir** deja ambos como están.
 - **Conservar ambos** mantiene el elemento existente y agrega el tuyo con un número, como «report (2)».
 
-Marca **Hacer esto para todos los conflictos** para usar la misma respuesta en toda la operación. Nada se reemplaza nunca sin preguntar.
+Marca **Hacer esto para todos los conflictos** para usar la misma respuesta en toda la operación. Nada se reemplaza nunca sin preguntar. Un archivo y una carpeta con el mismo nombre nunca se reemplazan entre sí; ese elemento se omite y aparece en la lista al terminar la operación.
 
 ## Elementos nuevos
 

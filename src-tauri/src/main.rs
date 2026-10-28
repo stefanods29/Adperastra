@@ -1415,6 +1415,33 @@ pub struct FileOpRequest {
     pub dest_dir: Option<String>,
     #[serde(default = "default_conflict_policy")]
     pub conflict: String,
+    /// For `restore`: the exact Recycle Bin entries (one per source) that
+    /// a Replace sent there, so Undo restores those and not a newer item
+    /// with the same original path.
+    #[serde(default)]
+    pub bin_ids: Option<Vec<String>>,
+}
+
+/// Validate Recycle Bin entry ids sent by the UI: one per source, each an
+/// absolute `$R...` path inside a `$Recycle.Bin` folder.
+fn validate_bin_ids(ids: &[String], sources: &[PathBuf]) -> Result<(), String> {
+    if ids.len() != sources.len() {
+        return Err("ops.invalid_request".to_string());
+    }
+    for id in ids {
+        validate_absolute_path(id).map_err(|_| "ops.invalid_request".to_string())?;
+        let path = Path::new(id);
+        let in_bin = path
+            .components()
+            .any(|c| c.as_os_str().eq_ignore_ascii_case("$Recycle.Bin"));
+        let data_name = path
+            .file_name()
+            .is_some_and(|n| n.to_string_lossy().starts_with("$R"));
+        if !in_bin || !data_name {
+            return Err("ops.invalid_request".to_string());
+        }
+    }
+    Ok(())
 }
 
 fn default_conflict_policy() -> String {
@@ -1472,6 +1499,7 @@ fn file_op_start(
         sources,
         dest_dir,
         conflict,
+        bin_ids,
     } = request;
     if !matches!(
         kind.as_str(),
@@ -1480,6 +1508,23 @@ fn file_op_start(
         return Err("ops.invalid_request".to_string());
     }
     let sources = validate_op_sources(&sources)?;
+    let replaced: Option<Vec<fs_service::ReplacedItem>> = match (kind.as_str(), bin_ids) {
+        ("restore", Some(ids)) => {
+            validate_bin_ids(&ids, &sources)?;
+            Some(
+                sources
+                    .iter()
+                    .zip(ids)
+                    .map(|(path, id)| fs_service::ReplacedItem {
+                        path: path.clone(),
+                        bin_id: Some(id),
+                    })
+                    .collect(),
+            )
+        }
+        (_, Some(_)) => return Err("ops.invalid_request".to_string()),
+        (_, None) => None,
+    };
     let policy = parse_conflict_policy(&conflict).map_err(|_| "ops.invalid_request".to_string())?;
     let dest = match (kind.as_str(), dest_dir) {
         ("copy" | "move", Some(dest)) => {
@@ -1538,7 +1583,10 @@ fn file_op_start(
                 &mut |p| set_progress(p),
             ),
             "recycle" => fs_service::recycle_items(&sources, &token, &mut |p| set_progress(p)),
-            "restore" => fs_service::restore_items(&sources),
+            "restore" => match &replaced {
+                Some(items) => fs_service::restore_bin_items(items),
+                None => fs_service::restore_items(&sources),
+            },
             _ => fs_service::delete_permanently(&sources, &token, &mut |p| set_progress(p)),
         };
         let (report, error) = match result {
@@ -2371,6 +2419,26 @@ mod tests {
         assert!(validate_op_sources(&[]).is_err());
         assert!(validate_op_sources(&[r"relative\a.txt".to_string()]).is_err());
         assert!(validate_op_sources(&[r"C:\a\..\b.txt".to_string()]).is_err());
+    }
+
+    #[test]
+    fn bin_ids_must_be_recycle_bin_entries_one_per_source() {
+        let sources = vec![PathBuf::from(r"C:\docs\a.txt")];
+        let good = vec![r"C:\$Recycle.Bin\S-1-5-21-1\$RABC123.txt".to_string()];
+        assert!(validate_bin_ids(&good, &sources).is_ok());
+        // Wrong count, outside the bin, the $I record, or a relative path.
+        assert!(validate_bin_ids(&[], &sources).is_err());
+        assert!(validate_bin_ids(&[r"C:\docs\$Rnot-bin.txt".to_string()], &sources).is_err());
+        assert!(
+            validate_bin_ids(&[r"C:\$Recycle.Bin\S-1\$IABC123.txt".to_string()], &sources).is_err()
+        );
+        assert!(validate_bin_ids(&[r"$Recycle.Bin\$RABC.txt".to_string()], &sources).is_err());
+        // Only restore takes bin ids; the request field is optional.
+        let request: FileOpRequest = serde_json::from_value(serde_json::json!({
+            "kind": "restore", "sources": ["C:\\a.txt"]
+        }))
+        .unwrap();
+        assert!(request.bin_ids.is_none());
     }
 
     #[test]

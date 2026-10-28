@@ -3,8 +3,8 @@
 
 use fs_service::{
     check_conflicts, copy_items, create_item, delete_permanently, move_items,
-    new_cancellation_token, recycle_items, restore_items, unique_destination, ConflictPolicy,
-    CreateKind,
+    new_cancellation_token, recycle_items, restore_bin_items, restore_items, unique_destination,
+    ConflictPolicy, CreateKind, OpReport,
 };
 use std::fs;
 use std::path::PathBuf;
@@ -403,6 +403,115 @@ fn a_replace_copy_swaps_in_the_new_file_and_leaves_no_partial_file() {
         .map(|e| e.file_name())
         .collect();
     assert_eq!(names.len(), 1, "{names:?}");
+    purge_replaced(&report);
+}
+
+/// Put back a Replace's old files and delete them for good, so a test
+/// leaves the Recycle Bin as it found it.
+fn purge_replaced(report: &OpReport) {
+    for item in &report.replaced {
+        let _ = fs::remove_file(&item.path);
+    }
+    if restore_bin_items(&report.replaced).is_ok() {
+        let paths: Vec<PathBuf> = report.replaced.iter().map(|i| i.path.clone()).collect();
+        let _ = delete_permanently(&paths, &new_cancellation_token(), &mut no_progress);
+    }
+}
+
+#[cfg(windows)]
+#[test]
+fn undoing_a_replace_brings_back_the_replaced_file() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    let target = dst.path().join("note.txt");
+    fs::write(src.path().join("note.txt"), b"new").unwrap();
+    fs::write(&target, b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("note.txt")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.replaced.len(), 1, "{report:?}");
+    assert!(report.replaced[0].bin_id.is_some(), "{report:?}");
+    // Undo: the copy goes to the bin (same original path as the replaced
+    // file), then the exact replaced entry comes back - not the copy.
+    let recycled = recycle_items(
+        std::slice::from_ref(&target),
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(recycled.completed.len(), 1);
+    let restored = restore_bin_items(&report.replaced).unwrap();
+    assert_eq!(restored.completed.len(), 1, "{restored:?}");
+    assert_eq!(fs::read(&target).unwrap(), b"old");
+    // Leave the bin as we found it (the recycled copy).
+    fs::remove_file(&target).unwrap();
+    let _ = delete_permanently_from_bin(&target);
+}
+
+#[cfg(windows)]
+#[test]
+fn a_replacing_move_sends_the_old_file_to_the_bin() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("m.txt"), b"new").unwrap();
+    fs::write(dst.path().join("m.txt"), b"old").unwrap();
+    let report = move_items(
+        &[src.path().join("m.txt")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1);
+    assert_eq!(fs::read(dst.path().join("m.txt")).unwrap(), b"new");
+    assert_eq!(report.replaced.len(), 1);
+    purge_replaced(&report);
+}
+
+#[test]
+fn a_merge_reports_only_the_new_items_so_undo_keeps_what_was_there() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::create_dir_all(src.path().join("A/new-sub")).unwrap();
+    fs::write(src.path().join("A/new-sub/x.txt"), b"x").unwrap();
+    fs::write(src.path().join("A/new.txt"), b"n").unwrap();
+    fs::write(src.path().join("A/same.txt"), b"s").unwrap();
+    fs::create_dir(dst.path().join("A")).unwrap();
+    fs::write(dst.path().join("A/mine.txt"), b"keep").unwrap();
+    fs::write(dst.path().join("A/same.txt"), b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("A")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1);
+    let mut created: Vec<String> = report
+        .created
+        .iter()
+        .map(|item| {
+            item.to
+                .strip_prefix(dst.path())
+                .unwrap()
+                .to_string_lossy()
+                .replace('\\', "/")
+        })
+        .collect();
+    created.sort();
+    // The existing folder and mine.txt are not "created"; new-sub covers
+    // x.txt; the replaced same.txt went to the bin.
+    assert_eq!(created, ["A/new-sub", "A/new.txt", "A/same.txt"]);
+    assert_eq!(fs::read(dst.path().join("A/mine.txt")).unwrap(), b"keep");
+    assert_eq!(report.replaced.len(), 1);
+    purge_replaced(&report);
 }
 
 #[test]
