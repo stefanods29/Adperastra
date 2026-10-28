@@ -154,7 +154,10 @@
     "accentWindows": "Windows",
     "accentCustom": "Custom",
     "customColor": "Custom color",
-    "persistNote": "Settings are saved automatically and apply right away."
+    "persistNote": "Settings are saved automatically and apply right away.",
+    "pastedImages": "Pasted images",
+    "formatPng": "PNG (sharper, larger files)",
+    "formatJpg": "JPG (smaller files)"
   },
   "gallery": {
     "title": "Gallery",
@@ -216,7 +219,18 @@
   },
   "toast": {
     "sampleUndo": "Sample action completed.",
-    "pathsCopied": "{count, plural, one {Path copied} other {# paths copied}}"
+    "pathsCopied": "{count, plural, one {Path copied} other {# paths copied}}",
+    "copied": "{count, plural, one {# item copied} other {# items copied}}",
+    "moved": "{count, plural, one {# item moved} other {# items moved}}",
+    "recycled": "{count, plural, one {# item moved to the Recycle Bin} other {# items moved to the Recycle Bin}}",
+    "deletedPermanently": "{count, plural, one {# item deleted forever} other {# items deleted forever}}",
+    "renamed": "Renamed to {name}",
+    "created": "Created {name}",
+    "pasted": "Pasted as {name}",
+    "actionUndone": "Action undone.",
+    "actionRedone": "Action redone.",
+    "nothingToPaste": "There's nothing to paste here.",
+    "undoNewerFirst": "Undo the newer actions first (Recent actions shows the order)."
   },
   "commands": {
     "back": "Back",
@@ -270,7 +284,12 @@
     "showMoreOptions": "Show more options",
     "more": "See more",
     "details": "Details",
-    "comingLater": "{label} (coming in a later update)"
+    "comingLater": "{label} (coming in a later update)",
+    "pasteAsFile": "Paste as file",
+    "deletePermanently": "Delete permanently",
+    "undo": "Undo",
+    "redo": "Redo",
+    "recentActions": "Recent actions"
   },
   "errors": {
     "rename": {
@@ -315,6 +334,33 @@
     },
     "copyPath": {
       "other": "The path couldn't be copied."
+    },
+    "ops": {
+      "exists": "There's already an item with this name here.",
+      "access_denied": "You don't have permission to change this item.",
+      "in_use": "This item is open in another app. Close it and try again.",
+      "not_found": "This item no longer exists.",
+      "too_long": "The path would be too long.",
+      "invalid_name": "Windows doesn't allow this name.",
+      "invalid_request": "That operation couldn't be started.",
+      "cancelled": "The operation was cancelled.",
+      "link_loop": "A folder link would loop, so it was skipped.",
+      "into_itself": "A folder can't be copied or moved into itself.",
+      "too_large": "That is too large for this operation.",
+      "other": "The operation couldn't finish."
+    },
+    "clipboard": {
+      "busy": "The clipboard is busy. Try again in a moment.",
+      "failed": "The clipboard couldn't be used.",
+      "other": "The clipboard couldn't be used."
+    },
+    "image": {
+      "failed": "The clipboard image couldn't be saved.",
+      "other": "The clipboard image couldn't be saved."
+    },
+    "shortcut": {
+      "failed": "The shortcut couldn't be created.",
+      "other": "The shortcut couldn't be created."
     }
   },
   "keys": {
@@ -328,5 +374,41 @@
     "up": "Up",
     "down": "Down",
     "space": "Space"
+  },
+  "files": {
+    "newFolderName": "New folder",
+    "newTextFileName": "New text document.txt",
+    "pastedImageName": "Pasted image {stamp}",
+    "pastedTextName": "Pasted text {stamp}",
+    "shortcutName": "{name} - Shortcut"
+  },
+  "jobs": {
+    "title": "File operations",
+    "copying": "{count, plural, one {Copying # item} other {Copying # items}}",
+    "moving": "{count, plural, one {Moving # item} other {Moving # items}}",
+    "recycling": "{count, plural, one {Deleting # item} other {Deleting # items}}",
+    "deletingPermanently": "{count, plural, one {Deleting # item forever} other {Deleting # items forever}}",
+    "restoring": "{count, plural, one {Restoring # item} other {Restoring # items}}",
+    "skippedItems": "{count, plural, one {# item was skipped} other {# items were skipped}}",
+    "done": "Done",
+    "cancelled": "Cancelled"
+  },
+  "dialogs": {
+    "conflictTitle": "An item with this name is already here",
+    "conflictBody": "{name} already exists in this folder.",
+    "conflictMore": "{count, plural, one {# more name conflicts} other {# more names conflict}}",
+    "replace": "Replace",
+    "skip": "Skip",
+    "keepBoth": "Keep both",
+    "forAll": "Do this for all conflicts",
+    "permanentTitle": "Delete permanently?",
+    "permanentBody": "{count, plural, one {This item will be deleted forever. You cannot undo this.} other {# items will be deleted forever. You cannot undo this.}}",
+    "recentTitle": "Recent actions",
+    "recentEmpty": "Nothing here yet. Actions you can undo will appear in this list."
+  },
+  "drag": {
+    "copyTo": "Copy to {name}",
+    "moveTo": "Move to {name}",
+    "shortcutTo": "Create shortcut in {name}"
   }
 }

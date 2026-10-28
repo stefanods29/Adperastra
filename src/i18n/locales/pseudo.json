@@ -154,7 +154,10 @@
     "languageSpanish": "[ËËšpääñøøl ëxträä løøñg]",
     "languagePseudo": "[Pšëëüüdøø-løøçäälëë (tëëštïïñg) ëxträä løøñg]",
     "customColor": "[Cüüštøøm çøøløør ëxträä løøñg]",
-    "persistNote": "[Sëëttïïñgš äärëë šäävëëd ääüütøømäätïïçäällÿ ääñd ääpplÿ rïïght ääwääÿ. ëxträä løøñg]"
+    "persistNote": "[Sëëttïïñgš äärëë šäävëëd ääüütøømäätïïçäällÿ ääñd ääpplÿ rïïght ääwääÿ. ëxträä løøñg]",
+    "pastedImages": "[Päästëëd ïïmäägëës Päästëëd ïïmäägëës]",
+    "formatPng": "[PÑG (shäärpëër, läärgëër fïïlëës) PÑG (shäärpëër, läärgëër fïïlëës)]",
+    "formatJpg": "[JPG (smäällëër fïïlëës) JPG (smäällëër fïïlëës)]"
   },
   "gallery": {
     "title": "[Gäällëërÿÿ Gäällëërÿÿ]",
@@ -207,7 +210,18 @@
   },
   "toast": {
     "sampleUndo": "[Sääämplëë ääçtïïøøñ çøømplëëtëëd ëëxträä løøñg.]",
-    "pathsCopied": "[{count, plural, one {Päth cøpïëd} other {# päths cøpïëd}} ëxträ]"
+    "pathsCopied": "[{count, plural, one {Päth cøpïëd} other {# päths cøpïëd}} ëxträ]",
+    "copied": "{count, plural, one {[# ïïtëëm cøøpïïëëd]} øøthëër {[# ïïtëëms cøøpïïëëd]}}",
+    "moved": "{count, plural, one {[# ïïtëëm møøvëëd]} øøthëër {[# ïïtëëms møøvëëd]}}",
+    "recycled": "{count, plural, one {[# ïïtëëm møøvëëd tøø thëë Rëëcyclëë Bïïñ]} øøthëër {[# ïïtëëms møøvëëd tøø thëë Rëëcyclëë Bïïñ]}}",
+    "deletedPermanently": "{count, plural, one {[# ïïtëëm dëëlëëtëëd føørëëvëër]} øøthëër {[# ïïtëëms dëëlëëtëëd føørëëvëër]}}",
+    "renamed": "Rëëñäämëëd tøø {name}",
+    "created": "Crëëäätëëd {name}",
+    "pasted": "Päästëëd ääs {name}",
+    "actionUndone": "[ÄÄctïïøøñ üüñdøøñëë. ÄÄctïïøøñ üüñdøøñëë.]",
+    "actionRedone": "[ÄÄctïïøøñ rëëdøøñëë. ÄÄctïïøøñ rëëdøøñëë.]",
+    "nothingToPaste": "[Thëërëë's ñøøthïïñg tøø päästëë hëërëë. Thëërëë's ñøøthïïñg tøø päästëë hëërëë.]",
+    "undoNewerFirst": "[ÜÜñdøø thëë ñëëwëër ääctïïøøñs fïïrst (Rëëcëëñt ääctïïøøñs shøøws thëë øørdëër). ÜÜñdøø thëë ñëëwëër ääctïïøøñs fïïrst (Rëëcëëñt ääctïïøøñs shøøws thëë øørdëër).]"
   },
   "components": {
     "breadcrumb": "[Brëëäädçrüümb ëxträä løøñg]",
@@ -270,7 +284,12 @@
     "showMoreOptions": "[Shøw mørë øptïøns ëxträ]",
     "more": "[Sëë mørë ëxträ]",
     "details": "[Dëtäïls ëxträ]",
-    "comingLater": "[{label} (cømïng ïn ä lätër üpdätë) ëxträ]"
+    "comingLater": "[{label} (cømïng ïn ä lätër üpdätë) ëxträ]",
+    "pasteAsFile": "[Päästëë ääs fïïlëë Päästëë ääs fïïlëë]",
+    "deletePermanently": "[Dëëlëëtëë pëërmääñëëñtly Dëëlëëtëë pëërmääñëëñtly]",
+    "undo": "[ÜÜñdøø ÜÜñdøø]",
+    "redo": "[Rëëdøø Rëëdøø]",
+    "recentActions": "[Rëëcëëñt ääctïïøøñs Rëëcëëñt ääctïïøøñs]"
   },
   "errors": {
     "rename": {
@@ -315,6 +334,33 @@
     },
     "copyPath": {
       "other": "[Thë päth cøüldn't bë cøpïëd. ëxträ]"
+    },
+    "ops": {
+      "exists": "[Thëërëë's äälrëëäädy ääñ ïïtëëm wïïth thïïs ñäämëë hëërëë. Thëërëë's äälrëëäädy ääñ ïïtëëm wïïth thïïs ñäämëë hëërëë.]",
+      "access_denied": "[Yøøüü døøñ't häävëë pëërmïïssïïøøñ tøø chääñgëë thïïs ïïtëëm. Yøøüü døøñ't häävëë pëërmïïssïïøøñ tøø chääñgëë thïïs ïïtëëm.]",
+      "in_use": "[Thïïs ïïtëëm ïïs øøpëëñ ïïñ ääñøøthëër ääpp. Cløøsëë ïït ääñd try äägääïïñ. Thïïs ïïtëëm ïïs øøpëëñ ïïñ ääñøøthëër ääpp. Cløøsëë ïït ääñd try äägääïïñ.]",
+      "not_found": "[Thïïs ïïtëëm ñøø løøñgëër ëëxïïsts. Thïïs ïïtëëm ñøø løøñgëër ëëxïïsts.]",
+      "too_long": "[Thëë pääth wøøüüld bëë tøøøø løøñg. Thëë pääth wøøüüld bëë tøøøø løøñg.]",
+      "invalid_name": "[Wïïñdøøws døøëësñ't äälløøw thïïs ñäämëë. Wïïñdøøws døøëësñ't äälløøw thïïs ñäämëë.]",
+      "invalid_request": "[Thäät øøpëëräätïïøøñ cøøüüldñ't bëë stäärtëëd. Thäät øøpëëräätïïøøñ cøøüüldñ't bëë stäärtëëd.]",
+      "cancelled": "[Thëë øøpëëräätïïøøñ wääs cääñcëëllëëd. Thëë øøpëëräätïïøøñ wääs cääñcëëllëëd.]",
+      "link_loop": "[ÄÄ føøldëër lïïñk wøøüüld løøøøp, søø ïït wääs skïïppëëd. ÄÄ føøldëër lïïñk wøøüüld løøøøp, søø ïït wääs skïïppëëd.]",
+      "into_itself": "[ÄÄ føøldëër cääñ't bëë cøøpïïëëd øør møøvëëd ïïñtøø ïïtsëëlf. ÄÄ føøldëër cääñ't bëë cøøpïïëëd øør møøvëëd ïïñtøø ïïtsëëlf.]",
+      "too_large": "[Thäät ïïs tøøøø läärgëë føør thïïs øøpëëräätïïøøñ. Thäät ïïs tøøøø läärgëë føør thïïs øøpëëräätïïøøñ.]",
+      "other": "[Thëë øøpëëräätïïøøñ cøøüüldñ't fïïñïïsh. Thëë øøpëëräätïïøøñ cøøüüldñ't fïïñïïsh.]"
+    },
+    "clipboard": {
+      "busy": "[Thëë clïïpbøøäärd ïïs büüsy. Try äägääïïñ ïïñ ää møømëëñt. Thëë clïïpbøøäärd ïïs büüsy. Try äägääïïñ ïïñ ää møømëëñt.]",
+      "failed": "[Thëë clïïpbøøäärd cøøüüldñ't bëë üüsëëd. Thëë clïïpbøøäärd cøøüüldñ't bëë üüsëëd.]",
+      "other": "[Thëë clïïpbøøäärd cøøüüldñ't bëë üüsëëd. Thëë clïïpbøøäärd cøøüüldñ't bëë üüsëëd.]"
+    },
+    "image": {
+      "failed": "[Thëë clïïpbøøäärd ïïmäägëë cøøüüldñ't bëë säävëëd. Thëë clïïpbøøäärd ïïmäägëë cøøüüldñ't bëë säävëëd.]",
+      "other": "[Thëë clïïpbøøäärd ïïmäägëë cøøüüldñ't bëë säävëëd. Thëë clïïpbøøäärd ïïmäägëë cøøüüldñ't bëë säävëëd.]"
+    },
+    "shortcut": {
+      "failed": "[Thëë shøørtcüüt cøøüüldñ't bëë crëëäätëëd. Thëë shøørtcüüt cøøüüldñ't bëë crëëäätëëd.]",
+      "other": "[Thëë shøørtcüüt cøøüüldñ't bëë crëëäätëëd. Thëë shøørtcüüt cøøüüldñ't bëë crëëäätëëd.]"
     }
   },
   "keys": {
@@ -328,5 +374,41 @@
     "up": "[Üp ëxträ]",
     "down": "[Døwn ëxträ]",
     "space": "[Späcë ëxträ]"
+  },
+  "files": {
+    "newFolderName": "[Ñëëw føøldëër Ñëëw føøldëër]",
+    "newTextFileName": "[Ñëëw tëëxt døøcüümëëñt.txt Ñëëw tëëxt døøcüümëëñt.txt]",
+    "pastedImageName": "Päästëëd ïïmäägëë {stamp}",
+    "pastedTextName": "Päästëëd tëëxt {stamp}",
+    "shortcutName": "{name} - Shøørtcüüt"
+  },
+  "jobs": {
+    "title": "[Fïïlëë øøpëëräätïïøøñs Fïïlëë øøpëëräätïïøøñs]",
+    "copying": "{count, plural, one {[Cøøpyïïñg # ïïtëëm]} øøthëër {[Cøøpyïïñg # ïïtëëms]}}",
+    "moving": "{count, plural, one {[Møøvïïñg # ïïtëëm]} øøthëër {[Møøvïïñg # ïïtëëms]}}",
+    "recycling": "{count, plural, one {[Dëëlëëtïïñg # ïïtëëm]} øøthëër {[Dëëlëëtïïñg # ïïtëëms]}}",
+    "deletingPermanently": "{count, plural, one {[Dëëlëëtïïñg # ïïtëëm føørëëvëër]} øøthëër {[Dëëlëëtïïñg # ïïtëëms føørëëvëër]}}",
+    "restoring": "{count, plural, one {[Rëëstøørïïñg # ïïtëëm]} øøthëër {[Rëëstøørïïñg # ïïtëëms]}}",
+    "skippedItems": "{count, plural, one {[# ïïtëëm wääs skïïppëëd]} øøthëër {[# ïïtëëms wëërëë skïïppëëd]}}",
+    "done": "[Døøñëë Døøñëë]",
+    "cancelled": "[Cääñcëëllëëd Cääñcëëllëëd]"
+  },
+  "dialogs": {
+    "conflictTitle": "[ÄÄñ ïïtëëm wïïth thïïs ñäämëë ïïs äälrëëäädy hëërëë ÄÄñ ïïtëëm wïïth thïïs ñäämëë ïïs äälrëëäädy hëërëë]",
+    "conflictBody": "{name} äälrëëäädy ëëxïïsts ïïñ thïïs føøldëër.",
+    "conflictMore": "{count, plural, one {[# møørëë ñäämëë cøøñflïïcts]} øøthëër {[# møørëë ñäämëës cøøñflïïct]}}",
+    "replace": "[Rëëplääcëë Rëëplääcëë]",
+    "skip": "[Skïïp Skïïp]",
+    "keepBoth": "[Këëëëp bøøth Këëëëp bøøth]",
+    "forAll": "[Døø thïïs føør ääll cøøñflïïcts Døø thïïs føør ääll cøøñflïïcts]",
+    "permanentTitle": "[Dëëlëëtëë pëërmääñëëñtly? Dëëlëëtëë pëërmääñëëñtly?]",
+    "permanentBody": "{count, plural, one {[Thïïs ïïtëëm wïïll bëë dëëlëëtëëd føørëëvëër. Yøøüü cääññøøt üüñdøø thïïs.]} øøthëër {[# ïïtëëms wïïll bëë dëëlëëtëëd føørëëvëër. Yøøüü cääññøøt üüñdøø thïïs.]}}",
+    "recentTitle": "[Rëëcëëñt ääctïïøøñs Rëëcëëñt ääctïïøøñs]",
+    "recentEmpty": "[Ñøøthïïñg hëërëë yëët. ÄÄctïïøøñs yøøüü cääñ üüñdøø wïïll ääppëëäär ïïñ thïïs lïïst. Ñøøthïïñg hëërëë yëët. ÄÄctïïøøñs yøøüü cääñ üüñdøø wïïll ääppëëäär ïïñ thïïs lïïst.]"
+  },
+  "drag": {
+    "copyTo": "Cøøpy tøø {name}",
+    "moveTo": "Møøvëë tøø {name}",
+    "shortcutTo": "Crëëäätëë shøørtcüüt ïïñ {name}"
   }
 }

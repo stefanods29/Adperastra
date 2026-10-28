@@ -154,7 +154,10 @@
     "accentWindows": "Windows",
     "accentCustom": "Personalizado",
     "customColor": "Color personalizado",
-    "persistNote": "Los ajustes se guardan automáticamente y se aplican al instante."
+    "persistNote": "Los ajustes se guardan automáticamente y se aplican al instante.",
+    "pastedImages": "Imágenes pegadas",
+    "formatPng": "PNG (más nítidas, archivos más grandes)",
+    "formatJpg": "JPG (archivos más pequeños)"
   },
   "gallery": {
     "title": "Galería",
@@ -216,7 +219,18 @@
   },
   "toast": {
     "sampleUndo": "Acción de ejemplo completada.",
-    "pathsCopied": "{count, plural, one {Ruta copiada} other {# rutas copiadas}}"
+    "pathsCopied": "{count, plural, one {Ruta copiada} other {# rutas copiadas}}",
+    "copied": "{count, plural, one {# elemento copiado} other {# elementos copiados}}",
+    "moved": "{count, plural, one {# elemento movido} other {# elementos movidos}}",
+    "recycled": "{count, plural, one {# elemento movido a la Papelera} other {# elementos movidos a la Papelera}}",
+    "deletedPermanently": "{count, plural, one {# elemento eliminado para siempre} other {# elementos eliminados para siempre}}",
+    "renamed": "Nombre cambiado a {name}",
+    "created": "Se creó {name}",
+    "pasted": "Se pegó como {name}",
+    "actionUndone": "Acción deshecha.",
+    "actionRedone": "Acción rehecha.",
+    "nothingToPaste": "No hay nada para pegar aquí.",
+    "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden)."
   },
   "commands": {
     "back": "Atrás",
@@ -270,7 +284,12 @@
     "showMoreOptions": "Mostrar más opciones",
     "more": "Ver más",
     "details": "Detalles",
-    "comingLater": "{label} (llega en una próxima actualización)"
+    "comingLater": "{label} (llega en una próxima actualización)",
+    "pasteAsFile": "Pegar como archivo",
+    "deletePermanently": "Eliminar permanentemente",
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "recentActions": "Acciones recientes"
   },
   "errors": {
     "rename": {
@@ -315,6 +334,33 @@
     },
     "copyPath": {
       "other": "No se pudo copiar la ruta."
+    },
+    "ops": {
+      "exists": "Ya hay un elemento con este nombre aquí.",
+      "access_denied": "No tienes permiso para cambiar este elemento.",
+      "in_use": "Este elemento está abierto en otra app. Ciérrala e inténtalo de nuevo.",
+      "not_found": "Este elemento ya no existe.",
+      "too_long": "La ruta sería demasiado larga.",
+      "invalid_name": "Windows no permite este nombre.",
+      "invalid_request": "Esa operación no pudo iniciarse.",
+      "cancelled": "La operación se canceló.",
+      "link_loop": "Un enlace de carpeta crearía un ciclo, así que se omitió.",
+      "into_itself": "Una carpeta no puede copiarse ni moverse dentro de sí misma.",
+      "too_large": "Eso es demasiado grande para esta operación.",
+      "other": "La operación no pudo terminar."
+    },
+    "clipboard": {
+      "busy": "El portapapeles está ocupado. Inténtalo de nuevo en un momento.",
+      "failed": "No se pudo usar el portapapeles.",
+      "other": "No se pudo usar el portapapeles."
+    },
+    "image": {
+      "failed": "No se pudo guardar la imagen del portapapeles.",
+      "other": "No se pudo guardar la imagen del portapapeles."
+    },
+    "shortcut": {
+      "failed": "No se pudo crear el acceso directo.",
+      "other": "No se pudo crear el acceso directo."
     }
   },
   "keys": {
@@ -328,5 +374,41 @@
     "up": "Flecha arriba",
     "down": "Flecha abajo",
     "space": "Espacio"
+  },
+  "files": {
+    "newFolderName": "Nueva carpeta",
+    "newTextFileName": "Nuevo documento de texto.txt",
+    "pastedImageName": "Imagen pegada {stamp}",
+    "pastedTextName": "Texto pegado {stamp}",
+    "shortcutName": "{name} - Acceso directo"
+  },
+  "jobs": {
+    "title": "Operaciones de archivo",
+    "copying": "{count, plural, one {Copiando # elemento} other {Copiando # elementos}}",
+    "moving": "{count, plural, one {Moviendo # elemento} other {Moviendo # elementos}}",
+    "recycling": "{count, plural, one {Eliminando # elemento} other {Eliminando # elementos}}",
+    "deletingPermanently": "{count, plural, one {Eliminando # elemento para siempre} other {Eliminando # elementos para siempre}}",
+    "restoring": "{count, plural, one {Restaurando # elemento} other {Restaurando # elementos}}",
+    "skippedItems": "{count, plural, one {Se omitió # elemento} other {Se omitieron # elementos}}",
+    "done": "Listo",
+    "cancelled": "Cancelado"
+  },
+  "dialogs": {
+    "conflictTitle": "Ya hay un elemento con este nombre aquí",
+    "conflictBody": "{name} ya existe en esta carpeta.",
+    "conflictMore": "{count, plural, one {# nombre más en conflicto} other {# nombres más en conflicto}}",
+    "replace": "Reemplazar",
+    "skip": "Omitir",
+    "keepBoth": "Conservar ambos",
+    "forAll": "Hacer esto para todos los conflictos",
+    "permanentTitle": "¿Eliminar permanentemente?",
+    "permanentBody": "{count, plural, one {Este elemento se eliminará para siempre. No podrás deshacerlo.} other {# elementos se eliminarán para siempre. No podrás deshacerlo.}}",
+    "recentTitle": "Acciones recientes",
+    "recentEmpty": "Aún no hay nada aquí. Las acciones que puedas deshacer aparecerán en esta lista."
+  },
+  "drag": {
+    "copyTo": "Copiar en {name}",
+    "moveTo": "Mover a {name}",
+    "shortcutTo": "Crear acceso directo en {name}"
   }
 }
