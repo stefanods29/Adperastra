@@ -19,6 +19,7 @@ use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
 mod explorer;
+mod shell;
 
 pub const CURRENT_SCHEMA: u32 = 3;
 
@@ -1205,6 +1206,145 @@ fn record_recent_folder(
     update_explorer_state(&state, |s| s.record_recent(path))
 }
 
+/// Size, times, and attributes for the Details pane (no file is opened).
+#[tauri::command]
+async fn item_details(
+    window: WebviewWindow,
+    path: String,
+) -> Result<fs_service::ItemDetails, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::item_details(Path::new(&path)).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Rename in place; returns the new path. Errors are `rename.<reason>`
+/// codes the UI translates.
+#[tauri::command]
+async fn rename_item(
+    window: WebviewWindow,
+    path: String,
+    new_name: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    if new_name.chars().count() > 255 {
+        return Err("rename.invalid_name".to_string());
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::rename_in_place(Path::new(&path), &new_name)
+            .map(|p| p.to_string_lossy().into_owned())
+            .map_err(|e| format!("rename.{}", fs_service::rename_error_reason(&e)))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn add_favorite(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<fs_service::ExplorerState, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    let canonical = tauri::async_runtime::spawn_blocking(move || {
+        fs::canonicalize(Path::new(&path))
+            .map(|p| p.to_string_lossy().into_owned())
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    update_explorer_state(&state, |s| s.add_favorite(canonical))
+}
+
+#[tauri::command]
+fn remove_favorite(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<fs_service::ExplorerState, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    update_explorer_state(&state, |s| s.remove_favorite(&path))
+}
+
+#[tauri::command]
+async fn list_favorite_items(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+) -> Result<Vec<explorer::RecentItem>, String> {
+    ensure_main(window.label())?;
+    let favorites = {
+        let _guard = state
+            .explorer_state_lock
+            .lock()
+            .map_err(|_| "explorer state lock poisoned".to_string())?;
+        fs_service::ExplorerState::load(&explorer_state_file(&state.data_dir)).favorites
+    };
+    tauri::async_runtime::spawn_blocking(move || explorer::favorite_items(&favorites))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// The main window's handle as a plain number, so it can cross into the
+/// blocking thread that shows a Windows dialog owned by it.
+#[cfg(windows)]
+fn window_handle(window: &WebviewWindow) -> isize {
+    window.hwnd().map(|hwnd| hwnd.0 as isize).unwrap_or(0)
+}
+
+#[cfg(not(windows))]
+fn window_handle(_window: &WebviewWindow) -> isize {
+    0
+}
+
+#[tauri::command]
+async fn open_item(window: WebviewWindow, path: String) -> Result<shell::OpenOutcome, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || shell::open_item(&path))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn open_with_dialog(window: WebviewWindow, path: String) -> Result<(), String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || shell::open_with_dialog(owner, &path))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn show_properties(window: WebviewWindow, paths: Vec<String>) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > shell::MAX_PROPERTIES_ITEMS {
+        return Err("properties.failed".to_string());
+    }
+    for path in &paths {
+        fs_service::validate_path_input(path).map_err(|e| e.to_string())?;
+    }
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || shell::show_properties(owner, &paths))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn open_in_terminal(window: WebviewWindow, folder: String) -> Result<(), String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&folder).map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || shell::open_in_terminal(&folder))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 async fn watch_start(
     window: WebviewWindow,
@@ -1332,7 +1472,16 @@ fn main() {
             unpin_folder,
             record_recent_folder,
             watch_start,
-            watch_stop
+            watch_stop,
+            item_details,
+            rename_item,
+            add_favorite,
+            remove_favorite,
+            list_favorite_items,
+            open_item,
+            open_with_dialog,
+            show_properties,
+            open_in_terminal
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
