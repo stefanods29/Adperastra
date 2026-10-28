@@ -1,4 +1,4 @@
-﻿# Known issues
+# Known issues
 
 Every defect, deferral, and speed miss is recorded here instead of being
 silently forgotten or quietly relaxed. Severity rules are in
@@ -60,6 +60,11 @@ that fixed it.
 - **Target:** owner confirmation in normal use; if the flyout does not
   appear, this becomes a Step 02 fix.
 
+### KI-009 - A pinned folder renamed or deleted outside the app stays stale in the nav pane (Minor)
+- **Found in:** Step 02. **Severity:** Minor (rare edge case).
+- **What:** The open folder and This PC update live (watch + drive polling), but a pinned folder itself being renamed or deleted in another app is not noticed; the nav pane keeps the old entry until you unpin it or restart. Clicking it shows "This folder could not be opened."
+- **Workaround:** unpin the stale entry (open it fails, so use the unpin button next to it) and pin the renamed folder; or restart the app.
+- **Target:** Step 07a background refresh (the metadata service can verify pinned paths then).
 ## Fixed
 
 ### KI-006 - Help center showed no pages in the packaged app (fixed in Step 01b)

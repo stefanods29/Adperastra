@@ -88,7 +88,7 @@
 
 **Files:** `scripts/generate-corpus.ps1`, `crates/fs-service/src/bin/fs-bench.rs`, `docs/benchmarks/*.json`, `docs/screenshots/step-02/`, `docs/step-reports/step-02.md`, `CHANGELOG.md`, `KNOWN_ISSUES.md`, `DESIGN_DEVIATIONS.md` if needed.
 
-- [ ] Generate 100,000-item folder in `%TEMP%` (nothing large committed); Rust bench: enumerate+sort total and first-batch time.
-- [ ] End-to-end: instrument folder-open -> first rows painted (performance marks in the Explorer view, read from the running app), report both numbers vs Fast tier in the step report table.
-- [ ] Screenshots vs `plan/design/screens/01-explorer-home.png` at 100%/150%, light/dark, EN/ES.
+- [x] Generate 100,000-item folder in `%TEMP%` (nothing large committed); Rust bench: enumerate+sort total and first-batch time.
+- [x] End-to-end: instrument folder-open -> first rows painted (performance marks in the Explorer view, read from the running app), report both numbers vs Fast tier in the step report table.
+- [x] Screenshots vs `plan/design/screens/01-explorer-home.png` at 100%/150%, light/dark, EN/ES.
 - [ ] Full suite on `testing` after merge; step report; tag `v0.0.4-step02` after owner approval.

@@ -3,6 +3,15 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-28 - Explorer inside a folder and This PC (Step 02) - pending owner approval
+
+- **What:** Figma has the Explorer Home page but not the Explorer inside a folder, the Details-pane variant, menus, or This PC (plan/design.md, "Screens still to design"). Those views were designed from `plan/design-spec.md` tokens and the Windows 11 Explorer as functional reference: 196 px nav pane, 34 px address box on the chrome surface, 28 px file rows, column widths following the Home frame (Name flexible, Date 190, Type 180, Size 110 right-aligned), folder view without a command bar (that arrives in Step 03a).
+- **Closest-option differences:** the address bar carries small sibling-folder chevrons next to each segment (a Step 02 requirement with no Figma counterpart); a single Pin/Unpin button sits at the right of the folder view; drive cards on This PC are an extension of the Quick access card in the same tokens.
+- **Evidence:** `docs/screenshots/step-02/` - Home, a folder, and This PC in English light, Home in Spanish light, dark variants from Slice 4.
+
+## 2026-10-28 - File-type tiles instead of Windows shell icons (Step 02) - approved by the owner on 2026-10-28
+
+- **What:** Step 02 asked for system icons; the owner chose the Figma file-type tiles for this step. Real Windows shell icons arrive in Step 07a for `.exe`, `.lnk`, and types without a tile, and Step 10a lets the user pick the icon style as part of icon packs (ADR 0005).
 ## 2026-10-27 - Setup window (Step 01a) - approved by the owner on 2026-10-27
 
 - **What:** The setup/repair window and the first-run window are not in the
