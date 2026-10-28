@@ -57,7 +57,8 @@ await page(`window.__m = {
   click(el, init = {}) { el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1, ...init })); },
   context(el) { const r = el.getBoundingClientRect(); el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: r.left + 60, clientY: r.top + 10 })); },
   closeMenus() { for (const m of document.querySelectorAll(".adp-ctxmenu")) m.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); },
-  button(text) { return [...document.querySelectorAll(".adp-commandbar button")].find((b) => b.textContent.trim() === text); },
+  // Text buttons in the command bar, in order: New, Sort, View, Details.
+  menuButton(index) { return document.querySelectorAll(".adp-commandbar .adp-cmd-text")[index]; },
 }; true`);
 await page(`window.__m.waitFor(() => document.querySelector(".adp-explorer"))`);
 
@@ -126,7 +127,7 @@ if (mode === "full") {
   results.push(await measure("type-ahead jump", `window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "p" })`));
   results.push(await measure("right-click menu on a file", `window.__m.click(window.__m.rows()[3]); true`, `window.__m.context(window.__m.rows()[3])`, `window.__m.closeMenus(); true`));
   results.push(await measure("right-click menu on empty space", `true`, `window.__m.list().dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 600, clientY: 700 }))`, `window.__m.closeMenus(); true`));
-  results.push(await measure("command bar View menu", `true`, `window.__m.button(${JSON.stringify(lang === "es" ? "Ver" : "View")}).click()`, `window.__m.closeMenus(); true`));
+  results.push(await measure("command bar View menu", `true`, `window.__m.menuButton(2).click()`, `window.__m.closeMenus(); true`));
   results.push(await measure("rename box (F2)", `window.__m.click(window.__m.rows()[5]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "F2" })`, `document.querySelector(".adp-rename-input")?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); true`));
   results.push(
     await measure(
@@ -190,8 +191,19 @@ if (shotDir) {
     await sleep(150);
   };
   if (mode !== "full") {
+    // Home shows the demo files as Favorites (the Recent list would show
+    // this PC's real recent files).
+    const favorites = ["Q4 Budget 2026.xlsx", "Project Overview.pptx", "Meeting Notes.docx", "Website Homepage.png", "Product Demo.mp4", "Brand Guidelines.pdf", "Logo - Final.png"];
+    for (const name of favorites) {
+      await page(`window.__TAURI_INTERNALS__.invoke("add_favorite", { path: ${JSON.stringify(join(demo, name))} }).then(() => true)`);
+    }
     await step(`[...document.querySelectorAll(".adp-explorer-nav button")][0].click()`);
+    await sleep(400);
+    await step(`document.querySelectorAll(".adp-segment-btn")[1].click()`);
     await sleep(600);
+    await step(`window.__m.click(window.__m.rows()[0])`);
+    await step(`document.activeElement?.blur()`);
+    await sleep(300);
     await shot("00-home");
   }
   await openFolder(demo);
@@ -225,7 +237,7 @@ if (shotDir) {
   await sleep(300);
   await shot("05-rename-problem");
   await step(`document.querySelector(".adp-rename-input")?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
-  await step(`window.__m.button(${JSON.stringify(lang === "es" ? "Ordenar" : "Sort")}).click()`);
+  await step(`window.__m.menuButton(1).click()`);
   await sleep(200);
   await shot("06-sort-menu");
   await step(`window.__m.closeMenus()`);
