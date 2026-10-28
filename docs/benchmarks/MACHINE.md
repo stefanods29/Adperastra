@@ -21,3 +21,8 @@ Notes:
   Step 01b.
 - Benchmark runs must note whether the NVIDIA or Intel GPU was active, since
   thumbnail/PDF/AI timings differ between them.
+
+## Build note (Step 01a)
+
+- MSVC C++ tools are now installed: VC Tools 14.44.35207, Windows SDK 10.0.26100.0 (installed during Step 01a; required by Rust/Tauri to link executables).
+- Windows security on this PC blocks cargo.exe/rustc.exe from creating folders under Documents (os error 2 in target/debug/build). Workaround used by all build commands and by scripts/package-setup.ps1: CARGO_TARGET_DIR=%TEMP%\adperastra-target. Source stays in the repo; only build output moves.
