@@ -42,7 +42,7 @@
 
 - [x] Tests first (RED): natural sort (`file2 < file10`, case-insensitive), folders-first sort, reserved-name rejection, state round-trip + pin/recent dedup, watcher coalescing, list/stat/read_range on a temp dir, online-only flag false for a normal file.
 - [x] Implement minimal crate to pass (GREEN); `cargo test -p fs-service` -> 10/10 passed (9 core + 1 live watcher).
-- [ ] Commit: `feat(fs): add fs-service crate core (list, sort, watch, state) [step-02]` (+ separate `deps:` commit for `notify`).
+- [x] Commit: `feat(fs): add fs-service crate core (list, sort, watch, state) [step-02]` (+ separate `deps:` commit for `notify`). Commits 1756a3f (plan/ADR), da10212 (deps), a6f24ad (feat).
 
 ### Slice 2: Tauri commands, known folders, drives, watch wiring
 
