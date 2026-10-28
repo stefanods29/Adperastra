@@ -13,7 +13,7 @@ use crate::item::{BackingKind, Item, ItemAttrs, ItemKind};
 use crate::list::{file_id_is_stable, validate_path_input, Listing};
 use crate::sort::{sort_items, SortSpec};
 use crate::{FsError, Result};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 #[cfg(not(windows))]
 pub fn list_dir_with_ids(path: &Path, sort: SortSpec) -> Result<Listing> {

@@ -34,8 +34,16 @@ fn bench(dir: &Path, runs: usize) {
     // Warm-up (filesystem caches, first-call setup).
     let std_warm = list_dir_std(dir, SortSpec::default()).expect("std listing");
     let ids_warm = list_dir_with_ids(dir, SortSpec::default()).expect("ids listing");
-    assert_eq!(std_warm.items.len(), ids_warm.items.len(), "listings disagree on item count");
-    let filled = ids_warm.items.iter().filter(|i| i.attrs.file_id.is_some()).count();
+    assert_eq!(
+        std_warm.items.len(),
+        ids_warm.items.len(),
+        "listings disagree on item count"
+    );
+    let filled = ids_warm
+        .items
+        .iter()
+        .filter(|i| i.attrs.file_id.is_some())
+        .count();
 
     let mut std_ms = Vec::new();
     let mut ids_ms = Vec::new();
@@ -73,7 +81,11 @@ fn main() {
     match args.get(1).map(|s| s.as_str()) {
         Some("generate") => {
             let dir = Path::new(args.get(2).expect("generate needs a dir"));
-            let count: usize = args.get(3).expect("generate needs a count").parse().expect("count");
+            let count: usize = args
+                .get(3)
+                .expect("generate needs a count")
+                .parse()
+                .expect("count");
             generate(dir, count);
         }
         Some("bench") => {
