@@ -78,3 +78,27 @@ Nothing about layout, look, or language is hardcoded. Use a settings schema, des
 - AI model weights follow the same rule: only MIT, BSD, Apache-2.0, or similarly permissive licenses; never non-commercial ones.
 - Re-verify each license and the project's maintenance status before using a component. Keep `THIRD_PARTY_LICENSES` (name, version, license, how used). Flag anything borderline (I'm not a lawyer).
 - Don't ship Microsoft fonts, icons, or logos, and don't use Microsoft trademarks in the app; "Word-style" is fine only as a description. For patent-encumbered codecs (H.264, HEVC, AAC) prefer the OS's or the GPU's encoders and decoders over bundled ones.
+
+## 11. Known issues and severity
+
+Every defect, deferral, and speed miss is recorded in `KNOWN_ISSUES.md` at
+the repository root (ID, severity, step found, plain-language description,
+workaround, target step or milestone). Fixed issues move to its "Fixed"
+section with the fixing commit. Speed misses are always logged there
+instead of being silently relaxed.
+
+- **Blocker:** data loss or corruption, a security or sandbox hole, a crash
+  or freeze in a normal flow, a broken core feature, a license problem, or
+  an accessibility barrier that blocks a main flow. Must be fixed before
+  the step is done; never deferred.
+- **Major:** a speed-tier miss in something users do every day, a feature
+  that works only partly, or a serious usability or accessibility problem
+  with a workaround. May be deferred to a later step only with the owner's
+  approval, but must be fixed before the next milestone release (v0.1,
+  v0.2, ...).
+- **Minor:** cosmetic problems, one-time costs (for example the first run
+  after installing), rare edge cases, and placeholders. May wait; reviewed
+  at every milestone.
+- When unsure about severity, choose the higher one and ask the owner.
+- Every step report lists new, open, and fixed known issues. A milestone
+  release cannot be published with any Blocker or Major issue open.
