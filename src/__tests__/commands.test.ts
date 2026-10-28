@@ -151,6 +151,16 @@ describe("explorer commands", () => {
     expect(byId["explorer.toggleDetailsPane"].checkedWhen?.({ ...baseCtx, view: { ...baseCtx.view, detailsPane: true } })).toBe(true);
   });
 
+  it("every command's help page exists in every app language", () => {
+    const pages = new Set(Object.keys(import.meta.glob("../../help/*/*.md")).map((path) => path.replace("../../help/", "")));
+    const slugs = new Set(createExplorerCommands(makeActions()).map((c) => c.helpSlug));
+    for (const slug of [...slugs, "command-bar", "details-pane", "home-page"]) {
+      for (const lang of ["en", "es"]) {
+        expect(pages.has(`${lang}/${slug}.md`), `${lang}/${slug}`).toBe(true);
+      }
+    }
+  });
+
   it("runs through to the injected actions", () => {
     const actions = makeActions();
     const commands = createExplorerCommands(actions);

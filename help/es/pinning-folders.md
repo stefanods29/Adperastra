@@ -5,8 +5,8 @@ Ancla las carpetas que abres seguido para tenerlas a un clic.
 ## Anclar y desanclar
 
 1. Abre la carpeta.
-2. Haz clic en **Anclar carpeta** en la parte superior derecha de la vista de carpeta.
-3. Para desanclarla, abre la carpeta de nuevo y haz clic en **Desanclar carpeta**, o usa el botón de desanclar junto a la carpeta en el panel izquierdo.
+2. En la barra de comandos, haz clic en **Ver más** (•••) y elige **Anclar carpeta**.
+3. Para desanclarla, abre la carpeta de nuevo y elige **Ver más** > **Desanclar carpeta**, o usa el botón de desanclar junto a la carpeta en el panel izquierdo.
 
 Las carpetas ancladas aparecen en el panel izquierdo bajo **Ancladas** y como tarjetas en Acceso rápido, en la página de Inicio.
 
