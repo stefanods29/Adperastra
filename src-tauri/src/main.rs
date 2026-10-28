@@ -893,15 +893,24 @@ pub struct ListJob {
     token: fs_service::CancellationToken,
 }
 
+/// Batches per poll response. Capped so the frontend paints the first
+/// rows (a few thousand items) instead of parsing a 100,000-item
+/// response before anything becomes visible (speed.md: render
+/// progressively, first view first).
+pub const MAX_POLL_BATCHES: usize = 8;
+
 /// Drain a finished/running job into one poll response. Pure so it can be
-/// unit-tested without a window.
+/// unit-tested without a window. `done` is only reported once the queue
+/// is empty, so the outcome never overtakes undelivered batches.
 pub fn drain_job(job: &mut ListJob) -> ListPoll {
-    let batches: Vec<Vec<explorer::ExplorerItem>> = job.batches.drain(..).collect();
+    let take = job.batches.len().min(MAX_POLL_BATCHES);
+    let batches: Vec<Vec<explorer::ExplorerItem>> = job.batches.drain(..take).collect();
+    let done = job.done && job.batches.is_empty();
     ListPoll {
         batches,
-        done: job.done,
-        outcome: if job.done { job.outcome.clone() } else { None },
-        error: if job.done { job.error.clone() } else { None },
+        done,
+        outcome: if done { job.outcome.clone() } else { None },
+        error: if done { job.error.clone() } else { None },
     }
 }
 
@@ -1429,7 +1438,11 @@ mod tests {
         let mut job = ListJob {
             batches: std::collections::VecDeque::from(vec![vec![], vec![]]),
             done: true,
-            outcome: Some(ListDirOutcome { path: "C:\\".to_string(), total: 0, skipped: vec![] }),
+            outcome: Some(ListDirOutcome {
+                path: "C:\\".to_string(),
+                total: 0,
+                skipped: vec![],
+            }),
             error: None,
             token: fs_service::new_cancellation_token(),
         };
@@ -1447,6 +1460,22 @@ mod tests {
         };
         let poll = drain_job(&mut running);
         assert!(!poll.done && poll.outcome.is_none());
+
+        // A finished job with more than MAX_POLL_BATCHES queued reports
+        // done only after the queue is fully drained.
+        let mut big = ListJob {
+            batches: std::collections::VecDeque::from(vec![vec![]; MAX_POLL_BATCHES + 2]),
+            done: true,
+            outcome: None,
+            error: None,
+            token: fs_service::new_cancellation_token(),
+        };
+        let first = drain_job(&mut big);
+        assert_eq!(first.batches.len(), MAX_POLL_BATCHES);
+        assert!(!first.done);
+        let second = drain_job(&mut big);
+        assert_eq!(second.batches.len(), 2);
+        assert!(second.done);
     }
     #[test]
     fn explorer_command_validation() {
