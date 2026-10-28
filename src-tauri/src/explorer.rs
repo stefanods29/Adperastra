@@ -4,6 +4,7 @@
 
 use fs_service::ItemKind;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -52,22 +53,29 @@ pub fn drive_kind_name(code: u32) -> &'static str {
     }
 }
 
-/// Newest first; a path appearing several times keeps its newest entry
-/// (Windows Recent often holds several shortcuts to the same file).
-pub fn dedup_sort_recent(items: Vec<RecentItem>, limit: usize) -> Vec<RecentItem> {
-    let mut sorted = items;
-    sorted.sort_by(|a, b| b.modified_unix.cmp(&a.modified_unix));
-    let mut seen: Vec<String> = Vec::new();
+/// Newest first with an early stop: candidates are sorted by their own
+/// timestamp, then resolved one at a time until `limit` distinct paths are
+/// found, so a Recent folder with thousands of shortcuts costs about
+/// `limit` resolves instead of thousands. A path appearing several times
+/// keeps its newest entry (Windows Recent often holds several shortcuts to
+/// the same file).
+pub fn pick_newest_recent<T>(
+    mut candidates: Vec<(u64, T)>,
+    limit: usize,
+    mut resolve: impl FnMut(u64, T) -> Option<RecentItem>,
+) -> Vec<RecentItem> {
+    candidates.sort_by_key(|c| std::cmp::Reverse(c.0));
+    let mut seen: HashSet<String> = HashSet::new();
     let mut out = Vec::new();
-    for item in sorted {
-        let key = item.path.to_lowercase();
-        if seen.contains(&key) {
-            continue;
-        }
-        seen.push(key);
-        out.push(item);
+    for (modified_unix, candidate) in candidates {
         if out.len() >= limit {
             break;
+        }
+        let Some(item) = resolve(modified_unix, candidate) else {
+            continue;
+        };
+        if seen.insert(item.path.to_lowercase()) {
+            out.push(item);
         }
     }
     out
@@ -401,23 +409,22 @@ pub fn recent_items(limit: usize) -> Vec<RecentItem> {
             Ok(listing) => listing,
             Err(_) => return Vec::new(),
         };
-        let mut items = Vec::new();
-        for entry in listing.items {
-            let is_link_file = entry
-                .path
-                .extension()
-                .map(|e| e.eq_ignore_ascii_case("lnk"))
-                .unwrap_or(false);
-            if !is_link_file {
-                continue;
-            }
-            let Some(target) = resolve_shortcut(&entry.path) else {
-                continue;
-            };
-            if !target.exists() {
-                continue;
-            }
-            let kind = if target.is_dir() {
+        let shortcuts: Vec<(u64, PathBuf)> = listing
+            .items
+            .into_iter()
+            .filter(|entry| {
+                entry
+                    .path
+                    .extension()
+                    .map(|e| e.eq_ignore_ascii_case("lnk"))
+                    .unwrap_or(false)
+            })
+            .map(|entry| (entry.modified_unix, entry.path))
+            .collect();
+        pick_newest_recent(shortcuts, limit, |modified_unix, link| {
+            let target = resolve_shortcut(&link)?;
+            let metadata = std::fs::metadata(&target).ok()?;
+            let kind = if metadata.is_dir() {
                 ItemKind::Folder
             } else {
                 ItemKind::File
@@ -426,18 +433,18 @@ pub fn recent_items(limit: usize) -> Vec<RecentItem> {
                 .file_name()
                 .map(|n| n.to_string_lossy().into_owned())
                 .unwrap_or_else(|| target.to_string_lossy().into_owned());
-            let size = std::fs::metadata(&target)
-                .map(|m| if m.is_file() { m.len() } else { 0 })
-                .unwrap_or(0);
-            items.push(RecentItem {
+            Some(RecentItem {
                 name,
                 path: target.to_string_lossy().into_owned(),
                 kind,
-                modified_unix: entry.modified_unix,
-                size,
-            });
-        }
-        dedup_sort_recent(items, limit)
+                modified_unix,
+                size: if metadata.is_file() {
+                    metadata.len()
+                } else {
+                    0
+                },
+            })
+        })
     }
     #[cfg(not(windows))]
     {
@@ -449,7 +456,7 @@ pub fn recent_items(limit: usize) -> Vec<RecentItem> {
 
 #[cfg(test)]
 mod tests {
-    use super::{dedup_sort_recent, drive_kind_name, RecentItem};
+    use super::{drive_kind_name, pick_newest_recent, RecentItem};
     use fs_service::ItemKind;
 
     #[test]
@@ -500,6 +507,10 @@ mod tests {
         let json = serde_json::to_string(&dto).unwrap();
         assert!(json.contains(r#""file_id":"18446744073709551614""#));
     }
+    fn as_candidates(items: Vec<RecentItem>) -> Vec<(u64, RecentItem)> {
+        items.into_iter().map(|i| (i.modified_unix, i)).collect()
+    }
+
     #[test]
     fn recent_items_are_newest_first_deduped_and_capped() {
         let items = vec![
@@ -508,20 +519,39 @@ mod tests {
             recent("a again", "c:\\A.txt", 20),
             recent("c", "C:\\c.txt", 40),
         ];
-        let out = dedup_sort_recent(items, 2);
+        let out = pick_newest_recent(as_candidates(items), 2, |_, i| Some(i));
         assert_eq!(
             out.iter().map(|i| i.path.as_str()).collect::<Vec<_>>(),
             vec!["C:\\c.txt", "C:\\b.txt"]
         );
         // The kept copy of a path is the newest one.
-        let out = dedup_sort_recent(
-            vec![
+        let out = pick_newest_recent(
+            as_candidates(vec![
                 recent("old", "C:\\a.txt", 10),
                 recent("new", "c:\\A.txt", 20),
-            ],
+            ]),
             10,
+            |_, i| Some(i),
         );
         assert_eq!(out.len(), 1);
         assert_eq!(out[0].name, "new");
+    }
+
+    #[test]
+    fn recent_items_stop_resolving_once_the_limit_is_reached() {
+        // 5,000 shortcuts, one dead target among the newest: only enough
+        // to fill the limit (plus the skipped one) may be resolved.
+        let candidates: Vec<(u64, u64)> = (0..5000u64).map(|n| (n, n)).collect();
+        let mut resolved = 0;
+        let out = pick_newest_recent(candidates, 30, |modified, n| {
+            resolved += 1;
+            if n == 4990 {
+                return None;
+            }
+            Some(recent("x", &format!("C:\\{n}.txt"), modified))
+        });
+        assert_eq!(out.len(), 30);
+        assert_eq!(out[0].path, "C:\\4999.txt");
+        assert_eq!(resolved, 31);
     }
 }
