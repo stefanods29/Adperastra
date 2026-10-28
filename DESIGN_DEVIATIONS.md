@@ -1,9 +1,9 @@
-﻿# Design deviations
+# Design deviations
 
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
-## 2026-10-27 - Setup window (Step 01a) - for owner approval
+## 2026-10-27 - Setup window (Step 01a) - approved by the owner on 2026-10-27
 
 - **What:** The setup/repair window and the first-run window are not in the
   Figma file. They were designed from the measured tokens in
