@@ -1,6 +1,6 @@
-﻿//! Installing/repairing a single `File` component from a local or URL source.
+//! Installing/repairing a single `File` component from a local or URL source.
 
-use crate::manifest::{Component, ComponentKind, Source};
+use crate::manifest::{Component, ComponentKind, Installer, Source};
 use crate::verify::hash_file;
 use crate::{Result, SetupError};
 use std::io::{Read, Write};
@@ -126,4 +126,106 @@ fn copy_stream(
         }
     }
     Ok(())
+}
+
+pub fn fetch_installer(
+    inst: &Installer,
+    source_base: &Path,
+    dest_dir: &Path,
+    progress: &mut dyn FnMut(f32),
+) -> Result<PathBuf> {
+    std::fs::create_dir_all(dest_dir)?;
+    let dest = dest_dir.join("installer.exe");
+    let part = part_path(&dest);
+    progress(0.0);
+    let result = (|| -> Result<()> {
+        let mut out = std::fs::File::create(&part)?;
+        match &inst.source {
+            Source::Local { path } => {
+                let src_path = source_base.join(path);
+                let total = std::fs::metadata(&src_path).map(|m| m.len()).ok();
+                let mut input = std::fs::File::open(&src_path)?;
+                copy_stream(&mut input, &mut out, total, progress)?;
+            }
+            Source::Url { url } => {
+                let mut resp = reqwest::blocking::get(url)
+                    .map_err(|e| SetupError::Download(format!("installer: {e}")))?;
+                if !resp.status().is_success() {
+                    return Err(SetupError::Download(format!(
+                        "installer: HTTP {}",
+                        resp.status()
+                    )));
+                }
+                let total = resp.content_length();
+                copy_stream(&mut resp, &mut out, total, progress)?;
+            }
+        }
+        out.flush()?;
+        Ok(())
+    })();
+    if let Err(e) = result {
+        let _ = std::fs::remove_file(&part);
+        return Err(e);
+    }
+    let actual_size = std::fs::metadata(&part)?.len();
+    if actual_size != inst.size {
+        let _ = std::fs::remove_file(&part);
+        return Err(SetupError::SizeMismatch(format!(
+            "installer: expected {} bytes, got {actual_size}",
+            inst.size
+        )));
+    }
+    let actual_hash = hash_file(&part)?;
+    if !actual_hash.eq_ignore_ascii_case(&inst.sha256) {
+        let _ = std::fs::remove_file(&part);
+        return Err(SetupError::HashMismatch(format!(
+            "installer: expected {}, got {actual_hash}",
+            inst.sha256
+        )));
+    }
+    if dest.exists() {
+        std::fs::remove_file(&dest)?;
+    }
+    std::fs::rename(&part, &dest)?;
+    progress(1.0);
+    Ok(dest)
+}
+
+pub fn install_runtime(
+    c: &Component,
+    base: &Path,
+    work_dir: &Path,
+    progress: &mut dyn FnMut(f32),
+) -> Result<()> {
+    let inst = c
+        .installer
+        .as_ref()
+        .ok_or_else(|| SetupError::NotInstallable(format!("{}: no installer", c.id)))?;
+    let dest_dir = work_dir.join("installers").join(&c.id);
+    let installer_path = fetch_installer(inst, base, &dest_dir, progress)?;
+    #[cfg(not(windows))]
+    {
+        let _ = &installer_path;
+        return Err(SetupError::Download(format!(
+            "{}: running installers is only supported on Windows",
+            c.id
+        )));
+    }
+    #[cfg(windows)]
+    {
+        let status = std::process::Command::new(&installer_path)
+            .args(&inst.args)
+            .status()?;
+        match status.code() {
+            Some(0) | Some(1641) | Some(3010) => Ok(()),
+            Some(code) => Err(SetupError::Download(format!(
+                "{}: installer exited with code {code}",
+                c.id
+            ))),
+            None => Err(SetupError::Download(format!(
+                "{}: installer terminated without an exit code",
+                c.id
+            ))),
+        }
+    }
 }
