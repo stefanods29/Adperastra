@@ -22,7 +22,43 @@
       "network": "Red"
     },
     "statusItems": "{count, plural, =0 {Sin elementos} one {# elemento} other {# elementos}}",
-    "statusSelected": "{count, plural, =0 {Ninguno seleccionado} one {# elemento seleccionado} other {# elementos seleccionados}}"
+    "statusSelected": "{count, plural, =0 {Ninguno seleccionado} one {# elemento seleccionado} other {# elementos seleccionados}}",
+    "addressLabel": "Dirección",
+    "searchIn": "Buscar en {name}",
+    "history": "Historial",
+    "siblingFolders": "Carpetas en {name}",
+    "columnName": "Nombre",
+    "columnModified": "Fecha de modificación",
+    "columnType": "Tipo",
+    "columnSize": "Tamaño",
+    "folderType": "Carpeta",
+    "fileType": "Archivo {ext}",
+    "genericFile": "Archivo",
+    "onlineOnly": "Solo en línea",
+    "isLink": "Acceso directo",
+    "loadingFolder": "Cargando carpeta...",
+    "stillLoading": "Sigue cargando...",
+    "loadError": "No se pudo abrir esta carpeta.",
+    "emptyFolder": "Esta carpeta está vacía.",
+    "noSearchResults": "Ningún elemento coincide con tu búsqueda.",
+    "notAvailable": "No disponible",
+    "driveStillLoading": "Sigue cargando...",
+    "driveNotAvailable": "Unidad no disponible",
+    "drivesTitle": "Este equipo",
+    "galleryPlaceholder": "La galería llegará en un paso posterior.",
+    "networkPlaceholder": "La exploración de red aún no está disponible.",
+    "favoritesEmpty": "Aún no hay favoritos.",
+    "recentEmpty": "Aún no hay elementos recientes.",
+    "browserPreview": "La exploración de archivos solo está disponible en la aplicación de escritorio.",
+    "pinnedFolders": "Ancladas",
+    "collapse": "Contraer",
+    "expand": "Expandir",
+    "sortBy": "Ordenar por {name}",
+    "driveSpace": "{free} libres de {total}",
+    "openDrive": "Abrir {name}",
+    "homeLocation": "Inicio",
+    "someItemsUnreadable": "Algunos elementos de esta carpeta no se pudieron leer.",
+    "fileListLabel": "Archivos en esta carpeta"
   },
   "help": {
     "title": "Ayuda",
@@ -109,5 +145,16 @@
   },
   "toast": {
     "sampleUndo": "Acción de ejemplo completada."
+  },
+  "commands": {
+    "back": "Atrás",
+    "forward": "Adelante",
+    "up": "Subir",
+    "refresh": "Actualizar",
+    "open": "Abrir",
+    "goToPath": "Ir a la ruta",
+    "pinUnpin": "Anclar o desanclar esta carpeta",
+    "pinFolder": "Anclar carpeta",
+    "unpinFolder": "Desanclar carpeta"
   }
 }

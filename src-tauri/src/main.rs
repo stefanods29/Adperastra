@@ -8,12 +8,17 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
+
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
+
+mod explorer;
 
 pub const CURRENT_SCHEMA: u32 = 2;
 
@@ -230,34 +235,9 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
     }
 }
 
+/// Crash-safe replace (see `fs_service::atomic_write`).
 pub fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), AppError> {
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)?;
-        }
-    }
-    let file_name = path
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "file".to_string());
-    let tmp_path = path.with_file_name(format!(".{file_name}.tmp-{}", std::process::id()));
-    fs::write(&tmp_path, contents)?;
-    match fs::rename(&tmp_path, path) {
-        Ok(()) => Ok(()),
-        Err(first_error) => {
-            // Windows rename does not replace an existing destination.
-            if path.exists() {
-                let _ = fs::remove_file(path);
-                fs::rename(&tmp_path, path).map_err(|_| {
-                    let _ = fs::remove_file(&tmp_path);
-                    AppError::Io(first_error)
-                })
-            } else {
-                let _ = fs::remove_file(&tmp_path);
-                Err(AppError::Io(first_error))
-            }
-        }
-    }
+    Ok(fs_service::atomic_write(path, contents)?)
 }
 
 pub fn load_settings(data_dir: &Path) -> Settings {
@@ -704,6 +684,19 @@ unsafe extern "system" fn snap_subclass_proc(
 pub struct AppState {
     data_dir: PathBuf,
     settings: Mutex<Settings>,
+    list_jobs: Mutex<HashMap<String, ListJob>>,
+    explorer_state_lock: Mutex<()>,
+    watch: Mutex<Option<WatchControl>>,
+    watch_next_id: AtomicU64,
+}
+
+struct WatchControl {
+    stop: std::sync::Arc<AtomicBool>,
+    watcher: std::sync::Arc<Mutex<fs_service::FsWatcher>>,
+}
+
+fn explorer_state_file(data_dir: &Path) -> PathBuf {
+    data_dir.join("explorer-state.json")
 }
 
 /// Every command is only callable from the main window. Help (and any
@@ -820,6 +813,404 @@ fn open_help_window(window: WebviewWindow, slug: Option<String>) -> Result<(), S
     window.emit("open-help", slug).map_err(|e| e.to_string())
 }
 
+// ---------------------------------------------------------------------------
+// Explorer commands (Step 02, slice 2)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListDirOutcome {
+    pub path: String,
+    pub total: usize,
+    pub skipped: Vec<fs_service::ListIssue>,
+}
+
+fn valid_request_id(id: &str) -> Result<(), String> {
+    if id.is_empty()
+        || id.len() > 64
+        || !id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err("invalid request id".to_string());
+    }
+    Ok(())
+}
+
+fn parse_sort(key: &str, direction: &str) -> Result<fs_service::SortSpec, String> {
+    let key = match key {
+        "name" => fs_service::SortKey::Name,
+        "modified" => fs_service::SortKey::Modified,
+        "size" => fs_service::SortKey::Size,
+        "kind" => fs_service::SortKey::Kind,
+        _ => return Err(format!("invalid sort key {key:?}")),
+    };
+    let direction = match direction {
+        "ascending" => fs_service::SortDirection::Ascending,
+        "descending" => fs_service::SortDirection::Descending,
+        _ => return Err(format!("invalid sort direction {direction:?}")),
+    };
+    Ok(fs_service::SortSpec { key, direction })
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListPoll {
+    pub batches: Vec<Vec<explorer::ExplorerItem>>,
+    pub done: bool,
+    pub outcome: Option<ListDirOutcome>,
+    pub error: Option<String>,
+}
+
+pub struct ListJob {
+    batches: std::collections::VecDeque<Vec<explorer::ExplorerItem>>,
+    done: bool,
+    outcome: Option<ListDirOutcome>,
+    error: Option<String>,
+    token: fs_service::CancellationToken,
+}
+
+/// Batches per poll response. Capped so the frontend paints the first
+/// rows (a few thousand items) instead of parsing a 100,000-item
+/// response before anything becomes visible (speed.md: render
+/// progressively, first view first).
+pub const MAX_POLL_BATCHES: usize = 8;
+
+/// Drain a finished/running job into one poll response. Pure so it can be
+/// unit-tested without a window. `done` is only reported once the queue
+/// is empty, so the outcome never overtakes undelivered batches.
+pub fn drain_job(job: &mut ListJob) -> ListPoll {
+    let take = job.batches.len().min(MAX_POLL_BATCHES);
+    let batches: Vec<Vec<explorer::ExplorerItem>> = job.batches.drain(..take).collect();
+    let done = job.done && job.batches.is_empty();
+    ListPoll {
+        batches,
+        done,
+        outcome: if done { job.outcome.clone() } else { None },
+        error: if done { job.error.clone() } else { None },
+    }
+}
+
+// NOTE (transport ruling, Step 02): Tauri Channel messages never reached
+// the frontend under this app's isolation pattern (probe: Rust listed 57
+// items, channel sends reported no error, JS received 0). Lists therefore
+// use plain invoke commands - start runs the listing on a blocking
+// thread, poll drains queued batches - which the isolation hook already
+// allows. Watch uses Tauri events, proven by the open-help flow.
+
+#[tauri::command]
+fn list_dir_start(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    app: AppHandle,
+    path: String,
+    sort_key: String,
+    sort_direction: String,
+    request_id: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    let sort = parse_sort(&sort_key, &sort_direction)?;
+    let token = fs_service::new_cancellation_token();
+    {
+        let mut jobs = state
+            .list_jobs
+            .lock()
+            .map_err(|_| "list jobs lock poisoned".to_string())?;
+        jobs.insert(
+            request_id.clone(),
+            ListJob {
+                batches: std::collections::VecDeque::new(),
+                done: false,
+                outcome: None,
+                error: None,
+                token: token.clone(),
+            },
+        );
+    }
+    let job_id = request_id;
+    tauri::async_runtime::spawn_blocking(move || {
+        let job_state = app.state::<AppState>();
+        let finish = |outcome: Option<ListDirOutcome>, error: Option<String>| {
+            if let Ok(mut jobs) = job_state.list_jobs.lock() {
+                if let Some(job) = jobs.get_mut(&job_id) {
+                    job.done = true;
+                    job.outcome = outcome;
+                    job.error = error;
+                }
+            }
+        };
+        let canonical = match fs::canonicalize(Path::new(&path)) {
+            Ok(canonical) => canonical,
+            Err(e) => {
+                finish(None, Some(e.to_string()));
+                return;
+            }
+        };
+        let job_id_for_batches = job_id.clone();
+        let result = fs_service::list_dir_batched(&canonical, sort, 512, &token, |chunk| {
+            let dto: Vec<explorer::ExplorerItem> =
+                chunk.iter().cloned().map(explorer::explorer_item).collect();
+            if let Ok(mut jobs) = job_state.list_jobs.lock() {
+                if let Some(job) = jobs.get_mut(&job_id_for_batches) {
+                    job.batches.push_back(dto);
+                }
+            }
+        });
+        match result {
+            Ok(listing) => finish(
+                Some(ListDirOutcome {
+                    path: listing.path.to_string_lossy().into_owned(),
+                    total: listing.items.len(),
+                    skipped: listing.skipped,
+                }),
+                None,
+            ),
+            Err(e) => finish(None, Some(e.to_string())),
+        }
+    });
+    Ok(())
+}
+
+#[tauri::command]
+fn list_dir_poll(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    request_id: String,
+) -> Result<ListPoll, String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    let mut jobs = state
+        .list_jobs
+        .lock()
+        .map_err(|_| "list jobs lock poisoned".to_string())?;
+    let Some(job) = jobs.get_mut(&request_id) else {
+        return Err(format!("unknown list request {request_id:?}"));
+    };
+    let poll = drain_job(job);
+    // drain_job only reports done once the queue is empty, and this
+    // response already carries the final drained batches, so the job can
+    // be dropped now; the client never needs to poll again.
+    if poll.done {
+        jobs.remove(&request_id);
+    }
+    Ok(poll)
+}
+
+#[tauri::command]
+fn list_dir_cancel(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    request_id: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    if let Ok(jobs) = state.list_jobs.lock() {
+        if let Some(job) = jobs.get(&request_id) {
+            job.token.store(true, Ordering::Relaxed);
+        }
+    }
+    Ok(())
+}
+#[tauri::command]
+async fn fs_stat(window: WebviewWindow, path: String) -> Result<explorer::ExplorerItem, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::stat_path(Path::new(&path))
+            .map(explorer::explorer_item)
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn list_known_folders(window: WebviewWindow) -> Result<Vec<explorer::KnownFolder>, String> {
+    ensure_main(window.label())?;
+    tauri::async_runtime::spawn_blocking(explorer::known_folders)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn list_drives(window: WebviewWindow) -> Result<Vec<explorer::DriveItem>, String> {
+    ensure_main(window.label())?;
+    // Logical drives only: this never waits on a drive (see explorer.rs).
+    Ok(explorer::list_drives())
+}
+
+#[tauri::command]
+async fn drive_info(window: WebviewWindow, root: String) -> Result<explorer::DriveInfo, String> {
+    ensure_main(window.label())?;
+    if root.len() > 256 {
+        return Err("drive root is too long".to_string());
+    }
+    fs_service::validate_path_input(&root).map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || explorer::drive_info(&root))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn list_recent_items(
+    window: WebviewWindow,
+    limit: usize,
+) -> Result<Vec<explorer::RecentItem>, String> {
+    ensure_main(window.label())?;
+    let limit = limit.clamp(1, 100);
+    tauri::async_runtime::spawn_blocking(move || explorer::recent_items(limit))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn explorer_state_get(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+) -> Result<fs_service::ExplorerState, String> {
+    ensure_main(window.label())?;
+    // Same lock as writers, so a read never races a save.
+    let _guard = state
+        .explorer_state_lock
+        .lock()
+        .map_err(|_| "explorer state lock poisoned".to_string())?;
+    Ok(fs_service::ExplorerState::load(&explorer_state_file(
+        &state.data_dir,
+    )))
+}
+
+fn update_explorer_state(
+    state: &AppState,
+    change: impl FnOnce(&mut fs_service::ExplorerState),
+) -> Result<fs_service::ExplorerState, String> {
+    let _guard = state
+        .explorer_state_lock
+        .lock()
+        .map_err(|_| "explorer state lock poisoned".to_string())?;
+    let path = explorer_state_file(&state.data_dir);
+    let mut current = fs_service::ExplorerState::load(&path);
+    change(&mut current);
+    current.save(&path).map_err(|e| e.to_string())?;
+    Ok(current)
+}
+
+#[tauri::command]
+async fn pin_folder(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<fs_service::ExplorerState, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    let canonical = tauri::async_runtime::spawn_blocking(move || {
+        let canonical = fs::canonicalize(Path::new(&path)).map_err(|e| e.to_string())?;
+        if !canonical.is_dir() {
+            return Err("only folders can be pinned".to_string());
+        }
+        Ok::<String, String>(canonical.to_string_lossy().into_owned())
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    update_explorer_state(&state, |s| s.pin(canonical))
+}
+
+#[tauri::command]
+fn unpin_folder(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<fs_service::ExplorerState, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    update_explorer_state(&state, |s| s.unpin(&path))
+}
+
+#[tauri::command]
+fn record_recent_folder(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<fs_service::ExplorerState, String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    update_explorer_state(&state, |s| s.record_recent(path))
+}
+
+#[tauri::command]
+async fn watch_start(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
+    let watcher = tauri::async_runtime::spawn_blocking(move || {
+        let canonical = fs::canonicalize(Path::new(&path)).map_err(|e| e.to_string())?;
+        let mut watcher = fs_service::FsWatcher::new().map_err(|e| e.to_string())?;
+        watcher.watch(&canonical).map_err(|e| e.to_string())?;
+        Ok::<fs_service::FsWatcher, String>(watcher)
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+
+    let id = state.watch_next_id.fetch_add(1, Ordering::Relaxed) + 1;
+    let control = WatchControl {
+        stop: std::sync::Arc::new(AtomicBool::new(false)),
+        watcher: std::sync::Arc::new(Mutex::new(watcher)),
+    };
+    let stop = control.stop.clone();
+    let shared = control.watcher.clone();
+    {
+        let mut slot = state
+            .watch
+            .lock()
+            .map_err(|_| "watch lock poisoned".to_string())?;
+        if let Some(old) = slot.take() {
+            old.stop.store(true, Ordering::Relaxed);
+        }
+        *slot = Some(control);
+    }
+    // Polling on a blocking thread: drain every 250 ms, so a burst of file
+    // changes becomes at most four batched UI events per second.
+    let window_for_events = window.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        loop {
+            std::thread::sleep(std::time::Duration::from_millis(250));
+            if stop.load(Ordering::Relaxed) {
+                break;
+            }
+            let events = match shared.lock() {
+                Ok(watcher) => watcher.drain_batched(),
+                Err(_) => break,
+            };
+            if !events.is_empty() {
+                let dto: Vec<explorer::FsEventDto> =
+                    events.into_iter().map(explorer::fs_event_dto).collect();
+                // Tauri events reach the frontend under the isolation
+                // pattern (the open-help flow proves it); Channel did not.
+                if window_for_events.emit("watch-events", dto).is_err() {
+                    break;
+                }
+            }
+        }
+        let _ = id; // generation, kept for future watch debugging
+    });
+    Ok(())
+}
+
+#[tauri::command]
+fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if let Ok(mut slot) = state.watch.lock() {
+        if let Some(control) = slot.take() {
+            control.stop.store(true, Ordering::Relaxed);
+            if let Ok(mut watcher) = control.watcher.lock() {
+                watcher.unwatch();
+            }
+        }
+    }
+    Ok(())
+}
 fn main() {
     let data_dir = resolve_data_dir();
     let _ = fs::create_dir_all(&data_dir);
@@ -834,6 +1225,10 @@ fn main() {
         .manage(AppState {
             data_dir,
             settings: Mutex::new(initial_settings),
+            list_jobs: Mutex::new(HashMap::new()),
+            explorer_state_lock: Mutex::new(()),
+            watch: Mutex::new(None),
+            watch_next_id: AtomicU64::new(0),
         })
         .setup(|app| {
             // Snap layouts: subclass the main window so Windows treats the
@@ -854,7 +1249,21 @@ fn main() {
             search_help,
             get_windows_accent,
             open_help_window,
-            set_maximize_rect
+            set_maximize_rect,
+            list_dir_start,
+            list_dir_poll,
+            list_dir_cancel,
+            fs_stat,
+            list_known_folders,
+            list_drives,
+            drive_info,
+            list_recent_items,
+            explorer_state_get,
+            pin_folder,
+            unpin_folder,
+            record_recent_folder,
+            watch_start,
+            watch_stop
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
@@ -1007,6 +1416,61 @@ mod tests {
         assert!(point_in_rect(145.5, 41.5, rect));
     }
 
+    #[test]
+    fn list_job_drain_returns_batches_then_outcome() {
+        let mut job = ListJob {
+            batches: std::collections::VecDeque::from(vec![vec![], vec![]]),
+            done: true,
+            outcome: Some(ListDirOutcome {
+                path: "C:\\".to_string(),
+                total: 0,
+                skipped: vec![],
+            }),
+            error: None,
+            token: fs_service::new_cancellation_token(),
+        };
+        let poll = drain_job(&mut job);
+        assert_eq!(poll.batches.len(), 2);
+        assert!(poll.done);
+        assert_eq!(poll.outcome.map(|o| o.total), Some(0));
+        assert!(job.batches.is_empty());
+        let mut running = ListJob {
+            batches: std::collections::VecDeque::new(),
+            done: false,
+            outcome: None,
+            error: None,
+            token: fs_service::new_cancellation_token(),
+        };
+        let poll = drain_job(&mut running);
+        assert!(!poll.done && poll.outcome.is_none());
+
+        // A finished job with more than MAX_POLL_BATCHES queued reports
+        // done only after the queue is fully drained.
+        let mut big = ListJob {
+            batches: std::collections::VecDeque::from(vec![vec![]; MAX_POLL_BATCHES + 2]),
+            done: true,
+            outcome: None,
+            error: None,
+            token: fs_service::new_cancellation_token(),
+        };
+        let first = drain_job(&mut big);
+        assert_eq!(first.batches.len(), MAX_POLL_BATCHES);
+        assert!(!first.done);
+        let second = drain_job(&mut big);
+        assert_eq!(second.batches.len(), 2);
+        assert!(second.done);
+    }
+    #[test]
+    fn explorer_command_validation() {
+        assert!(valid_request_id("req-1_a").is_ok());
+        assert!(valid_request_id("").is_err());
+        assert!(valid_request_id("bad id!").is_err());
+        assert!(valid_request_id(&"x".repeat(65)).is_err());
+        assert!(parse_sort("name", "ascending").is_ok());
+        assert!(parse_sort("size", "descending").is_ok());
+        assert!(parse_sort("bogus", "ascending").is_err());
+        assert!(parse_sort("name", "sideways").is_err());
+    }
     #[test]
     fn ensure_main_guard() {
         assert!(ensure_main("main").is_ok());

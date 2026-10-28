@@ -1,4 +1,4 @@
-﻿import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { CircleHelp, Copy, Home, LayoutGrid, Minus, Plus, Settings as SettingsIcon, Square, X } from "lucide-react";
@@ -35,7 +35,7 @@ const EXPLORER_TAB: TabState = { id: "explorer", kind: "explorer" };
 const SESSION_KEY = "adperastra-session";
 const TAB_KINDS: TabKind[] = ["explorer", "help", "settings", "gallery"];
 const HELP_SLUGS: Record<TabKind, string> = {
-  explorer: "getting-started",
+  explorer: "browsing-folders",
   settings: "changing-language-and-theme",
   help: "using-help",
   gallery: "using-help",
@@ -472,7 +472,7 @@ export default function App() {
               setExplorerTotal(total);
               setExplorerSelected(selected);
             }}
-            onOpenHelp={() => openTab("help", "getting-started")}
+            onOpenHelp={(slug) => openTab("help", slug ?? "browsing-folders")}
           />
         ) : null}
         {activeTab.kind === "help" ? (

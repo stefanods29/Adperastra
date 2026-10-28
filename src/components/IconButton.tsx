@@ -9,6 +9,8 @@ export interface IconButtonProps {
   disabled?: boolean;
   pressed?: boolean;
   keyTip?: string;
+  /** Shown in the tooltip after the label, e.g. "Copy (Ctrl+C)". */
+  shortcut?: string;
   showKeyTip?: boolean;
   className?: string;
 }
@@ -20,6 +22,7 @@ export default function IconButton({
   disabled,
   pressed,
   keyTip,
+  shortcut,
   showKeyTip,
   className,
 }: IconButtonProps) {
@@ -34,7 +37,7 @@ export default function IconButton({
       disabled={disabled}
       aria-label={label}
       aria-pressed={pressed}
-      title={label}
+      title={shortcut ? `${label} (${shortcut})` : label}
     >
       <Icon size={16} aria-hidden="true" />
       {keyTip ? <KeyTip letter={keyTip} visible={showKeyTip} /> : null}

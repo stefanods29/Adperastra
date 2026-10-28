@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-28",
+  "step": "step-02 (slice 6)",
+  "machine": "docs/benchmarks/MACHINE.md (i5-13420H, 15.7 GB RAM, C: NTFS 909 GB)",
+  "corpus": "%TEMP%\\adperastra-corpus\\folder-100k: 100,000 one-byte files + 100 empty folders = 100,100 items (scripts/generate-corpus.ps1)",
+  "rust_listing_release": {
+    "source": "docs/benchmarks/2026-10-28-folder-listing-step02.json plus a repeat run in slice 6",
+    "enumeration_with_file_ids_median_ms": 97.2,
+    "std_median_ms": 101.8,
+    "repeat_enumeration_median_ms": 107.3,
+    "tier": "Fast (1000 ms) - pass, enumeration only"
+  },
+  "end_to_end_first_rows_painted": {
+    "method": "scripts/measure-folder-open.ps1: packaged release app, fresh data dir, Enter in the address bar -> first folder-000 row present in the accessibility tree (UIA, 25 ms poll granularity)",
+    "runs_ms": [358.0, 378.0, 388.4, 458.4],
+    "median_ms": 383.2,
+    "tier": "Fast (1000 ms) - pass",
+    "note": "Before the poll-response cap (commit 05d9545) the same measurement was 1112-1256 ms, because the first poll delivered all 196 batches in one IPC response and nothing painted until it was parsed. Capping polls at 8 batches (4096 items) fixed it; full listing still completes progressively after first paint."
+  },
+  "scrolling": {
+    "method": "TanStack Virtual: only ~30 of 100,100 rows exist in the DOM at any time (verified in screenshots and the UIA tree while measuring)",
+    "tier": "Smooth (16 ms per frame) - by construction, no dropped-frame tooling in this step"
+  }
+}
