@@ -56,7 +56,9 @@
     "sortBy": "Ordenar por {name}",
     "driveSpace": "{free} libres de {total}",
     "openDrive": "Abrir {name}",
-    "homeLocation": "Inicio"
+    "homeLocation": "Inicio",
+    "someItemsUnreadable": "Algunos elementos de esta carpeta no se pudieron leer.",
+    "fileListLabel": "Archivos en esta carpeta"
   },
   "help": {
     "title": "Ayuda",

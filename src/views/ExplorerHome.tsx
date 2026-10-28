@@ -86,6 +86,9 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
   const [slowLoad, setSlowLoad] = useState(false);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [partialCount, setPartialCount] = useState(0);
+  const [skeletonVisible, setSkeletonVisible] = useState(false);
+  const loadModeRef = useRef<"hard" | "soft">("hard");
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [homeNonce, setHomeNonce] = useState(0);
   const generationRef = useRef(0);
@@ -97,6 +100,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
   const goToLocation = useCallback((next: ExplorerLocation) => {
     setSearch("");
     setSelectedPath(null);
+    setPartialCount(0);
     setItems([]);
     setHistory((current) => navigate(current, next));
   }, []);
@@ -104,7 +108,10 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
   const goToFolder = useCallback((path: string) => goToLocation({ type: "folder", path: displayPath(path) }), [goToLocation]);
 
   const refresh = useCallback(() => {
-    if (location.type === "folder") setRefreshNonce((value) => value + 1);
+    if (location.type === "folder") {
+      loadModeRef.current = "soft";
+      setRefreshNonce((value) => value + 1);
+    }
     else if (location.type === "home") setHomeNonce((value) => value + 1);
     else if (location.type === "drives") setRefreshNonce((value) => value + 1);
   }, [location.type]);
@@ -126,8 +133,21 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
       goToPath: (path: string) => {
         const trimmed = path.trim();
         if (!trimmed) return;
-        if (trimmed.toLowerCase() === "this pc" || trimmed === "this-pc") {
+        const word = trimmed.toLowerCase();
+        if (word === "this pc" || word === "este equipo" || word === "this-pc") {
           goToLocation({ type: "drives" });
+          return;
+        }
+        if (word === "home" || word === "inicio") {
+          goToLocation({ type: "home" });
+          return;
+        }
+        if (word === "gallery" || word === "galería" || word === "galeria") {
+          goToLocation({ type: "gallery" });
+          return;
+        }
+        if (word === "network" || word === "red") {
+          goToLocation({ type: "network" });
           return;
         }
         goToFolder(trimmed);
@@ -168,6 +188,30 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
   };
   const commandCtxRef = useRef(commandCtx);
   commandCtxRef.current = commandCtx;
+
+  // Command shortcuts (registry metadata): Alt+Left/Right/Up and F5 /
+  // Ctrl+R, unless the user is typing in a field.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
+      if (event.altKey && event.key === "ArrowLeft") {
+        event.preventDefault();
+        actions.back();
+      } else if (event.altKey && event.key === "ArrowRight") {
+        event.preventDefault();
+        actions.forward();
+      } else if (event.altKey && event.key === "ArrowUp") {
+        event.preventDefault();
+        actions.up();
+      } else if (event.key === "F5" || ((event.ctrlKey || event.metaKey) && (event.key === "r" || event.key === "R"))) {
+        event.preventDefault();
+        actions.refresh();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [actions]);
 
   // Initial shell data: known folders, explorer state, drive roots.
   useEffect(() => {
@@ -260,10 +304,16 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     const generation = generationRef.current + 1;
     generationRef.current = generation;
     benchRef.current = { generation, startedAt: performance.now(), done: false };
+    const soft = loadModeRef.current === "soft";
+    loadModeRef.current = "hard";
     setLoading(true);
+    setSkeletonVisible(false);
     setSlowLoad(false);
     setLoadTimedOut(false);
     setLoadError(false);
+    const skeletonTimer = window.setTimeout(() => {
+      if (generationRef.current === generation) setSkeletonVisible(true);
+    }, 100);
     const slowTimer = window.setTimeout(() => {
       if (generationRef.current === generation) setSlowLoad(true);
     }, 1000);
@@ -272,6 +322,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     }, 15000);
     let receivedFirst = false;
     let cancelled = false;
+    const collected: ExplorerItem[] = [];
     let watchRefreshTimer = 0;
     let watchUnlisten: (() => void) | null = null;
 
@@ -279,6 +330,13 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
       try {
         const handle = await startListDir(path, { key: sortKey, direction: sortDirection }, (batch) => {
           if (generationRef.current !== generation || cancelled) return;
+          if (soft) {
+            // Soft refresh (watch / manual refresh): keep the current
+            // rows, scroll and focus on screen; swap atomically at the
+            // end instead of shrinking the list batch by batch.
+            collected.push(...batch);
+            return;
+          }
           if (!receivedFirst) {
             receivedFirst = true;
             setItems(batch);
@@ -289,30 +347,43 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
         cancelRef.current = handle.cancel;
         const outcome = await handle.completion;
         if (generationRef.current !== generation || cancelled) return;
-        setItems((current) => (receivedFirst ? current : []));
+        if (soft) setItems(collected);
+        else setItems((current) => (receivedFirst ? current : []));
+        setPartialCount(outcome.skipped.length);
         setLoading(false);
         setSlowLoad(false);
         setLoadTimedOut(false);
         void outcome;
-        void recordRecentFolder(path)
-          .then((next) => setStateData(normalizeState(next)))
-          .catch(() => undefined);
+        if (!soft) {
+          void recordRecentFolder(path)
+            .then((next) => setStateData(normalizeState(next)))
+            .catch(() => undefined);
+        }
         watchUnlisten = await watchStart(path, () => {
           if (generationRef.current !== generation || cancelled) return;
           window.clearTimeout(watchRefreshTimer);
           watchRefreshTimer = window.setTimeout(() => {
-            if (generationRef.current === generation && !cancelled) setRefreshNonce((value) => value + 1);
+            if (generationRef.current === generation && !cancelled) {
+              loadModeRef.current = "soft";
+              setRefreshNonce((value) => value + 1);
+            }
           }, 300);
         }).catch(() => null);
+        if (cancelled && watchUnlisten) {
+          watchUnlisten();
+          watchUnlisten = null;
+          void watchStop();
+        }
       } catch {
         if (generationRef.current !== generation || cancelled) return;
         setLoading(false);
-        setLoadError(true);
+        if (!soft) setLoadError(true);
       }
     })();
 
     return () => {
       cancelled = true;
+      window.clearTimeout(skeletonTimer);
       window.clearTimeout(slowTimer);
       window.clearTimeout(timeoutTimer);
       window.clearTimeout(watchRefreshTimer);
@@ -373,8 +444,18 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     location.type === "folder"
       ? (segments[segments.length - 1]?.label ?? location.path)
       : segments[0].label;
+  const labelFor = (loc: ExplorerLocation): string =>
+    loc.type === "folder"
+      ? loc.path
+      : loc.type === "drives"
+        ? t("explorer.nav.thisPc")
+        : loc.type === "gallery"
+          ? t("explorer.nav.gallery")
+          : loc.type === "network"
+            ? t("explorer.nav.network")
+            : t("explorer.nav.home");
   const historyEntries = history.back
-    .map((entry, index) => ({ label: locationLabel(entry, t("explorer.nav.home"), t("explorer.nav.thisPc")), distance: history.back.length - index }))
+    .map((entry, index) => ({ label: labelFor(entry), distance: history.back.length - index }))
     .reverse();
 
   const pinnedCards = useMemo(() => {
@@ -401,9 +482,18 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     if (!isTauriRuntime()) {
       folderContent = <p className="adp-empty-note">{t("explorer.browserPreview")}</p>;
     } else if (loadError) {
-      folderContent = <p className="adp-empty-note">{t("explorer.loadError")}</p>;
+      folderContent = (
+        <>
+          <p className="adp-empty-note">{t("explorer.loadError")}</p>
+          <p>
+            <button type="button" className="adp-btn" onClick={refresh}>
+              {t("commands.refresh")}
+            </button>
+          </p>
+        </>
+      );
     } else {
-      const showSkeleton = loading && items.length === 0;
+      const showSkeleton = skeletonVisible && loading && items.length === 0;
       const showSlow = slowLoad && loading;
       const showTimedOut = loadTimedOut && loading;
       const showEmpty = !loading && items.length === 0;
@@ -413,6 +503,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
           {showSkeleton ? <Skeleton variant="rows" count={10} /> : null}
           {showSlow ? <p className="adp-note">{t("explorer.stillLoading")}</p> : null}
           {showTimedOut ? <p className="adp-note">{t("explorer.notAvailable")}</p> : null}
+          {partialCount > 0 ? <p className="adp-note" role="status">{t("explorer.someItemsUnreadable")}</p> : null}
           {showEmpty ? <p className="adp-empty-note">{t("explorer.emptyFolder")}</p> : null}
           {showNoResults ? <p className="adp-empty-note">{t("explorer.noSearchResults")}</p> : null}
           {visibleItems.length > 0 ? (

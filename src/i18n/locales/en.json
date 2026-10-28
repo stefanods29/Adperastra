@@ -56,7 +56,9 @@
     "sortBy": "Sort by {name}",
     "driveSpace": "{free} free of {total}",
     "openDrive": "Open {name}",
-    "homeLocation": "Home"
+    "homeLocation": "Home",
+    "someItemsUnreadable": "Some items in this folder could not be read.",
+    "fileListLabel": "Files in this folder"
   },
   "help": {
     "title": "Help",

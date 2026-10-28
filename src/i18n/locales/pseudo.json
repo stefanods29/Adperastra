@@ -56,7 +56,9 @@
     "sortBy": "[Sørt by {name} ëxträä]",
     "driveSpace": "[{free} frëë øf {total} ëxträä]",
     "openDrive": "[Øpën {name} ëxträä]",
-    "homeLocation": "[Hømë ëxträä]"
+    "homeLocation": "[Hømë ëxträä]",
+    "someItemsUnreadable": "[Sømë ïtëmš ïn thïš føldër çøüld ñøt bë rëääd ëxträä]",
+    "fileListLabel": "[Fïlëš ïn thïš føldër ëxträä]"
   },
   "help": {
     "title": "[Hëëlp Hëëlp]",

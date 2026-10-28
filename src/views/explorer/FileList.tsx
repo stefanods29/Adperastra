@@ -24,6 +24,7 @@ export default function FileList(props: FileListProps) {
   const { t, i18n } = useTranslation();
   const parentRef = useRef<HTMLDivElement>(null);
   const paintedRef = useRef(false);
+  const pendingFocusIndexRef = useRef<number | null>(null);
   const virtualizer = useVirtualizer({
     count: props.items.length,
     getScrollElement: () => parentRef.current,
@@ -42,6 +43,18 @@ export default function FileList(props: FileListProps) {
     return () => cancelAnimationFrame(handle);
   }, [props.items, props]);
 
+  useEffect(() => {
+    const pending = pendingFocusIndexRef.current;
+    if (pending === null) return;
+    pendingFocusIndexRef.current = null;
+    const handle = requestAnimationFrame(() => {
+      parentRef.current
+        ?.querySelector<HTMLElement>(`[data-index="${pending}"]`)
+        ?.focus();
+    });
+    return () => cancelAnimationFrame(handle);
+  }, [props.selectedPath, props.items]);
+
   const typeLabel = (item: ExplorerItem): string => {
     if (item.kind === "folder") return t("explorer.folderType");
     const ext = fileExtension(item.name);
@@ -51,6 +64,7 @@ export default function FileList(props: FileListProps) {
   const header = (key: SortKey, labelKey: string, className: string) => (
     <button
       type="button"
+      role="columnheader"
       className={`adp-filelist-header-cell ${className}`}
       aria-label={t("explorer.sortBy", { name: t(labelKey) })}
       aria-sort={props.sortKey === key ? (props.sortDirection === "ascending" ? "ascending" : "descending") : undefined}
@@ -69,7 +83,7 @@ export default function FileList(props: FileListProps) {
         {header("kind", "explorer.columnType", "adp-col-type")}
         {header("size", "explorer.columnSize", "adp-col-size")}
       </div>
-      <div ref={parentRef} className="adp-filelist-scroll" role="listbox" aria-label={t("explorer.columnName")}>
+      <div ref={parentRef} className="adp-filelist-scroll" role="listbox" aria-label={t("explorer.fileListLabel")}>
         <div className="adp-filelist-inner" style={{ height: virtualizer.getTotalSize() }}>
           {virtualizer.getVirtualItems().map((row) => {
             const item = props.items[row.index];
@@ -80,13 +94,29 @@ export default function FileList(props: FileListProps) {
                 key={item.path}
                 type="button"
                 role="option"
+                data-index={row.index}
                 aria-selected={props.selectedPath === item.path}
                 className={`adp-file-row${props.selectedPath === item.path ? " adp-file-row--selected" : ""}${item.hidden ? " adp-file-row--hidden" : ""}`}
                 style={{ transform: `translateY(${row.start}px)`, height: ROW_HEIGHT }}
                 onClick={() => props.onSelect(item)}
                 onDoubleClick={() => props.onOpen(item)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") props.onOpen(item);
+                  if (event.key === "Enter") {
+                    props.onOpen(item);
+                    return;
+                  }
+                  const move = (targetIndex: number) => {
+                    const target = props.items[targetIndex];
+                    if (!target) return;
+                    event.preventDefault();
+                    pendingFocusIndexRef.current = targetIndex;
+                    virtualizer.scrollToIndex(targetIndex, { align: "auto" });
+                    props.onSelect(target);
+                  };
+                  if (event.key === "ArrowDown") move(row.index + 1);
+                  else if (event.key === "ArrowUp") move(row.index - 1);
+                  else if (event.key === "Home") move(0);
+                  else if (event.key === "End") move(props.items.length - 1);
                 }}
               >
                 <span className="adp-col-name adp-file-name-cell">

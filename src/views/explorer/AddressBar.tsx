@@ -90,8 +90,8 @@ export default function AddressBar(props: AddressBarProps) {
   return (
     <div className="adp-addressbar">
       <div className="adp-nav-buttons">
-        <IconButton icon={props.backCommand.icon} labelKey={props.backCommand.labelKey} disabled={!props.backCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.backCommand)} />
-        <IconButton icon={props.forwardCommand.icon} labelKey={props.forwardCommand.labelKey} disabled={!props.forwardCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.forwardCommand)} />
+        <IconButton icon={props.backCommand.icon} labelKey={props.backCommand.labelKey} shortcut={props.backCommand.shortcut} disabled={!props.backCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.backCommand)} />
+        <IconButton icon={props.forwardCommand.icon} labelKey={props.forwardCommand.labelKey} shortcut={props.forwardCommand.shortcut} disabled={!props.forwardCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.forwardCommand)} />
         <div className="adp-dropdown">
           <button type="button" className="adp-icon-btn" aria-label={t("explorer.history")} title={t("explorer.history")} disabled={props.historyEntries.length === 0} onClick={() => setOpenSegment(openSegment === -1 ? null : -1)}>
             <Clock3 size={14} aria-hidden="true" />
@@ -108,8 +108,8 @@ export default function AddressBar(props: AddressBarProps) {
             </ul>
           ) : null}
         </div>
-        <IconButton icon={props.upCommand.icon} labelKey={props.upCommand.labelKey} disabled={!props.upCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.upCommand)} />
-        <IconButton icon={props.refreshCommand.icon} labelKey={props.refreshCommand.labelKey} disabled={!props.refreshCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.refreshCommand)} />
+        <IconButton icon={props.upCommand.icon} labelKey={props.upCommand.labelKey} shortcut={props.upCommand.shortcut} disabled={!props.upCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.upCommand)} />
+        <IconButton icon={props.refreshCommand.icon} labelKey={props.refreshCommand.labelKey} shortcut={props.refreshCommand.shortcut} disabled={!props.refreshCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.refreshCommand)} />
       </div>
 
       {editing ? (

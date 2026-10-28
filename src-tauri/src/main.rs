@@ -1012,7 +1012,10 @@ fn list_dir_poll(
         return Err(format!("unknown list request {request_id:?}"));
     };
     let poll = drain_job(job);
-    if poll.done && poll.batches.is_empty() {
+    // drain_job only reports done once the queue is empty, and this
+    // response already carries the final drained batches, so the job can
+    // be dropped now; the client never needs to poll again.
+    if poll.done {
         jobs.remove(&request_id);
     }
     Ok(poll)
