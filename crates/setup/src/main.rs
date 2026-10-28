@@ -28,6 +28,18 @@ struct Args {
     simulate_missing: Vec<String>,
 }
 
+/// `--simulate-missing` is a test flag: compiled in only for debug/test
+/// builds, ignored (with a warning) in release builds.
+const SIMULATE_ALLOWED: bool = cfg!(debug_assertions);
+
+fn effective_simulate(ids: &[String], allowed: bool) -> Vec<String> {
+    if allowed {
+        ids.to_vec()
+    } else {
+        Vec::new()
+    }
+}
+
 fn parse_args() -> Args {
     let mut a = Args::default();
     let mut it = std::env::args().skip(1);
@@ -134,10 +146,21 @@ fn run_headless_repair(cfg: &Cfg, missing: &[String]) -> i32 {
             }
             ComponentKind::AnyPath { .. } => {
                 if comp.installer.is_some() {
-                    let res =
-                        setup_core::install_runtime(comp, &cfg.base_dir, &cfg.data_dir, &mut |f| {
-                            append_log(&cfg.data_dir, &format!("runtime {id}: {:.0}%", f * 100.0))
-                        });
+                    let res = setup_core::install_runtime(
+                        comp,
+                        &cfg.base_dir,
+                        &cfg.data_dir,
+                        &mut |phase| match phase {
+                            setup_core::RuntimeProgress::Downloading(f) => append_log(
+                                &cfg.data_dir,
+                                &format!("runtime {id} download: {:.0}%", f * 100.0),
+                            ),
+                            setup_core::RuntimeProgress::Installing => append_log(
+                                &cfg.data_dir,
+                                &format!("runtime {id} installing (Microsoft installer)"),
+                            ),
+                        },
+                    );
                     match res {
                         Ok(()) => append_log(&cfg.data_dir, &format!("runtime installed {id}")),
                         Err(e) => {
@@ -167,6 +190,14 @@ fn run_headless_repair(cfg: &Cfg, missing: &[String]) -> i32 {
 fn main() {
     let args = parse_args();
     let data = data_dir(&args);
+    let simulate = effective_simulate(&args.simulate_missing, SIMULATE_ALLOWED);
+    if !args.simulate_missing.is_empty() && !SIMULATE_ALLOWED {
+        append_log(
+            &data,
+            "warning: --simulate-missing ignored in release builds (development/test only)",
+        );
+        eprintln!("Adperastra setup: --simulate-missing is only available in development/test builds; ignoring it.");
+    }
     if args.reset_profile {
         let _ = std::fs::remove_file(data.join("profile.json"));
         append_log(&data, "profile reset by --reset-profile");
@@ -275,7 +306,7 @@ fn main() {
     };
 
     let mut reports = verify_all(&cfg.manifest, &cfg.base_dir, args.repair);
-    for id in &args.simulate_missing {
+    for id in &simulate {
         // Test flag: pretend a component is missing without touching the PC.
         if let Some(r) = reports.iter_mut().find(|r| &r.id == id) {
             r.status = Status::Broken("simulated missing (test flag)".into());
@@ -362,6 +393,7 @@ fn main() {
 
 enum Msg {
     Progress(String, f32),
+    Installing(String),
     Done(String, Result<(), String>),
 }
 
@@ -370,6 +402,7 @@ struct Row {
     label: String,
     detail: String,
     frac: f32,
+    installing: bool,
     status: String,
     error: Option<String>,
 }
@@ -399,6 +432,7 @@ impl RepairApp {
                 label: t(&cfg.lang, &c.name_key),
                 detail: format!("{} | {}", c.version, human_size(c.size.unwrap_or(0))),
                 frac: 0.0,
+                installing: false,
                 status: t(&cfg.lang, "repair.checking"),
                 error: None,
             })
@@ -451,10 +485,18 @@ impl RepairApp {
                             let tx2 = tx.clone();
                             let id2 = id.clone();
                             let work = std::env::temp_dir().join("adperastra-installers");
-                            let res = setup_core::install_runtime(comp, &base, &work, &mut |f| {
-                                let _ = tx2.send(Msg::Progress(id2.clone(), f));
-                            })
-                            .map_err(|e| e.to_string());
+                            let res =
+                                setup_core::install_runtime(comp, &base, &work, &mut |phase| {
+                                    match phase {
+                                        setup_core::RuntimeProgress::Downloading(f) => {
+                                            let _ = tx2.send(Msg::Progress(id2.clone(), f));
+                                        }
+                                        setup_core::RuntimeProgress::Installing => {
+                                            let _ = tx2.send(Msg::Installing(id2.clone()));
+                                        }
+                                    }
+                                })
+                                .map_err(|e| e.to_string());
                             let _ = tx.send(Msg::Done(id, res));
                         } else {
                             let _ = tx.send(Msg::Done(id, Err("not-installable".into())));
@@ -468,7 +510,10 @@ impl RepairApp {
     fn all_ok(&self) -> bool {
         self.started
             && !self.running
-            && self.rows.iter().all(|r| r.error.is_none() && r.frac >= 1.0)
+            && self
+                .rows
+                .iter()
+                .all(|r| !r.installing && r.error.is_none() && r.frac >= 1.0)
     }
 }
 
@@ -496,6 +541,13 @@ impl eframe::App for RepairApp {
                                 fmt(&t(&self.lang, "repair.installing"), &[("name", &r.label)]);
                         }
                     }
+                    Msg::Installing(id) => {
+                        self.running = true;
+                        if let Some(r) = self.rows.iter_mut().find(|r| r.id == id) {
+                            r.installing = true;
+                            r.status = fmt(&t(&self.lang, "repair.runtime"), &[("name", &r.label)]);
+                        }
+                    }
                     Msg::Done(id, res) => {
                         if let Some(r) = self.rows.iter_mut().find(|r| r.id == id) {
                             match res {
@@ -514,10 +566,15 @@ impl eframe::App for RepairApp {
                 }
             }
         }
-        if self.running && self.rows.iter().all(|r| r.frac >= 1.0 || r.error.is_some()) {
+        if self.running
+            && self
+                .rows
+                .iter()
+                .all(|r| !r.installing && (r.frac >= 1.0 || r.error.is_some()))
+        {
             self.running = false;
         }
-        if self.running {
+        if self.running || self.rows.iter().any(|r| r.installing) {
             ctx.request_repaint_after(std::time::Duration::from_millis(50));
         }
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -526,10 +583,20 @@ impl eframe::App for RepairApp {
             let lang = self.lang.clone();
             for r in &mut self.rows {
                 ui.label(format!("{} ({})", r.label, r.detail));
-                ui.add(egui::ProgressBar::new(r.frac).show_percentage());
+                if r.installing {
+                    ui.add(
+                        egui::ProgressBar::new(0.0)
+                            .animate(true)
+                            .desired_width(f32::INFINITY),
+                    );
+                } else {
+                    ui.add(egui::ProgressBar::new(r.frac).show_percentage());
+                }
                 ui.small(&r.status);
                 if let Some(e) = &r.error {
-                    if e.contains("download") || e.contains("http") || e.contains("url") {
+                    if e.contains("hash mismatch") || e.contains("size mismatch") {
+                        ui.label(t(&lang, "repair.checksum_mismatch"));
+                    } else if e.contains("download") || e.contains("http") || e.contains("url") {
                         ui.label(fmt(&t(&lang, "repair.offline"), &[("name", &r.label)]));
                     }
                 }
@@ -545,6 +612,7 @@ impl eframe::App for RepairApp {
                         if r.error.is_some() {
                             r.error = None;
                             r.frac = 0.0;
+                            r.installing = false;
                         }
                     }
                     self.start_worker();
@@ -762,5 +830,22 @@ impl eframe::App for SignatureApp {
                 }
             });
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn simulate_ids_kept_in_development_builds() {
+        let ids = vec!["webview2".to_string()];
+        assert_eq!(effective_simulate(&ids, true), ids);
+    }
+
+    #[test]
+    fn simulate_ids_dropped_in_release_builds() {
+        let ids = vec!["webview2".to_string()];
+        assert!(effective_simulate(&ids, false).is_empty());
     }
 }
