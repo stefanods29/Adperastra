@@ -59,3 +59,17 @@ Stability: `Item.attrs.file_id_stable` is true only for NTFS/ReFS on a
 local drive. On FAT/FAT32/exFAT (IDs derive from directory-entry offsets
 and can change, per the Microsoft remarks above) and on network drives,
 it is false and consumers (tags, Step 11b) must fall back to the path.
+## Amendment (Slice 4 finding): IPC transport for streamed data
+
+Tauri `Channel` messages never reached the frontend in this app
+(Rust listed 57 items, channel sends reported no error, the JS handler
+received 0) - the isolation pattern (plan/rules.md section 5) is the
+suspected boundary. Streamed listings therefore use plain invoke
+commands the isolation hook already allows: `list_dir_start` runs the
+listing on a blocking thread and `list_dir_poll` drains queued batches
+of 512 until done, with `list_dir_cancel` setting the token. Folder
+watch uses Tauri events (`watch-events`), the same transport the
+open-help flow already proved in Step 01b. If a later Tauri version or a
+different webview layout makes Channel reliable, this can be revisited;
+the service interface (`startListDir` handle with completion promise)
+will not need to change.

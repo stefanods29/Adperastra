@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::ipc::Channel;
+
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
@@ -709,14 +709,13 @@ unsafe extern "system" fn snap_subclass_proc(
 pub struct AppState {
     data_dir: PathBuf,
     settings: Mutex<Settings>,
-    list_cancellations: Mutex<HashMap<String, fs_service::CancellationToken>>,
+    list_jobs: Mutex<HashMap<String, ListJob>>,
     explorer_state_lock: Mutex<()>,
     watch: Mutex<Option<WatchControl>>,
     watch_next_id: AtomicU64,
 }
 
 struct WatchControl {
-    id: u64,
     stop: std::sync::Arc<AtomicBool>,
     watcher: std::sync::Arc<Mutex<fs_service::FsWatcher>>,
 }
@@ -878,48 +877,136 @@ fn parse_sort(key: &str, direction: &str) -> Result<fs_service::SortSpec, String
     Ok(fs_service::SortSpec { key, direction })
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListPoll {
+    pub batches: Vec<Vec<explorer::ExplorerItem>>,
+    pub done: bool,
+    pub outcome: Option<ListDirOutcome>,
+    pub error: Option<String>,
+}
+
+pub struct ListJob {
+    batches: std::collections::VecDeque<Vec<explorer::ExplorerItem>>,
+    done: bool,
+    outcome: Option<ListDirOutcome>,
+    error: Option<String>,
+    token: fs_service::CancellationToken,
+}
+
+/// Drain a finished/running job into one poll response. Pure so it can be
+/// unit-tested without a window.
+pub fn drain_job(job: &mut ListJob) -> ListPoll {
+    let batches: Vec<Vec<explorer::ExplorerItem>> = job.batches.drain(..).collect();
+    ListPoll {
+        batches,
+        done: job.done,
+        outcome: if job.done { job.outcome.clone() } else { None },
+        error: if job.done { job.error.clone() } else { None },
+    }
+}
+
+// NOTE (transport ruling, Step 02): Tauri Channel messages never reached
+// the frontend under this app's isolation pattern (probe: Rust listed 57
+// items, channel sends reported no error, JS received 0). Lists therefore
+// use plain invoke commands - start runs the listing on a blocking
+// thread, poll drains queued batches - which the isolation hook already
+// allows. Watch uses Tauri events, proven by the open-help flow.
+
 #[tauri::command]
-async fn list_dir_start(
+fn list_dir_start(
     window: WebviewWindow,
     state: State<'_, AppState>,
+    app: AppHandle,
     path: String,
     sort_key: String,
     sort_direction: String,
     request_id: String,
-    on_batch: Channel<Vec<explorer::ExplorerItem>>,
-) -> Result<ListDirOutcome, String> {
+) -> Result<(), String> {
     ensure_main(window.label())?;
     valid_request_id(&request_id)?;
     fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
     let sort = parse_sort(&sort_key, &sort_direction)?;
     let token = fs_service::new_cancellation_token();
     {
-        let mut map = state
-            .list_cancellations
+        let mut jobs = state
+            .list_jobs
             .lock()
-            .map_err(|_| "cancellation lock poisoned".to_string())?;
-        map.insert(request_id.clone(), token.clone());
+            .map_err(|_| "list jobs lock poisoned".to_string())?;
+        jobs.insert(
+            request_id.clone(),
+            ListJob {
+                batches: std::collections::VecDeque::new(),
+                done: false,
+                outcome: None,
+                error: None,
+                token: token.clone(),
+            },
+        );
     }
-    let request_for_cleanup = request_id.clone();
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        let canonical = fs::canonicalize(Path::new(&path)).map_err(|e| e.to_string())?;
-        let listing = fs_service::list_dir_batched(&canonical, sort, 512, &token, |chunk| {
+    let job_id = request_id;
+    tauri::async_runtime::spawn_blocking(move || {
+        let job_state = app.state::<AppState>();
+        let finish = |outcome: Option<ListDirOutcome>, error: Option<String>| {
+            if let Ok(mut jobs) = job_state.list_jobs.lock() {
+                if let Some(job) = jobs.get_mut(&job_id) {
+                    job.done = true;
+                    job.outcome = outcome;
+                    job.error = error;
+                }
+            }
+        };
+        let canonical = match fs::canonicalize(Path::new(&path)) {
+            Ok(canonical) => canonical,
+            Err(e) => {
+                finish(None, Some(e.to_string()));
+                return;
+            }
+        };
+        let job_id_for_batches = job_id.clone();
+        let result = fs_service::list_dir_batched(&canonical, sort, 512, &token, |chunk| {
             let dto: Vec<explorer::ExplorerItem> =
                 chunk.iter().cloned().map(explorer::explorer_item).collect();
-            let _ = on_batch.send(dto);
-        })
-        .map_err(|e| e.to_string())?;
-        Ok::<ListDirOutcome, String>(ListDirOutcome {
-            path: listing.path.to_string_lossy().into_owned(),
-            total: listing.items.len(),
-            skipped: listing.skipped,
-        })
-    })
-    .await;
-    if let Ok(mut map) = state.list_cancellations.lock() {
-        map.remove(&request_for_cleanup);
+            if let Ok(mut jobs) = job_state.list_jobs.lock() {
+                if let Some(job) = jobs.get_mut(&job_id_for_batches) {
+                    job.batches.push_back(dto);
+                }
+            }
+        });
+        match result {
+            Ok(listing) => finish(
+                Some(ListDirOutcome {
+                    path: listing.path.to_string_lossy().into_owned(),
+                    total: listing.items.len(),
+                    skipped: listing.skipped,
+                }),
+                None,
+            ),
+            Err(e) => finish(None, Some(e.to_string())),
+        }
+    });
+    Ok(())
+}
+
+#[tauri::command]
+fn list_dir_poll(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    request_id: String,
+) -> Result<ListPoll, String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    let mut jobs = state
+        .list_jobs
+        .lock()
+        .map_err(|_| "list jobs lock poisoned".to_string())?;
+    let Some(job) = jobs.get_mut(&request_id) else {
+        return Err(format!("unknown list request {request_id:?}"));
+    };
+    let poll = drain_job(job);
+    if poll.done && poll.batches.is_empty() {
+        jobs.remove(&request_id);
     }
-    result.map_err(|e| e.to_string())?
+    Ok(poll)
 }
 
 #[tauri::command]
@@ -930,14 +1017,13 @@ fn list_dir_cancel(
 ) -> Result<(), String> {
     ensure_main(window.label())?;
     valid_request_id(&request_id)?;
-    if let Ok(map) = state.list_cancellations.lock() {
-        if let Some(token) = map.get(&request_id) {
-            token.store(true, Ordering::Relaxed);
+    if let Ok(jobs) = state.list_jobs.lock() {
+        if let Some(job) = jobs.get(&request_id) {
+            job.token.store(true, Ordering::Relaxed);
         }
     }
     Ok(())
 }
-
 #[tauri::command]
 async fn fs_stat(window: WebviewWindow, path: String) -> Result<explorer::ExplorerItem, String> {
     ensure_main(window.label())?;
@@ -1063,7 +1149,6 @@ async fn watch_start(
     window: WebviewWindow,
     state: State<'_, AppState>,
     path: String,
-    on_event: Channel<Vec<explorer::FsEventDto>>,
 ) -> Result<(), String> {
     ensure_main(window.label())?;
     fs_service::validate_path_input(&path).map_err(|e| e.to_string())?;
@@ -1078,7 +1163,6 @@ async fn watch_start(
 
     let id = state.watch_next_id.fetch_add(1, Ordering::Relaxed) + 1;
     let control = WatchControl {
-        id,
         stop: std::sync::Arc::new(AtomicBool::new(false)),
         watcher: std::sync::Arc::new(Mutex::new(watcher)),
     };
@@ -1096,6 +1180,7 @@ async fn watch_start(
     }
     // Polling on a blocking thread: drain every 250 ms, so a burst of file
     // changes becomes at most four batched UI events per second.
+    let window_for_events = window.clone();
     tauri::async_runtime::spawn_blocking(move || {
         loop {
             std::thread::sleep(std::time::Duration::from_millis(250));
@@ -1109,12 +1194,14 @@ async fn watch_start(
             if !events.is_empty() {
                 let dto: Vec<explorer::FsEventDto> =
                     events.into_iter().map(explorer::fs_event_dto).collect();
-                if on_event.send(dto).is_err() {
+                // Tauri events reach the frontend under the isolation
+                // pattern (the open-help flow proves it); Channel did not.
+                if window_for_events.emit("watch-events", dto).is_err() {
                     break;
                 }
             }
         }
-        let _ = id;
+        let _ = id; // generation, kept for future watch debugging
     });
     Ok(())
 }
@@ -1146,7 +1233,7 @@ fn main() {
         .manage(AppState {
             data_dir,
             settings: Mutex::new(initial_settings),
-            list_cancellations: Mutex::new(HashMap::new()),
+            list_jobs: Mutex::new(HashMap::new()),
             explorer_state_lock: Mutex::new(()),
             watch: Mutex::new(None),
             watch_next_id: AtomicU64::new(0),
@@ -1172,6 +1259,7 @@ fn main() {
             open_help_window,
             set_maximize_rect,
             list_dir_start,
+            list_dir_poll,
             list_dir_cancel,
             fs_stat,
             list_known_folders,
@@ -1336,6 +1424,30 @@ mod tests {
         assert!(point_in_rect(145.5, 41.5, rect));
     }
 
+    #[test]
+    fn list_job_drain_returns_batches_then_outcome() {
+        let mut job = ListJob {
+            batches: std::collections::VecDeque::from(vec![vec![], vec![]]),
+            done: true,
+            outcome: Some(ListDirOutcome { path: "C:\\".to_string(), total: 0, skipped: vec![] }),
+            error: None,
+            token: fs_service::new_cancellation_token(),
+        };
+        let poll = drain_job(&mut job);
+        assert_eq!(poll.batches.len(), 2);
+        assert!(poll.done);
+        assert_eq!(poll.outcome.map(|o| o.total), Some(0));
+        assert!(job.batches.is_empty());
+        let mut running = ListJob {
+            batches: std::collections::VecDeque::new(),
+            done: false,
+            outcome: None,
+            error: None,
+            token: fs_service::new_cancellation_token(),
+        };
+        let poll = drain_job(&mut running);
+        assert!(!poll.done && poll.outcome.is_none());
+    }
     #[test]
     fn explorer_command_validation() {
         assert!(valid_request_id("req-1_a").is_ok());
