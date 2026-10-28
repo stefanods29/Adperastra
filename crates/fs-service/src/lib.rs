@@ -8,6 +8,7 @@
 pub mod details;
 pub mod item;
 pub mod list;
+pub mod ops;
 pub mod rename;
 pub mod sort;
 pub mod state;
@@ -38,6 +39,11 @@ pub use list::{
     file_id_is_stable, list_dir, list_dir_batched, list_dir_cancellable, list_dir_std,
     new_cancellation_token, read_range, stat_path, validate_new_name, validate_path_input,
     CancellationToken, ListIssue, Listing, MAX_PATH_INPUT, MAX_READ_RANGE,
+};
+pub use ops::{
+    check_conflicts, copy_items, create_item, delete_permanently, move_items, op_error_reason,
+    recycle_items, restore_items, unique_destination, CompletedItem, ConflictPolicy, CreateKind,
+    OpProgress, OpReport, SkippedItem,
 };
 pub use rename::{rename_error_reason, rename_in_place};
 pub use sort::{natural_cmp, sort_items, SortDirection, SortKey, SortSpec};
