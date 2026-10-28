@@ -171,7 +171,7 @@ fn list_dir_std_inner(
     let mut seen = 0usize;
     for entry in fs::read_dir(path)? {
         seen += 1;
-        if seen % 512 == 0 {
+        if seen.is_multiple_of(512) {
             if let Some(token) = token {
                 if token.load(Ordering::Relaxed) {
                     return Err(FsError::Cancelled);

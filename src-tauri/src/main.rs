@@ -515,7 +515,7 @@ fn write_minidump(logs_dir: &Path, timestamp: u64) {
         .open(&path)
     {
         unsafe {
-            let handle = HANDLE(file.as_raw_handle() as *mut std::ffi::c_void);
+            let handle = HANDLE(file.as_raw_handle());
             let _ = MiniDumpWriteDump(
                 GetCurrentProcess(),
                 GetCurrentProcessId(),
@@ -1325,8 +1325,10 @@ mod tests {
 
     #[test]
     fn validation_rejects_bad_language() {
-        let mut settings = Settings::default();
-        settings.language = "fr".to_string();
+        let mut settings = Settings {
+            language: "fr".to_string(),
+            ..Settings::default()
+        };
         assert!(validate(&settings).is_err());
         settings.language = "".to_string();
         assert!(validate(&settings).is_err());
