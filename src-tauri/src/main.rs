@@ -1739,6 +1739,30 @@ async fn clipboard_text(window: WebviewWindow) -> Result<Option<String>, String>
         .map_err(|e| e.to_string())?
 }
 
+/// Save the clipboard image as a PNG/JPG file in `parent` (Paste as
+/// file). Returns the created path. Errors are `image.<reason>` codes.
+#[tauri::command]
+async fn clipboard_image_file(
+    window: WebviewWindow,
+    parent: String,
+    base_name: String,
+    format: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    validate_absolute_path(&parent).map_err(|_| "image.failed".to_string())?;
+    if !matches!(format.as_str(), "png" | "jpg") || base_name.chars().count() > 200 {
+        return Err("image.failed".to_string());
+    }
+    fs_service::validate_new_name(&format!("{base_name}.{format}"))
+        .map_err(|_| "image.failed".to_string())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || {
+        clipboard::save_image(owner, Path::new(&parent), &base_name, &format)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// The Windows share sheet for files. Windows UI for a window has to be
 /// shown from that window's thread, so the work hops to the main thread.
 #[tauri::command]
@@ -1958,7 +1982,8 @@ fn main() {
             show_classic_menu,
             clipboard_set_files,
             clipboard_read,
-            clipboard_text
+            clipboard_text,
+            clipboard_image_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

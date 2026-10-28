@@ -241,6 +241,119 @@ mod imp {
         close();
         result
     }
+
+    /// Save the clipboard image as PNG or JPG in `parent` under
+    /// `base_name` (a numbered name is chosen when taken). Screenshots
+    /// usually arrive as a bitmap; browsers may also offer ready PNG
+    /// data, which is decoded with the same Windows imaging path.
+    pub fn save_image(
+        owner: isize,
+        parent: &std::path::Path,
+        base_name: &str,
+        format: &str,
+    ) -> Result<String, String> {
+        use windows::core::{Interface, PCWSTR};
+        use windows::Win32::Graphics::Gdi::HBITMAP;
+        use windows::Win32::Graphics::Imaging::{
+            CLSID_WICImagingFactory, GUID_ContainerFormatJpeg, GUID_ContainerFormatPng,
+            GUID_WICPixelFormat24bppBGR, GUID_WICPixelFormat32bppBGRA, IWICBitmapSource,
+            IWICImagingFactory, WICBitmapEncoderNoCache, WICBitmapUseAlpha,
+        };
+        use windows::Win32::System::Com::{
+            CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_INPROC_SERVER,
+            COINIT_APARTMENTTHREADED,
+        };
+
+        let extension = if format == "jpg" { "jpg" } else { "png" };
+        let target = fs_service::unique_destination(parent, &format!("{base_name}.{extension}"));
+        open(owner)?;
+        // SAFETY: COM is balanced below; clipboard handles are only used
+        // while the clipboard stays open on this thread.
+        let initialized = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }.0 >= 0;
+        let result = unsafe {
+            (|| -> windows::core::Result<String> {
+                let factory: IWICImagingFactory =
+                    CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)?;
+                // Source: ready PNG data when offered, else the bitmap.
+                let source: IWICBitmapSource = 'source: {
+                    if let Ok(handle) = GetClipboardData(png_format()) {
+                        if !handle.is_invalid() {
+                            let hglobal = HGLOBAL(handle.0);
+                            let size = GlobalSize(hglobal);
+                            if size > 0 && size <= 512 * 1024 * 1024 {
+                                let ptr = GlobalLock(hglobal) as *const u8;
+                                if !ptr.is_null() {
+                                    let bytes = std::slice::from_raw_parts(ptr, size).to_vec();
+                                    let _ = GlobalUnlock(hglobal);
+                                    let stream = factory.CreateStream()?;
+                                    stream.InitializeFromMemory(&bytes)?;
+                                    let decoder = factory.CreateDecoderFromStream(
+                                        &stream,
+                                        std::ptr::null(),
+                                        windows::Win32::Graphics::Imaging::WICDecodeMetadataCacheOnLoad,
+                                    )?;
+                                    let frame = decoder.GetFrame(0)?;
+                                    break 'source frame.cast::<IWICBitmapSource>()?;
+                                }
+                            }
+                        }
+                    }
+                    let handle = GetClipboardData(CF_BITMAP_ID).map_err(|_| {
+                        windows::core::Error::from_hresult(windows::Win32::Foundation::E_FAIL)
+                    })?;
+                    let bitmap = factory.CreateBitmapFromHBITMAP(
+                        HBITMAP(handle.0),
+                        windows::Win32::Graphics::Gdi::HPALETTE::default(),
+                        WICBitmapUseAlpha,
+                    )?;
+                    bitmap.cast::<IWICBitmapSource>()?
+                };
+                let container = if extension == "jpg" {
+                    &GUID_ContainerFormatJpeg
+                } else {
+                    &GUID_ContainerFormatPng
+                };
+                let stream = factory.CreateStream()?;
+                let target_wide = wide(&target.to_string_lossy());
+                // GENERIC_WRITE
+                stream.InitializeFromFilename(PCWSTR(target_wide.as_ptr()), 0x4000_0000)?;
+                let encoder = factory.CreateEncoder(container, std::ptr::null())?;
+                encoder.Initialize(&stream, WICBitmapEncoderNoCache)?;
+                let mut frame: Option<windows::Win32::Graphics::Imaging::IWICBitmapFrameEncode> =
+                    None;
+                encoder.CreateNewFrame(&mut frame, std::ptr::null_mut())?;
+                let frame = frame.ok_or_else(|| {
+                    windows::core::Error::from_hresult(windows::Win32::Foundation::E_FAIL)
+                })?;
+                frame.Initialize(None)?;
+                let (mut width, mut height) = (0u32, 0u32);
+                source.GetSize(&mut width, &mut height)?;
+                frame.SetSize(width, height)?;
+                let mut pixel_format = if extension == "jpg" {
+                    GUID_WICPixelFormat24bppBGR
+                } else {
+                    GUID_WICPixelFormat32bppBGRA
+                };
+                frame.SetPixelFormat(&mut pixel_format)?;
+                frame.WriteSource(&source, std::ptr::null())?;
+                frame.Commit()?;
+                encoder.Commit()?;
+                Ok(target.to_string_lossy().into_owned())
+            })()
+        };
+        if initialized {
+            // SAFETY: pairs with the successful CoInitializeEx above.
+            unsafe { CoUninitialize() };
+        }
+        close();
+        match result {
+            Ok(path) => Ok(path),
+            Err(_) => {
+                let _ = std::fs::remove_file(&target);
+                Err("image.failed".to_string())
+            }
+        }
+    }
 }
 
 #[cfg(windows)]
@@ -271,4 +384,24 @@ pub fn text(owner: isize) -> Result<Option<String>, String> {
 #[cfg(not(windows))]
 pub fn text(_owner: isize) -> Result<Option<String>, String> {
     Ok(None)
+}
+
+#[cfg(windows)]
+pub fn save_image(
+    owner: isize,
+    parent: &std::path::Path,
+    base_name: &str,
+    format: &str,
+) -> Result<String, String> {
+    imp::save_image(owner, parent, base_name, format)
+}
+
+#[cfg(not(windows))]
+pub fn save_image(
+    _owner: isize,
+    _parent: &std::path::Path,
+    _base_name: &str,
+    _format: &str,
+) -> Result<String, String> {
+    Err("image.failed".to_string())
 }
