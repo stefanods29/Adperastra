@@ -1,23 +1,37 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import HelpButton from "../components/HelpButton";
+import { supportedLanguages } from "../i18n";
+import Menu, { type MenuAnchor } from "../components/Menu";
 import Skeleton from "../components/Skeleton";
-import { createExplorerCommands, type ExplorerActions } from "../commands/explorerCommands";
-import type { Command, CommandContext } from "../commands/registry";
+import ToastStack, { type ToastData } from "../components/Toast";
+import { createExplorerCommands, type ExplorerActions, type ViewToggle } from "../commands/explorerCommands";
+import { BACKGROUND_MENU, COMMAND_BAR, ITEM_MENU, resolveMenu } from "../commands/menus";
+import { CommandRegistry, isCommandEnabled, type Command, type CommandContext } from "../commands/registry";
 import {
+  addFavorite,
   displayPath,
   driveInfo as fetchDriveInfo,
   explorerStateGet,
-  startListDir,
   listDrives,
+  listFavoriteItems,
   listKnownFolders,
   listRecentItems,
   mergeRecentItems,
+  openInTerminal,
+  openItem,
+  openWithDialog,
   parentPathOf,
   pathSegments,
+  pathsForClipboard,
   pinFolder,
   recordRecentFolder,
+  removeFavorite,
+  renameItem,
   samePath,
+  shareItems,
+  showClassicMenu,
+  showProperties,
+  startListDir,
   unpinFolder,
   watchStart,
   watchStop,
@@ -29,56 +43,143 @@ import {
   type SortDirection,
   type SortKey,
 } from "../services/explorer";
-import { isTauriRuntime } from "../services/settings";
+import { groupItems } from "../services/grouping";
 import {
   canGoBack,
   canGoForward,
   createHistory,
   goBack,
   goForward,
-  locationKey,
   navigate,
   type ExplorerLocation,
   type NavHistory,
 } from "../services/navigation";
+import {
+  EMPTY_SELECTION,
+  clearSelection,
+  invertSelection,
+  pruneSelection,
+  selectAll,
+  selectOnly,
+  summarizeSelection,
+  type SelectionState,
+} from "../services/selection";
+import { isTauriRuntime, type ExplorerViewSettings } from "../services/settings";
 import AddressBar from "./explorer/AddressBar";
+import CommandBar from "./explorer/CommandBar";
+import DetailsPane from "./explorer/DetailsPane";
 import DriveList, { type DriveLoadState } from "./explorer/DriveList";
 import FileList from "./explorer/FileList";
-import HomePage from "./explorer/HomePage";
+import { fileExtension } from "./explorer/fileTile";
+import HomePage, { type HomeTab } from "./explorer/HomePage";
 import NavPane from "./explorer/NavPane";
 
-export interface ExplorerHomeProps {
-  onStatsChange?: (total: number, selected: number) => void;
-  onOpenHelp: (slug?: string) => void;
+/** What the status bar shows for the Explorer tab. */
+export interface ExplorerStats {
+  total: number;
+  selected: number;
+  selectedBytes: number;
+  selectedFiles: number;
 }
+
+export interface ExplorerHomeProps {
+  onStatsChange?: (stats: ExplorerStats) => void;
+  onOpenHelp: (slug?: string) => void;
+  /** View options from settings (schema 3); defaults when absent. */
+  view?: ExplorerViewSettings;
+  onViewChange?: (patch: Partial<ExplorerViewSettings>) => void;
+}
+
+const DEFAULT_VIEW: ExplorerViewSettings = {
+  show_hidden: false,
+  show_extensions: true,
+  item_checkboxes: false,
+  details_pane: false,
+  group_by: "none",
+};
+
+const VIEW_SETTING: Record<ViewToggle, keyof Omit<ExplorerViewSettings, "group_by">> = {
+  detailsPane: "details_pane",
+  showHidden: "show_hidden",
+  showExtensions: "show_extensions",
+  itemCheckboxes: "item_checkboxes",
+};
+
+/** Opening many files at once stops here, like Windows' own limit. */
+const OPEN_LIMIT = 15;
 
 function normalizeState(state: ExplorerStateData): ExplorerStateData {
   return {
     ...state,
     pinned_folders: state.pinned_folders.map(displayPath),
     recent_folders: state.recent_folders.map(displayPath),
+    favorites: (state.favorites ?? []).map(displayPath),
   };
 }
 
-function locationLabel(location: ExplorerLocation, homeLabel: string, drivesLabel: string): string {
-  if (location.type === "folder") return location.path;
-  if (location.type === "drives") return drivesLabel;
-  if (location.type === "gallery") return "gallery";
-  if (location.type === "network") return "network";
-  return homeLabel;
+function toExplorerItem(item: RecentItem): ExplorerItem {
+  return {
+    path: item.path,
+    name: item.name,
+    kind: item.kind,
+    size: item.size,
+    modified_unix: item.modified_unix,
+    hidden: false,
+    system: false,
+    is_link: false,
+    online_only: false,
+    file_id: null,
+    file_id_stable: false,
+  };
 }
 
-export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHomeProps) {
-  const { t } = useTranslation();
+/** Error codes from Rust look like `rename.exists`; the UI shows the
+ * matching translated message, or the action's generic one. */
+function errorReason(error: unknown, action: string): string {
+  const raw = typeof error === "string" ? error : error instanceof Error ? error.message : "";
+  return raw.startsWith(`${action}.`) ? raw.slice(action.length + 1) : "other";
+}
+
+async function writeClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const area = document.createElement("textarea");
+  area.value = text;
+  document.body.appendChild(area);
+  area.select();
+  const ok = document.execCommand("copy");
+  area.remove();
+  if (!ok) throw new Error("copy failed");
+}
+
+interface OpenMenu {
+  kind: "item" | "background";
+  anchor: MenuAnchor;
+  startedAt: number;
+  focusFirst: boolean;
+}
+
+/** Accent- and case-insensitive text, for matching typed place names. */
+function plainText(text: string): string {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp, onViewChange }: ExplorerHomeProps) {
+  const { t, i18n } = useTranslation();
+  const view = viewProp ?? DEFAULT_VIEW;
   const [history, setHistory] = useState<NavHistory>(() => createHistory({ type: "home" }));
   const location = history.current;
   const [knownFolders, setKnownFolders] = useState<KnownFolder[]>([]);
-  const [stateData, setStateData] = useState<ExplorerStateData>({ schema_version: 1, pinned_folders: [], recent_folders: [] });
+  const [stateData, setStateData] = useState<ExplorerStateData>({ schema_version: 2, pinned_folders: [], recent_folders: [], favorites: [] });
   const [recent, setRecent] = useState<RecentItem[]>([]);
+  const [favoriteItems, setFavoriteItems] = useState<RecentItem[]>([]);
+  const [homeTab, setHomeTab] = useState<HomeTab>("recent");
+  const [favoritesNonce, setFavoritesNonce] = useState(0);
   const [drives, setDrives] = useState<DriveItem[]>([]);
   const [driveStates, setDriveStates] = useState<Record<string, DriveLoadState>>({});
   const [items, setItems] = useState<ExplorerItem[]>([]);
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("ascending");
@@ -88,6 +189,12 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
   const [loadError, setLoadError] = useState(false);
   const [partialCount, setPartialCount] = useState(0);
   const [skeletonVisible, setSkeletonVisible] = useState(false);
+  const [selection, setSelection] = useState<SelectionState>(EMPTY_SELECTION);
+  const [renamingPath, setRenamingPath] = useState<string | null>(null);
+  const [menu, setMenu] = useState<OpenMenu | null>(null);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [busyNote, setBusyNote] = useState<string | null>(null);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
   const loadModeRef = useRef<"hard" | "soft">("hard");
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [homeNonce, setHomeNonce] = useState(0);
@@ -95,11 +202,29 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
   type CancelFn = Awaited<ReturnType<typeof startListDir>>["cancel"];
   const cancelRef = useRef<CancelFn | null>(null);
   const benchRef = useRef<{ generation: number; startedAt: number; done: boolean }>({ generation: 0, startedAt: 0, done: false });
-  const selectedItem = items.find((item) => item.path === selectedPath) ?? null;
+  const pendingSelectRef = useRef<string | null>(null);
+  const toastIdRef = useRef(0);
+  // Where "Show more options" opens: the last right-click point.
+  const lastPointer = useRef({ x: 0, y: 0 });
+
+  const notify = useCallback((message: string) => {
+    toastIdRef.current += 1;
+    const id = toastIdRef.current;
+    setToasts((list) => [...list.slice(-2), { id, message }]);
+  }, []);
+  const notifyError = useCallback(
+    (error: unknown, action: string) => {
+      const reason = errorReason(error, action);
+      notify(t(`errors.${action}.${reason}`, { defaultValue: t(`errors.${action}.other`) }));
+    },
+    [notify, t],
+  );
 
   const goToLocation = useCallback((next: ExplorerLocation) => {
     setSearch("");
-    setSelectedPath(null);
+    setSelection(EMPTY_SELECTION);
+    setRenamingPath(null);
+    setMenu(null);
     setPartialCount(0);
     setItems([]);
     setHistory((current) => navigate(current, next));
@@ -111,51 +236,171 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     if (location.type === "folder") {
       loadModeRef.current = "soft";
       setRefreshNonce((value) => value + 1);
-    }
-    else if (location.type === "home") setHomeNonce((value) => value + 1);
+    } else if (location.type === "home") setHomeNonce((value) => value + 1);
     else if (location.type === "drives") setRefreshNonce((value) => value + 1);
   }, [location.type]);
+
+  const typeLabel = useCallback(
+    (item: ExplorerItem) => {
+      if (item.kind === "folder" || item.kind === "drive") return t("explorer.folderType");
+      const ext = fileExtension(item.name);
+      return ext ? t("explorer.fileType", { ext: ext.toUpperCase() }) : t("explorer.genericFile");
+    },
+    [t],
+  );
+
+  // ---------------------------------------------------------------------
+  // The list on screen: folder items (hidden items only when shown), or
+  // the Home page's Recent/Favorites list.
+  // ---------------------------------------------------------------------
+  const visibleItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return items.filter(
+      (item) => (view.show_hidden || !(item.hidden || item.system)) && (!query || item.name.toLowerCase().includes(query)),
+    );
+  }, [items, search, view.show_hidden]);
+
+  const recentMerged = useMemo(() => mergeRecentItems(recent, stateData.recent_folders), [recent, stateData.recent_folders]);
+
+  const homeItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const source = homeTab === "favorites" ? favoriteItems : recentMerged;
+    return source.map(toExplorerItem).filter((item) => !query || item.name.toLowerCase().includes(query));
+  }, [homeTab, favoriteItems, recentMerged, search]);
+
+  const groups = useMemo(
+    () => (location.type === "folder" && view.group_by !== "none" ? groupItems(visibleItems, view.group_by, new Date(), typeLabel) : null),
+    [location.type, view.group_by, visibleItems, typeLabel],
+  );
+
+  const listItems = location.type === "folder" ? visibleItems : location.type === "home" ? homeItems : [];
+  const displayOrder = useMemo(() => (groups ? groups.flatMap((group) => group.items) : listItems), [groups, listItems]);
+  const orderPaths = useMemo(() => displayOrder.map((item) => item.path), [displayOrder]);
+  const itemByPath = useMemo(() => new Map(displayOrder.map((item) => [item.path, item])), [displayOrder]);
+
+  useEffect(() => {
+    setSelection((current) => pruneSelection(current, orderPaths));
+  }, [orderPaths]);
+
+  // "Show in folder": select the item once its folder has loaded.
+  useEffect(() => {
+    const wanted = pendingSelectRef.current;
+    if (!wanted || location.type !== "folder") return;
+    const match = orderPaths.find((path) => samePath(path, wanted));
+    if (match) {
+      pendingSelectRef.current = null;
+      setSelection(selectOnly(match));
+    }
+  }, [orderPaths, location.type]);
+
+  const summary = useMemo(() => summarizeSelection(selection.selected, (path) => itemByPath.get(path)), [selection.selected, itemByPath]);
+  const selectedPaths = useMemo(() => orderPaths.filter((path) => selection.selected.has(path)), [orderPaths, selection.selected]);
+  const selectedItems = useMemo(
+    () => selectedPaths.map((path) => itemByPath.get(path)).filter((item): item is ExplorerItem => item !== undefined),
+    [selectedPaths, itemByPath],
+  );
+  const favoriteKeys = useMemo(() => new Set(stateData.favorites.map((path) => displayPath(path).toLowerCase())), [stateData.favorites]);
+  const allFavorites = selectedPaths.length > 0 && selectedPaths.every((path) => favoriteKeys.has(displayPath(path).toLowerCase()));
+
+  const currentPinned = location.type === "folder" && stateData.pinned_folders.some((p) => samePath(p, location.path));
+  const singleSelected = selectedItems.length === 1 ? selectedItems[0] : null;
+  const commandCtx: CommandContext = {
+    location: location.type,
+    currentPath: location.type === "folder" ? location.path : null,
+    canGoBack: canGoBack(history),
+    canGoForward: canGoForward(history),
+    selectedPath: singleSelected?.path ?? null,
+    selectedKind: singleSelected ? (singleSelected.kind === "drive" ? "other" : singleSelected.kind) : null,
+    currentPinned,
+    selection: { paths: selectedPaths, count: summary.count, files: summary.files, folders: summary.folders },
+    view: {
+      showHidden: view.show_hidden,
+      showExtensions: view.show_extensions,
+      itemCheckboxes: view.item_checkboxes,
+      detailsPane: view.details_pane,
+      groupBy: view.group_by,
+      sortKey,
+      sortDirection,
+    },
+    allFavorites,
+    selectionInCurrentFolder: location.type === "folder",
+  };
+  const commandCtxRef = useRef(commandCtx);
+  commandCtxRef.current = commandCtx;
+
+  // Actions read the latest state through this ref, so the command list
+  // (and every menu built from it) stays stable between renders.
+  const live = useRef({ location, orderPaths, selectedPaths, itemByPath, stateData, sortKey, sortDirection, view, allFavorites, menu });
+  live.current = { location, orderPaths, selectedPaths, itemByPath, stateData, sortKey, sortDirection, view, allFavorites, menu };
+
+  const openOne = useCallback(
+    (item: ExplorerItem) => {
+      if (item.kind === "folder" || item.kind === "drive") {
+        goToFolder(item.path);
+        return;
+      }
+      if (!isTauriRuntime()) return;
+      openItem(item.path)
+        .then((outcome) => {
+          if (outcome.navigate_to) goToFolder(outcome.navigate_to);
+        })
+        .catch((error: unknown) => notifyError(error, "open"));
+    },
+    [goToFolder, notifyError],
+  );
 
   const actions: ExplorerActions = useMemo(
     () => ({
       back: () => setHistory((current) => goBack(current)),
       forward: () => setHistory((current) => goForward(current)),
       up: () => {
-        if (location.type !== "folder") return;
-        const parent = parentPathOf(location.path);
+        const current = live.current.location;
+        if (current.type !== "folder") return;
+        const parent = parentPathOf(current.path);
         if (parent) goToFolder(parent);
         else goToLocation({ type: "drives" });
       },
       refresh,
       openSelected: () => {
-        if (selectedItem?.kind === "folder") goToFolder(selectedItem.path);
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        const targets = paths.map((path) => byPath.get(path)).filter((item): item is ExplorerItem => item !== undefined);
+        if (targets.length === 1) {
+          openOne(targets[0]);
+          return;
+        }
+        const files = targets.filter((entry) => entry.kind === "file");
+        for (const item of files.slice(0, OPEN_LIMIT)) openOne(item);
+        if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
       },
       goToPath: (path: string) => {
         const trimmed = path.trim();
         if (!trimmed) return;
-        const word = trimmed.toLowerCase();
-        if (word === "this pc" || word === "este equipo" || word === "this-pc") {
+        // Place names ("This PC", "Home"...) in any app language.
+        const word = plainText(trimmed);
+        const isPlace = (key: string) => supportedLanguages.some((lng) => plainText(i18n.t(key, { lng })) === word);
+        if (word === "this-pc" || isPlace("explorer.nav.thisPc")) {
           goToLocation({ type: "drives" });
           return;
         }
-        if (word === "home" || word === "inicio") {
+        if (isPlace("explorer.nav.home")) {
           goToLocation({ type: "home" });
           return;
         }
-        if (word === "gallery" || word === "galería" || word === "galeria") {
+        if (isPlace("explorer.nav.gallery")) {
           goToLocation({ type: "gallery" });
           return;
         }
-        if (word === "network" || word === "red") {
+        if (isPlace("explorer.nav.network")) {
           goToLocation({ type: "network" });
           return;
         }
         goToFolder(trimmed);
       },
       togglePin: () => {
-        if (location.type !== "folder") return;
-        const path = location.path;
-        const pinned = stateData.pinned_folders.some((p) => samePath(p, path));
+        const { location: current, stateData: state } = live.current;
+        if (current.type !== "folder") return;
+        const path = current.path;
+        const pinned = state.pinned_folders.some((p) => samePath(p, path));
         void (async () => {
           try {
             const next = pinned ? await unpinFolder(path) : await pinFolder(path);
@@ -165,53 +410,153 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
           }
         })();
       },
+      rename: () => {
+        const paths = live.current.selectedPaths;
+        if (paths.length === 1) setRenamingPath(paths[0]);
+      },
+      share: () => {
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        if (paths.length === 0 || !isTauriRuntime()) return;
+        const title = paths.length === 1 ? (byPath.get(paths[0])?.name ?? paths[0]) : t("explorer.shareTitle", { count: paths.length });
+        void shareItems(paths, title).catch((error: unknown) => notifyError(error, "share"));
+      },
+      openWith: () => {
+        const paths = live.current.selectedPaths;
+        if (paths.length === 1 && isTauriRuntime()) void openWithDialog(paths[0]).catch((error: unknown) => notifyError(error, "openWith"));
+      },
+      copyPath: () => {
+        const { selectedPaths: paths, location: current } = live.current;
+        const targets = paths.length > 0 ? paths : current.type === "folder" ? [current.path] : [];
+        if (targets.length === 0) return;
+        writeClipboard(pathsForClipboard(targets))
+          .then(() => notify(t("toast.pathsCopied", { count: targets.length })))
+          .catch(() => notify(t("errors.copyPath.other")));
+      },
+      toggleFavorite: () => {
+        const { selectedPaths: paths, allFavorites: all } = live.current;
+        if (paths.length === 0 || !isTauriRuntime()) return;
+        void (async () => {
+          try {
+            let next: ExplorerStateData | null = null;
+            for (const path of paths) next = all ? await removeFavorite(path) : await addFavorite(path);
+            if (next) setStateData(normalizeState(next));
+            setFavoritesNonce((value) => value + 1);
+          } catch {
+            notify(t("errors.favorites.other"));
+          }
+        })();
+      },
+      showInFolder: () => {
+        const paths = live.current.selectedPaths;
+        if (paths.length !== 1) return;
+        const parent = parentPathOf(paths[0]);
+        if (!parent) return;
+        pendingSelectRef.current = paths[0];
+        goToFolder(parent);
+      },
+      properties: () => {
+        const { selectedPaths: paths, location: current } = live.current;
+        const targets = paths.length > 0 ? paths : current.type === "folder" ? [current.path] : [];
+        if (targets.length > 0 && isTauriRuntime()) void showProperties(targets).catch((error: unknown) => notifyError(error, "properties"));
+      },
+      openInTerminal: () => {
+        const current = live.current.location;
+        if (current.type === "folder" && isTauriRuntime()) void openInTerminal(current.path).catch((error: unknown) => notifyError(error, "terminal"));
+      },
+      selectAll: () => setSelection((current) => selectAll(current, live.current.orderPaths)),
+      selectNone: () => setSelection((current) => clearSelection(current)),
+      invertSelection: () => setSelection((current) => invertSelection(current, live.current.orderPaths)),
+      setSortKey: (key: SortKey) => {
+        if (key === live.current.sortKey) return;
+        // Re-sort in place: the list stays on screen and keeps the selection.
+        loadModeRef.current = "soft";
+        setSortKey(key);
+        setSortDirection("ascending");
+      },
+      setSortDirection: (direction: SortDirection) => {
+        if (direction === live.current.sortDirection) return;
+        loadModeRef.current = "soft";
+        setSortDirection(direction);
+      },
+      setGroupBy: (groupBy) => onViewChange?.({ group_by: groupBy }),
+      toggleView: (option: ViewToggle) => {
+        const key = VIEW_SETTING[option];
+        onViewChange?.({ [key]: !live.current.view[key] });
+      },
+      showMoreOptions: () => {
+        const { selectedPaths: paths, location: current } = live.current;
+        if (!isTauriRuntime()) return;
+        const targets = paths.length > 0 ? paths : current.type === "folder" ? [current.path] : [];
+        if (targets.length === 0) return;
+        // The classic menu works on one folder's items; never act on a part
+        // of the selection without saying so.
+        if (new Set(targets.map((path) => (parentPathOf(path) ?? path).toLowerCase())).size > 1) {
+          notify(t("errors.moreOptions.mixedFolders"));
+          return;
+        }
+        const point = lastPointer.current;
+        // Windows can take a moment to load other apps' menu items; say so.
+        const timer = window.setTimeout(() => setBusyNote(t("explorer.loadingMoreOptions")), 300);
+        void showClassicMenu(targets, paths.length === 0, point.x, point.y)
+          .catch((error: unknown) => notifyError(error, "moreOptions"))
+          .finally(() => {
+            window.clearTimeout(timer);
+            setBusyNote(null);
+          });
+      },
     }),
-    [goToFolder, goToLocation, location, refresh, selectedItem, stateData.pinned_folders],
+    [goToFolder, goToLocation, i18n, notify, notifyError, onViewChange, openOne, refresh, t],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);
+  const registry = useMemo(() => {
+    const next = new CommandRegistry();
+    for (const command of commands) next.register(command);
+    return next;
+  }, [commands]);
+  const lookup = useCallback((id: string) => registry.get(id), [registry]);
   const commandById = useMemo(() => Object.fromEntries(commands.map((c) => [c.id, c])), [commands]);
-  const runCommand = useCallback(
-    (command: Command, arg?: string) => command.run(commandCtxRef.current, arg),
-    [],
+  const runCommand = useCallback((command: Command, arg?: string) => {
+    if (isCommandEnabled(command, commandCtxRef.current)) command.run(commandCtxRef.current, arg);
+  }, []);
+  const runById = useCallback(
+    (id: string, point?: { x: number; y: number }) => {
+      if (point) lastPointer.current = point;
+      const command = registry.get(id);
+      if (command) runCommand(command);
+    },
+    [registry, runCommand],
   );
 
-  const currentPinned = location.type === "folder" && stateData.pinned_folders.some((p) => samePath(p, location.path));
-  const commandCtx: CommandContext = {
-    location: location.type,
-    currentPath: location.type === "folder" ? location.path : null,
-    canGoBack: canGoBack(history),
-    canGoForward: canGoForward(history),
-    selectedPath,
-    selectedKind: selectedItem ? (selectedItem.kind === "drive" ? "other" : selectedItem.kind) : null,
-    currentPinned,
-  };
-  const commandCtxRef = useRef(commandCtx);
-  commandCtxRef.current = commandCtx;
-
-  // Command shortcuts (registry metadata): Alt+Left/Right/Up and F5 /
-  // Ctrl+R, unless the user is typing in a field.
+  // Window-level shortcuts from the registry metadata, unless typing.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
-      if (event.altKey && event.key === "ArrowLeft") {
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && (event.key === "a" || event.key === "A")) {
+        // Select all files, never the page's own text.
         event.preventDefault();
-        actions.back();
+        runById("explorer.selectAll");
+      } else if (event.altKey && event.shiftKey && (event.key === "p" || event.key === "P")) {
+        event.preventDefault();
+        runById("explorer.toggleDetailsPane");
+      } else if (event.altKey && event.key === "ArrowLeft") {
+        event.preventDefault();
+        runById("explorer.back");
       } else if (event.altKey && event.key === "ArrowRight") {
         event.preventDefault();
-        actions.forward();
+        runById("explorer.forward");
       } else if (event.altKey && event.key === "ArrowUp") {
         event.preventDefault();
-        actions.up();
+        runById("explorer.up");
       } else if (event.key === "F5" || ((event.ctrlKey || event.metaKey) && (event.key === "r" || event.key === "R"))) {
         event.preventDefault();
-        actions.refresh();
+        runById("explorer.refresh");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [actions]);
+  }, [runById]);
 
   // Initial shell data: known folders, explorer state, drive roots.
   useEffect(() => {
@@ -265,6 +610,29 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
       cancelled = true;
     };
   }, [location.type, homeNonce]);
+
+  // Favorites list on Home.
+  useEffect(() => {
+    if (location.type !== "home" || homeTab !== "favorites" || !isTauriRuntime()) return;
+    let cancelled = false;
+    // Skeleton rows if the list isn't back within 0.1 s.
+    const timer = window.setTimeout(() => {
+      if (!cancelled) setFavoritesLoading(true);
+    }, 100);
+    listFavoriteItems()
+      .then((list) => {
+        if (!cancelled) setFavoriteItems(list);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        window.clearTimeout(timer);
+        if (!cancelled) setFavoritesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [location.type, homeTab, favoritesNonce, homeNonce]);
 
   // Drive details for This PC, each with its own timeout.
   useEffect(() => {
@@ -353,7 +721,6 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
         setLoading(false);
         setSlowLoad(false);
         setLoadTimedOut(false);
-        void outcome;
         if (!soft) {
           void recordRecentFolder(path)
             .then((next) => setStateData(normalizeState(next)))
@@ -394,28 +761,17 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.type === "folder" ? location.path : null, sortKey, sortDirection, refreshNonce]);
 
-  const visibleItems = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return items;
-    return items.filter((item) => item.name.toLowerCase().includes(query));
-  }, [items, search]);
-
-  const recentMerged = useMemo(
-    () => mergeRecentItems(recent, stateData.recent_folders),
-    [recent, stateData.recent_folders],
-  );
-
   useEffect(() => {
     const total =
       location.type === "folder"
         ? visibleItems.length
         : location.type === "home"
-          ? recentMerged.length
+          ? homeItems.length
           : location.type === "drives"
             ? drives.length
             : 0;
-    onStatsChange?.(total, location.type === "folder" && selectedPath ? 1 : 0);
-  }, [onStatsChange, visibleItems.length, selectedPath, location.type, recentMerged.length, drives.length]);
+    onStatsChange?.({ total, selected: summary.count, selectedBytes: summary.bytes, selectedFiles: summary.files });
+  }, [onStatsChange, visibleItems.length, homeItems.length, drives.length, location.type, summary]);
 
   const onFirstPaint = useCallback(() => {
     const bench = benchRef.current;
@@ -427,7 +783,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
   }, []);
 
   const onSort = (key: SortKey) => {
-    setItems([]);
+    loadModeRef.current = "soft";
     if (key === sortKey) {
       setSortDirection((value) => (value === "ascending" ? "descending" : "ascending"));
     } else {
@@ -435,6 +791,41 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
       setSortDirection("ascending");
     }
   };
+
+  const openContextMenu = useCallback((point: { x: number; y: number }, item: ExplorerItem | null) => {
+    lastPointer.current = point;
+    setRenamingPath(null);
+    setMenu({ kind: item ? "item" : "background", anchor: { kind: "point", x: point.x, y: point.y }, startedAt: performance.now(), focusFirst: false });
+  }, []);
+  const closeMenu = useCallback(() => setMenu(null), []);
+  const onMenuShown = useCallback(() => {
+    const opened = live.current.menu;
+    if (!opened) return;
+    const elapsed = performance.now() - opened.startedAt;
+    (window as unknown as Record<string, unknown>).__adperastraLastMenuOpenMs = elapsed;
+    document.querySelector(".adp-explorer")?.setAttribute("data-last-menu-open-ms", String(Math.round(elapsed)));
+  }, []);
+
+  const commitRename = useCallback(
+    async (item: ExplorerItem, newName: string): Promise<string | null> => {
+      try {
+        const newPath = displayPath(await renameItem(item.path, newName));
+        setItems((list) => list.map((entry) => (entry.path === item.path ? { ...entry, path: newPath, name: newName } : entry)));
+        setSelection(selectOnly(newPath));
+        setRenamingPath(null);
+        if (live.current.location.type === "home") setHomeNonce((value) => value + 1);
+        // Rust moved any favorites along with the item.
+        void explorerStateGet()
+          .then((state) => setStateData(normalizeState(state)))
+          .catch(() => undefined);
+        return null;
+      } catch (error) {
+        const reason = errorReason(error, "rename");
+        return t(`errors.rename.${reason}`, { defaultValue: t("errors.rename.other") });
+      }
+    },
+    [t],
+  );
 
   const segments =
     location.type === "folder"
@@ -477,6 +868,25 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     return cards;
   }, [knownFolders, stateData.pinned_folders]);
 
+  const listProps = {
+    selection,
+    onSelectionChange: setSelection,
+    sortKey,
+    sortDirection,
+    showExtensions: view.show_extensions,
+    checkboxes: view.item_checkboxes,
+    typeLabel,
+    renamingPath,
+    onStartRename: (item: ExplorerItem) => {
+      if (commandById["explorer.rename"] && isCommandEnabled(commandById["explorer.rename"], commandCtxRef.current)) setRenamingPath(item.path);
+    },
+    onRenameCommit: commitRename,
+    onRenameCancel: () => setRenamingPath(null),
+    onOpen: openOne,
+    onContextMenu: openContextMenu,
+    onCommandKey: runById,
+  };
+
   let folderContent = null;
   if (location.type === "folder") {
     if (!isTauriRuntime()) {
@@ -496,8 +906,8 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
       const showSkeleton = skeletonVisible && loading && items.length === 0;
       const showSlow = slowLoad && loading;
       const showTimedOut = loadTimedOut && loading;
-      const showEmpty = !loading && items.length === 0;
-      const showNoResults = !loading && items.length > 0 && visibleItems.length === 0;
+      const showEmpty = !loading && visibleItems.length === 0 && !search;
+      const showNoResults = !loading && items.length > 0 && visibleItems.length === 0 && Boolean(search);
       folderContent = (
         <>
           {showSkeleton ? <Skeleton variant="rows" count={10} /> : null}
@@ -508,16 +918,12 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
           {showNoResults ? <p className="adp-empty-note">{t("explorer.noSearchResults")}</p> : null}
           {visibleItems.length > 0 ? (
             <FileList
+              {...listProps}
               items={visibleItems}
-              selectedPath={selectedPath}
-              sortKey={sortKey}
-              sortDirection={sortDirection}
+              groups={groups}
               onSort={onSort}
-              onSelect={(item) => setSelectedPath(item.path)}
-              onOpen={(item) => {
-                if (item.kind === "folder") goToFolder(item.path);
-              }}
               onFirstPaint={onFirstPaint}
+              label={t("explorer.fileListLabel")}
             />
           ) : null}
         </>
@@ -525,82 +931,141 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp }: ExplorerHome
     }
   }
 
+  let homeList;
+  if (homeTab === "favorites" && favoritesLoading && homeItems.length === 0) {
+    homeList = <Skeleton variant="rows" count={5} />;
+  } else if (homeItems.length === 0) {
+    homeList = <p className="adp-empty-note">{t(homeTab === "favorites" ? "explorer.favoritesEmpty" : "explorer.recentEmpty")}</p>;
+  } else {
+    homeList = (
+      <FileList
+        {...listProps}
+        items={homeItems}
+        groups={null}
+        virtual={false}
+        label={t(homeTab === "favorites" ? "explorer.favorites" : "explorer.recent")}
+      />
+    );
+  }
+
+  const detailsFolder =
+    location.type === "folder"
+      ? { path: location.path, name: placeLabel, itemCount: visibleItems.length }
+      : null;
+
   return (
     <div className="adp-explorer">
-      <NavPane
-        knownFolders={knownFolders}
-        pinnedFolders={stateData.pinned_folders}
-        drives={drives}
-        location={location}
-        onHome={() => goToLocation({ type: "home" })}
-        onGallery={() => goToLocation({ type: "gallery" })}
-        onDrives={() => goToLocation({ type: "drives" })}
-        onNetwork={() => goToLocation({ type: "network" })}
-        onOpenFolder={goToFolder}
-        onUnpin={(path) => {
-          void unpinFolder(path).then((next) => setStateData(normalizeState(next))).catch(() => undefined);
+      <AddressBar
+        backCommand={commandById["explorer.back"]}
+        forwardCommand={commandById["explorer.forward"]}
+        upCommand={commandById["explorer.up"]}
+        refreshCommand={commandById["explorer.refresh"]}
+        commandCtx={commandCtx}
+        onRun={runCommand}
+        onNavigatePath={(path) => actions.goToPath(path)}
+        segments={segments}
+        rootSiblings={drives.map((d) => ({ label: d.root, path: d.root }))}
+        editablePath={location.type === "folder" ? location.path : null}
+        placeLabel={placeLabel}
+        historyEntries={historyEntries}
+        onHistory={(distance) => {
+          setHistory((current) => {
+            let next = current;
+            for (let i = 0; i < distance; i += 1) next = goBack(next);
+            return next;
+          });
         }}
+        search={search}
+        onSearch={setSearch}
       />
-      <section className="adp-explorer-content">
-        <AddressBar
-          backCommand={commandById["explorer.back"]}
-          forwardCommand={commandById["explorer.forward"]}
-          upCommand={commandById["explorer.up"]}
-          refreshCommand={commandById["explorer.refresh"]}
-          commandCtx={commandCtx}
-          onRun={runCommand}
-          onNavigatePath={(path) => actions.goToPath(path)}
-          segments={segments}
-          rootSiblings={drives.map((d) => ({ label: d.root, path: d.root }))}
-          editablePath={location.type === "folder" ? location.path : null}
-          placeLabel={placeLabel}
-          historyEntries={historyEntries}
-          onHistory={(distance) => {
-            setHistory((current) => {
-              let next = current;
-              for (let i = 0; i < distance; i += 1) next = goBack(next);
-              return next;
-            });
+      <CommandBar entries={COMMAND_BAR} ctx={commandCtx} lookup={lookup} onRun={runCommand} onOpenHelp={() => onOpenHelp("command-bar")} />
+      <div className="adp-explorer-body">
+        <NavPane
+          knownFolders={knownFolders}
+          pinnedFolders={stateData.pinned_folders}
+          drives={drives}
+          location={location}
+          onHome={() => goToLocation({ type: "home" })}
+          onGallery={() => goToLocation({ type: "gallery" })}
+          onDrives={() => goToLocation({ type: "drives" })}
+          onNetwork={() => goToLocation({ type: "network" })}
+          onOpenFolder={goToFolder}
+          onUnpin={(path) => {
+            void unpinFolder(path).then((next) => setStateData(normalizeState(next))).catch(() => undefined);
           }}
-          search={search}
-          onSearch={setSearch}
         />
-
-        {location.type === "folder" ? (
-          <div className="adp-folder-toolbar">
-            <button
-              type="button"
-              className="adp-btn adp-btn--subtle"
-              disabled={!commandById["explorer.togglePin"].enabledWhen(commandCtx)}
-              onClick={() => runCommand(commandById["explorer.togglePin"])}
+        <section
+          className="adp-explorer-content"
+          onContextMenu={(event) => {
+            // The file list handles its own right-clicks; this covers empty
+            // folders, loading states, and messages.
+            if (event.defaultPrevented) return;
+            event.preventDefault();
+            if (live.current.location.type !== "folder") return;
+            setSelection((current) => clearSelection(current));
+            openContextMenu({ x: event.clientX, y: event.clientY }, null);
+          }}
+        >
+          {location.type === "home" ? (
+            <HomePage
+              knownFolders={knownFolders}
+              pinnedCards={pinnedCards}
+              onOpenFolder={goToFolder}
+              onOpenHelp={() => onOpenHelp("home-page")}
+              tab={homeTab}
+              onTabChange={(tab) => {
+                setSelection(EMPTY_SELECTION);
+                setRenamingPath(null);
+                setHomeTab(tab);
+              }}
             >
-              {currentPinned ? t("commands.unpinFolder") : t("commands.pinFolder")}
-            </button>
-            <HelpButton onOpenHelp={() => onOpenHelp("browsing-folders")} />
-          </div>
-        ) : null}
+              {homeList}
+            </HomePage>
+          ) : null}
 
-        {location.type === "home" ? (
-          <HomePage
-            knownFolders={knownFolders}
-            pinnedCards={pinnedCards}
-            recent={recentMerged}
-            onOpenFolder={goToFolder}
-            onOpenRecent={(item) => {
-              if (item.kind === "folder") goToFolder(item.path);
+          {location.type === "drives" ? (
+            <DriveList drives={drives} states={driveStates} onOpenDrive={goToFolder} />
+          ) : null}
+
+          {location.type === "gallery" ? <p className="adp-empty-note">{t("explorer.galleryPlaceholder")}</p> : null}
+          {location.type === "network" ? <p className="adp-empty-note">{t("explorer.networkPlaceholder")}</p> : null}
+          {folderContent}
+        </section>
+        {view.details_pane ? (
+          <DetailsPane
+            selected={selectedItems}
+            summary={summary}
+            folder={detailsFolder}
+            showExtensions={view.show_extensions}
+            typeLabel={typeLabel}
+            onCopyPath={(path) => {
+              writeClipboard(pathsForClipboard([path]))
+                .then(() => notify(t("toast.pathsCopied", { count: 1 })))
+                .catch(() => notify(t("errors.copyPath.other")));
             }}
-            onOpenHelp={() => onOpenHelp("home-page")}
+            onOpenHelp={() => onOpenHelp("details-pane")}
           />
         ) : null}
-
-        {location.type === "drives" ? (
-          <DriveList drives={drives} states={driveStates} onOpenDrive={goToFolder} />
-        ) : null}
-
-        {location.type === "gallery" ? <p className="adp-empty-note">{t("explorer.galleryPlaceholder")}</p> : null}
-        {location.type === "network" ? <p className="adp-empty-note">{t("explorer.networkPlaceholder")}</p> : null}
-        {folderContent}
-      </section>
+      </div>
+      {menu ? (
+        <Menu
+          entries={resolveMenu(menu.kind === "item" ? ITEM_MENU : BACKGROUND_MENU, commandCtx, lookup)}
+          ctx={commandCtx}
+          lookup={lookup}
+          anchor={menu.anchor}
+          focusFirst={menu.focusFirst}
+          ariaLabel={t("explorer.contextMenu")}
+          onRun={runCommand}
+          onClose={closeMenu}
+          onShown={onMenuShown}
+        />
+      ) : null}
+      {busyNote ? (
+        <div className="adp-busy-note" role="status">
+          {busyNote}
+        </div>
+      ) : null}
+      <ToastStack toasts={toasts} onDismiss={(id) => setToasts((list) => list.filter((toast) => toast.id !== id))} />
     </div>
   );
 }

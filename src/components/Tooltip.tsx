@@ -4,9 +4,11 @@ export interface TooltipProps {
   label: string;
   shortcut?: string;
   children: ReactNode;
+  /** Bars at the top of the window show their tooltips below. */
+  placement?: "above" | "below";
 }
 
-export default function Tooltip({ label, shortcut, children }: TooltipProps) {
+export default function Tooltip({ label, shortcut, children, placement = "above" }: TooltipProps) {
   const [visible, setVisible] = useState(false);
   const timer = useRef<number | null>(null);
 
@@ -29,7 +31,7 @@ export default function Tooltip({ label, shortcut, children }: TooltipProps) {
     >
       {children}
       {visible ? (
-        <span className="adp-tooltip" role="tooltip">
+        <span className={placement === "below" ? "adp-tooltip adp-tooltip--below" : "adp-tooltip"} role="tooltip">
           <span>{label}</span>
           {shortcut ? <span className="adp-tooltip-shortcut">{shortcut}</span> : null}
         </span>

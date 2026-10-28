@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 1;
+export const SETTINGS_SCHEMA_VERSION = 3;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -13,15 +14,27 @@ export interface ThemeSettings {
   accent_custom: string | null;
 }
 
+/** Explorer view options (schema 3): the View menu's toggles and the Sort
+ * menu's grouping. */
+export interface ExplorerViewSettings {
+  show_hidden: boolean;
+  show_extensions: boolean;
+  item_checkboxes: boolean;
+  details_pane: boolean;
+  group_by: GroupBy;
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
   theme: ThemeSettings;
+  explorer: ExplorerViewSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
 const THEME_MODES: readonly ThemeMode[] = ["light", "dark", "system"];
 const ACCENT_SOURCES: readonly AccentSource[] = ["design", "windows", "custom"];
+const GROUP_BY: readonly GroupBy[] = ["none", "name", "modified", "type", "size"];
 const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 export function defaultSettings(): AppSettings {
@@ -32,6 +45,13 @@ export function defaultSettings(): AppSettings {
       mode: "system",
       accent_source: "design",
       accent_custom: null,
+    },
+    explorer: {
+      show_hidden: false,
+      show_extensions: true,
+      item_checkboxes: false,
+      details_pane: false,
+      group_by: "none",
     },
   };
 }
@@ -59,6 +79,8 @@ export function normalizeSettings(input: unknown): AppSettings {
       : defaults.schema_version;
 
   const themeInput = isRecord(input.theme) ? input.theme : {};
+  const explorerInput = isRecord(input.explorer) ? input.explorer : {};
+  const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
       ? themeInput.accent_custom
@@ -71,6 +93,13 @@ export function normalizeSettings(input: unknown): AppSettings {
       mode: pick(themeInput.mode, THEME_MODES, defaults.theme.mode),
       accent_source: pick(themeInput.accent_source, ACCENT_SOURCES, defaults.theme.accent_source),
       accent_custom: accentCustom,
+    },
+    explorer: {
+      show_hidden: flag(explorerInput.show_hidden, defaults.explorer.show_hidden),
+      show_extensions: flag(explorerInput.show_extensions, defaults.explorer.show_extensions),
+      item_checkboxes: flag(explorerInput.item_checkboxes, defaults.explorer.item_checkboxes),
+      details_pane: flag(explorerInput.details_pane, defaults.explorer.details_pane),
+      group_by: pick(explorerInput.group_by, GROUP_BY, defaults.explorer.group_by),
     },
   };
 }

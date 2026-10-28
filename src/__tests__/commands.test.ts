@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { createExplorerCommands, type ExplorerActions } from "../commands/explorerCommands";
-import { CommandRegistry, type CommandContext } from "../commands/registry";
+import { BACKGROUND_MENU, COMMAND_BAR, ITEM_MENU, resolveMenu, type MenuEntry } from "../commands/menus";
+import {
+  CommandRegistry,
+  commandLabelKey,
+  isCommandEnabled,
+  type CommandContext,
+} from "../commands/registry";
 import {
   canGoBack,
   canGoForward,
@@ -59,16 +65,15 @@ describe("path helpers", () => {
   });
 });
 
+/** Every action is a spy, created on first use. */
 function makeActions(): ExplorerActions {
-  return {
-    back: vi.fn(),
-    forward: vi.fn(),
-    up: vi.fn(),
-    refresh: vi.fn(),
-    openSelected: vi.fn(),
-    goToPath: vi.fn(),
-    togglePin: vi.fn(),
-  };
+  const spies = new Map<string, ReturnType<typeof vi.fn>>();
+  return new Proxy({} as ExplorerActions, {
+    get: (_target, key: string) => {
+      if (!spies.has(key)) spies.set(key, vi.fn());
+      return spies.get(key);
+    },
+  });
 }
 
 const baseCtx: CommandContext = {
@@ -79,22 +84,30 @@ const baseCtx: CommandContext = {
   selectedPath: null,
   selectedKind: null,
   currentPinned: false,
+  selection: { paths: [], count: 0, files: 0, folders: 0 },
+  view: {
+    showHidden: false,
+    showExtensions: true,
+    itemCheckboxes: false,
+    detailsPane: false,
+    groupBy: "none",
+    sortKey: "name",
+    sortDirection: "ascending",
+  },
+  allFavorites: false,
+  selectionInCurrentFolder: true,
 };
 
+const oneFile = { paths: ["C:\\Users\\a.txt"], count: 1, files: 1, folders: 0 };
+
 describe("explorer commands", () => {
-  it("registers the Step 02 command set with full metadata", () => {
+  it("keeps the Step 02 commands and gives every command full metadata", () => {
     const registry = new CommandRegistry();
     for (const command of createExplorerCommands(makeActions())) registry.register(command);
     const ids = registry.list().map((c) => c.id);
-    expect(ids).toEqual([
-      "explorer.back",
-      "explorer.forward",
-      "explorer.up",
-      "explorer.refresh",
-      "explorer.open",
-      "explorer.goToPath",
-      "explorer.togglePin",
-    ]);
+    for (const id of ["explorer.back", "explorer.forward", "explorer.up", "explorer.refresh", "explorer.open", "explorer.goToPath", "explorer.togglePin"]) {
+      expect(ids).toContain(id);
+    }
     for (const command of registry.list()) {
       expect(command.labelKey).toMatch(/^commands\./);
       expect(command.icon).toBeDefined();
@@ -104,16 +117,48 @@ describe("explorer commands", () => {
     expect(() => registry.register(createExplorerCommands(makeActions())[0])).toThrow();
   });
 
-  it("enabled-when rules follow the context", () => {
-    const commands = createExplorerCommands(makeActions());
-    const byId = Object.fromEntries(commands.map((c) => [c.id, c]));
-    expect(byId["explorer.back"].enabledWhen(baseCtx)).toBe(false);
-    expect(byId["explorer.back"].enabledWhen({ ...baseCtx, canGoBack: true })).toBe(true);
-    expect(byId["explorer.up"].enabledWhen({ ...baseCtx, location: "home", currentPath: null })).toBe(false);
-    expect(byId["explorer.open"].enabledWhen(baseCtx)).toBe(false);
-    expect(byId["explorer.open"].enabledWhen({ ...baseCtx, selectedPath: "C:\\Users\\a", selectedKind: "folder" })).toBe(true);
-    expect(byId["explorer.togglePin"].enabledWhen({ ...baseCtx, location: "home", currentPath: null })).toBe(false);
-    expect(byId["explorer.goToPath"].enabledWhen({ ...baseCtx, location: "home", currentPath: null })).toBe(true);
+  it("enabled-when rules follow the context and the selection", () => {
+    const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
+    expect(isCommandEnabled(byId["explorer.back"], baseCtx)).toBe(false);
+    expect(isCommandEnabled(byId["explorer.back"], { ...baseCtx, canGoBack: true })).toBe(true);
+    expect(isCommandEnabled(byId["explorer.up"], { ...baseCtx, location: "home", currentPath: null })).toBe(false);
+    expect(isCommandEnabled(byId["explorer.open"], baseCtx)).toBe(false);
+    expect(isCommandEnabled(byId["explorer.open"], { ...baseCtx, selection: oneFile })).toBe(true);
+    expect(isCommandEnabled(byId["explorer.rename"], baseCtx)).toBe(false);
+    expect(isCommandEnabled(byId["explorer.rename"], { ...baseCtx, selection: oneFile })).toBe(true);
+    const two = { paths: ["a", "b"], count: 2, files: 1, folders: 1 };
+    expect(isCommandEnabled(byId["explorer.rename"], { ...baseCtx, selection: two })).toBe(false);
+    expect(isCommandEnabled(byId["explorer.share"], { ...baseCtx, selection: two })).toBe(false);
+    expect(isCommandEnabled(byId["explorer.share"], { ...baseCtx, selection: oneFile })).toBe(true);
+    expect(isCommandEnabled(byId["explorer.goToPath"], { ...baseCtx, location: "home", currentPath: null })).toBe(true);
+  });
+
+  it("keeps not-yet-built commands disabled even with a selection", () => {
+    const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
+    for (const id of ["explorer.cut", "explorer.copy", "explorer.paste", "explorer.delete", "explorer.newFolder", "explorer.viewList"]) {
+      expect(byId[id].pending).toBe(true);
+      expect(isCommandEnabled(byId[id], { ...baseCtx, selection: oneFile })).toBe(false);
+    }
+    expect(isCommandEnabled(byId["explorer.viewDetails"], baseCtx)).toBe(true);
+  });
+
+  it("labels and checks follow the context", () => {
+    const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
+    expect(commandLabelKey(byId["explorer.toggleFavorite"], baseCtx)).toBe("commands.addFavorite");
+    expect(commandLabelKey(byId["explorer.toggleFavorite"], { ...baseCtx, allFavorites: true })).toBe("commands.removeFavorite");
+    expect(byId["explorer.sortByName"].checkedWhen?.(baseCtx)).toBe(true);
+    expect(byId["explorer.sortBySize"].checkedWhen?.(baseCtx)).toBe(false);
+    expect(byId["explorer.toggleDetailsPane"].checkedWhen?.({ ...baseCtx, view: { ...baseCtx.view, detailsPane: true } })).toBe(true);
+  });
+
+  it("every command's help page exists in every app language", () => {
+    const pages = new Set(Object.keys(import.meta.glob("../../help/*/*.md")).map((path) => path.replace("../../help/", "")));
+    const slugs = new Set(createExplorerCommands(makeActions()).map((c) => c.helpSlug));
+    for (const slug of [...slugs, "command-bar", "details-pane", "home-page"]) {
+      for (const lang of ["en", "es"]) {
+        expect(pages.has(`${lang}/${slug}.md`), `${lang}/${slug}`).toBe(true);
+      }
+    }
   });
 
   it("runs through to the injected actions", () => {
@@ -123,5 +168,45 @@ describe("explorer commands", () => {
     expect(actions.back).toHaveBeenCalledOnce();
     commands.find((c) => c.id === "explorer.goToPath")?.run(baseCtx, "D:\\Docs");
     expect(actions.goToPath).toHaveBeenCalledWith("D:\\Docs");
+    commands.find((c) => c.id === "explorer.sortBySize")?.run(baseCtx);
+    expect(actions.setSortKey).toHaveBeenCalledWith("size");
+    commands.find((c) => c.id === "explorer.toggleHiddenItems")?.run(baseCtx);
+    expect(actions.toggleView).toHaveBeenCalledWith("showHidden");
+  });
+});
+
+describe("menus from commands", () => {
+  const registry = new CommandRegistry();
+  for (const command of createExplorerCommands(makeActions())) registry.register(command);
+  const lookup = (id: string) => registry.get(id);
+  const ids = (entries: MenuEntry[]) => entries.map((e) => (e.type === "command" ? e.id : e.type === "submenu" ? `sub:${e.id}` : e.type));
+
+  it("every command a menu or the bar names is registered", () => {
+    const walk = (entries: MenuEntry[]): string[] =>
+      entries.flatMap((e) => (e.type === "command" ? [e.id] : e.type === "iconRow" ? e.ids : e.type === "submenu" ? walk(e.entries) : []));
+    const named = [...walk(ITEM_MENU), ...walk(BACKGROUND_MENU)];
+    for (const entry of COMMAND_BAR) {
+      if (entry.type === "command") named.push(entry.id);
+      if (entry.type === "menu" || entry.type === "overflow") named.push(...walk(entry.entries));
+    }
+    for (const id of named) expect(registry.get(id), id).toBeDefined();
+  });
+
+  it("hides commands that do not apply and tidies separators", () => {
+    const fileMenu = resolveMenu(ITEM_MENU, { ...baseCtx, selection: oneFile }, lookup);
+    expect(ids(fileMenu)).toContain("explorer.openWith");
+    expect(ids(fileMenu)).not.toContain("explorer.showInFolder");
+    const homeMenu = resolveMenu(ITEM_MENU, { ...baseCtx, location: "home", selection: oneFile, selectionInCurrentFolder: false }, lookup);
+    expect(ids(homeMenu)).toContain("explorer.showInFolder");
+    const folderMenu = resolveMenu(ITEM_MENU, { ...baseCtx, selection: { paths: ["d"], count: 1, files: 0, folders: 1 } }, lookup);
+    expect(ids(folderMenu)).not.toContain("explorer.openWith");
+    const background = resolveMenu(BACKGROUND_MENU, baseCtx, lookup);
+    expect(ids(background).slice(0, 3)).toEqual(["sub:view", "sub:sort", "sub:new"]);
+    const resolved = resolveMenu(
+      [{ type: "separator" }, { type: "command", id: "missing" }, { type: "separator" }, { type: "command", id: "explorer.refresh" }, { type: "separator" }],
+      baseCtx,
+      lookup,
+    );
+    expect(ids(resolved)).toEqual(["explorer.refresh"]);
   });
 });

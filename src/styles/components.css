@@ -192,3 +192,97 @@ span.adp-col-size { display:flex; }
 .adp-drive-name { font-weight:600; }
 .adp-drive-bar { display:block; height:6px; border-radius:var(--adp-radius-pill); background:var(--adp-color-surface-segment-track); overflow:hidden; }
 .adp-drive-bar-used { display:block; height:100%; background:var(--adp-accent-current); }
+
+/* Explorer layout (Step 03a): the address row and the command bar span the window, as in Figma. */
+.adp-explorer { display:flex; flex-direction:column; height:100%; min-height:0; }
+.adp-explorer > .adp-addressbar { flex:none; min-height:56px; padding:0 var(--adp-space-7); }
+.adp-explorer-body { display:flex; flex:1; min-height:0; }
+.adp-explorer-body > .adp-explorer-content { flex:1; }
+.adp-home .adp-filelist { flex:none; }
+/* Narrow layouts (Details pane open, small windows): dates and types give
+   up room before names do, instead of pushing sizes out of view. */
+.adp-col-date { flex:0 1 190px; min-width:120px; }
+.adp-col-type { flex:0 1 180px; min-width:90px; }
+.adp-home { overflow-x:hidden; }
+
+/* Command bar (Step 03a) */
+.adp-commandbar { display:flex; align-items:center; gap:5px; height:48px; flex:none; padding:0 var(--adp-space-5); background:var(--adp-color-surface-window); border-bottom:1px solid var(--adp-color-border-default); }
+.adp-cmd-wrap { display:inline-flex; flex:none; }
+.adp-cmd-text, .adp-cmd-icon { display:inline-flex; align-items:center; justify-content:center; height:32px; border:none; border-radius:var(--adp-radius-sm); background:transparent; color:var(--adp-color-text-primary); cursor:pointer; flex:none; }
+.adp-cmd-text { gap:var(--adp-space-3); padding:0 var(--adp-space-4); font-size:var(--adp-font-command); white-space:nowrap; }
+.adp-cmd-icon { width:36px; }
+.adp-cmd-text:hover:not([aria-disabled="true"]), .adp-cmd-icon:hover:not([aria-disabled="true"]), .adp-cmd-text[aria-expanded="true"], .adp-cmd-icon[aria-expanded="true"] { background:var(--adp-color-surface-selected); }
+.adp-cmd-text[aria-disabled="true"], .adp-cmd-icon[aria-disabled="true"] { color:var(--adp-color-text-tertiary); cursor:default; }
+.adp-cmd--pressed, .adp-cmd--pressed:hover:not([aria-disabled="true"]) { background:var(--adp-accent-light-explorer); }
+.adp-cmd-text:focus-visible, .adp-cmd-icon:focus-visible { outline:2px solid var(--adp-accent-current); outline-offset:-2px; }
+.adp-cmd-sep { width:1px; height:20px; margin:0 var(--adp-space-1); background:var(--adp-color-border-default); flex:none; }
+.adp-cmd-spacer { flex:1; min-width:0; }
+.adp-tooltip--below { bottom:auto; top:calc(100% + 6px); z-index:60; }
+
+/* Menus from commands (Step 03a) */
+.adp-ctxmenu { position:fixed; z-index:1000; min-width:220px; max-width:360px; padding:var(--adp-space-1); background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-lg); box-shadow:var(--adp-shadow-card); color:var(--adp-color-text-primary); font-size:var(--adp-font-body); outline:none; user-select:none; }
+.adp-ctxmenu-item { display:flex; align-items:center; gap:var(--adp-space-4); height:30px; padding:0 var(--adp-space-4); border-radius:var(--adp-radius-sm); cursor:default; }
+.adp-ctxmenu-item--active { background:var(--adp-color-surface-selected); }
+.adp-ctxmenu-item[aria-disabled="true"] { color:var(--adp-color-text-tertiary); }
+.adp-ctxmenu-item[aria-disabled="true"] .adp-ctxmenu-icon, .adp-ctxmenu-item[aria-disabled="true"] .adp-ctxmenu-shortcut { color:var(--adp-color-text-tertiary); }
+.adp-ctxmenu-icon { display:inline-flex; width:16px; justify-content:center; color:var(--adp-color-text-secondary); flex:none; }
+.adp-ctxmenu-check { color:var(--adp-accent-current); }
+.adp-ctxmenu-label { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.adp-ctxmenu-shortcut { margin-left:var(--adp-space-6); color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); flex:none; }
+.adp-ctxmenu-separator { height:1px; margin:var(--adp-space-1) var(--adp-space-0); background:var(--adp-color-border-default); }
+.adp-ctxmenu-iconrow { display:flex; justify-content:space-between; gap:var(--adp-space-1); padding:var(--adp-space-0) var(--adp-space-1) var(--adp-space-1); }
+.adp-ctxmenu-iconbtn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:28px; border-radius:var(--adp-radius-sm); color:var(--adp-color-text-primary); cursor:default; }
+.adp-ctxmenu-iconbtn.adp-ctxmenu-item--active { background:var(--adp-color-surface-selected); }
+.adp-ctxmenu-iconbtn[aria-disabled="true"] { color:var(--adp-color-text-tertiary); }
+
+/* File list selection, check boxes, groups, rename (Step 03a) */
+.adp-filelist-scroll:focus-visible { outline:2px solid var(--adp-accent-current); outline-offset:-2px; }
+.adp-filelist-scroll:focus-visible .adp-file-row--focused { box-shadow:inset 0 0 0 1px var(--adp-accent-current); }
+.adp-file-row { user-select:none; }
+.adp-file-row--selected:hover { background:var(--adp-color-surface-selected-row); }
+.adp-file-row--static { position:relative; height:28px; }
+.adp-filelist--static .adp-filelist-scroll { flex:none; overflow:visible; }
+.adp-filelist-header-cell--static { cursor:default; }
+.adp-filelist-header-cell--static:hover { background:transparent; }
+.adp-row-check { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border:1px solid var(--adp-color-border-input); border-radius:3px; background:var(--adp-color-surface-window); color:var(--adp-color-text-on-accent); flex:none; cursor:pointer; }
+.adp-row-check--on { background:var(--adp-accent-current); border-color:var(--adp-accent-current); }
+.adp-row-check--header { margin:0 var(--adp-space-1) 0 var(--adp-space-3); }
+.adp-group-header { display:flex; align-items:center; gap:var(--adp-space-3); height:32px; padding:0 var(--adp-space-3); color:var(--adp-color-text-primary); font-size:var(--adp-font-body); font-weight:600; }
+.adp-filelist-inner > .adp-group-header { position:absolute; top:0; left:0; width:100%; }
+.adp-group-count { color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); font-weight:400; }
+.adp-group-rule { flex:1; height:1px; background:var(--adp-color-border-default); }
+.adp-file-name-cell:has(.adp-rename) { overflow:visible; }
+/* Each virtual row is its own layer; lift the one being renamed so its
+   message is not covered by the rows below it. */
+.adp-file-row:has(.adp-rename) { z-index:5; }
+.adp-rename { position:relative; display:inline-flex; flex:1; min-width:0; }
+.adp-rename-input { width:100%; max-width:420px; height:22px; padding:0 var(--adp-space-2); border:1px solid var(--adp-accent-current); border-radius:var(--adp-radius-sm); background:var(--adp-color-surface-window); color:var(--adp-color-text-primary); font:inherit; font-size:var(--adp-font-body); outline:none; }
+.adp-rename-error { position:absolute; top:calc(100% + 4px); left:0; z-index:20; width:max-content; max-width:360px; padding:var(--adp-space-2) var(--adp-space-4); background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-sm); box-shadow:var(--adp-shadow-card); color:var(--adp-color-text-primary); font-size:var(--adp-font-small); white-space:normal; }
+
+/* Details pane (Step 03a) */
+.adp-details-pane { width:280px; flex:none; display:flex; flex-direction:column; gap:var(--adp-space-5); padding:var(--adp-space-6) var(--adp-space-7); border-left:1px solid var(--adp-color-border-default); background:var(--adp-color-surface-window); overflow:auto; }
+.adp-details-header { display:flex; align-items:center; justify-content:space-between; font-size:var(--adp-font-section); font-weight:600; }
+.adp-details-hero { display:flex; align-items:center; gap:var(--adp-space-5); }
+.adp-details-tile { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:var(--adp-radius-xs); color:#fff; flex:none; }
+.adp-details-tile--many { background:var(--adp-color-surface-selected); color:var(--adp-color-text-secondary); }
+.adp-details-tile.adp-file-tile--folder { color:#DFB22B; }
+.adp-details-title { display:flex; flex-direction:column; gap:var(--adp-space-1); min-width:0; }
+.adp-details-name { font-size:var(--adp-font-section); font-weight:600; overflow-wrap:anywhere; }
+.adp-details-sub { font-size:var(--adp-font-small); color:var(--adp-color-text-secondary); }
+.adp-details-grid { display:grid; grid-template-columns:auto minmax(0, 1fr); gap:var(--adp-space-3) var(--adp-space-5); margin:0; font-size:var(--adp-font-body); }
+.adp-details-grid dt { color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); }
+.adp-details-grid dd { margin:0; min-width:0; overflow-wrap:anywhere; }
+.adp-details-path { display:flex; align-items:flex-start; gap:var(--adp-space-1); }
+.adp-details-copy { width:22px; height:22px; flex:none; }
+.adp-details-note { margin:0; color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); }
+.adp-details-skeleton { display:inline-block; width:110px; height:10px; border-radius:var(--adp-radius-xs); background:linear-gradient(100deg, var(--adp-color-surface-selected) 40%, var(--adp-color-surface-pane) 50%, var(--adp-color-surface-selected) 60%); background-size:200% 100%; animation:adp-shimmer 1.2s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .adp-details-skeleton { animation:none; } }
+
+/* Interface text is not selectable, like a desktop app; content stays selectable. */
+.adp-shell { user-select:none; }
+.adp-shell input, .adp-shell textarea, .adp-help-body, .adp-details-grid dd, .adp-details-name { user-select:text; }
+.adp-busy-note { position:fixed; left:50%; bottom:40px; transform:translateX(-50%); z-index:70; padding:var(--adp-space-2) var(--adp-space-5); background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-sm); box-shadow:var(--adp-shadow-card); color:var(--adp-color-text-primary); font-size:var(--adp-font-body); }
+
+/* Status bar selection size (Step 03a) */
+.adp-status-divider { width:1px; height:12px; align-self:center; background:var(--adp-color-border-default); }
+.adp-status-size { margin-left:var(--adp-space-5); }

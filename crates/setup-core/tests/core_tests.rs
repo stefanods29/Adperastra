@@ -162,10 +162,12 @@ fn profile_roundtrip_and_first_run() {
     let dir = tempfile::tempdir().unwrap();
     assert!(is_first_run(dir.path()));
     assert!(load_profile(dir.path()).is_none());
-    let mut p = Profile::default();
-    p.language = "es".into();
-    p.first_run_completed = true;
-    p.packs_selected = vec!["office".into()];
+    let p = Profile {
+        language: "es".into(),
+        first_run_completed: true,
+        packs_selected: vec!["office".into()],
+        ..Profile::default()
+    };
     save_profile(dir.path(), &p).unwrap();
     assert_eq!(profile_path(dir.path()), dir.path().join("profile.json"));
     let loaded = load_profile(dir.path()).unwrap();

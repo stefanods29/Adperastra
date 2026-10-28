@@ -1,4 +1,4 @@
-﻿// check-i18n.mjs â€” hardcoded-text lint + locale key parity (plan/rules.md section 2).
+// check-i18n.mjs â€” hardcoded-text lint + locale key parity (plan/rules.md section 2).
 //
 // (a) Fails if the flattened key sets of en.json and es.json differ.
 // (b) Scans src/**/*.tsx for likely hardcoded UI text:
@@ -82,6 +82,11 @@ for (const file of tsxFiles) {
     // statement semicolons or declaration keywords, so skip code-like spans.
     if (candidate.includes(";")) continue;
     if (/\b(const|let|var|function|return|import|export|if|for|while|void)\b/.test(candidate)) continue;
+    // A ">" that belongs to "=>" starts an arrow-function body, not JSX text.
+    if (text[match.index - 1] === "=") continue;
+    // Expression leftovers such as ": null) :" have no words once JS
+    // literals are removed.
+    if (!letterRe.test(candidate.replace(/\b(null|undefined|true|false)\b/g, ""))) continue;
     if (ALLOWLIST.has(candidate)) continue;
     console.error(`${rel}:${lineOf(text, match.index)}: hardcoded JSX text: "${candidate}"`);
     failed = true;

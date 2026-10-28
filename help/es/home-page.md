@@ -8,8 +8,10 @@ Las tarjetas superiores abren tus carpetas principales (Escritorio, Descargas, D
 
 ## Recientes y Favoritos
 
-**Recientes** enumera los archivos y carpetas que abriste hace poco: la lista de elementos recientes de Windows más las carpetas que visitaste en Adperastra, lo más nuevo primero. Haz clic en una carpeta para abrirla.
+**Recientes** enumera los archivos y carpetas que abriste hace poco: la lista de elementos recientes de Windows más las carpetas que visitaste en Adperastra, lo más nuevo primero.
 
-**Favoritos** está vacío por ahora. Guardará los elementos que marques como favoritos en una versión posterior; las carpetas ancladas viven en Acceso rápido.
+**Favoritos** enumera los archivos y carpetas que agregaste con **Agregar a favoritos** en el menú del clic derecho. Haz clic derecho en un favorito y elige **Quitar de favoritos** para sacarlo de la lista. Si cambias el nombre de un favorito en Adperastra, sigue siendo favorito. Un favorito que no se encuentra en este momento (o que está en una unidad de red) sigue en la lista, sin fecha ni tamaño, para que siempre puedas quitarlo.
 
-Consulta también: «Anclar carpetas» y «Explorar carpetas» en la lista de ayuda de la izquierda.
+Las dos listas funcionan como cualquier carpeta: selecciona elementos, haz doble clic para abrirlos o clic derecho para ver más, como **Mostrar en la carpeta** para ir a la carpeta que contiene un elemento. Las carpetas ancladas viven en Acceso rápido.
+
+Consulta también: «Anclar carpetas», «Explorar carpetas» y «El menú del clic derecho» en la lista de ayuda de la izquierda.
