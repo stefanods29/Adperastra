@@ -1,6 +1,6 @@
 # Step 03b Implementation Plan
 
-> Native (inline) execution, slice by slice, tests first where the logic is pure. Steps use checkbox (`- [ ]`) syntax.
+> Native (inline) execution, slice by slice, tests first where the logic is pure. Steps use checkbox (`- [x]`) syntax.
 
 **Goal:** Daily file management works safely: New, Cut, Copy, Paste, Rename, Delete (Recycle Bin; Shift+Delete permanent after a warning), big operations run as cancellable background jobs with progress, every change can be undone (toast, Ctrl+Z, Recent actions), files drag inside the app and to/from Windows Explorer, and text/images on the clipboard paste as files.
 
@@ -32,32 +32,32 @@
 
 ### Slice 1: Rust operation engine and jobs
 
-- [ ] `deps:` adopt `trash` 5.2.9 (MIT) in `fs-service` after verifying the license and restore API; record in THIRD_PARTY_LICENSES.md and docs/dependency-and-license-table.md.
-- [ ] `ops.rs`: unique names (`name (2).ext`, `name - Copy.ext`), create folder/file, chunked copy with progress + cancel + partial cleanup, same-volume rename move with cross-volume fallback, recursive walk with link-loop guard, recycle via `trash`, restore by matching original path in the Recycle Bin, permanent delete; per-item skip report with stable reason codes. Unit tests on temp folders.
-- [ ] Tauri jobs: `check_conflicts`, `file_op_start` / `file_op_poll` / `file_op_cancel` (kinds copy, move, recycle, restore, permanent), `create_item`; AppState job map; isolation allowlist; command validation tests.
+- [x] `deps:` adopt `trash` 5.2.9 (MIT) in `fs-service` after verifying the license and restore API; record in THIRD_PARTY_LICENSES.md and docs/dependency-and-license-table.md.
+- [x] `ops.rs`: unique names (`name (2).ext`, `name - Copy.ext`), create folder/file, chunked copy with progress + cancel + partial cleanup, same-volume rename move with cross-volume fallback, recursive walk with link-loop guard, recycle via `trash`, restore by matching original path in the Recycle Bin, permanent delete; per-item skip report with stable reason codes. Unit tests on temp folders.
+- [x] Tauri jobs: `check_conflicts`, `file_op_start` / `file_op_poll` / `file_op_cancel` (kinds copy, move, recycle, restore, permanent), `create_item`; AppState job map; isolation allowlist; command validation tests.
 
 ### Slice 2: Undo stack and toasts
 
-- [ ] `src/services/undo.ts` (pure): push/undo/redo, grouping, non-undoable entries; unit tests.
-- [ ] `src/services/fileops.ts`: typed wrappers, job polling, executing undo/redo actions as data (rename back, move back, recycle created copies, restore recycled items).
-- [ ] Explorer: rename pushes an undo entry + toast (closes KI-014); Ctrl+Z / Ctrl+Y; Recent actions dialog from See more; `explorer.undo` / `explorer.redo` / `explorer.recentActions` commands.
+- [x] `src/services/undo.ts` (pure): push/undo/redo, grouping, non-undoable entries; unit tests.
+- [x] `src/services/fileops.ts`: typed wrappers, job polling, executing undo/redo actions as data (rename back, move back, recycle created copies, restore recycled items).
+- [x] Explorer: rename pushes an undo entry + toast (closes KI-014); Ctrl+Z / Ctrl+Y; Recent actions dialog from See more; `explorer.undo` / `explorer.redo` / `explorer.recentActions` commands.
 
 ### Slice 3: File operations through the registry
 
-- [ ] Turn on New folder / New text file, Cut, Copy, Paste, Delete; add Paste as file and permanent delete commands; menus in `menus.ts` (command bar, item menu with Cut/Copy/Paste/Delete, background menu with Paste + Paste as file); keyboard Ctrl+X/C/V, Delete, Shift+Delete, Ctrl+Shift+N in FileList/Explorer.
-- [ ] Conflict dialog (Replace / Skip / Keep both, for-all) and permanent-delete warning dialog (approved design); job panel with progress + Cancel and skipped-item report.
-- [ ] Clipboard in Rust: `clipboard_set_files` (CF_HDROP + Preferred DropEffect), `clipboard_read` (files + effect, text with size limit), paste honors cut by moving; friendly errors as `ops.<reason>` codes.
+- [x] Turn on New folder / New text file, Cut, Copy, Paste, Delete; add Paste as file and permanent delete commands; menus in `menus.ts` (command bar, item menu with Cut/Copy/Paste/Delete, background menu with Paste + Paste as file); keyboard Ctrl+X/C/V, Delete, Shift+Delete, Ctrl+Shift+N in FileList/Explorer.
+- [x] Conflict dialog (Replace / Skip / Keep both, for-all) and permanent-delete warning dialog (approved design); job panel with progress + Cancel and skipped-item report.
+- [x] Clipboard in Rust: `clipboard_set_files` (CF_HDROP + Preferred DropEffect), `clipboard_read` (files + effect, text with size limit), paste honors cut by moving; friendly errors as `ops.<reason>` codes.
 
 ### Slice 4: Paste as file
 
-- [ ] Settings schema 4: `files.paste_image_format` (png/jpg) in Rust + TS with v3 migration tests; Settings page row.
-- [ ] Pure text classification (Markdown / CSV / plain) and translated default names with locale date; Rust `clipboard_image_file` writes the clipboard image as PNG/JPG via Windows imaging; created file opens in the rename box; undo toast.
+- [x] Settings schema 4: `files.paste_image_format` (png/jpg) in Rust + TS with v3 migration tests; Settings page row.
+- [x] Pure text classification (Markdown / CSV / plain) and translated default names with locale date; Rust `clipboard_image_file` writes the clipboard image as PNG/JPG via Windows imaging; created file opens in the rename box; undo toast.
 
 ### Slice 5: Drag and drop
 
-- [ ] Spike: native drag out (`start_external_drag`, OLE data object with CF_HDROP, copy/move/link effects). If it balloons, stop and propose the split to the owner before continuing.
-- [ ] Internal drag: rows draggable, drop targets (folder rows, nav pane, breadcrumbs, drives) with Copy/Move/Shortcut badge following the cursor; modifiers Ctrl/Shift/Alt; drops run as undoable jobs; `create_shortcut` for Alt.
-- [ ] Drop in from other apps: Tauri drag-drop event, coordinates mapped to the folder under the cursor, same job path as internal drops.
+- [x] Spike: native drag out (`start_external_drag`, OLE data object with CF_HDROP, copy/move/link effects). If it balloons, stop and propose the split to the owner before continuing.
+- [x] Internal drag: rows draggable, drop targets (folder rows, nav pane, breadcrumbs, drives) with Copy/Move/Shortcut badge following the cursor; modifiers Ctrl/Shift/Alt; drops run as undoable jobs; `create_shortcut` for Alt.
+- [x] Drop in from other apps: Tauri drag-drop event, coordinates mapped to the folder under the cursor, same job path as internal drops.
 
 ### Slice 6: Help, records, verification
 
