@@ -277,6 +277,135 @@ fn delete_permanently_from_bin(original: &std::path::Path) -> bool {
 }
 
 #[test]
+fn a_failed_replace_copy_keeps_the_destination() {
+    // The source vanishes after the user chose Replace: the old
+    // destination must survive (the replacement is written aside first
+    // and only swapped in once it is complete).
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    let source = src.path().join("a.txt");
+    fs::write(&source, b"new").unwrap();
+    fs::write(dst.path().join("a.txt"), b"old").unwrap();
+    fs::remove_file(&source).unwrap();
+    // Recreate it as a folder: a folder never replaces a file.
+    fs::create_dir(&source).unwrap();
+    let report = copy_items(
+        &[source],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"old");
+}
+
+#[test]
+fn copying_a_file_onto_a_same_named_folder_never_deletes_the_folder() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("README"), b"file").unwrap();
+    fs::create_dir(dst.path().join("README")).unwrap();
+    fs::write(dst.path().join("README/keep.txt"), b"keep").unwrap();
+    let report = copy_items(
+        &[src.path().join("README")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(
+        fs::read(dst.path().join("README/keep.txt")).unwrap(),
+        b"keep"
+    );
+
+    // And the other way around: a folder onto a same-named file.
+    let report = move_items(
+        &[src.path().join("README")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(
+        fs::read(dst.path().join("README/keep.txt")).unwrap(),
+        b"keep"
+    );
+}
+
+#[test]
+fn permanent_delete_and_recycle_refuse_a_drive_root() {
+    let root = PathBuf::from("C:\\");
+    let report = delete_permanently(
+        std::slice::from_ref(&root),
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(report.skipped.len(), 1);
+    let report = recycle_items(&[root], &new_cancellation_token(), &mut no_progress).unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(report.skipped.len(), 1);
+}
+
+#[cfg(windows)]
+#[test]
+fn restore_brings_back_same_stem_files_without_swapping_them() {
+    // photo.jpg and photo.png share a stem; with "hide extensions" on,
+    // the bin shows both as "photo". Each must come back with its own
+    // contents (the bin's $I records keep the full original paths).
+    let dir = tempfile::tempdir().unwrap();
+    let jpg = dir.path().join("photo.jpg");
+    let png = dir.path().join("photo.png");
+    fs::write(&jpg, b"JPEG-DATA").unwrap();
+    fs::write(&png, b"PNG-DATA!").unwrap();
+    let recycled = recycle_items(
+        &[jpg.clone(), png.clone()],
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(recycled.completed.len(), 2);
+    let restored = restore_items(&[jpg.clone(), png.clone()]).unwrap();
+    assert_eq!(restored.completed.len(), 2, "{restored:?}");
+    assert_eq!(fs::read(&jpg).unwrap(), b"JPEG-DATA");
+    assert_eq!(fs::read(&png).unwrap(), b"PNG-DATA!");
+    // Leave the bin as we found it.
+    let again = recycle_items(&[jpg, png], &new_cancellation_token(), &mut no_progress).unwrap();
+    assert_eq!(again.completed.len(), 2);
+}
+
+#[test]
+fn a_replace_copy_swaps_in_the_new_file_and_leaves_no_partial_file() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("a.txt"), b"new").unwrap();
+    fs::write(dst.path().join("a.txt"), b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("a.txt")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1);
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"new");
+    let names: Vec<_> = fs::read_dir(dst.path())
+        .unwrap()
+        .flatten()
+        .map(|e| e.file_name())
+        .collect();
+    assert_eq!(names.len(), 1, "{names:?}");
+}
+
+#[test]
 fn copying_a_folder_with_a_link_loop_terminates() {
     let dir = tempfile::tempdir().unwrap();
     let dst = tempfile::tempdir().unwrap();

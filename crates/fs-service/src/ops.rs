@@ -90,6 +90,24 @@ fn exists(path: &Path) -> bool {
     path.symlink_metadata().is_ok()
 }
 
+fn is_real_dir(path: &Path) -> bool {
+    path.symlink_metadata()
+        .is_ok_and(|m| m.is_dir() && !m.file_type().is_symlink())
+}
+
+/// A drive or network-share root (for example `C:`): never moved,
+/// recycled or deleted as a whole.
+fn is_drive_root(path: &Path) -> bool {
+    path.parent().is_none()
+}
+
+fn skip(report: &mut OpReport, path: &Path, reason: &str) {
+    report.skipped.push(SkippedItem {
+        path: path.to_path_buf(),
+        reason: reason.to_string(),
+    });
+}
+
 fn same_folder(a: &Path, b: &Path) -> bool {
     a.to_string_lossy()
         .eq_ignore_ascii_case(&b.to_string_lossy())
@@ -277,7 +295,8 @@ fn expand_dir(dir: &Path, rel: &Path, plan: &mut Plan, visited: &mut HashSet<Str
         };
         children.push((entry.path(), file_type, size));
     }
-    children.sort_by_key(|(path, _, _)| path.file_name().map(|n| n.to_string_lossy().to_lowercase()));
+    children
+        .sort_by_key(|(path, _, _)| path.file_name().map(|n| n.to_string_lossy().to_lowercase()));
     for (child, file_type, size) in children {
         let Some(name) = child.file_name().map(|n| n.to_string_lossy().into_owned()) else {
             continue;
@@ -397,24 +416,40 @@ impl Runner<'_> {
                     Some(unique_destination(dest_dir, &name))
                 }
             }
-            ConflictPolicy::Replace => Some(target),
+            ConflictPolicy::Replace => {
+                // A file never replaces a folder (or the reverse): that
+                // would delete everything inside it.
+                if is_real_dir(source) != is_real_dir(&target) {
+                    skip(report, source, "kind_mismatch");
+                    return None;
+                }
+                Some(target)
+            }
         }
     }
 
+    /// Copy one file. The data is written to a hidden sibling first and
+    /// only swapped in once complete, so a failed or cancelled Replace
+    /// keeps the old destination and never leaves a partial file behind.
     fn copy_file(&mut self, from: &Path, to: &Path) -> std::result::Result<(), FsError> {
-        if exists(to) {
-            remove_any(to)?;
+        if is_real_dir(to) {
+            return Err(FsError::Io(std::io::ErrorKind::AlreadyExists.into()));
         }
-        if let Some(parent) = to.parent() {
-            fs::create_dir_all(parent)?;
-        }
+        let parent = to.parent().unwrap_or(to);
+        fs::create_dir_all(parent)?;
+        let name = to
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let partial = unique_destination(parent, &format!("~{name}.partial"));
         let mut input = fs::File::open(from)?;
         let mut output = fs::OpenOptions::new()
             .write(true)
             .create_new(true)
-            .open(to)
+            .open(&partial)
             .map_err(FsError::from)?;
         let mut buffer = vec![0u8; CHUNK];
+        let started_at = self.bytes_done;
         let result = (|| {
             loop {
                 if self.cancelled() {
@@ -431,17 +466,19 @@ impl Runner<'_> {
             Ok(())
         })();
         drop(output);
-        if let Err(error) = result {
-            // Never leave a partial file behind.
-            let _ = fs::remove_file(to);
-            if matches!(error, FsError::Cancelled) {
-                self.bytes_done = self.bytes_done.saturating_sub(0);
+        if result.is_ok() {
+            if let Ok(metadata) = fs::metadata(from) {
+                copy_times(from, &partial);
+                let _ = fs::set_permissions(&partial, metadata.permissions());
             }
-            return Err(error);
         }
-        if let Ok(metadata) = fs::metadata(from) {
-            let _ = fs::set_permissions(to, metadata.permissions());
-            copy_times(from, to);
+        // Renaming onto a file replaces it in one step (MoveFileEx with
+        // MOVEFILE_REPLACE_EXISTING on Windows).
+        let result = result.and_then(|()| fs::rename(&partial, to).map_err(FsError::from));
+        if let Err(error) = result {
+            let _ = remove_file_forced(&partial);
+            self.bytes_done = started_at;
+            return Err(error);
         }
         Ok(())
     }
@@ -479,6 +516,11 @@ impl Runner<'_> {
                     }),
                 }
             } else {
+                if is_real_dir(&dest) {
+                    skip(report, &entry.from, "kind_mismatch");
+                    self.bytes_done += entry.size;
+                    continue;
+                }
                 // A file conflict inside a merged folder follows the policy.
                 if exists(&dest) && dest != entry.from {
                     match self.policy {
@@ -738,51 +780,31 @@ pub fn move_items(
             runner.report();
             continue;
         }
+        if is_drive_root(source) {
+            skip(&mut report, source, "drive_root");
+            runner.items_done += plan.entries.len();
+            continue;
+        }
         let Some(target) = runner.target_for(source, dest_dir, &mut report) else {
             runner.items_done += plan.entries.len();
             continue;
         };
-        // Fast path: a plain rename (same volume, nothing to merge).
-        let merging = exists(&target);
-        if !merging {
-            match fs::rename(source, &target) {
-                Ok(()) => {
-                    runner.bytes_done += plan.total_bytes;
-                    runner.items_done += plan.entries.len();
-                    report.completed.push(CompletedItem {
-                        from: source.clone(),
-                        to: target,
-                    });
-                    runner.report();
-                    continue;
-                }
-                Err(_) => {
-                    // Cross-volume or a link: fall through to copy + delete.
-                }
-            }
+        // Fast path: a plain rename (same volume). Renaming a file onto a
+        // file the user chose to replace swaps it in one step; a folder
+        // that already exists is merged below instead.
+        if !is_real_dir(&target) && fs::rename(source, &target).is_ok() {
+            runner.bytes_done += plan.total_bytes;
+            runner.items_done += plan.entries.len();
+            report.completed.push(CompletedItem {
+                from: source.clone(),
+                to: target,
+            });
+            runner.report();
+            continue;
         }
-        if merging && policy == ConflictPolicy::Replace {
-            let target_is_dir = target.is_dir() && !target.is_symlink();
-            let source_is_dir = source.is_dir() && !source.is_symlink();
-            if target_is_dir != source_is_dir {
-                report.skipped.push(SkippedItem {
-                    path: source.clone(),
-                    reason: "exists".to_string(),
-                });
-                runner.items_done += plan.entries.len();
-                continue;
-            }
-            if !target_is_dir {
-                if let Err(error) = remove_any(&target) {
-                    report.skipped.push(SkippedItem {
-                        path: source.clone(),
-                        reason: reason(&error),
-                    });
-                    runner.items_done += plan.entries.len();
-                    continue;
-                }
-            }
-        }
+        // Otherwise (cross-volume, a link, or merging into an existing
+        // folder): copy + delete. The copy replaces an old file only once
+        // it is complete.
         let copied = runner.copy_plan(plan, source, &target, &mut report);
         if runner.cancelled {
             break;
@@ -848,6 +870,10 @@ pub fn recycle_items(
             bytes_total: 0,
             current: path.to_string_lossy().into_owned(),
         });
+        if is_drive_root(path) {
+            skip(&mut report, path, "drive_root");
+            continue;
+        }
         match trash::delete(path) {
             Ok(()) => report.completed.push(CompletedItem {
                 from: path.clone(),
@@ -905,23 +931,24 @@ pub fn restore_items(originals: &[PathBuf]) -> Result<OpReport> {
             });
             continue;
         }
-        // Windows reports a recycled item's display name without its
-        // extension when "hide extensions" is on (the common case), so a
-        // bin entry matches when its folder matches and its name is the
-        // original name or the original name without the extension.
+        // Prefer the bin's own record of the full original path, so
+        // `photo.jpg` and `photo.png` never swap. Windows reports a
+        // recycled item's display name without its extension when "hide
+        // extensions" is on, so the name/stem match is only a fallback
+        // for items whose record can't be read.
         let parent = original.parent().unwrap_or(original);
         let name = item_name(original).unwrap_or_default();
         let stem = split_name(&name).0.to_string();
+        let wanted = original.to_string_lossy();
         let candidate = bin
             .iter()
-            .filter(|item| {
-                same_folder(&item.original_parent, parent)
-                    && (item.name.to_string_lossy().eq_ignore_ascii_case(&name)
-                        || item.name.to_string_lossy().eq_ignore_ascii_case(&stem)
-                        || item
-                            .original_path()
-                            .to_string_lossy()
-                            .eq_ignore_ascii_case(&original.to_string_lossy()))
+            .filter(|item| same_folder(&item.original_parent, parent))
+            .filter(|item| match bin_original_path(item) {
+                Some(full) => full.to_string_lossy().eq_ignore_ascii_case(&wanted),
+                None => {
+                    let shown = item.name.to_string_lossy();
+                    shown.eq_ignore_ascii_case(&name) || shown.eq_ignore_ascii_case(&stem)
+                }
             })
             .max_by_key(|item| item.time_deleted);
         match candidate {
@@ -942,6 +969,47 @@ pub fn restore_items(originals: &[PathBuf]) -> Result<OpReport> {
         }
     }
     Ok(report)
+}
+
+/// The full original path stored in the bin's `$I` record next to the
+/// item's `$R` data (`$IABC123.txt` beside `$RABC123.txt`). Format v1:
+/// 24-byte header then a 260-character path; v2: header, a character
+/// count, then the path.
+#[cfg(windows)]
+fn bin_original_path(item: &trash::TrashItem) -> Option<PathBuf> {
+    use std::os::windows::ffi::OsStringExt;
+    let data_path = Path::new(&item.id);
+    let data_name = data_path.file_name()?.to_string_lossy().into_owned();
+    let record_name = data_name.strip_prefix("$R")?;
+    let record = data_path.with_file_name(format!("$I{record_name}"));
+    let mut bytes = Vec::new();
+    fs::File::open(record)
+        .ok()?
+        .take(24 + 4 + 2 * 32_768)
+        .read_to_end(&mut bytes)
+        .ok()?;
+    let version = u64::from_le_bytes(bytes.get(..8)?.try_into().ok()?);
+    let text = match version {
+        1 => bytes.get(24..24 + 520)?,
+        2 => {
+            let count = u32::from_le_bytes(bytes.get(24..28)?.try_into().ok()?) as usize;
+            bytes.get(28..28 + count * 2)?
+        }
+        _ => return None,
+    };
+    let wide: Vec<u16> = text
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|pair| u16::from_le_bytes(*pair))
+        .take_while(|&unit| unit != 0)
+        .collect();
+    (!wide.is_empty()).then(|| PathBuf::from(std::ffi::OsString::from_wide(&wide)))
+}
+
+#[cfg(not(windows))]
+fn bin_original_path(item: &trash::TrashItem) -> Option<PathBuf> {
+    Some(item.original_path())
 }
 
 /// Restore one Recycle Bin item to `original` with its full original
@@ -1028,6 +1096,10 @@ pub fn delete_permanently(
             bytes_total: 0,
             current: path.to_string_lossy().into_owned(),
         });
+        if is_drive_root(path) {
+            skip(&mut report, path, "drive_root");
+            continue;
+        }
         match remove_any(path) {
             Ok(()) => report.completed.push(CompletedItem {
                 from: path.clone(),

@@ -346,6 +346,8 @@
       "cancelled": "[Thëë øøpëëräätïïøøñ wääs cääñcëëllëëd. Thëë øøpëëräätïïøøñ wääs cääñcëëllëëd.]",
       "link_loop": "[ÄÄ føøldëër lïïñk wøøüüld løøøøp, søø ïït wääs skïïppëëd. ÄÄ føøldëër lïïñk wøøüüld løøøøp, søø ïït wääs skïïppëëd.]",
       "into_itself": "[ÄÄ føøldëër cääñ't bëë cøøpïïëëd øør møøvëëd ïïñtøø ïïtsëëlf. ÄÄ føøldëër cääñ't bëë cøøpïïëëd øør møøvëëd ïïñtøø ïïtsëëlf.]",
+      "kind_mismatch": "[ÄÄ fïïlëë ääñd ää føøldëër wïïth thëë säämëë ñäämëë cääñ't rëëplääcëë ëëääch øøthëër. ÄÄ fïïlëë ääñd ää føøldëër wïïth thëë säämëë ñäämëë cääñ't rëëplääcëë ëëääch øøthëër.]",
+      "drive_root": "[ÄÄ whøølëë drïïvëë cääñ't bëë møøvëëd øør dëëlëëtëëd. ÄÄ whøølëë drïïvëë cääñ't bëë møøvëëd øør dëëlëëtëëd.]",
       "too_large": "[Thäät ïïs tøøøø läärgëë føør thïïs øøpëëräätïïøøñ. Thäät ïïs tøøøø läärgëë føør thïïs øøpëëräätïïøøñ.]",
       "other": "[Thëë øøpëëräätïïøøñ cøøüüldñ't fïïñïïsh. Thëë øøpëëräätïïøøñ cøøüüldñ't fïïñïïsh.]"
     },

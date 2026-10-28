@@ -346,6 +346,8 @@
       "cancelled": "The operation was cancelled.",
       "link_loop": "A folder link would loop, so it was skipped.",
       "into_itself": "A folder can't be copied or moved into itself.",
+      "kind_mismatch": "A file and a folder with the same name can't replace each other.",
+      "drive_root": "A whole drive can't be moved or deleted.",
       "too_large": "That is too large for this operation.",
       "other": "The operation couldn't finish."
     },

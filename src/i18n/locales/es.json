@@ -346,6 +346,8 @@
       "cancelled": "La operación se canceló.",
       "link_loop": "Un enlace de carpeta crearía un ciclo, así que se omitió.",
       "into_itself": "Una carpeta no puede copiarse ni moverse dentro de sí misma.",
+      "kind_mismatch": "Un archivo y una carpeta con el mismo nombre no pueden reemplazarse entre sí.",
+      "drive_root": "No se puede mover ni eliminar una unidad completa.",
       "too_large": "Eso es demasiado grande para esta operación.",
       "other": "La operación no pudo terminar."
     },
