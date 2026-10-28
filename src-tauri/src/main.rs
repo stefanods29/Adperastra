@@ -1420,6 +1420,83 @@ pub struct FileOpRequest {
     /// with the same original path.
     #[serde(default)]
     pub bin_ids: Option<Vec<String>>,
+    /// "foreground" (the user is waiting), "normal" (default) or
+    /// "background" (later background tasks: low CPU and disk priority).
+    #[serde(default = "default_job_priority")]
+    pub priority: String,
+}
+
+fn default_job_priority() -> String {
+    "normal".to_string()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JobPriority {
+    Foreground,
+    Normal,
+    Background,
+}
+
+fn parse_job_priority(value: &str) -> Result<JobPriority, String> {
+    match value {
+        "foreground" => Ok(JobPriority::Foreground),
+        "normal" => Ok(JobPriority::Normal),
+        "background" => Ok(JobPriority::Background),
+        _ => Err("ops.invalid_request".to_string()),
+    }
+}
+
+/// Runs the current worker thread at a job's priority until dropped
+/// (pool threads are reused, so the priority is always put back).
+struct ThreadPriorityGuard(JobPriority);
+
+impl ThreadPriorityGuard {
+    fn enter(priority: JobPriority) -> Self {
+        #[cfg(windows)]
+        {
+            use windows::Win32::System::Threading::{
+                GetCurrentThread, SetThreadPriority, THREAD_MODE_BACKGROUND_BEGIN,
+                THREAD_PRIORITY_ABOVE_NORMAL,
+            };
+            // SAFETY: the pseudo-handle of the calling thread is always valid.
+            unsafe {
+                let _ = match priority {
+                    JobPriority::Foreground => {
+                        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL)
+                    }
+                    JobPriority::Background => {
+                        SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN)
+                    }
+                    JobPriority::Normal => Ok(()),
+                };
+            }
+        }
+        Self(priority)
+    }
+}
+
+impl Drop for ThreadPriorityGuard {
+    fn drop(&mut self) {
+        #[cfg(windows)]
+        {
+            use windows::Win32::System::Threading::{
+                GetCurrentThread, SetThreadPriority, THREAD_MODE_BACKGROUND_END,
+                THREAD_PRIORITY_NORMAL,
+            };
+            // SAFETY: as in `enter`.
+            unsafe {
+                let _ = match self.0 {
+                    JobPriority::Foreground => {
+                        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL)
+                    }
+                    JobPriority::Background => {
+                        SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_END)
+                    }
+                    JobPriority::Normal => Ok(()),
+                };
+            }
+        }
+    }
 }
 
 /// Validate Recycle Bin entry ids sent by the UI: one per source, each an
@@ -1500,7 +1577,9 @@ fn file_op_start(
         dest_dir,
         conflict,
         bin_ids,
+        priority,
     } = request;
+    let priority = parse_job_priority(&priority)?;
     if !matches!(
         kind.as_str(),
         "copy" | "move" | "recycle" | "restore" | "permanent"
@@ -1559,6 +1638,7 @@ fn file_op_start(
     }
     let job_id = request_id;
     tauri::async_runtime::spawn_blocking(move || {
+        let _priority = ThreadPriorityGuard::enter(priority);
         let job_state = app.state::<AppState>();
         let set_progress = |progress: &fs_service::OpProgress| {
             if let Ok(mut jobs) = job_state.file_jobs.lock() {
@@ -2439,6 +2519,38 @@ mod tests {
         }))
         .unwrap();
         assert!(request.bin_ids.is_none());
+        assert_eq!(request.priority, "normal");
+    }
+
+    #[test]
+    fn job_priorities_parse_and_reset_the_thread() {
+        assert_eq!(
+            parse_job_priority("foreground").unwrap(),
+            JobPriority::Foreground
+        );
+        assert_eq!(parse_job_priority("normal").unwrap(), JobPriority::Normal);
+        assert_eq!(
+            parse_job_priority("background").unwrap(),
+            JobPriority::Background
+        );
+        assert!(parse_job_priority("realtime").is_err());
+        #[cfg(windows)]
+        {
+            use windows::Win32::System::Threading::{
+                GetCurrentThread, GetThreadPriority, THREAD_PRIORITY_NORMAL,
+            };
+            let normal = THREAD_PRIORITY_NORMAL.0;
+            for priority in [JobPriority::Foreground, JobPriority::Background] {
+                let guard = ThreadPriorityGuard::enter(priority);
+                // SAFETY: the calling thread's pseudo-handle is always valid.
+                let inside = unsafe { GetThreadPriority(GetCurrentThread()) };
+                assert!(inside != normal, "{priority:?} did not change the thread");
+                drop(guard);
+                // SAFETY: as above.
+                let after = unsafe { GetThreadPriority(GetCurrentThread()) };
+                assert_eq!(after, normal, "{priority:?} was not put back");
+            }
+        }
     }
 
     #[test]

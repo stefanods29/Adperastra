@@ -10,6 +10,10 @@ import type { FileAction, UndoEntryInput } from "./undo";
 
 export type FileOpKind = "copy" | "move" | "recycle" | "restore" | "permanent";
 export type ConflictPolicy = "replace" | "skip" | "keepBoth";
+/** Job priority (contract 10): "foreground" when the user waits on it,
+ * "normal" for file operations (the default), "background" for later
+ * background tasks (low CPU and disk priority in Rust). */
+export type JobPriority = "foreground" | "normal" | "background";
 
 export interface OpProgress {
   items_done: number;
@@ -84,6 +88,7 @@ export async function startFileJob(
     conflict?: ConflictPolicy;
     /** For "restore": the exact bin entries, one per source. */
     binIds?: string[];
+    priority?: JobPriority;
     onProgress?: (progress: OpProgress) => void;
   } = {},
 ): Promise<RunningJob> {
@@ -97,6 +102,7 @@ export async function startFileJob(
       dest_dir: options.destDir ?? null,
       conflict: options.conflict ?? "skip",
       bin_ids: options.binIds ?? null,
+      priority: options.priority ?? "normal",
     },
     requestId,
   });
@@ -148,6 +154,7 @@ export async function runFileJob(
     destDir?: string;
     conflict?: ConflictPolicy;
     binIds?: string[];
+    priority?: JobPriority;
     onProgress?: (progress: OpProgress) => void;
   } = {},
 ): Promise<OpReport> {
