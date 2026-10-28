@@ -41,5 +41,6 @@
   "signature.body": "A la lista de componentes (dependencies.json) le falta la firma o la firma no coincide. Adperastra no se iniciará, para que nada se pueda instalar ni cambiar sin que lo sepas.",
   "signature.repair": "Reparar: volver a comprobar",
   "signature.close": "Cerrar",
-  "repair.runtime": "Instalando {name} (componente del sistema)..."
+  "repair.runtime": "Instalando {name} (esto puede tardar alrededor de un minuto)",
+  "repair.checksum_mismatch": "El instalador descargado no coincide con la suma de comprobación esperada, por lo que no se ejecutó. Revisa tu conexión y pulsa Reintentar."
 }

@@ -2,7 +2,7 @@ use setup_core::{
     expand_env, fetch_installer, free_disk_space, generate_keypair, install_component,
     is_first_run, keys_for, load_profile, parse_manifest, profile_path, save_profile,
     sign_manifest, signature_status, t, verify_component, AppInfo, Component, ComponentKind,
-    Installer, Manifest, Profile, SignatureStatus, Source, Status,
+    Installer, Manifest, Profile, SetupError, SignatureStatus, Source, Status,
 };
 use sha2::{Digest, Sha256};
 use std::fs;
@@ -248,6 +248,7 @@ fn fetch_installer_local_ok_and_bad_hash() {
         source: Source::Local {
             path: "setup.exe".into(),
         },
+        fallback_source: None,
         sha256: sha256_hex(data),
         size: data.len() as u64,
         args: vec![],
@@ -265,4 +266,46 @@ fn fetch_installer_local_ok_and_bad_hash() {
     let mut noop2 = |_p: f32| {};
     assert!(fetch_installer(&bad, src_dir.path(), bad_dir.path(), &mut noop2).is_err());
     assert!(!bad_dir.path().join("installer.exe").exists());
+}
+
+#[test]
+fn fetch_installer_uses_fallback() {
+    let src_dir = tempfile::tempdir().unwrap();
+    let dst_dir = tempfile::tempdir().unwrap();
+    let data = b"fallback-installer-bytes";
+    fs::write(src_dir.path().join("fallback.exe"), data).unwrap();
+    let inst = Installer {
+        source: Source::Local {
+            path: "does-not-exist.exe".into(),
+        },
+        fallback_source: Some(Source::Local {
+            path: "fallback.exe".into(),
+        }),
+        sha256: sha256_hex(data),
+        size: data.len() as u64,
+        args: vec![],
+    };
+    let mut noop = |_p: f32| {};
+    let path = fetch_installer(&inst, src_dir.path(), dst_dir.path(), &mut noop).unwrap();
+    assert_eq!(path, dst_dir.path().join("installer.exe"));
+    assert_eq!(fs::read(&path).unwrap(), data);
+
+    // Fallback with wrong sha256: the fallback's HashMismatch error
+    // surfaces and no installer.exe is left behind.
+    let bad_dst = tempfile::tempdir().unwrap();
+    let bad = Installer {
+        sha256: "0".repeat(64),
+        ..inst
+    };
+    let mut noop2 = |_p: f32| {};
+    let err = fetch_installer(&bad, src_dir.path(), bad_dst.path(), &mut noop2).unwrap_err();
+    assert!(
+        matches!(err, SetupError::HashMismatch(_)),
+        "expected HashMismatch, got {err:?}"
+    );
+    assert!(
+        err.to_string().contains("hash mismatch"),
+        "unexpected Display: {err}"
+    );
+    assert!(!bad_dst.path().join("installer.exe").exists());
 }

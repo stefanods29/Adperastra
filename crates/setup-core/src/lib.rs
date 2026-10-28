@@ -32,7 +32,7 @@ pub enum SetupError {
 pub type Result<T> = std::result::Result<T, SetupError>;
 
 pub use i18n::{available_keys, keys_for, t};
-pub use install::{fetch_installer, install_component, install_runtime};
+pub use install::{fetch_installer, install_component, install_runtime, RuntimeProgress};
 pub use logfile::append_log;
 pub use manifest::{
     load_manifest, parse_manifest, AppInfo, Component, ComponentKind, Installer, Manifest, Pack,
