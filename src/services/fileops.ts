@@ -210,6 +210,16 @@ export async function clipboardImageFile(parent: string, baseName: string, forma
   );
 }
 
+/** Start a native drag to other apps; resolves with the chosen effect. */
+export async function startExternalDrag(paths: string[]): Promise<"copy" | "move" | "link" | "none"> {
+  return (await invoke("start_external_drag", { paths })) as "copy" | "move" | "link" | "none";
+}
+
+/** Create a .lnk shortcut to `target` inside `folder`; returns its path. */
+export async function createShortcut(target: string, folder: string, name: string): Promise<string> {
+  return displayPath((await invoke("create_shortcut", { target, folder, name })) as string);
+}
+
 /** Undo/redo entries for a finished job, or null when nothing changed. */
 export function entryForJob(
   kind: "copy" | "move" | "recycle",

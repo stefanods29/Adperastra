@@ -37,14 +37,14 @@ export default function NavPane(props: NavPaneProps) {
       {props.knownFolders
         .filter((folder) => folder.id !== "home")
         .map((folder) => (
-          <NavItem key={folder.id} icon={Folder} label={folder.name} pinned active={isActive(folder.path)} onClick={() => props.onOpenFolder(folder.path)} />
+          <NavItem key={folder.id} icon={Folder} label={folder.name} pinned active={isActive(folder.path)} onClick={() => props.onOpenFolder(folder.path)} dropPath={folder.path} dropName={folder.name} />
         ))}
       {customPins.length > 0 ? (
         <>
           <div className="adp-nav-section">{t("explorer.pinnedFolders")}</div>
           {customPins.map((path) => (
             <div key={path} className="adp-nav-pin-row">
-              <NavItem icon={Folder} label={folderNameFromPath(path)} pinned active={isActive(path)} onClick={() => props.onOpenFolder(path)} />
+              <NavItem icon={Folder} label={folderNameFromPath(path)} pinned active={isActive(path)} onClick={() => props.onOpenFolder(path)} dropPath={path} dropName={folderNameFromPath(path)} />
               <button type="button" className="adp-icon-btn adp-nav-unpin" aria-label={t("commands.unpinFolder")} title={t("commands.unpinFolder")} onClick={() => props.onUnpin(path)}>
                 <PinOff size={12} aria-hidden="true" />
               </button>
@@ -55,7 +55,7 @@ export default function NavPane(props: NavPaneProps) {
       <div className="adp-nav-spacer" />
       <NavItem icon={Monitor} label={t("explorer.nav.thisPc")} active={props.location.type === "drives"} onClick={props.onDrives} />
       {props.drives.map((drive) => (
-        <button key={drive.root} type="button" className={`adp-nav-drive${props.location.type === "folder" && samePath(props.location.path, drive.root) ? " adp-nav-item--active" : ""}`} onClick={() => props.onOpenFolder(drive.root)}>
+        <button key={drive.root} type="button" className={`adp-nav-drive${props.location.type === "folder" && samePath(props.location.path, drive.root) ? " adp-nav-item--active" : ""}`} onClick={() => props.onOpenFolder(drive.root)} data-drop-folder={drive.root} data-drop-name={drive.root}>
           <HardDrive size={14} aria-hidden="true" />
           <span>{drive.root}</span>
         </button>

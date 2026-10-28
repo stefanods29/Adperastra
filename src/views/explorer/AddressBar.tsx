@@ -150,6 +150,8 @@ export default function AddressBar(props: AddressBarProps) {
                   className="adp-breadcrumb-item"
                   aria-current={index === props.segments.length - 1 ? "page" : undefined}
                   onClick={() => props.onNavigatePath(segment.path)}
+                  data-drop-folder={segment.path}
+                  data-drop-name={segment.label}
                 >
                   {segment.label}
                 </button>

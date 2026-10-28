@@ -20,6 +20,7 @@ use thiserror::Error;
 
 mod classic_menu;
 mod clipboard;
+mod drag;
 mod explorer;
 mod shell;
 
@@ -1805,6 +1806,48 @@ async fn clipboard_clear(window: WebviewWindow) -> Result<(), String> {
         .map_err(|e| e.to_string())?
 }
 
+/// Start a native file drag to other apps; resolves with the effect
+/// the drop target chose. A "move" result means the caller finishes
+/// the move (the target copied the files; sources are removed).
+#[tauri::command]
+async fn start_external_drag(window: WebviewWindow, paths: Vec<String>) -> Result<String, String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > drag::MAX_DRAG_FILES {
+        return Err("drag.failed".to_string());
+    }
+    for path in &paths {
+        validate_absolute_path(path).map_err(|_| "drag.failed".to_string())?;
+    }
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || drag::start_drag(owner, &paths))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// Create a shortcut (.lnk) to `target` in `folder` (Alt-drag).
+#[tauri::command]
+async fn create_shortcut(
+    window: WebviewWindow,
+    target: String,
+    folder: String,
+    name: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    validate_absolute_path(&target).map_err(|_| "shortcut.failed".to_string())?;
+    validate_absolute_path(&folder).map_err(|_| "shortcut.failed".to_string())?;
+    if name.chars().count() > 200 {
+        return Err("shortcut.failed".to_string());
+    }
+    fs_service::validate_new_name(&format!("{name}.lnk"))
+        .map_err(|_| "shortcut.failed".to_string())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || {
+        shell::create_shortcut(owner, &target, &folder, &name)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// The Windows share sheet for files. Windows UI for a window has to be
 /// shown from that window's thread, so the work hops to the main thread.
 #[tauri::command]
@@ -2027,7 +2070,9 @@ fn main() {
             clipboard_read,
             clipboard_text,
             clipboard_image_file,
-            clipboard_clear
+            clipboard_clear,
+            start_external_drag,
+            create_shortcut
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

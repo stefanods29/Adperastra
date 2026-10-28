@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { supportedLanguages } from "../i18n";
 import Menu, { type MenuAnchor } from "../components/Menu";
@@ -51,9 +51,12 @@ import {
   clipboardText,
   checkConflicts,
   createItem,
+  createShortcut,
   createTextFile,
   entryForJob,
   executeFileAction,
+  runFileJob,
+  startExternalDrag,
   startFileJob,
   type ConflictPolicy,
   type OpReport,
@@ -241,6 +244,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   } | null>(null);
   const [recentOpen, setRecentOpen] = useState(false);
   const pendingRenameRef = useRef<string | null>(null);
+  const [dragBadge, setDragBadge] = useState<{ x: number; y: number; key: string; name: string } | null>(null);
   const loadModeRef = useRef<"hard" | "soft">("hard");
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [homeNonce, setHomeNonce] = useState(0);
@@ -1286,6 +1290,202 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     [t, notifyAction, touchUndo],
   );
 
+
+  // -------------------------------------------------------------------
+  // Drag and drop (Step 03b): a mouse-driven session inside the app,
+  // handed to a native Windows drag when the pointer leaves the window;
+  // drops from other apps arrive through Tauri's drag-drop event.
+  // -------------------------------------------------------------------
+  type DragEffect = "copy" | "move" | "link" | "none";
+  interface DragSession {
+    mode: "idle" | "pending" | "dragging" | "external";
+    paths: string[];
+    x: number;
+    y: number;
+  }
+  const dragSession = useRef<DragSession>({ mode: "idle", paths: [], x: 0, y: 0 });
+  const dragTargetEl = useRef<Element | null>(null);
+  const opsRef = useRef({ performCopyMove, createShortcuts: (_paths: string[], _target: string) => {}, finishExternalMove: (_paths: string[]) => {} });
+  opsRef.current = {
+    performCopyMove,
+    createShortcuts: (paths: string[], target: string) => {
+      void (async () => {
+        try {
+          const created: string[] = [];
+          for (const path of paths) {
+            created.push(await createShortcut(path, target, t("files.shortcutName", { name: baseNameOf(path) })));
+          }
+          if (created.length > 0) {
+            undoStack.current.push({
+              labelKey: "toast.created",
+              labelArgs: { name: baseNameOf(created[0]) },
+              undo: { type: "recycle", paths: created },
+              redo: { type: "restore", originals: created },
+            });
+            touchUndo();
+            notifyAction(t("toast.created", { name: baseNameOf(created[0]) }), undoStack.current.peekUndo());
+            refreshAfterOp();
+          }
+        } catch (error) {
+          notifyOpError(error);
+        }
+      })();
+    },
+    finishExternalMove: (paths: string[]) => {
+      // The drop target copied the files; a Windows move is finished by
+      // removing the sources. Where they went is not reported back, so
+      // this one action cannot be offered as an undo.
+      void (async () => {
+        try {
+          const report = await runFileJob("permanent", paths);
+          if (report.completed.length > 0) notify(t("toast.moved", { count: report.completed.length }));
+          refreshAfterOp();
+        } catch (error) {
+          notifyOpError(error);
+        }
+      })();
+    },
+  };
+
+  useEffect(() => {
+    const driveRoot = (path: string) => {
+      const shown = displayPath(path);
+      if (shown.startsWith("\\\\")) return shown.split("\\").slice(0, 4).join("\\").toUpperCase();
+      return `${shown.split("\\")[0]}\\`.toUpperCase();
+    };
+    const targetFromPoint = (x: number, y: number) => {
+      const element = document.elementFromPoint(x, y)?.closest?.("[data-drop-folder]");
+      if (!element) return null;
+      const path = element.getAttribute("data-drop-folder");
+      if (!path) return null;
+      return { element, path, name: element.getAttribute("data-drop-name") ?? path };
+    };
+    const effectFor = (paths: string[], targetPath: string, event: MouseEvent): DragEffect => {
+      const sameFolder = paths.every((path) => {
+        const parent = parentPathOf(path);
+        return parent !== null && samePath(parent, targetPath);
+      });
+      if (sameFolder) return "none";
+      if (event.altKey) return "link";
+      if (event.ctrlKey || event.metaKey) return "copy";
+      if (event.shiftKey) return "move";
+      return driveRoot(paths[0]) === driveRoot(targetPath) ? "move" : "copy";
+    };
+    const clearTarget = () => {
+      dragTargetEl.current?.classList.remove("adp-drop-target");
+      dragTargetEl.current = null;
+    };
+    const endSession = () => {
+      dragSession.current = { mode: "idle", paths: [], x: 0, y: 0 };
+      clearTarget();
+      setDragBadge(null);
+    };
+    const onMove = (event: MouseEvent) => {
+      const session = dragSession.current;
+      if (session.mode === "pending") {
+        if (Math.hypot(event.clientX - session.x, event.clientY - session.y) < 6) return;
+        session.mode = "dragging";
+      }
+      if (session.mode !== "dragging") return;
+      const target = targetFromPoint(event.clientX, event.clientY);
+      clearTarget();
+      if (target) {
+        dragTargetEl.current = target.element;
+        target.element.classList.add("adp-drop-target");
+      }
+      const effect = target ? effectFor(session.paths, target.path, event) : "none";
+      if (target && effect !== "none") {
+        const key = effect === "copy" ? "drag.copyTo" : effect === "move" ? "drag.moveTo" : "drag.shortcutTo";
+        setDragBadge({ x: event.clientX, y: event.clientY, key, name: target.name });
+      } else {
+        setDragBadge(null);
+      }
+      session.x = event.clientX;
+      session.y = event.clientY;
+    };
+    const onUp = (event: MouseEvent) => {
+      const session = dragSession.current;
+      if (session.mode === "pending") {
+        session.mode = "idle";
+        return;
+      }
+      if (session.mode !== "dragging") return;
+      const target = targetFromPoint(event.clientX, event.clientY);
+      const effect = target ? effectFor(session.paths, target.path, event) : "none";
+      const paths = session.paths;
+      endSession();
+      if (!target || effect === "none") return;
+      if (effect === "link") opsRef.current.createShortcuts(paths, target.path);
+      else void opsRef.current.performCopyMove(effect, paths, target.path);
+    };
+    const onLeave = () => {
+      const session = dragSession.current;
+      if (session.mode !== "dragging" || !isTauriRuntime()) return;
+      const paths = session.paths;
+      session.mode = "external";
+      clearTarget();
+      setDragBadge(null);
+      startExternalDrag(paths)
+        .then((effect) => {
+          if (effect === "move") opsRef.current.finishExternalMove(paths);
+          if (effect !== "none") refreshAfterOp();
+        })
+        .catch((error: unknown) => notifyOpError(error))
+        .finally(() => {
+          dragSession.current.mode = "idle";
+        });
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && dragSession.current.mode === "dragging") endSession();
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("mouseleave", onLeave);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("mouseleave", onLeave);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Drops from other apps (Explorer, desktop): Tauri reports the paths
+  // and the window position; the folder under the pointer is the target.
+  useEffect(() => {
+    if (!isTauriRuntime()) return;
+    let unlisten: (() => void) | undefined;
+    let disposed = false;
+    void import("@tauri-apps/api/webview")
+      .then(({ getCurrentWebview }) =>
+        getCurrentWebview().onDragDropEvent((event) => {
+          if (event.payload.type !== "drop" || event.payload.paths.length === 0) return;
+          const scale = window.devicePixelRatio || 1;
+          const x = event.payload.position.x / scale;
+          const y = event.payload.position.y / scale;
+          const element = document.elementFromPoint(x, y)?.closest?.("[data-drop-folder]");
+          const attr = element?.getAttribute("data-drop-folder");
+          const current = live.current.location;
+          const dest = attr ?? (current.type === "folder" ? current.path : null);
+          if (!dest) return;
+          const paths = event.payload.paths.map(displayPath);
+          const rootOf = (path: string) => displayPath(path).split("\\")[0].toUpperCase();
+          const effect = paths.every((path) => rootOf(path) === rootOf(dest)) ? "move" : "copy";
+          void opsRef.current.performCopyMove(effect as "copy" | "move", paths, dest);
+        }),
+      )
+      .then((fn) => {
+        if (disposed) fn();
+        else unlisten = fn;
+      })
+      .catch(() => undefined);
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, []);
+
   const segments =
     location.type === "folder"
       ? pathSegments(location.path)
@@ -1344,6 +1544,13 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     onOpen: openOne,
     onContextMenu: openContextMenu,
     onCommandKey: runById,
+    onItemMouseDown: (event: ReactMouseEvent, item: ExplorerItem) => {
+      if (event.button !== 0) return;
+      const selected = live.current.selectedPaths;
+      const paths = selected.includes(item.path) ? selected : [item.path];
+      if (!selected.includes(item.path)) setSelection(selectOnly(item.path));
+      dragSession.current = { mode: "pending", paths, x: event.clientX, y: event.clientY };
+    },
   };
 
   let folderContent = null;
@@ -1523,6 +1730,14 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
           }}
           onClose={() => setRecentOpen(false)}
         />
+      ) : null}
+      {dragBadge ? (
+        <div
+          className="adp-drag-badge"
+          style={{ left: dragBadge.x + 14, top: dragBadge.y + 18 }}
+        >
+          {t(dragBadge.key, { name: dragBadge.name })}
+        </div>
       ) : null}
       {jobsOpen ? (
         <JobsPanel

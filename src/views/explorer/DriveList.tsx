@@ -24,7 +24,7 @@ export default function DriveList(props: DriveListProps) {
           const state = props.states[drive.root] ?? { status: "loading" as const };
           const label = state.status === "ready" && state.info.label ? state.info.label : drive.root;
           return (
-            <button key={drive.root} type="button" className="adp-drive-card" aria-label={t("explorer.openDrive", { name: label })} onClick={() => props.onOpenDrive(drive.root)}>
+            <button key={drive.root} type="button" className="adp-drive-card" aria-label={t("explorer.openDrive", { name: label })} onClick={() => props.onOpenDrive(drive.root)} data-drop-folder={drive.root} data-drop-name={label}>
               <HardDrive size={22} aria-hidden="true" />
               <span className="adp-drive-text">
                 <span className="adp-drive-name">{label} ({drive.root.replace(/\\$/, "")})</span>

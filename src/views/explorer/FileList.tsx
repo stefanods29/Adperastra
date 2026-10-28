@@ -44,6 +44,8 @@ export interface FileListProps {
   /** Keys that run registry commands (Enter, F2, Alt+Enter, ...); the
    * point says where a keyboard-opened menu should appear. */
   onCommandKey: (commandId: string, point?: { x: number; y: number }) => void;
+  /** Mouse-down on a row, for starting a drag (Step 03b). */
+  onItemMouseDown?: (event: ReactMouseEvent, item: ExplorerItem) => void;
   onFirstPaint?: () => void;
   /** Short Home lists render every row; folders virtualize. */
   virtual?: boolean;
@@ -306,6 +308,9 @@ export default function FileList(props: FileListProps) {
         aria-selected={selected}
         className={className}
         style={style}
+        data-drop-folder={item.kind === "folder" || item.kind === "drive" ? item.path : undefined}
+        data-drop-name={item.kind === "folder" || item.kind === "drive" ? item.name : undefined}
+        onMouseDown={(event) => props.onItemMouseDown?.(event, item)}
         onClick={(event) => onRowClick(event, item)}
         onDoubleClick={(event) => {
           event.stopPropagation();
