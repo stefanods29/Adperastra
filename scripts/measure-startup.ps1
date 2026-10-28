@@ -32,7 +32,8 @@ public class PM {
 "@ -ReferencedAssemblies System.Drawing
 
 $data = Join-Path $env:TEMP "adp-cold-measure"
-$runs = @()
+# PowerShell names ignore case: the list must not be called $runs ($Runs is the parameter).
+$results = @()
 foreach ($run in 1..$Runs) {
   Get-Process Adperastra -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
   Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" |
@@ -54,7 +55,7 @@ foreach ($run in 1..$Runs) {
     Start-Sleep -Milliseconds 40
   }
   $sw.Stop()
-  $runs += @{ run = $run; window_handle_ms = $handle; first_paint_ms = $paint; content_ready_ms = $session }
+  $results += @{ run = $run; window_handle_ms = $handle; first_paint_ms = $paint; content_ready_ms = $session }
   Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
   Start-Sleep -Seconds 1
 }
@@ -65,9 +66,9 @@ $result = @{
   step = $Step
   method = "WebView2 children of Adperastra stopped before each run; first paint = PrintWindow pixel; content ready = session.json written"
   note = "Run right after a reboot for true cold-cache numbers. First-ever run (creates the WebView2 profile) is a one-time cost and is measured separately."
-  runs = $runs
+  runs = $results
 }
 $out = Join-Path $root ("docs\benchmarks\{0}-startup-step{1}.json" -f (Get-Date -Format "yyyy-MM-dd"), $Step)
 $result | ConvertTo-Json -Depth 4 | Set-Content $out -Encoding utf8
 Write-Output "Wrote $out"
-$runs | ForEach-Object { Write-Output "run $($_.run): handle=$($_.window_handle_ms)ms paint=$($_.first_paint_ms)ms content=$($_.content_ready_ms)ms" }
+$results | ForEach-Object { Write-Output "run $($_.run): handle=$($_.window_handle_ms)ms paint=$($_.first_paint_ms)ms content=$($_.content_ready_ms)ms" }
