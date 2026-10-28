@@ -494,6 +494,7 @@ export default function App() {
             onOpenHelp={(slug) => openTab("help", slug ?? "browsing-folders")}
             view={settings.explorer}
             onViewChange={onViewChange}
+            pasteImageFormat={settings.files?.paste_image_format ?? "png"}
           />
         ) : null}
         {activeTab.kind === "help" ? (

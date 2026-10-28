@@ -190,6 +190,10 @@ export async function clipboardRead(): Promise<ClipboardData> {
   return { ...data, files: data.files.map(displayPath) };
 }
 
+export async function clipboardClear(): Promise<void> {
+  await invoke("clipboard_clear");
+}
+
 export async function clipboardText(): Promise<string | null> {
   return (await invoke("clipboard_text")) as string | null;
 }

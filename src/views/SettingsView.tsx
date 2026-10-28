@@ -94,6 +94,21 @@ export default function SettingsView({ settings, onApply, onOpenHelp }: Settings
           ) : null}
         </div>
       </div>
+      <div className="adp-setting-row">
+        <span className="adp-setting-label">{t("settings.pastedImages")}</span>
+        <div className="adp-button-row">
+          {(["png", "jpg"] as const).map((format) => (
+            <Button
+              key={format}
+              variant={settings.files.paste_image_format === format ? "primary" : "default"}
+              aria-pressed={settings.files.paste_image_format === format}
+              onClick={() => onApply({ ...settings, files: { paste_image_format: format } })}
+            >
+              {t(format === "png" ? "settings.formatPng" : "settings.formatJpg")}
+            </Button>
+          ))}
+        </div>
+      </div>
       <p className="adp-note">{t("settings.persistNote")}</p>
     </div>
   );

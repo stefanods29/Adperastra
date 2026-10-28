@@ -50,6 +50,9 @@ export const VIEW_MENU: MenuEntry[] = [
 ];
 
 export const OVERFLOW_MENU: MenuEntry[] = [
+  cmd("explorer.undo"),
+  cmd("explorer.redo"),
+  separator,
   cmd("explorer.selectAll"),
   cmd("explorer.selectNone"),
   cmd("explorer.invertSelection"),
@@ -58,6 +61,8 @@ export const OVERFLOW_MENU: MenuEntry[] = [
   cmd("explorer.copyPath"),
   cmd("explorer.openInTerminal"),
   cmd("explorer.properties"),
+  separator,
+  cmd("explorer.recentActions"),
 ];
 
 /** Right-click on one or more items. */
@@ -70,6 +75,7 @@ export const ITEM_MENU: MenuEntry[] = [
   cmd("explorer.showInFolder"),
   cmd("explorer.copyPath"),
   cmd("explorer.properties"),
+  cmd("explorer.deletePermanently"),
   separator,
   cmd("explorer.showMoreOptions"),
 ];
@@ -81,6 +87,7 @@ export const BACKGROUND_MENU: MenuEntry[] = [
   { type: "submenu", id: "new", labelKey: "commands.new", icon: Plus, entries: NEW_MENU },
   separator,
   cmd("explorer.paste"),
+  cmd("explorer.pasteAsFile"),
   cmd("explorer.openInTerminal"),
   cmd("explorer.properties"),
   separator,
