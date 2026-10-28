@@ -1,0 +1,113 @@
+{
+  "tabs": {
+    "explorer": "[Ëxpløørëër Ëxpløørëër]",
+    "newTab": "[Ñëëw tääb Ñëëw tääb]",
+    "close": "[Çløøsë tääb Çløøsëë]"
+  },
+  "window": {
+    "minimize": "[Mïïñïmïïzëë Mïïñïï]",
+    "maximize": "[Määxïmïïzëë Määxïï]",
+    "restore": "[Rëëstøørëë Rëëstøø]",
+    "close": "[Çløøsëë Çløøsëë]"
+  },
+  "explorer": {
+    "quickAccess": "[Qüïïçk ääççëëss Qüïïçk]",
+    "recent": "[Rëëçëënt Rëëçëën]",
+    "favorites": "[Fäävøørïïtëës Fäävøør]",
+    "nav": {
+      "home": "[Høømëë Høømëë]",
+      "gallery": "[Gäällëërÿÿ Gäällëë]",
+      "thisPc": "[Thïïs PÇ Thïïs PÇÇ]",
+      "network": "[Ñëëtwøørk Ñëëtwøø]"
+    },
+    "statusItems": "{count, plural, =0 {[Ñøø ïïtëëmš ëëxträä]} one {[# ïïtëëm ëëxträä]} other {[# ïïtëëmš ëëxträä løøñg]}}",
+    "statusSelected": "{count, plural, =0 {[Ñøøñëë sëëlëëçtëëd ëëxträä]} one {[# ïïtëëm sëëlëëçtëëd ëëxträä]} other {[# ïïtëëmš sëëlëëçtëëd ëëxträä]}}",
+    "pinned": "[Pïïññëëd ëxträä løøñg]"
+  },
+  "help": {
+    "title": "[Hëëlp Hëëlp]",
+    "searchPlaceholder": "[Sëëääçh hëëlp sëëääçh]",
+    "whatsNew": "[Whäätš ñëëw whäätš ñëëww]",
+    "noResults": "[Nøø hëëlp päägëëš føøüüñd. ëxträä løøñg]",
+    "selectPage": "[Chøøøøšëë ää tøøpïïç tøø rëëääd. ëxträä løøñg]",
+    "loadError": "[Thïïš hëëlp päägëë çøøüüld ñøøt bëë løøäädëëd. ëxträä løøñg]"
+  },
+  "settings": {
+    "title": "[Sëëttïïñgš Sëëttïïñ]",
+    "language": "[Lääñgüäägëë Lääñgüää]",
+    "theme": "[Thëëmëë Thëëmëë]",
+    "themeLight": "[Lïïght Lïïght]",
+    "themeDark": "[Dääärk Dääärk]",
+    "themeSystem": "[Sÿÿstëëm Sÿÿstëë]",
+    "accent": "[Ääççëënt Ääççëën]",
+    "accentDesign": "[Dëësïïgñ Dëësïïg]",
+    "accentWindows": "[Wïïñdøøwš Wïïñdøø]",
+    "accentCustom": "[Çüüstøøm Çüüstøø]",
+    "languageEnglish": "[ËËñglïïšh ëxträä løøñg]",
+    "languageSpanish": "[ËËšpääñøøl ëxträä løøñg]",
+    "languagePseudo": "[Pšëëüüdøø-løøçäälëë (tëëštïïñg) ëxträä løøñg]",
+    "customColor": "[Cüüštøøm çøøløør ëxträä løøñg]",
+    "persistNote": "[Sëëttïïñgš äärëë šäävëëd ääüütøømäätïïçäällÿ ääñd ääpplÿ rïïght ääwääÿ. ëxträä løøñg]"
+  },
+  "gallery": {
+    "title": "[Gäällëërÿÿ Gäällëërÿÿ]",
+    "devBadge": "[Dëëv ëxträä løøñg]",
+    "buttons": "[Büüttøøñš ëxträä løøñg]",
+    "primaryAction": "[Prïïmäärÿ ääçtïïøøñ ëxträä løøñg]",
+    "defaultAction": "[Dëëfääüült ääçtïïøøñ ëxträä løøñg]",
+    "subtleAction": "[Süübtlëë ääçtïïøøñ ëxträä løøñg]",
+    "splitAction": "[Splïït ääçtïïøøñ ëxträä løøñg]",
+    "iconButtons": "[ÏÏçøøñ büüttøøñš ëxträä løøñg]",
+    "inputs": "[ÏÏñpüütš ëxträä løøñg]",
+    "samplePlaceholder": "[Tÿpëë hëërëë ëxträä løøñg]",
+    "breadcrumb": "[Brëëäädçrüümb ëxträä løøñg]",
+    "listRows": "[Lïïšt røøwš ëxträä løøñg]",
+    "navItems": "[Näävïïgäätïïøøñ ïïtëëmš ëxträä løøñg]",
+    "menuDemo": "[Mëëñüü ëxträä løøñg]",
+    "openMenu": "[ØØpëëñ mëëñüü ëxträä løøñg]",
+    "dialogDemo": "[Dïïääløøg ëxträä løøñg]",
+    "openDialog": "[ØØpëëñ dïïääløøg ëxträä løøñg]",
+    "dialogBody": "[Thïïš dïïääløøg çløøšëëš wïïth thëë çløøšëë büüttøøñ, ËËšçääpëë, øør ää çlïïçk øøüütšïïdëë. ëxträä løøñg]",
+    "tooltipDemo": "[Tøøøøltïïp ëxträä løøñg]",
+    "tooltipText": "[Säävëë ÿøøüür wøørk ëxträä løøñg]",
+    "keyTipsDemo": "[Këëÿ tïïpš ëxträä løøñg]",
+    "keyTipsHint": "[Høøld ÄÄlt tøø šhøøw këëÿ tïïpš. ëxträä løøñg]",
+    "toastDemo": "[Tøøääšt ëxträä løøñg]",
+    "showToast": "[Shøøw tøøääšt ëxträä løøñg]",
+    "toastUndone": "[ÄÄçtïïøøñ üüñdøøñëë. ëxträä løøñg]",
+    "skeletons": "[Skëëlëëtøøñš ëxträä løøñg]",
+    "progress": "[Prøøgrëëšš ëxträä løøñg]",
+    "switches": "[Swïïtçhëëš ëxträä løøñg]",
+    "featureToggle": "[ËËñääblëë fëëäätüürëë ëxträä løøñg]",
+    "sliders": "[Slïïdëërš ëxträä løøñg]",
+    "sliderLabel": "[Dëëmøø šlïïdëër ëxträä løøñg]",
+    "dropdownDemo": "[Drøøpdøøwñ ëxträä løøñg]",
+    "dropdownLabel": "[Chøøøøšëë ääñ øøptïïøøñ ëxträä løøñg]",
+    "optionOne": "[Fïïršt øøptïïøøñ ëxträä løøñg]",
+    "optionTwo": "[Sëëçøøñd øøptïïøøñ ëxträä løøñg]",
+    "optionThree": "[Thïïrd øøptïïøøñ ëxträä løøñg]"
+  },
+  "common": {
+    "save": "[Säävëë Säävëë]",
+    "cancel": "[Çääñçëël Çääñçëë]",
+    "close": "[Çløøsëë Çløøsëë]",
+    "undo": "[Üüñdøø Üüñdøø]",
+    "search": "[Sëëääçh Sëëääçh]",
+    "ready": "[Rëëäädÿ ëxträä løøñg]",
+    "moreOptions": "[Møørëë øøptïïøøñš ëxträä løøñg]",
+    "dismiss": "[Dïïšmïïšš ëxträä løøñg]",
+    "open": "[ØØpëëñ ëxträä løøñg]"
+  },
+  "toast": {
+    "sampleUndo": "[Sääämplëë ääçtïïøøñ çøømplëëtëëd ëëxträä løøñg.]"
+  },
+  "components": {
+    "breadcrumb": "[Brëëäädçrüümb ëxträä løøñg]",
+    "clearSearch": "[Clëëäär šëëäärçh ëxträä løøñg]",
+    "closeDialog": "[Cløøšëë dïïääløøg ëxträä løøñg]",
+    "loading": "[Løøäädïïñg ëxträä løøñg]",
+    "slider": "[Slïïdëër ëxträä løøñg]",
+    "switch": "[Swïïtçh ëxträä løøñg]",
+    "progress": "[Prøøgrëëšš ëxträä løøñg]"
+  }
+}
