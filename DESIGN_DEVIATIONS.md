@@ -3,7 +3,7 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
-## 2026-10-28 - Explorer inside a folder and This PC (Step 02) - pending owner approval
+## 2026-10-28 - Explorer inside a folder and This PC (Step 02) - approved by the owner on 2026-10-28
 
 - **What:** Figma has the Explorer Home page but not the Explorer inside a folder, the Details-pane variant, menus, or This PC (plan/design.md, "Screens still to design"). Those views were designed from `plan/design-spec.md` tokens and the Windows 11 Explorer as functional reference: 196 px nav pane, 34 px address box on the chrome surface, 28 px file rows, column widths following the Home frame (Name flexible, Date 190, Type 180, Size 110 right-aligned), folder view without a command bar (that arrives in Step 03a).
 - **Closest-option differences:** the address bar carries small sibling-folder chevrons next to each segment (a Step 02 requirement with no Figma counterpart); a single Pin/Unpin button sits at the right of the folder view; drive cards on This PC are an extension of the Quick access card in the same tokens.

@@ -1,6 +1,6 @@
 # Step 02 report - Browse folders, Home page, and the command registry
 
-Dates: 2026-10-28. Status: implemented on branch `step-02-browse-folders`, awaiting owner approval. Proposed tag after approval: `v0.0.4-step02`.
+Dates: 2026-10-28. Status: done, approved by the owner on 2026-10-28 (including the folder and This PC screens in DESIGN_DEVIATIONS.md). Tag: `v0.0.4-step02`.
 
 ## Owner decisions and additions (all implemented)
 
