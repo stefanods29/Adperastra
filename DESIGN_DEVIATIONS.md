@@ -12,6 +12,18 @@ is recorded here for owner approval (plan/design.md rule 6). Newest first.
 ## 2026-10-28 - File-type tiles instead of Windows shell icons (Step 02) - approved by the owner on 2026-10-28
 
 - **What:** Step 02 asked for system icons; the owner chose the Figma file-type tiles for this step. Real Windows shell icons arrive in Step 07a for `.exe`, `.lnk`, and types without a tile, and Step 10a lets the user pick the icon style as part of icon packs (ADR 0005).
+
+## 2026-10-28 - Derived dark theme (Step 01b) - approved by the owner on 2026-10-28
+
+- **What:** The Figma design is light-only. The dark theme is derived from the same tokens (surfaces `#202020`-`#333`, Explorer accent lightened to `#4CC2FF` for contrast).
+- **Evidence:** `docs/screenshots/step-01b/01-explorer-dark-en.png` and `04-settings-dark-es.png`; values live in `themes/dark.tokens.json`.
+
+## 2026-10-28 - Custom title bar and Windows snap layouts (Step 01b) - custom title bar kept by owner decision; snap flyout awaiting visual confirmation
+
+- **What:** The window uses a custom title bar (decorations off) with our tab bar inside; window buttons call the Windows API.
+- **Decision:** The owner chose to keep the custom title bar and fix snap layouts instead of restoring the native frame (Step 01b report). The maximize button reports `HTMAXBUTTON` to Windows (verified by message test), so the Windows 11 snap-layouts flyout should appear on hover.
+- **Still open:** The owner has not yet seen the flyout on their own PC (KI-005). If it does not appear, the fix happens in a later step; the native frame stays the last-resort fallback.
+
 ## 2026-10-27 - Setup window (Step 01a) - approved by the owner on 2026-10-27
 
 - **What:** The setup/repair window and the first-run window are not in the
@@ -30,14 +42,3 @@ is recorded here for owner approval (plan/design.md rule 6). Newest first.
   offline/missing component, signature error, and the first-run window
   (language/theme and packs checklist), in English and Spanish, light and
   dark.
-
-## 2026-10-28 - Derived dark theme (Step 01b) - approved by the owner on 2026-10-28
-
-- **What:** The Figma design is light-only. The dark theme is derived from the same tokens (surfaces `#202020`-`#333`, Explorer accent lightened to `#4CC2FF` for contrast).
-- **Evidence:** Screenshots will be in the step report; values live in `themes/dark.tokens.json`.
-
-## 2026-10-28 - Custom title bar and Windows snap layouts (Step 01b)
-
-- **What:** The window uses a custom title bar (decorations off) with our tab bar inside; window buttons call the Windows API.
-- **Open question:** Whether the Windows 11 snap-layouts hover menu appears on the maximize button must be confirmed on the owner's PC. If it does not, the fallback is restoring the native frame.
-
