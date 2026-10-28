@@ -7,7 +7,7 @@
   "signature": {
     "algorithm": "minisign",
     "public_key": "RWQ7PAFi7vjiH8xlY9hiOp3x69dWA2PwyqXgza8C45h2qD6gAgohb/tt",
-    "value": "untrusted comment: signature from rsign secret key\nRUQ7PAFi7vjiH/Tm2NsCFrG5nVkg03ZFCkWyHTpKffZJZWeCE6/eY8L/yMIiNOvoqrM9YE9MvMCwwwclpt0TgEonDbE1vwMyLg8=\ntrusted comment: timestamp:1793158801\nDQN13pXanEG4SqnAP1wdK4qv3L0uyfIivxMUeqe7Vbm8aCTkdwSlT2evydLnlYdaV8bmRE2PKNEjldwu4XExAw=="
+    "value": "untrusted comment: signature from rsign secret key\nRUQ7PAFi7vjiHxl4Jv69hoqnbNdBeRXpvMMDBdhoIrHWVSALY5YvreXIo9Y4EG+yhRbkFOpanU+Vf9V36rndvf27nb9trNseFAs=\ntrusted comment: timestamp:1793159634\nNGClUw/6XA1wuBJ/x/1+aVeGCIr6Zsvojojc8s7GA9enIAYui0jY7DU6d0ykzMI5e4tZhVvY8f9P3cxfqNuZDw=="
   },
   "components": [
     {
@@ -27,8 +27,8 @@
       "source": null,
       "installer": {
         "source": {
-          "type": "url",
-          "url": "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+          "type": "local",
+          "path": "runtimes/MicrosoftEdgeWebview2Setup.exe"
         },
         "sha256": "13f6d9cdc8c3e7186e4b180db7f48e199ee97d631480e8391fb3106f338fb21a",
         "size": 1889488,

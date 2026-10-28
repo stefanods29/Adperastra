@@ -128,19 +128,23 @@ fn copy_stream(
     Ok(())
 }
 
-pub fn fetch_installer(
+#[derive(Debug, Clone, PartialEq)]
+pub enum RuntimeProgress {
+    Downloading(f32),
+    Installing,
+}
+
+fn fetch_one(
     inst: &Installer,
+    source: &Source,
     source_base: &Path,
-    dest_dir: &Path,
+    part: &Path,
     progress: &mut dyn FnMut(f32),
-) -> Result<PathBuf> {
-    std::fs::create_dir_all(dest_dir)?;
-    let dest = dest_dir.join("installer.exe");
-    let part = part_path(&dest);
+) -> Result<()> {
     progress(0.0);
     let result = (|| -> Result<()> {
-        let mut out = std::fs::File::create(&part)?;
-        match &inst.source {
+        let mut out = std::fs::File::create(part)?;
+        match source {
             Source::Local { path } => {
                 let src_path = source_base.join(path);
                 let total = std::fs::metadata(&src_path).map(|m| m.len()).ok();
@@ -164,24 +168,57 @@ pub fn fetch_installer(
         Ok(())
     })();
     if let Err(e) = result {
-        let _ = std::fs::remove_file(&part);
+        let _ = std::fs::remove_file(part);
         return Err(e);
     }
-    let actual_size = std::fs::metadata(&part)?.len();
+    let actual_size = match std::fs::metadata(part) {
+        Ok(md) => md.len(),
+        Err(e) => {
+            let _ = std::fs::remove_file(part);
+            return Err(e.into());
+        }
+    };
     if actual_size != inst.size {
-        let _ = std::fs::remove_file(&part);
+        let _ = std::fs::remove_file(part);
         return Err(SetupError::SizeMismatch(format!(
             "installer: expected {} bytes, got {actual_size}",
             inst.size
         )));
     }
-    let actual_hash = hash_file(&part)?;
+    let actual_hash = match hash_file(part) {
+        Ok(h) => h,
+        Err(e) => {
+            let _ = std::fs::remove_file(part);
+            return Err(e);
+        }
+    };
     if !actual_hash.eq_ignore_ascii_case(&inst.sha256) {
-        let _ = std::fs::remove_file(&part);
+        let _ = std::fs::remove_file(part);
         return Err(SetupError::HashMismatch(format!(
             "installer: expected {}, got {actual_hash}",
             inst.sha256
         )));
+    }
+    Ok(())
+}
+
+pub fn fetch_installer(
+    inst: &Installer,
+    source_base: &Path,
+    dest_dir: &Path,
+    progress: &mut dyn FnMut(f32),
+) -> Result<PathBuf> {
+    std::fs::create_dir_all(dest_dir)?;
+    let dest = dest_dir.join("installer.exe");
+    let part = part_path(&dest);
+    if let Err(primary_err) = fetch_one(inst, &inst.source, source_base, &part, progress) {
+        match &inst.fallback_source {
+            Some(fallback) => {
+                // If the fallback also fails, return the fallback's error.
+                fetch_one(inst, fallback, source_base, &part, progress)?;
+            }
+            None => return Err(primary_err),
+        }
     }
     if dest.exists() {
         std::fs::remove_file(&dest)?;
@@ -195,14 +232,17 @@ pub fn install_runtime(
     c: &Component,
     base: &Path,
     work_dir: &Path,
-    progress: &mut dyn FnMut(f32),
+    progress: &mut dyn FnMut(RuntimeProgress),
 ) -> Result<()> {
     let inst = c
         .installer
         .as_ref()
         .ok_or_else(|| SetupError::NotInstallable(format!("{}: no installer", c.id)))?;
     let dest_dir = work_dir.join("installers").join(&c.id);
-    let installer_path = fetch_installer(inst, base, &dest_dir, progress)?;
+    let installer_path = fetch_installer(inst, base, &dest_dir, &mut |f| {
+        progress(RuntimeProgress::Downloading(f))
+    })?;
+    progress(RuntimeProgress::Installing);
     #[cfg(not(windows))]
     {
         let _ = &installer_path;

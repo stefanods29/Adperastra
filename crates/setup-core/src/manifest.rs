@@ -58,6 +58,8 @@ pub enum Source {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Installer {
     pub source: Source,
+    #[serde(default)]
+    pub fallback_source: Option<Source>,
     pub sha256: String,
     pub size: u64,
     #[serde(default)]

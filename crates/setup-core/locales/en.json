@@ -41,5 +41,6 @@
   "signature.body": "The component list (dependencies.json) is missing its signature or the signature does not match. Adperastra will not start, so nothing can be installed or changed without your knowledge.",
   "signature.repair": "Repair: check again",
   "signature.close": "Close",
-  "repair.runtime": "Installing {name} (system component)..."
+  "repair.runtime": "Installing {name} (this can take about a minute)",
+  "repair.checksum_mismatch": "The downloaded installer does not match the expected checksum, so it was not run. Check your connection and press Retry."
 }
