@@ -23,7 +23,7 @@ mod clipboard;
 mod explorer;
 mod shell;
 
-pub const CURRENT_SCHEMA: u32 = 3;
+pub const CURRENT_SCHEMA: u32 = 4;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -166,6 +166,26 @@ impl Default for ExplorerViewSettings {
     }
 }
 
+fn default_paste_image_format() -> String {
+    "png".to_string()
+}
+
+/// File-operation choices (schema 4, Step 03b).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FileSettings {
+    /// What Paste as file saves clipboard images as: "png" or "jpg".
+    #[serde(default = "default_paste_image_format")]
+    pub paste_image_format: String,
+}
+
+impl Default for FileSettings {
+    fn default() -> Self {
+        Self {
+            paste_image_format: default_paste_image_format(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default = "default_schema_version")]
@@ -176,6 +196,8 @@ pub struct Settings {
     pub theme: ThemeSettings,
     #[serde(default)]
     pub explorer: ExplorerViewSettings,
+    #[serde(default)]
+    pub files: FileSettings,
 }
 
 impl Default for Settings {
@@ -185,6 +207,7 @@ impl Default for Settings {
             language: default_language(),
             theme: ThemeSettings::default(),
             explorer: ExplorerViewSettings::default(),
+            files: FileSettings::default(),
         }
     }
 }
@@ -227,6 +250,12 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             settings.theme.accent_custom
         )));
     }
+    if !matches!(settings.files.paste_image_format.as_str(), "png" | "jpg") {
+        return Err(AppError::Validation(format!(
+            "unsupported paste_image_format {:?} (expected png or jpg)",
+            settings.files.paste_image_format
+        )));
+    }
     if !matches!(
         settings.explorer.group_by.as_str(),
         "none" | "name" | "modified" | "type" | "size"
@@ -260,6 +289,24 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
             ..ThemeSettings::default()
         },
         explorer: ExplorerViewSettings::default(),
+        files: FileSettings::default(),
+    }
+}
+
+/// Schema 3 had no file-operation choices; schema 4 adds them with the
+/// PNG default. A v3 file keeps its language, theme and view options.
+fn migrate_v3(value: serde_json::Value) -> Settings {
+    match serde_json::from_value::<Settings>(value) {
+        Ok(mut settings) => {
+            settings.schema_version = CURRENT_SCHEMA;
+            settings.files = FileSettings::default();
+            if validate(&settings).is_ok() {
+                settings
+            } else {
+                Settings::default()
+            }
+        }
+        Err(_) => Settings::default(),
     }
 }
 
@@ -297,6 +344,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
+            Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
             _ => Ok(Settings::default()),
@@ -1928,7 +1976,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 3);
+        assert_eq!(settings.schema_version, 4);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -1940,7 +1988,7 @@ mod tests {
     fn migrate_v1_flat_json() {
         let value = serde_json::json!({ "language": "es", "theme": "dark" });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 3);
+        assert_eq!(settings.schema_version, 4);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_source, "design");
@@ -1963,7 +2011,7 @@ mod tests {
             "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#112233" }
         });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 3);
+        assert_eq!(settings.schema_version, 4);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_custom, "#112233");
@@ -1981,6 +2029,28 @@ mod tests {
         }
         settings.explorer.group_by = "colour".to_string();
         assert!(validate(&settings).is_err());
+    }
+
+    #[test]
+    fn migrate_v3_keeps_everything_and_adds_file_choices() {
+        let value = serde_json::json!({
+            "schema_version": 3,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#112233" },
+            "explorer": { "show_hidden": true, "show_extensions": false, "item_checkboxes": true, "details_pane": true, "group_by": "type" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(settings.explorer.show_hidden);
+        assert_eq!(settings.explorer.group_by, "type");
+        assert_eq!(settings.files.paste_image_format, "png");
+        let mut custom = Settings::default();
+        custom.files.paste_image_format = "jpg".to_string();
+        assert!(validate(&custom).is_ok());
+        custom.files.paste_image_format = "gif".to_string();
+        assert!(validate(&custom).is_err());
     }
 
     #[test]
