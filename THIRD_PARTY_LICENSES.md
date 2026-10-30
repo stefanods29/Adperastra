@@ -63,4 +63,5 @@ file lists everything that ships inside the app folder.
 - **windows** 0.61 and **windows-collections** 0.2 (MIT / Apache-2.0) - Windows APIs: known folders, drives, file details, rename, Open, Open with, Properties, the share sheet and the classic menu (Steps 02 and 03a).
 - **windows-core** 0.61.2 (MIT OR Apache-2.0) - implements a size-limited Windows image stream for safe clipboard image paste (Step 03b). Already included transitively by windows 0.61.3; now also a direct dependency.
 - **minisign** (MIT) - manifest signatures.
+- **CodeMirror 6** (MIT) - the text and code viewer: code colors, search, line numbers (Step 04b). Packages: @codemirror/state 6.7.6, view 6.43.15, language 6.13.1, commands 6.11.1, search 6.7.2, lang-javascript 6.2.5, lang-json 6.0.2, lang-html 6.4.12, lang-css 6.3.1, lang-xml 6.1.0, lang-markdown 6.5.2, lang-python 6.2.1, lang-rust 6.0.2, lang-sql 6.10.0, lang-java 6.0.2, lang-cpp 6.0.3, lang-yaml 6.1.3, legacy-modes 6.5.5, and @lezer/highlight 1.2.5, with the @lezer parsers they use (all MIT).
 
