@@ -59,5 +59,6 @@ file lists everything that ships inside the app folder.
 - **trash** 5.2.9 (MIT) - move items to the Windows Recycle Bin and restore them for Undo (Step 03b).
 - **TanStack Virtual** (MIT) - virtualized file lists (Step 02).
 - **windows** 0.61 and **windows-collections** 0.2 (MIT / Apache-2.0) - Windows APIs: known folders, drives, file details, rename, Open, Open with, Properties, the share sheet and the classic menu (Steps 02 and 03a).
+- **windows-core** 0.61.2 (MIT OR Apache-2.0) - implements a size-limited Windows image stream for safe clipboard image paste (Step 03b). Already included transitively by windows 0.61.3; now also a direct dependency.
 - **minisign** (MIT) - manifest signatures.
 

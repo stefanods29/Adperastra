@@ -13,6 +13,7 @@ Licenses allowed: `plan/rules.md` R-LIC.
 | thiserror | 2 | MIT / Apache-2.0 | Rust error types |
 | windows | 0.61 | MIT / Apache-2.0 | Windows APIs (features listed in `src-tauri/Cargo.toml`) |
 | windows-collections | 0.2 | MIT / Apache-2.0 | Share sheet item lists |
+| windows-core | 0.61.2 (exact) | MIT OR Apache-2.0 | Windows COM interface implementation for bounded clipboard-image encoding (03b); already a transitive dependency of windows 0.61.3, now direct for its `implement` macro; crate metadata requires Rust 1.74 |
 | notify | 8 (8.2.1) | CC0-1.0 | Folder watching |
 | trash | 5.2.9 | MIT | Recycle Bin and restore |
 | eframe, egui | 0.32 (default features off: accesskit, glow; no default fonts) | MIT / Apache-2.0 | Setup window |

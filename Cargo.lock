@@ -126,6 +126,7 @@ dependencies = [
  "thiserror 2.0.21",
  "windows 0.61.3",
  "windows-collections 0.2.0",
+ "windows-core 0.61.2",
 ]
 
 [[package]]
