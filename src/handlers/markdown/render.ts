@@ -66,7 +66,9 @@ hr { border: none; border-top: 1px solid ${c.border}; }
  * and the index shown. */
 export function findInPage(doc: Document, text: string, current: number): { count: number; index: number } {
   const win = doc.defaultView;
-  const highlights = win && "highlights" in win.CSS ? win.CSS.highlights : null;
+  // Older engines may have no `CSS` object at all; then there is no
+  // Custom Highlight API and the search shows no matches.
+  const highlights = win && win.CSS && "highlights" in win.CSS ? win.CSS.highlights : null;
   if (!win || !highlights) return { count: 0, index: -1 };
   highlights.delete("adp-find");
   highlights.delete("adp-find-current");

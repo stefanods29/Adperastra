@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderMarkdownPage, type DocColors } from "../handlers/markdown/render";
+import { findInPage, renderMarkdownPage, type DocColors } from "../handlers/markdown/render";
 
 const colors: DocColors = {
   text: "#202020",
@@ -38,5 +38,13 @@ describe("Markdown rendering", () => {
 
   it("scales the font with the zoom", () => {
     expect(renderMarkdownPage("x", colors, 2, "es")).toContain("font: 30px/1.6");
+  });
+
+  it("finds nothing when the engine has no Custom Highlight API", () => {
+    const host = document.createElement("div");
+    host.textContent = "hello";
+    document.body.appendChild(host);
+    expect(findInPage(document, "hello", 0)).toEqual({ count: 0, index: -1 });
+    host.remove();
   });
 });
