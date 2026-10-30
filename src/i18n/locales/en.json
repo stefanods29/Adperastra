@@ -446,7 +446,8 @@
   },
   "handlers": {
     "image": "Image",
-    "text": "Text"
+    "text": "Text",
+    "markdown": "Markdown"
   },
   "fileTab": {
     "showInFolder": "Show in folder",
@@ -500,5 +501,14 @@
       "onLine": "on line",
       "controlCharacter": "Control character"
     }
+  },
+  "markdown": {
+    "renderedMode": "Reading view",
+    "sourceMode": "Source"
+  },
+  "links": {
+    "openTitle": "Open this link?",
+    "openBody": "It opens in your web browser or mail app:",
+    "open": "Open link"
   }
 }

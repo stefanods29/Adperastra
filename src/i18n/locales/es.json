@@ -446,7 +446,8 @@
   },
   "handlers": {
     "image": "Imagen",
-    "text": "Texto"
+    "text": "Texto",
+    "markdown": "Markdown"
   },
   "fileTab": {
     "showInFolder": "Mostrar en la carpeta",
@@ -500,5 +501,14 @@
       "onLine": "en la línea",
       "controlCharacter": "Carácter de control"
     }
+  },
+  "markdown": {
+    "renderedMode": "Vista de lectura",
+    "sourceMode": "Código fuente"
+  },
+  "links": {
+    "openTitle": "¿Abrir este vínculo?",
+    "openBody": "Se abrirá en tu navegador web o en tu aplicación de correo:",
+    "open": "Abrir vínculo"
   }
 }

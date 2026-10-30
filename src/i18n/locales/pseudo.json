@@ -446,7 +446,8 @@
   },
   "handlers": {
     "image": "[Ïmägë ~~]",
-    "text": "[Tëxt ~~]"
+    "text": "[Tëxt ~~]",
+    "markdown": "[Märkdøwñ ~~~~]"
   },
   "fileTab": {
     "showInFolder": "[Shøw ïñ føldër ~~~~~]",
@@ -500,5 +501,14 @@
       "onLine": "[øñ lïñë ~~~]",
       "controlCharacter": "[Çøñtrøl çhäräçtër ~~~~~~~]"
     }
+  },
+  "markdown": {
+    "renderedMode": "[Rëädïñg vïëw ~~~~~]",
+    "sourceMode": "[Søürçë ~~~]"
+  },
+  "links": {
+    "openTitle": "[Øpëñ thïs lïñk? ~~~~~]",
+    "openBody": "[Ït øpëñs ïñ ÿøür wëb brøwsër ør mäïl äpp: ~~~~~~~~~~~~~]",
+    "open": "[Øpëñ lïñk ~~~~]"
   }
 }
