@@ -8,6 +8,7 @@ Pictures open in a tab: PNG, JPG, GIF (animated too), WebP, BMP, ICO, SVG and AV
 - Zoom in and out with **Ctrl** and the mouse wheel (it zooms toward the pointer), **Ctrl++** and **Ctrl+-**, or the zoom slider in the status bar.
 - **Ctrl+0** or **Fit** in the status bar fits the whole picture in the window again.
 - When the picture is bigger than the window, drag it with the mouse to move around.
+- **View** > **Rotate left** and **Rotate right** turn the picture on screen (the file is not changed). **Actual size** shows it at 100%.
 
 ## Good to know
 
@@ -16,4 +17,4 @@ Pictures open in a tab: PNG, JPG, GIF (animated too), WebP, BMP, ICO, SVG and AV
 - Viewing never changes the file. Editing pictures arrives in a later update.
 - If a picture can't be shown (for example a damaged file), use **Open in Windows app**.
 
-See also: "Opening files in tabs".
+See also: "Opening files in tabs" and "The ribbon".
