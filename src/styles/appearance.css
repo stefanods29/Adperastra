@@ -1,0 +1,42 @@
+/* Appearance: scheme, density, corner radius, animations (Step 05d). Values from plan/steps/step-05d.md. */
+:root { --adp-row-height: 28px; --adp-list-item-height: 24px; --adp-nav-item-height: 36px; }
+:root[data-scheme="light"] { color-scheme: light; }
+:root[data-scheme="dark"] { color-scheme: dark; }
+
+/* Density: spacing tokens and the row heights of every list. */
+:root[data-density="compact"] {
+  --adp-space-0: 2px; --adp-space-1: 3px; --adp-space-2: 4px; --adp-space-3: 6px; --adp-space-4: 8px;
+  --adp-space-5: 9px; --adp-space-6: 10px; --adp-space-7: 12px; --adp-space-8: 14px; --adp-space-9: 16px;
+  --adp-space-10: 18px;
+  --adp-row-height: 24px; --adp-list-item-height: 20px; --adp-nav-item-height: 30px;
+}
+:root[data-density="spacious"] {
+  --adp-space-0: 3px; --adp-space-1: 5px; --adp-space-2: 8px; --adp-space-3: 10px; --adp-space-4: 12px;
+  --adp-space-5: 15px; --adp-space-6: 18px; --adp-space-7: 20px; --adp-space-8: 22px; --adp-space-9: 26px;
+  --adp-space-10: 30px;
+  --adp-row-height: 36px; --adp-list-item-height: 30px; --adp-nav-item-height: 44px;
+}
+
+/* Corner radius: `pill` and `round` stay as the theme has them. */
+:root[data-radius="square"] {
+  --adp-radius-xs: 0px; --adp-radius-sm: 0px; --adp-radius-md: 0px; --adp-radius-lg: 0px; --adp-radius-xl: 0px;
+}
+:root[data-radius="round"] {
+  --adp-radius-xs: 3px; --adp-radius-sm: 6px; --adp-radius-md: 8px; --adp-radius-lg: 12px; --adp-radius-xl: 14px;
+}
+
+/* Animations: `reduced` stops repeating and long motion, transitions stay. */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}
+/* `off` stops transitions too. */
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition: none !important;
+}

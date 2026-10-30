@@ -31,7 +31,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 2px solid var(--adp-accent-explorer);
+  outline: 2px solid var(--adp-accent-current);
   outline-offset: 2px;
 }
 

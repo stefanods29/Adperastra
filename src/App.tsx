@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { CircleHelp, Copy, Home, LayoutGrid, List, Minus, Settings as SettingsIcon, Square, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { applyAppearanceAttributes, applyThemeAttributes } from "./appearance/applyAppearance";
 import { LayoutContext } from "./layout/LayoutContext";
 import TabStrip from "./layout/TabStrip";
 import { KeyTipsContext } from "./ribbon/keyTips";
@@ -94,13 +95,12 @@ export default function App() {
   tabsRef.current = tabsState;
 
   const applyVisual = useCallback(async (next: AppSettings) => {
-    const resolved =
-      next.theme.mode === "system"
-        ? window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light"
-        : next.theme.mode;
-    document.documentElement.dataset.theme = resolved;
+    applyThemeAttributes(
+      document.documentElement,
+      next.theme,
+      window.matchMedia("(prefers-color-scheme: dark)").matches,
+    );
+    applyAppearanceAttributes(document.documentElement, next.appearance);
     await applyLanguage(next.language);
     let accent = "var(--adp-accent-explorer)";
     if (next.theme.accent_source === "custom") {
