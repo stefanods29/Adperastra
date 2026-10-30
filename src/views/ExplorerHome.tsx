@@ -58,6 +58,7 @@ import {
   runFileJob,
   startExternalDrag,
   startFileJob,
+  setRetainedTransfers,
   type ConflictPolicy,
   type OpReport,
 } from "../services/fileops";
@@ -92,6 +93,7 @@ import {
   ConflictDialog,
   PermanentDialog,
   RecentActionsDialog,
+  SystemItemsDialog,
   type ConflictAnswer,
 } from "./explorer/FileOpDialogs";
 import JobsPanel, { type JobView } from "./explorer/JobsPanel";
@@ -242,6 +244,8 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     count: number;
     answer: (confirmed: boolean) => void;
   } | null>(null);
+  const systemQueue = useRef<((confirmed: boolean) => void)[]>([]);
+  const [systemAsk, setSystemAsk] = useState<((confirmed: boolean) => void) | null>(null);
   const [recentOpen, setRecentOpen] = useState(false);
   const pendingRenameRef = useRef<string | null>(null);
   const [dragBadge, setDragBadge] = useState<{ x: number; y: number; key: string; name: string } | null>(null);
@@ -281,7 +285,10 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     },
     [notify, notifyError, t],
   );
-  const touchUndo = useCallback(() => setUndoVersion((value) => value + 1), []);
+  const touchUndo = useCallback(() => {
+    setRetainedTransfers(undoStack.current.retainedEntries);
+    setUndoVersion((value) => value + 1);
+  }, []);
   /** Toast for a finished action, with an Undo button wired to its entry. */
   const notifyAction = useCallback(
     (message: string, entry: UndoEntry | null) => {
@@ -475,6 +482,16 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
       });
     });
 
+  const askSystemItems = () => new Promise<boolean>((resolve) => {
+    const answer = (confirmed: boolean) => {
+      systemQueue.current.shift();
+      setSystemAsk(() => systemQueue.current[0] ?? null);
+      resolve(confirmed);
+    };
+    systemQueue.current.push(answer);
+    if (systemQueue.current.length === 1) setSystemAsk(() => answer);
+  });
+
   const baseNameOf = (path: string) => displayPath(path).split("\\").filter(Boolean).pop() ?? path;
 
   /** Run one job in the panel; resolves with its report. */
@@ -502,23 +519,39 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
       ].slice(0, 6),
     );
     try {
-      const job = await startFileJob(kind, sources, {
-        ...options,
-        onProgress: (progress) =>
-          setJobs((list) => list.map((entry) => (entry.id === id ? { ...entry, progress } : entry))),
-      });
-      jobCancelRef.current.set(id, () => void job.cancel());
-      const report = await job.completion;
-      window.clearTimeout(openTimer);
-      setJobs((list) =>
-        list.map((entry) =>
-          entry.id === id
-            ? { ...entry, status: report.cancelled ? ("cancelled" as const) : ("done" as const), skipped: report.skipped }
-            : entry,
-        ),
-      );
-      if (report.cancelled) setJobsOpen(true);
-      return report;
+      let allowSystem = false;
+      for (;;) {
+        try {
+          const job = await startFileJob(kind, sources, {
+            ...options,
+            allowSystem,
+            onProgress: (progress) =>
+              setJobs((list) => list.map((entry) => (entry.id === id ? { ...entry, progress } : entry))),
+          });
+          jobCancelRef.current.set(id, () => void job.cancel());
+          const report = await job.completion;
+          window.clearTimeout(openTimer);
+          setJobs((list) =>
+            list.map((entry) =>
+              entry.id === id
+                ? { ...entry, status: report.cancelled ? ("cancelled" as const) : ("done" as const), skipped: report.skipped }
+                : entry,
+            ),
+          );
+          if (report.cancelled) setJobsOpen(true);
+          return report;
+        } catch (error) {
+          const code = error instanceof Error ? error.message : String(error);
+          if (code !== "ops.system_confirmation_required" || allowSystem) throw error;
+          jobCancelRef.current.delete(id);
+          if (!(await askSystemItems())) {
+            window.clearTimeout(openTimer);
+            setJobs((list) => list.map((entry) => entry.id === id ? { ...entry, status: "cancelled" as const } : entry));
+            return { completed: [], skipped: [], replaced: [], created: [], cancelled: true };
+          }
+          allowSystem = true;
+        }
+      }
     } catch (error) {
       window.clearTimeout(openTimer);
       setJobs((list) =>
@@ -591,7 +624,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     }
     // One by one: plain items first, then each conflict asks again.
     const conflictTargets = new Set(conflicts.map((path) => displayPath(path).toLowerCase()));
-    const targetOf = (source: string) => `${displayPath(destDir)}\${baseNameOf(source)}`;
+    const targetOf = (source: string) => `${displayPath(destDir).replace(/\\$/, "")}\\${baseNameOf(source)}`;
     const plain = sources.filter((source) => !conflictTargets.has(targetOf(source).toLowerCase()));
     const clashing = sources.filter((source) => conflictTargets.has(targetOf(source).toLowerCase()));
     undoStack.current.beginGroup(kind === "copy" ? "toast.copied" : "toast.moved", {
@@ -626,7 +659,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     const entry = undoStack.current.peekUndo();
     if (!entry) return;
     try {
-      await executeFileAction(entry.undo);
+      await executeFileAction(entry.undo, askSystemItems);
       undoStack.current.confirmUndo();
       touchUndo();
       notify(t("toast.actionUndone"));
@@ -640,7 +673,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     const entry = undoStack.current.peekRedo();
     if (!entry) return;
     try {
-      await executeFileAction(entry.redo);
+      await executeFileAction(entry.redo, askSystemItems);
       undoStack.current.confirmRedo();
       touchUndo();
       notify(t("toast.actionRedone"));
@@ -959,6 +992,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
+      if (document.querySelector("[role='dialog']")) return;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
       const ctrl = event.ctrlKey || event.metaKey;
       if (ctrl && !event.altKey && (event.key === "z" || event.key === "Z") && !event.shiftKey) {
@@ -1719,6 +1753,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         <ConflictDialog name={conflictAsk.name} moreCount={conflictAsk.more} onAnswer={conflictAsk.answer} />
       ) : null}
       {permanentAsk ? <PermanentDialog count={permanentAsk.count} onAnswer={permanentAsk.answer} /> : null}
+      {systemAsk ? <SystemItemsDialog onAnswer={systemAsk} onOpenHelp={() => onOpenHelp("copying-and-moving")} /> : null}
       {recentOpen ? (
         <RecentActionsDialog
           items={undoStack.current.recent(20)}

@@ -70,4 +70,14 @@ describe("undo stack", () => {
     expect(recent.every((item) => item.canUndo)).toBe(true);
     expect(stack.entries[0].labelKey).toBe("toast.n5");
   });
+  it("retains completed entries and pending group inputs until the history releases them", () => {
+    const stack = new UndoStack();
+    pushRename(stack, "toast.first");
+    stack.confirmUndo();
+    stack.beginGroup("toast.group");
+    pushRename(stack, "toast.pending");
+    expect(stack.retainedEntries.map((entry) => entry.labelKey)).toEqual(["toast.first", "toast.pending"]);
+    stack.endGroup();
+    expect(stack.retainedEntries.map((entry) => entry.labelKey)).toEqual(["toast.pending"]);
+  });
 });

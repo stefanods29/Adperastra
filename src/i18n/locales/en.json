@@ -299,7 +299,8 @@
       "in_use": "This item is open in another app. Close it and try again.",
       "not_found": "This item no longer exists.",
       "too_long": "The new path would be too long.",
-      "other": "This item couldn't be renamed."
+      "other": "This item couldn't be renamed.",
+      "protected_path": "This location is protected and cannot be renamed."
     },
     "open": {
       "not_found": "This item no longer exists.",
@@ -349,7 +350,12 @@
       "kind_mismatch": "A file and a folder with the same name can't replace each other.",
       "drive_root": "A whole drive can't be moved or deleted.",
       "too_large": "That is too large for this operation.",
-      "other": "The operation couldn't finish."
+      "other": "The operation couldn't finish.",
+      "system_confirmation_required": "This action needs confirmation before changing a Windows system item.",
+      "protected_path": "This location is protected and cannot be moved, replaced, or deleted.",
+      "link_not_supported": "This item contains a folder link or junction. It was skipped so the linked folder stays untouched.",
+      "undo_limit": "There is not enough space in Undo history for this operation. No files were changed.",
+      "undo_expired": "This action is no longer available in Undo history."
     },
     "clipboard": {
       "busy": "The clipboard is busy. Try again in a moment.",
@@ -406,7 +412,10 @@
     "permanentTitle": "Delete permanently?",
     "permanentBody": "{count, plural, one {This item will be deleted forever. You cannot undo this.} other {# items will be deleted forever. You cannot undo this.}}",
     "recentTitle": "Recent actions",
-    "recentEmpty": "Nothing here yet. Actions you can undo will appear in this list."
+    "recentEmpty": "Nothing here yet. Actions you can undo will appear in this list.",
+    "systemTitle": "Change a system item?",
+    "systemBody": "This action changes a Windows system item. Moving, replacing, or deleting it can stop apps or Windows from working. Continue only if you know it is safe.",
+    "continue": "Continue"
   },
   "drag": {
     "copyTo": "Copy to {name}",

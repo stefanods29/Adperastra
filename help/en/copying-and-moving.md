@@ -31,3 +31,9 @@ Copying or moving a lot runs in the background: a small panel shows progress, an
 Every copy and move can be undone: see "Undo".
 
 See also: "Deleting and the Recycle Bin", "Drag and drop", and "Paste as file".
+
+## System items and folder links
+
+Moving or replacing a Windows system item, including one inside a selected folder, shows a separate warning before anything changes. **Cancel** is selected first. Choose **Continue** only if you know it is safe. Other files do not need this extra confirmation. Untouched files inside a merged folder do not cause a warning.
+
+Drive roots and the Windows and Program Files folders are protected. A move or deletion that contains a folder link or junction is skipped instead of following that link. Replacing an item through such a folder link is also skipped. The operation panel lists what was skipped; ordinary copies keep their existing link-loop protection.

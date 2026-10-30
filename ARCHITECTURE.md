@@ -143,3 +143,19 @@ clarification, not a reordering. Example: "Open in Terminal" is a menu entry
 registered in 03a and completed/documented in 09d. The three hardest clusters
 (18, 19, 20-22) stay last; 20a keeps its throwaway-spike design so the Office
 engine risk is retired with evidence before any editor is built on it.
+
+## File-operation safety (contract 10, Step 03b)
+
+`FileOpRequest.allow_system` defaults to `false`. A job checks fresh metadata before making any change, including system items nested inside moved/deleted folders and existing Replace targets. If confirmation is needed, the job returns `ops.system_confirmation_required` with no changes; the UI shows a translated warning with Cancel focused and can retry that same operation once with `allow_system: true` after Continue. Ordinary jobs never show this warning. Cancellation during the check returns a cancelled report without changing files. The check reads metadata only, reports progress through the existing job transport, and never reads file contents.
+
+Drive/share roots and the actual Windows/Program Files folders are always refused; confirmation cannot override this. Destructive operations do not follow directory links or junctions: a top-level item containing one is skipped with `link_not_supported`, leaving its source untouched. Copy keeps its existing source loop guard; Replace target checks also refuse directory reparse points. Metadata failures are skipped and reported. Undo/Redo transfer jobs check their existing source and destination paths under the same rules; missing counterpart paths are expected and are left for the operation engine to validate.
+
+## Step 03b: exact transfer effects for Undo (contracts 10 and 11)
+
+A move report retains an exact transfer plan even when cancelled or only partly successful. Each TransferEffect records from, to, kind (file, directory scaffold, or atomic tree rename), source_removed, and destination_created. Directory scaffolds are never mistaken for an atomic renamed tree. File targets are the actual names written, including Keep both names. Effects are recorded as disk changes succeed; completed remains a user-facing top-level summary, never the source of truth for Undo.
+
+Undo first recreates source directory scaffolds that the operation removed, moves back only items whose sources were actually removed, recycles copies whose sources remain, and removes only empty directory scaffolds it created. Pre-existing merged destination contents are untouched. The exact replaced Recycle Bin entries are restored afterward. Redo repeats only recorded effects, including retained copies, and removes only empty source scaffolds that were originally removed; it never retries skipped source files.
+
+Undo and redo never overwrite a new item at an expected target, and nonempty scaffolds changed by another program are preserved. A skipped, failed, or cancelled history operation raises its translated error and leaves the history cursor unchanged. The existing file_op_start transport executes transfer history as a job with cancel/progress and the same absolute-path, root, reparse-point and system-item checks as other operations. Transfer plans stay in Rust behind opaque identifiers so a large folder does not turn into a large UI response; identifiers are local, bounded with the 100-entry undo history, and never commands or paths supplied without validation.
+
+Transfer history reserves at most 32 MiB per forward operation before any mutation and keeps at most 100 referenced plans within 128 MiB total. Capacity exhaustion returns FsError::UndoLimit / ops.undo_limit, not a filename error; no effects are clipped or silently evicted. The user can select fewer items or restart to begin a fresh local history. Plans already referenced by Undo/Redo, including pending groups and in-flight jobs, remain retained.

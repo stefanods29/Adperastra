@@ -31,3 +31,9 @@ Copiar o mover mucho contenido se hace en segundo plano: un panel pequeño muest
 Todo lo copiado y movido se puede deshacer: consulta «Deshacer».
 
 Consulta también: «Eliminar y la Papelera de reciclaje», «Arrastrar y soltar» y «Pegar como archivo».
+
+## Elementos del sistema y vínculos de carpetas
+
+Mover o reemplazar un elemento del sistema de Windows, incluso uno dentro de una carpeta seleccionada, muestra una advertencia aparte antes de cambiar nada. **Cancelar** está seleccionado al principio. Elige **Continuar** solo si sabes que es seguro. Los demás archivos no necesitan esta confirmación adicional. Los archivos que no se cambian dentro de una carpeta combinada no provocan una advertencia.
+
+Las raíces de las unidades y las carpetas Windows y Archivos de programa están protegidas. Si un movimiento o una eliminación contiene un vínculo o una unión de carpetas, se omite en lugar de seguir el vínculo. También se omite reemplazar un elemento a través de uno de esos vínculos. El panel de operaciones muestra lo que se omitió; las copias normales conservan su protección contra ciclos de vínculos.

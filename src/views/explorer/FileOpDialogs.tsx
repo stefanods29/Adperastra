@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Dialog from "../../components/Dialog";
+import HelpButton from "../../components/HelpButton";
 import type { ConflictPolicy } from "../../services/fileops";
 import { formatShortcut } from "../../services/shortcuts";
 import type { UndoEntry } from "../../services/undo";
@@ -68,6 +69,31 @@ export function PermanentDialog({ count, onAnswer }: PermanentDialogProps) {
         <span className="adp-cmd-spacer" />
         <button type="button" className="adp-btn adp-btn--danger" onClick={() => onAnswer(true)}>
           {t("commands.deletePermanently")}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
+export interface SystemItemsDialogProps {
+  onAnswer: (confirmed: boolean) => void;
+  onOpenHelp: () => void;
+}
+
+/** System items need a separate, explicit warning before they change. */
+export function SystemItemsDialog({ onAnswer, onOpenHelp }: SystemItemsDialogProps) {
+  const { t } = useTranslation();
+  return (
+    <Dialog title={t("dialogs.systemTitle")} onClose={() => onAnswer(false)}>
+      <p className="adp-dialog-text">{t("dialogs.systemBody")}</p>
+      <div className="adp-dialog-actions">
+        <HelpButton onOpenHelp={onOpenHelp} />
+        <button type="button" className="adp-btn adp-btn--primary" autoFocus onClick={() => onAnswer(false)}>
+          {t("common.cancel")}
+        </button>
+        <span className="adp-cmd-spacer" />
+        <button type="button" className="adp-btn adp-btn--danger" onClick={() => onAnswer(true)}>
+          {t("dialogs.continue")}
         </button>
       </div>
     </Dialog>

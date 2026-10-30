@@ -38,4 +38,27 @@ describe("undo entries for finished jobs", () => {
   it("records nothing when nothing changed", () => {
     expect(entryForJob("copy", base, "D:\out")).toBeNull();
   });
+
+  it("records destination changes from a cancelled move before any source completed", () => {
+    const report: OpReport = {
+      ...base,
+      cancelled: true,
+      transfer_id: "op-partial",
+      created: [{ from: "C:\\src\\A\\first.txt", to: "D:\\out\\A\\first.txt" }],
+    };
+    const entry = entryForJob("move", report, "D:\\out");
+    expect(entry?.undo).toEqual({ type: "transfer", id: "op-partial", reverse: true });
+    expect(entry?.redo).toEqual({ type: "transfer", id: "op-partial", reverse: false });
+  });
+
+  it("records an empty destination folder created before a copy was cancelled", () => {
+    const report: OpReport = {
+      ...base,
+      cancelled: true,
+      created: [{ from: "C:\\src\\A", to: "D:\\out\\A" }],
+    };
+    expect(entryForJob("copy", report, "D:\\out")?.undo).toEqual({
+      type: "recycle", paths: ["D:\\out\\A"],
+    });
+  });
 });

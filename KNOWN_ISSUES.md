@@ -11,6 +11,36 @@ that fixed it.
 
 ## Open
 
+### KI-018 - Individual conflict choices are ignored (Major)
+- **Found in:** Step 03b completion audit, 2026-10-29. **Severity:** Major (a partly-working daily-use feature with a workaround).
+- **What:** In src/views/ExplorerHome.tsx:594, the destination template escapes the file-name interpolation instead of adding a path separator. With "Do this for all" unchecked, conflicting sources are treated as non-conflicting and run with Skip; Replace and Keep both are ignored. Executing the actual expression produced a literal ${baseNameOf(source)} instead of the file name. The existing 63 UI tests pass without covering this branch.
+- **Workaround:** choose "Do this for all" when the same choice fits every conflict, or perform the operation in Windows Explorer.
+- **Target:** fix and add a regression test before Step 03b approval. No deferral approved.
+
+### KI-019 - Some partial moves have no Undo entry (Major)
+- **Found in:** Step 03b completion audit, 2026-10-29. **Severity:** Major (Undo only partly works; no permanent data loss established by this audit).
+- **What:** Code inspection found that src/services/fileops.ts:264 returns no undo entry when report.completed is empty, even if created/replaced records contain destination changes. In crates/fs-service/src/ops.rs:875-909, cancellation or a partly unsuccessful folder move can produce that report after destination files were written or old destinations recycled. Those changes are absent from Recent actions and Ctrl+Z.
+- **Workaround:** inspect source and destination and use Windows Explorer and the Recycle Bin to recover affected items; there is no single-action Undo for this case.
+- **Target:** fix and test cancelled and partly successful moves before Step 03b approval. No deferral approved.
+
+### KI-020 - Move and delete do not warn about system items (Major)
+- **Found in:** Step 03b completion audit, 2026-10-29. **Severity:** Major (a serious safety/usability gap with a workaround).
+- **What:** plan/rules.md section 6 requires a clear warning before modifying a system file. Rename has that warning, but move and recycle in src/views/ExplorerHome.tsx do not check the system attribute before starting. The engine's drive-root guard does not supply this warning. Permanent delete has a general irreversible-action warning, but no system-item warning.
+- **Workaround:** keep hidden/system items hidden and use Windows Explorer for operations involving system items.
+- **Target:** add the required warnings and tests before Step 03b approval. No deferral approved.
+
+### KI-021 - Restore and Replace Undo tests fail on Windows CI (Major)
+- **Found in:** Step 03b completion audit, 2026-10-29. **Severity:** Major (an unresolved correctness/verification failure; the cause is not established).
+- **What:** GitHub run 40781419373 at 11aced2 fails recycle_then_restore_brings_the_item_back, restore_brings_back_same_stem_files_without_swapping_them, and undoing_a_replace_brings_back_the_replaced_file. The hosted Windows runner reports missing Recycle Bin matches, including bin_id: None. All three pass on this Windows 11 PC in the same audit. The difference must be explained and resolved without skipping or weakening tests.
+- **Workaround:** none for the failed verification; local success alone does not make CI pass.
+- **Target:** investigate and resolve before Step 03b approval/merge. No deferral approved.
+
+### KI-022 - Earlier full-suite claims exceed recorded verification (Major)
+- **Found in:** Completion audit of Steps 00-03b, 2026-10-29. **Severity:** Major (required verification is partly implemented).
+- **What:** Earlier steps have real approvals, merged PRs and tags. However, docs/test-and-speed-plan.md promises a combined quick/full runner, automated speed-regression enforcement, screenshot comparisons, license checks, accessibility checks and a weekly full run. The named runner and these checks are absent from the current repository/CI. The Step 03a report's "Full local suite" covers available unit/UI/build checks, not the entire promised suite. Step 02's 16 ms scrolling claim is "by construction", without recorded frame-time measurements. KI-003 separately records missing post-reboot startup measurements.
+- **Workaround:** distinguish available checks from unverified requirements in reports; earlier approvals do not prove missing checks ran.
+- **Target:** reconcile verification requirements and implement or obtain explicit approval for deferrals before claiming the full suite passes. No deferral approved.
+
 ### KI-001 - First-ever run takes about 2.2 seconds (Minor)
 - **Found in:** Step 01b. **Severity:** Minor (one-time cost).
 - **What:** The very first launch creates the WebView2 profile and takes

@@ -299,7 +299,8 @@
       "in_use": "[Thïs ïtëm ïs øpën ïn änøthër äpp. Cløsë ït änd try ägäïn. ëxträ]",
       "not_found": "[Thïs ïtëm nø løngër ëxïsts. ëxträ]",
       "too_long": "[Thë nëw päth wøüld bë tøø løng. ëxträ]",
-      "other": "[Thïs ïtëm cøüldn't bë rënämëd. ëxträ]"
+      "other": "[Thïs ïtëm cøüldn't bë rënämëd. ëxträ]",
+      "protected_path": "[Thïs løçätïøñ ïs prøtëçtëd äñd çäññøt bë rëñämëd. ~~~~~~~~~~~~~~~~~]"
     },
     "open": {
       "not_found": "[Thïs ïtëm nø løngër ëxïsts. ëxträ]",
@@ -349,7 +350,12 @@
       "kind_mismatch": "[ÄÄ fïïlëë ääñd ää føøldëër wïïth thëë säämëë ñäämëë cääñ't rëëplääcëë ëëääch øøthëër. ÄÄ fïïlëë ääñd ää føøldëër wïïth thëë säämëë ñäämëë cääñ't rëëplääcëë ëëääch øøthëër.]",
       "drive_root": "[ÄÄ whøølëë drïïvëë cääñ't bëë møøvëëd øør dëëlëëtëëd. ÄÄ whøølëë drïïvëë cääñ't bëë møøvëëd øør dëëlëëtëëd.]",
       "too_large": "[Thäät ïïs tøøøø läärgëë føør thïïs øøpëëräätïïøøñ. Thäät ïïs tøøøø läärgëë føør thïïs øøpëëräätïïøøñ.]",
-      "other": "[Thëë øøpëëräätïïøøñ cøøüüldñ't fïïñïïsh. Thëë øøpëëräätïïøøñ cøøüüldñ't fïïñïïsh.]"
+      "other": "[Thëë øøpëëräätïïøøñ cøøüüldñ't fïïñïïsh. Thëë øøpëëräätïïøøñ cøøüüldñ't fïïñïïsh.]",
+      "system_confirmation_required": "[Thïs äçtïøñ ñëëds çøñfïrmätïøñ bëførë çhäñgïñg ä Wïñdøws sÿstëm ïtëm. ~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "protected_path": "[Thïs løçätïøñ ïs prøtëçtëd äñd çäññøt bë møvëd, rëpläçëd, ør dëlëtëd. ~~~~~~~~~~~~~~~~~~~~~~~]",
+      "link_not_supported": "[Thïs ïtëm çøñtäïñs ä føldër lïñk ør jüñçtïøñ. Ït wäs skïppëd sø thë lïñkëd føldër stäÿs üñtøüçhëd. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "undo_limit": "[Thërë ïs ñøt ëñøügh späçë ïñ Üñdø hïstørÿ før thïs øpërätïøñ. Ñø fïlës wërë çhäñgëd. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "undo_expired": "[Thïs äçtïøñ ïs ñø løñgër äväïläblë ïñ Üñdø hïstørÿ. ~~~~~~~~~~~~~~~~~]"
     },
     "clipboard": {
       "busy": "[Thëë clïïpbøøäärd ïïs büüsy. Try äägääïïñ ïïñ ää møømëëñt. Thëë clïïpbøøäärd ïïs büüsy. Try äägääïïñ ïïñ ää møømëëñt.]",
@@ -406,7 +412,10 @@
     "permanentTitle": "[Dëëlëëtëë pëërmääñëëñtly? Dëëlëëtëë pëërmääñëëñtly?]",
     "permanentBody": "{count, plural, one {[Thïïs ïïtëëm wïïll bëë dëëlëëtëëd føørëëvëër. Yøøüü cääññøøt üüñdøø thïïs.]} other {[# ïïtëëms wïïll bëë dëëlëëtëëd føørëëvëër. Yøøüü cääññøøt üüñdøø thïïs.]}}",
     "recentTitle": "[Rëëcëëñt ääctïïøøñs Rëëcëëñt ääctïïøøñs]",
-    "recentEmpty": "[Ñøøthïïñg hëërëë yëët. ÄÄctïïøøñs yøøüü cääñ üüñdøø wïïll ääppëëäär ïïñ thïïs lïïst. Ñøøthïïñg hëërëë yëët. ÄÄctïïøøñs yøøüü cääñ üüñdøø wïïll ääppëëäär ïïñ thïïs lïïst.]"
+    "recentEmpty": "[Ñøøthïïñg hëërëë yëët. ÄÄctïïøøñs yøøüü cääñ üüñdøø wïïll ääppëëäär ïïñ thïïs lïïst. Ñøøthïïñg hëërëë yëët. ÄÄctïïøøñs yøøüü cääñ üüñdøø wïïll ääppëëäär ïïñ thïïs lïïst.]",
+    "systemTitle": "[Çhäñgë ä sÿstëm ïtëm? ~~~~~~~]",
+    "systemBody": "[Thïs äçtïøñ çhäñgës ä Wïñdøws sÿstëm ïtëm. Møvïñg, rëpläçïñg, ør dëlëtïñg ït çäñ støp äpps ør Wïñdøws frøm wørkïñg. Çøñtïñüë øñlÿ ïf ÿøü kñøw ït ïs säfë. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "continue": "[Çøñtïñüë ~~~~]"
   },
   "drag": {
     "copyTo": "Cøøpy tøø {name}",

@@ -12,11 +12,17 @@
 use crate::list::{validate_new_name, CancellationToken};
 use crate::{FsError, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
+
+#[path = "transfer.rs"]
+mod transfer;
+pub use transfer::{
+    apply_transfer, transfer_bytes, TransferEffect, TransferKind, MAX_TRANSFER_BYTES,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -78,6 +84,11 @@ pub struct OpReport {
     /// it, so Undo never touches what was already there.
     #[serde(default)]
     pub created: Vec<CompletedItem>,
+    /// Exact effects stay in Rust; the UI receives only the history token.
+    #[serde(skip)]
+    pub transfer: Vec<TransferEffect>,
+    #[serde(default)]
+    pub transfer_id: Option<String>,
 }
 
 /// Short, stable reason for a failed operation (`errors.ops.<reason>`).
@@ -85,6 +96,7 @@ pub fn op_error_reason(error: &FsError) -> &'static str {
     match error {
         FsError::Validation(_) => "invalid_name",
         FsError::Cancelled => "cancelled",
+        FsError::UndoLimit => "undo_limit",
         FsError::Io(io) => match io.raw_os_error() {
             Some(80) | Some(183) => "exists",
             Some(5) => "access_denied",
@@ -360,6 +372,24 @@ fn expand_dir(dir: &Path, rel: &Path, plan: &mut Plan, visited: &mut HashSet<Str
     }
 }
 
+/// Reserve the complete worst-case effects before touching any file.
+fn check_transfer_budget(plans: &[Plan], dest_dir: &Path) -> Result<()> {
+    let bytes = plans
+        .iter()
+        .flat_map(|plan| &plan.entries)
+        .fold(0usize, |bytes, entry| {
+            bytes
+                .saturating_add(entry.from.as_os_str().len())
+                .saturating_add(dest_dir.as_os_str().len())
+                .saturating_add(entry.rel.as_os_str().len())
+                .saturating_add(192)
+        });
+    if bytes > MAX_TRANSFER_BYTES {
+        return Err(FsError::UndoLimit);
+    }
+    Ok(())
+}
+
 const CHUNK: usize = 1024 * 1024;
 
 struct Runner<'a> {
@@ -559,6 +589,13 @@ impl Runner<'_> {
                 match fs::create_dir_all(&dest) {
                     Ok(()) => {
                         copied.push(entry.from.clone());
+                        report.transfer.push(TransferEffect {
+                            from: entry.from.clone(),
+                            to: dest.clone(),
+                            kind: TransferKind::Directory,
+                            source_removed: false,
+                            destination_created: !existed,
+                        });
                         if !existed {
                             new_dirs.insert(key(&dest));
                             if !inside_new {
@@ -606,6 +643,13 @@ impl Runner<'_> {
                 match self.copy_file(&entry.from, &written) {
                     Ok(()) => {
                         copied.push(entry.from.clone());
+                        report.transfer.push(TransferEffect {
+                            from: entry.from.clone(),
+                            to: written.clone(),
+                            kind: TransferKind::File,
+                            source_removed: false,
+                            destination_created: true,
+                        });
                         if !inside_new {
                             report.created.push(CompletedItem {
                                 from: entry.from.clone(),
@@ -735,6 +779,7 @@ pub fn copy_items(
         .iter()
         .map(|s| expand(std::slice::from_ref(s)))
         .collect();
+    check_transfer_budget(&plans, dest_dir)?;
     let total_bytes: u64 = plans.iter().map(|p| p.total_bytes).sum();
     for plan in &plans {
         report.skipped.extend(plan.skipped.iter().cloned());
@@ -804,6 +849,7 @@ pub fn move_items(
         .iter()
         .map(|s| expand(std::slice::from_ref(s)))
         .collect();
+    check_transfer_budget(&plans, dest_dir)?;
     let total_bytes: u64 = plans.iter().map(|p| p.total_bytes).sum();
     for plan in &plans {
         report.skipped.extend(plan.skipped.iter().cloned());
@@ -862,6 +908,13 @@ pub fn move_items(
                 from: source.clone(),
                 to: target.clone(),
             });
+            report.transfer.push(TransferEffect {
+                from: source.clone(),
+                to: target.clone(),
+                kind: TransferKind::Tree,
+                source_removed: true,
+                destination_created: true,
+            });
             report.completed.push(CompletedItem {
                 from: source.clone(),
                 to: target,
@@ -872,6 +925,7 @@ pub fn move_items(
         // Otherwise (cross-volume, a link, or merging into an existing
         // folder): copy + delete. The copy replaces an old file only once
         // it is complete.
+        let effect_start = report.transfer.len();
         let copied = runner.copy_plan(plan, source, &target, &mut report);
         if runner.cancelled {
             break;
@@ -883,6 +937,11 @@ pub fn move_items(
             .collect();
         let mut entries: Vec<&PlanEntry> = plan.entries.iter().collect();
         entries.sort_by_key(|e| std::cmp::Reverse(e.rel.components().count()));
+        let effect_indices: HashMap<PathBuf, usize> = report.transfer[effect_start..]
+            .iter()
+            .enumerate()
+            .map(|(index, effect)| (effect.from.clone(), effect_start + index))
+            .collect();
         let mut fully_moved = true;
         for entry in entries {
             if !copied_set.contains(&entry.from.to_string_lossy().to_lowercase()) {
@@ -894,12 +953,19 @@ pub fn move_items(
             } else {
                 remove_file_forced(&entry.from)
             };
-            if let Err(error) = result {
-                fully_moved = false;
-                report.skipped.push(SkippedItem {
-                    path: entry.from.clone(),
-                    reason: reason(&error),
-                });
+            match result {
+                Ok(()) => {
+                    if let Some(index) = effect_indices.get(&entry.from) {
+                        report.transfer[*index].source_removed = true;
+                    }
+                }
+                Err(error) => {
+                    fully_moved = false;
+                    report.skipped.push(SkippedItem {
+                        path: entry.from.clone(),
+                        reason: reason(&error),
+                    });
+                }
             }
         }
         if fully_moved {
@@ -974,6 +1040,19 @@ fn recycle_reason(error: &trash::Error) -> String {
     }
 }
 
+/// Recycled leaves no longer exist, but their parent usually does. Resolve
+/// the parent so Windows' short (8.3) aliases and extended path prefixes
+/// match the long original paths kept by the Recycle Bin. Keep the exact
+/// leaf name, including its extension, to distinguish same-stem files.
+fn restore_match_path(path: &Path) -> PathBuf {
+    let (Some(parent), Some(name)) = (path.parent(), path.file_name()) else {
+        return path.to_path_buf();
+    };
+    fs::canonicalize(parent)
+        .unwrap_or_else(|_| parent.to_path_buf())
+        .join(name)
+}
+
 /// Look up the Recycle Bin entries of items just sent there (newest
 /// match per path), listing the bin once.
 fn find_in_bin(paths: &[PathBuf]) -> Vec<ReplacedItem> {
@@ -984,12 +1063,16 @@ fn find_in_bin(paths: &[PathBuf]) -> Vec<ReplacedItem> {
     paths
         .iter()
         .map(|path| {
-            let wanted = path.to_string_lossy();
+            let normalized = restore_match_path(path);
+            let wanted = normalized.to_string_lossy();
             let bin_id = bin
                 .iter()
                 .filter(|item| {
-                    bin_original_path(item)
-                        .is_some_and(|full| full.to_string_lossy().eq_ignore_ascii_case(&wanted))
+                    bin_original_path(item).is_some_and(|full| {
+                        restore_match_path(&full)
+                            .to_string_lossy()
+                            .eq_ignore_ascii_case(&wanted)
+                    })
                 })
                 .max_by_key(|item| item.time_deleted)
                 .map(|item| item.id.to_string_lossy().into_owned());
@@ -1069,18 +1152,23 @@ pub fn restore_items(originals: &[PathBuf]) -> Result<OpReport> {
         // recycled item's display name without its extension when "hide
         // extensions" is on, so the name/stem match is only a fallback
         // for items whose record can't be read.
-        let parent = original.parent().unwrap_or(original);
+        let normalized = restore_match_path(original);
+        let parent = normalized.parent().unwrap_or(&normalized);
         let name = item_name(original).unwrap_or_default();
         let stem = split_name(&name).0.to_string();
-        let wanted = original.to_string_lossy();
+        let wanted = normalized.to_string_lossy();
         let candidate = bin
             .iter()
-            .filter(|item| same_folder(&item.original_parent, parent))
             .filter(|item| match bin_original_path(item) {
-                Some(full) => full.to_string_lossy().eq_ignore_ascii_case(&wanted),
+                Some(full) => restore_match_path(&full)
+                    .to_string_lossy()
+                    .eq_ignore_ascii_case(&wanted),
                 None => {
+                    let item_parent = fs::canonicalize(&item.original_parent)
+                        .unwrap_or_else(|_| item.original_parent.clone());
                     let shown = item.name.to_string_lossy();
-                    shown.eq_ignore_ascii_case(&name) || shown.eq_ignore_ascii_case(&stem)
+                    same_folder(&item_parent, parent)
+                        && (shown.eq_ignore_ascii_case(&name) || shown.eq_ignore_ascii_case(&stem))
                 }
             })
             .max_by_key(|item| item.time_deleted);

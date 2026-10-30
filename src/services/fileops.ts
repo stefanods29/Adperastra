@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { displayPath, parentPathOf, renameItem } from "./explorer";
+import { displayPath, itemDetails, parentPathOf, renameItem } from "./explorer";
 import { isTauriRuntime } from "./settings";
 import type { FileAction, UndoEntryInput } from "./undo";
 
@@ -8,7 +8,7 @@ import type { FileAction, UndoEntryInput } from "./undo";
  * progress and Cancel, and the UI polls (the transport ruling of
  * ADR 0005: Tauri Channels do not arrive under the isolation pattern). */
 
-export type FileOpKind = "copy" | "move" | "recycle" | "restore" | "permanent";
+export type FileOpKind = "copy" | "move" | "recycle" | "restore" | "permanent" | "transfer";
 export type ConflictPolicy = "replace" | "skip" | "keepBoth";
 /** Job priority (contract 10): "foreground" when the user waits on it,
  * "normal" for file operations (the default), "background" for later
@@ -50,6 +50,8 @@ export interface OpReport {
   /** Top-most items the operation made at the destination (only the new
    * ones inside a merged folder); Undo removes or moves back just these. */
   created: CompletedItem[];
+  /** Opaque identifier for exact effects kept in Rust. */
+  transfer_id?: string | null;
 }
 
 interface FileOpPoll {
@@ -66,6 +68,18 @@ export interface RunningJob {
 }
 
 let requestCounter = 0;
+let retainedTransfers = new Set<string>();
+
+/** Keep plans used by history, including entries pending in a group. */
+export function setRetainedTransfers(entries: readonly UndoEntryInput[]): void {
+  const next = new Set<string>();
+  const visit = (action: FileAction) => {
+    if (action.type === "transfer") next.add(action.id);
+    else if (action.type === "sequence") action.actions.forEach(visit);
+  };
+  for (const entry of entries) { visit(entry.undo); visit(entry.redo); }
+  retainedTransfers = next;
+}
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
 export async function checkConflicts(sources: string[], destDir: string): Promise<string[]> {
@@ -89,6 +103,9 @@ export async function startFileJob(
     /** For "restore": the exact bin entries, one per source. */
     binIds?: string[];
     priority?: JobPriority;
+    allowSystem?: boolean;
+    transferId?: string;
+    reverse?: boolean;
     onProgress?: (progress: OpProgress) => void;
   } = {},
 ): Promise<RunningJob> {
@@ -103,6 +120,10 @@ export async function startFileJob(
       conflict: options.conflict ?? "skip",
       bin_ids: options.binIds ?? null,
       priority: options.priority ?? "normal",
+      allow_system: options.allowSystem ?? false,
+      transfer_id: options.transferId ?? null,
+      reverse: options.reverse ?? false,
+      retained_transfers: [...retainedTransfers],
     },
     requestId,
   });
@@ -121,7 +142,9 @@ export async function startFileJob(
       options.onProgress?.(poll.progress);
       if (poll.error) throw new Error(poll.error);
       if (poll.done && poll.report) {
+        if (poll.report.transfer_id) retainedTransfers.add(poll.report.transfer_id);
         return {
+          transfer_id: poll.report.transfer_id ?? null,
           completed: poll.report.completed.map((item) => ({
             from: displayPath(item.from),
             to: displayPath(item.to),
@@ -155,6 +178,9 @@ export async function runFileJob(
     conflict?: ConflictPolicy;
     binIds?: string[];
     priority?: JobPriority;
+    allowSystem?: boolean;
+    transferId?: string;
+    reverse?: boolean;
     onProgress?: (progress: OpProgress) => void;
   } = {},
 ): Promise<OpReport> {
@@ -165,16 +191,19 @@ export async function runFileJob(
 /** Move one item to an exact target path, renaming afterwards when the
  * move kept a different name (Keep both). Never overwrites: when the
  * exact target is taken, the item lands next to it numbered instead. */
-async function moveToExact(from: string, to: string): Promise<string> {
+async function moveToExact(from: string, to: string, confirmSystem?: () => Promise<boolean>): Promise<string> {
   if (displayPath(from).toLowerCase() === displayPath(to).toLowerCase()) return to;
   const parent = parentPathOf(to);
   if (!parent) throw new Error("ops.other");
   const fromParent = parentPathOf(from);
   const name = to.split("\\").filter(Boolean).pop() ?? to;
   if (fromParent && displayPath(fromParent).toLowerCase() === displayPath(parent).toLowerCase()) {
+    if ((await itemDetails(from)).attributes.includes("system")) {
+      if (!confirmSystem || !(await confirmSystem())) throw new Error("ops.cancelled");
+    }
     return renameItem(from, name);
   }
-  const report = await runFileJob("move", [from], { destDir: parent, conflict: "keepBoth" });
+  const report = await runHistoryJob("move", [from], { destDir: parent, conflict: "keepBoth" }, confirmSystem);
   const landed = report.completed[0]?.to;
   if (!landed) throw new Error("ops.other");
   if (displayPath(landed).toLowerCase() === displayPath(to).toLowerCase()) return landed;
@@ -182,31 +211,52 @@ async function moveToExact(from: string, to: string): Promise<string> {
 }
 
 /** Execute one undo/redo action and return the report(s) behind it. */
-export async function executeFileAction(action: FileAction): Promise<void> {
+export async function executeFileAction(action: FileAction, confirmSystem?: () => Promise<boolean>): Promise<void> {
   switch (action.type) {
+    case "transfer":
+      await runHistoryJob("transfer", [], { transferId: action.id, reverse: action.reverse }, confirmSystem);
+      return;
     case "rename":
-      await moveToExact(action.from, action.to);
+      await moveToExact(action.from, action.to, confirmSystem);
       return;
     case "movePairs":
       for (const pair of action.pairs) {
-        await moveToExact(pair.from, pair.to);
+        await moveToExact(pair.from, pair.to, confirmSystem);
       }
       return;
     case "copy":
-      await runFileJob("copy", action.sources, { destDir: action.destDir, conflict: action.conflict });
+      await runHistoryJob("copy", action.sources, { destDir: action.destDir, conflict: action.conflict }, confirmSystem);
       return;
     case "recycle":
-      await runFileJob("recycle", action.paths);
+      await runHistoryJob("recycle", action.paths, {}, confirmSystem);
       return;
     case "restore":
-      await runFileJob("restore", action.originals, { binIds: action.binIds });
+      await runHistoryJob("restore", action.originals, { binIds: action.binIds }, confirmSystem);
       return;
     case "sequence":
       for (const step of action.actions) {
-        await executeFileAction(step);
+        await executeFileAction(step, confirmSystem);
       }
       return;
   }
+}
+
+/** An incomplete Undo/Redo must not advance the shared history cursor. */
+async function runHistoryJob(
+  kind: FileOpKind, sources: string[], options: Parameters<typeof runFileJob>[2] = {},
+  confirmSystem?: () => Promise<boolean>,
+): Promise<OpReport> {
+  let report: OpReport;
+  try {
+    report = await runFileJob(kind, sources, options);
+  } catch (error) {
+    if (!(error instanceof Error) || error.message !== "ops.system_confirmation_required") throw error;
+    if (!confirmSystem || !(await confirmSystem())) throw new Error("ops.cancelled");
+    report = await runFileJob(kind, sources, { ...options, allowSystem: true });
+  }
+  if (report.cancelled) throw new Error("ops.cancelled");
+  if (report.skipped.length > 0) throw new Error(`ops.${report.skipped[0].reason}`);
+  return report;
 }
 
 export interface ClipboardData {
@@ -261,8 +311,9 @@ export function entryForJob(
   report: OpReport,
   destDir: string | null,
 ): UndoEntryInput | null {
-  if (report.completed.length === 0) return null;
-  const count = report.completed.length;
+  if (report.completed.length === 0 && report.created.length === 0
+    && report.replaced.length === 0 && !report.transfer_id) return null;
+  const count = report.completed.length || report.created.length || report.replaced.length;
   // Items a Replace sent to the Recycle Bin come back after the new ones
   // are out of the way (exact bin entries, so never the new copy itself).
   const replaced = report.replaced.filter((item): item is ReplacedItem & { bin_id: string } => !!item.bin_id);
@@ -280,6 +331,14 @@ export function entryForJob(
             },
           ],
         };
+  if (report.transfer_id && kind !== "recycle") {
+    return {
+      labelKey: kind === "copy" ? "toast.copied" : "toast.moved",
+      labelArgs: { count },
+      undo: withReplaced({ type: "transfer", id: report.transfer_id, reverse: true }),
+      redo: { type: "transfer", id: report.transfer_id, reverse: false },
+    };
+  }
   if (kind === "copy" && destDir) {
     return {
       labelKey: "toast.copied",

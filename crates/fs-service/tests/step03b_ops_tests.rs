@@ -547,3 +547,83 @@ fn copying_a_folder_with_a_link_loop_terminates() {
         .any(|item| item.reason == "link_loop" || item.reason == "exists"));
     let _ = PathBuf::new();
 }
+
+#[cfg(windows)]
+fn short_path(path: &std::path::Path) -> PathBuf {
+    use std::os::windows::ffi::{OsStrExt, OsStringExt};
+    use windows::core::PCWSTR;
+    use windows::Win32::Storage::FileSystem::GetShortPathNameW;
+
+    let input: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+    let mut output = vec![0u16; 32_768];
+    // SAFETY: both buffers remain live for the call and the output slice
+    // describes its complete writable allocation.
+    let length = unsafe { GetShortPathNameW(PCWSTR(input.as_ptr()), Some(&mut output)) };
+    assert!(length > 0 && (length as usize) < output.len());
+    PathBuf::from(std::ffi::OsString::from_wide(&output[..length as usize]))
+}
+
+#[cfg(windows)]
+#[test]
+fn restore_accepts_a_short_parent_path_without_swapping_extensions() {
+    let dir = tempfile::Builder::new()
+        .prefix("adperastra-long-recycle-parent-")
+        .tempdir()
+        .unwrap();
+    let parent = short_path(dir.path());
+    let jpg = parent.join("photo.jpg");
+    let png = parent.join("photo.png");
+    fs::write(&jpg, b"JPEG-DATA").unwrap();
+    fs::write(&png, b"PNG-DATA!").unwrap();
+    let recycled = recycle_items(
+        &[jpg.clone(), png.clone()],
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(recycled.completed.len(), 2, "{recycled:?}");
+    let restored = restore_items(&[jpg.clone(), png.clone()]).unwrap();
+    assert_eq!(
+        restored.completed.len(),
+        2,
+        "{restored:?}; long parent: {:?}",
+        dir.path()
+    );
+    assert_eq!(fs::read(&jpg).unwrap(), b"JPEG-DATA");
+    assert_eq!(fs::read(&png).unwrap(), b"PNG-DATA!");
+}
+
+#[cfg(windows)]
+#[test]
+fn replacing_with_a_short_parent_path_keeps_the_exact_undo_entry() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::Builder::new()
+        .prefix("adperastra-long-replace-parent-")
+        .tempdir()
+        .unwrap();
+    let parent = short_path(dst.path());
+    let target = parent.join("note.txt");
+    fs::write(src.path().join("note.txt"), b"new").unwrap();
+    fs::write(&target, b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("note.txt")],
+        &parent,
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1, "{report:?}");
+    assert_eq!(report.replaced.len(), 1, "{report:?}");
+    assert!(
+        report.replaced[0].bin_id.is_some(),
+        "{report:?}; long parent: {:?}",
+        dst.path()
+    );
+    // Removing the new copy leaves only the old replacement in the bin;
+    // restoring its exact ID must preserve its contents and extension.
+    fs::remove_file(&target).unwrap();
+    let restored = restore_bin_items(&report.replaced).unwrap();
+    assert_eq!(restored.completed.len(), 1, "{restored:?}");
+    assert_eq!(fs::read(&target).unwrap(), b"old");
+}

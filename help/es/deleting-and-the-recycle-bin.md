@@ -18,3 +18,7 @@ Eliminar nunca sobrescribe nada: si mientras tanto un elemento nuevo ocupó el n
 Adperastra usa la misma Papelera de reciclaje de Windows que el Explorador, con los mismos límites de tamaño que Windows define en cada unidad. Cuando la Papelera se llena, Windows elimina por sí mismo los elementos más antiguos.
 
 Consulta también: «Deshacer» y «Copiar y mover archivos».
+
+## Elementos del sistema
+
+Eliminar un elemento del sistema de Windows, incluso uno dentro de una carpeta seleccionada, muestra una advertencia aparte antes de cambiar cualquier elemento. **Cancelar** está seleccionado al principio. **Continuar** permite solo esta operación; no desactiva la advertencia. Las raíces de las unidades y las carpetas Windows y Archivos de programa siguen protegidas. Se omiten las carpetas que contienen vínculos o uniones de directorios para no seguirlos hacia otra carpeta al eliminar.

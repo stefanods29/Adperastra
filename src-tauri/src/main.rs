@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
@@ -22,7 +22,9 @@ mod classic_menu;
 mod clipboard;
 mod drag;
 mod explorer;
+mod operation_safety;
 mod shell;
+mod transfer_history;
 
 pub const CURRENT_SCHEMA: u32 = 4;
 
@@ -807,6 +809,7 @@ pub struct AppState {
     settings: Mutex<Settings>,
     list_jobs: Mutex<HashMap<String, ListJob>>,
     file_jobs: Mutex<HashMap<String, FileJob>>,
+    transfer_history: Arc<Mutex<transfer_history::TransferHistory>>,
     explorer_state_lock: Mutex<()>,
     watch: Mutex<Option<WatchControl>>,
     watch_next_id: AtomicU64,
@@ -1304,6 +1307,9 @@ async fn rename_item(
     }
     let old_path = path.clone();
     let new_path = tauri::async_runtime::spawn_blocking(move || {
+        if operation_safety::protected_path(Path::new(&path)) {
+            return Err("rename.protected_path".to_string());
+        }
         fs_service::rename_in_place(Path::new(&path), &new_name)
             .map(|p| p.to_string_lossy().into_owned())
             .map_err(|e| format!("rename.{}", fs_service::rename_error_reason(&e)))
@@ -1424,6 +1430,17 @@ pub struct FileOpRequest {
     /// "background" (later background tasks: low CPU and disk priority).
     #[serde(default = "default_job_priority")]
     pub priority: String,
+    /// The UI may set this only after the separate system-item warning.
+    #[serde(default)]
+    pub allow_system: bool,
+    /// Opaque, in-memory transfer plan used by Undo/Redo.
+    #[serde(default)]
+    pub transfer_id: Option<String>,
+    #[serde(default)]
+    pub reverse: bool,
+    /// Absent for direct developer callers; present for the UI history.
+    #[serde(default)]
+    pub retained_transfers: Option<Vec<String>>,
 }
 
 fn default_job_priority() -> String {
@@ -1578,15 +1595,52 @@ fn file_op_start(
         conflict,
         bin_ids,
         priority,
+        allow_system,
+        transfer_id,
+        reverse,
+        retained_transfers,
     } = request;
     let priority = parse_job_priority(&priority)?;
     if !matches!(
         kind.as_str(),
-        "copy" | "move" | "recycle" | "restore" | "permanent"
+        "copy" | "move" | "recycle" | "restore" | "permanent" | "transfer"
     ) {
         return Err("ops.invalid_request".to_string());
     }
-    let sources = validate_op_sources(&sources)?;
+    if let Some(ids) = &retained_transfers {
+        if ids.len() > 1024 {
+            return Err("ops.undo_limit".to_string());
+        }
+        for id in ids {
+            valid_request_id(id).map_err(|_| "ops.invalid_request".to_string())?;
+        }
+    }
+    let sources = if kind == "transfer" {
+        if !sources.is_empty() || bin_ids.is_some() || dest_dir.is_some() {
+            return Err("ops.invalid_request".to_string());
+        }
+        Vec::new()
+    } else {
+        if transfer_id.is_some() || reverse {
+            return Err("ops.invalid_request".to_string());
+        }
+        validate_op_sources(&sources)?
+    };
+    let transfer_plan = if kind == "transfer" {
+        let id = transfer_id
+            .as_deref()
+            .ok_or_else(|| "ops.invalid_request".to_string())?;
+        valid_request_id(id).map_err(|_| "ops.invalid_request".to_string())?;
+        Some(
+            state
+                .transfer_history
+                .lock()
+                .map_err(|_| "ops.other".to_string())?
+                .get(id)?,
+        )
+    } else {
+        None
+    };
     let replaced: Option<Vec<fs_service::ReplacedItem>> = match (kind.as_str(), bin_ids) {
         ("restore", Some(ids)) => {
             validate_bin_ids(&ids, &sources)?;
@@ -1613,12 +1667,35 @@ fn file_op_start(
         ("copy" | "move", None) => return Err("ops.invalid_request".to_string()),
         _ => None,
     };
+    let history = Arc::clone(&state.transfer_history);
+    let reserve_transfer = matches!(kind.as_str(), "copy" | "move");
+    if reserve_transfer {
+        history
+            .lock()
+            .map_err(|_| "ops.other".to_string())?
+            .reserve(&request_id, retained_transfers.as_deref())?;
+    }
     let token = fs_service::new_cancellation_token();
     {
-        let mut jobs = state
-            .file_jobs
-            .lock()
-            .map_err(|_| "file jobs lock poisoned".to_string())?;
+        let mut jobs = match state.file_jobs.lock() {
+            Ok(jobs) => jobs,
+            Err(_) => {
+                if reserve_transfer {
+                    if let Ok(mut history) = history.lock() {
+                        history.abort(&request_id);
+                    }
+                }
+                return Err("ops.other".to_string());
+            }
+        };
+        if jobs.contains_key(&request_id) {
+            if reserve_transfer {
+                if let Ok(mut history) = history.lock() {
+                    history.abort(&request_id);
+                }
+            }
+            return Err("ops.invalid_request".to_string());
+        }
         jobs.insert(
             request_id.clone(),
             FileJob {
@@ -1647,37 +1724,92 @@ fn file_op_start(
                 }
             }
         };
-        let result = match kind.as_str() {
-            "copy" => fs_service::copy_items(
-                &sources,
-                dest.as_ref().expect("dest checked"),
+        let mut result = (|| -> Result<fs_service::OpReport, String> {
+            let safety_paths: Vec<PathBuf> = if let Some(plan) = &transfer_plan {
+                plan.iter()
+                    .flat_map(|effect| [effect.from.clone(), effect.to.clone()])
+                    .collect()
+            } else {
+                sources.clone()
+            };
+            let checked = operation_safety::check(
+                &kind,
+                &safety_paths,
+                dest.as_deref(),
                 policy,
+                allow_system,
                 &token,
-                &mut |p| set_progress(p),
-            ),
-            "move" => fs_service::move_items(
-                &sources,
-                dest.as_ref().expect("dest checked"),
-                policy,
-                &token,
-                &mut |p| set_progress(p),
-            ),
-            "recycle" => fs_service::recycle_items(&sources, &token, &mut |p| set_progress(p)),
-            "restore" => match &replaced {
-                Some(items) => fs_service::restore_bin_items(items),
-                None => fs_service::restore_items(&sources),
-            },
-            _ => fs_service::delete_permanently(&sources, &token, &mut |p| set_progress(p)),
-        };
+                &mut |progress| set_progress(progress),
+            )?;
+            if checked.cancelled {
+                return Ok(fs_service::OpReport {
+                    cancelled: true,
+                    skipped: checked.skipped,
+                    ..Default::default()
+                });
+            }
+            if kind == "transfer" && !checked.skipped.is_empty() {
+                return Ok(fs_service::OpReport {
+                    skipped: checked.skipped,
+                    ..Default::default()
+                });
+            }
+            let sources = checked.sources;
+            let mut report = match kind.as_str() {
+                "copy" => fs_service::copy_items(
+                    &sources,
+                    dest.as_ref().expect("dest checked"),
+                    policy,
+                    &token,
+                    &mut |progress| set_progress(progress),
+                ),
+                "move" => fs_service::move_items(
+                    &sources,
+                    dest.as_ref().expect("dest checked"),
+                    policy,
+                    &token,
+                    &mut |progress| set_progress(progress),
+                ),
+                "recycle" => fs_service::recycle_items(&sources, &token, &mut |progress| {
+                    set_progress(progress)
+                }),
+                "restore" => match &replaced {
+                    Some(items) => fs_service::restore_bin_items(items),
+                    None => fs_service::restore_items(&sources),
+                },
+                "transfer" => fs_service::ops::apply_transfer(
+                    transfer_plan.as_ref().expect("transfer checked"),
+                    reverse,
+                    &token,
+                    &mut |progress| set_progress(progress),
+                ),
+                _ => fs_service::delete_permanently(&sources, &token, &mut |progress| {
+                    set_progress(progress)
+                }),
+            }
+            .map_err(|error| format!("ops.{}", fs_service::op_error_reason(&error)))?;
+            report.skipped.extend(checked.skipped);
+            Ok(report)
+        })();
+        if reserve_transfer {
+            match history.lock() {
+                Ok(mut history) => match &mut result {
+                    Ok(report) => {
+                        match history.finish(&job_id, std::mem::take(&mut report.transfer)) {
+                            Ok(id) => report.transfer_id = id,
+                            Err(error) => result = Err(error),
+                        }
+                    }
+                    Err(_) => history.abort(&job_id),
+                },
+                Err(_) => result = Err("ops.other".to_string()),
+            }
+        }
         let (report, error) = match result {
             Ok(report) => (Some(report), None),
-            Err(error) => (
-                None,
-                Some(format!("ops.{}", fs_service::op_error_reason(&error))),
-            ),
+            Err(error) => (None, Some(error)),
         };
-        // Favorites follow moved items, like they follow a rename. The
-        // operation already happened; a state failure must not fail it.
+        // Favorites follow completed moves; state failure cannot undo disk work.
         if kind == "move" {
             if let Some(report) = &report {
                 let pairs: Vec<(String, String)> = report
@@ -1732,6 +1864,17 @@ fn file_op_poll(
         error: job.error.clone(),
     };
     if poll.done {
+        if let Some(id) = poll
+            .report
+            .as_ref()
+            .and_then(|report| report.transfer_id.as_deref())
+        {
+            state
+                .transfer_history
+                .lock()
+                .map_err(|_| "ops.other".to_string())?
+                .delivered(id);
+        }
         jobs.remove(&request_id);
     }
     Ok(poll)
@@ -2139,6 +2282,7 @@ fn main() {
             settings: Mutex::new(initial_settings),
             list_jobs: Mutex::new(HashMap::new()),
             file_jobs: Mutex::new(HashMap::new()),
+            transfer_history: Arc::new(Mutex::new(transfer_history::TransferHistory::default())),
             explorer_state_lock: Mutex::new(()),
             watch: Mutex::new(None),
             watch_next_id: AtomicU64::new(0),
@@ -2494,6 +2638,10 @@ mod tests {
         }))
         .unwrap();
         assert_eq!(request.conflict, "skip");
+        assert!(!request.allow_system);
+        assert!(request.transfer_id.is_none());
+        assert!(request.retained_transfers.is_none());
+        assert!(!request.reverse);
         let sources = validate_op_sources(&[r"C:\a.txt".to_string()]).unwrap();
         assert_eq!(sources.len(), 1);
         assert!(validate_op_sources(&[]).is_err());

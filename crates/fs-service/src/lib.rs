@@ -29,6 +29,8 @@ pub enum FsError {
     Validation(String),
     #[error("operation cancelled")]
     Cancelled,
+    #[error("undo history capacity exceeded")]
+    UndoLimit,
 }
 
 pub type Result<T> = std::result::Result<T, FsError>;

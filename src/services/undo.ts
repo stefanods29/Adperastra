@@ -4,6 +4,8 @@
  * actions list can show and run them long after the toast is gone. */
 
 export type FileAction =
+  /** Replay exact file-transfer effects retained in Rust. */
+  | { type: "transfer"; id: string; reverse: boolean }
   /** Move one item to an exact path (same-folder renames included). */
   | { type: "rename"; from: string; to: string }
   /** Move several items, each `from` to its exact `to`. */
@@ -48,6 +50,11 @@ export class UndoStack {
 
   get entries(): readonly UndoEntry[] {
     return this.list;
+  }
+
+  /** Plans referenced by redo history or an unfinished group stay alive. */
+  get retainedEntries(): readonly UndoEntryInput[] {
+    return this.group ? [...this.list, ...this.group.inputs] : this.list;
   }
 
   get canUndo(): boolean {

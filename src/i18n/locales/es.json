@@ -299,7 +299,8 @@
       "in_use": "Este elemento está abierto en otra app. Ciérrala y vuelve a intentarlo.",
       "not_found": "Este elemento ya no existe.",
       "too_long": "La nueva ruta sería demasiado larga.",
-      "other": "No se pudo cambiar el nombre de este elemento."
+      "other": "No se pudo cambiar el nombre de este elemento.",
+      "protected_path": "Esta ubicación está protegida y no se le puede cambiar el nombre."
     },
     "open": {
       "not_found": "Este elemento ya no existe.",
@@ -349,7 +350,12 @@
       "kind_mismatch": "Un archivo y una carpeta con el mismo nombre no pueden reemplazarse entre sí.",
       "drive_root": "No se puede mover ni eliminar una unidad completa.",
       "too_large": "Eso es demasiado grande para esta operación.",
-      "other": "La operación no pudo terminar."
+      "other": "La operación no pudo terminar.",
+      "system_confirmation_required": "Esta acción necesita confirmación antes de cambiar un elemento del sistema de Windows.",
+      "protected_path": "Esta ubicación está protegida y no se puede mover, reemplazar ni eliminar.",
+      "link_not_supported": "Este elemento contiene un vínculo o una unión de carpetas. Se omitió para no cambiar la carpeta vinculada.",
+      "undo_limit": "No hay suficiente espacio en el historial de Deshacer para esta operación. No se cambió ningún archivo.",
+      "undo_expired": "Esta acción ya no está disponible en el historial de Deshacer."
     },
     "clipboard": {
       "busy": "El portapapeles está ocupado. Inténtalo de nuevo en un momento.",
@@ -406,7 +412,10 @@
     "permanentTitle": "¿Eliminar permanentemente?",
     "permanentBody": "{count, plural, one {Este elemento se eliminará para siempre. No podrás deshacerlo.} other {# elementos se eliminarán para siempre. No podrás deshacerlo.}}",
     "recentTitle": "Acciones recientes",
-    "recentEmpty": "Aún no hay nada aquí. Las acciones que puedas deshacer aparecerán en esta lista."
+    "recentEmpty": "Aún no hay nada aquí. Las acciones que puedas deshacer aparecerán en esta lista.",
+    "systemTitle": "¿Cambiar un elemento del sistema?",
+    "systemBody": "Esta acción cambia un elemento del sistema de Windows. Moverlo, reemplazarlo o eliminarlo puede hacer que las apps o Windows dejen de funcionar. Continúa solo si sabes que es seguro.",
+    "continue": "Continuar"
   },
   "drag": {
     "copyTo": "Copiar en {name}",
