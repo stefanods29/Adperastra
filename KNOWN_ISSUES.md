@@ -11,6 +11,12 @@ that fixed it.
 
 ## Open
 
+### KI-031 - The hex viewer has no search or Go to offset yet (Minor, deferral)
+- **Found in:** Step 04c, 2026-10-30. **Severity:** Minor (deliberate deferral named in the step file; the viewer scrolls the whole 1 MB part, and larger files use the part buttons).
+- **What:** The hex viewer shows offsets, hex and text, with zoom and 1 MB parts, but a byte sequence cannot be searched and there is no Go to offset box. Both are scheduled with the other hex tools.
+- **Workaround:** use the part buttons to move through a large file, and Ctrl+F is not offered in this viewer.
+- **Target:** Step 06f (tables, JSON, fonts, hex search).
+
 ### KI-030 - Replacing existing files is not available yet (Minor, owner-approved deferral)
 - **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (a deliberate deferral approved by the owner; the step does not require it, and Merge / Skip / Keep both cover safe daily use).
 - **What:** A path-based Recycle Bin call cannot prove that it removes the exact file the user approved; another file can appear at the same path after the prompt. The command boundary therefore returns `ops.replace_unavailable` and the dialog offers Merge (folders), Skip and Keep both. Replace returns with the full conflict window and the approved-target mechanism in `plan/contracts.md`.
