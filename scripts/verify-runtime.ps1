@@ -46,6 +46,14 @@ foreach ($variant in $variants) {
     try {
         $env:ADPERASTRA_DATA_DIR = $dataDir
         $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$port --disable-background-timer-throttling --disable-renderer-backgrounding"
+        # Hosted runners' WebView2 ignored the environment variable (no debugging
+        # port on its command line), so there also set Microsoft's documented
+        # per-exe policy. Those machines are disposable; never done on a real PC.
+        if ($env:GITHUB_ACTIONS -eq 'true') {
+            $policy = 'HKCU:\Software\Policies\Microsoft\Edge\WebView2\AdditionalBrowserArguments'
+            New-Item -Path $policy -Force | Out-Null
+            New-ItemProperty -Path $policy -Name (Split-Path -Leaf $Exe) -Value $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS -PropertyType String -Force | Out-Null
+        }
         $process = Start-Process -FilePath $Exe -PassThru -WindowStyle Hidden
         # A fresh WebView2 profile on a cold machine (hosted runners) can take
         # far longer than on the development PC; stop early if the app exits.
