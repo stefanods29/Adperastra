@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Files open in tabs (Step 04a): double-click a picture and it opens next to the Explorer tab, fitted to the window; the Explorer keeps its folder, selection and scroll. Middle-click opens a background tab, closing returns to the Explorer, and open tabs come back after a restart. Files without a viewer still open in their Windows app.
+- Picture viewer: fit, zoom from 5 % to 1600 %, Ctrl+wheel toward the pointer, drag to pan, rotate left/right and actual size, with a checkerboard behind transparency. File bytes reach the page only through per-file access tokens (`adpfile`), never through a path in a URL.
+- Help pages for opening files in tabs and viewing images, in English and Spanish.
 - File operations (Step 03b): New folder and text file, Cut, Copy, Paste, and Delete through the command bar, menus, and keyboard; big copies and moves run as background jobs with progress and Cancel; name conflicts ask first (Merge for two folders, Skip, or Keep both). Merge never touches an existing file; a file and a folder with the same name cannot be combined, and a whole drive can never be moved or deleted. Replace is not offered yet: it returns with the full conflict window, once recycling can be bound to the exact item you approved.
 - Undo for almost everything: Ctrl+Z / Ctrl+Y, an Undo button on the toast after each action, and a Recent actions list. Deleting goes to the Recycle Bin and restores from it; Shift+Delete deletes permanently after a warning that it cannot be undone.
 - Drag and drop: drag items onto folders in the list, navigation pane, address bar, or drives (Ctrl copies, Shift moves, Alt creates a shortcut), drag files in from Windows Explorer or the desktop, and drag files out to them.
