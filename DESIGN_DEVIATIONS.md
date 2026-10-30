@@ -3,6 +3,12 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-30 - Movable toolbars, panels and tabs (Step 05c)
+
+- **What:** the Figma file has only the top layout. The side toolbars (200, 168 or 48 px columns), the bottom toolbar, the auto-hide line (6 px), the tab column (220 or 48 px, rows 36 px), the bottom tab row (36 px), the navigation pane on the right and the Details pane at the bottom (200 px) were designed in this step from the existing tokens and the measured values in `plan/design-spec.md`.
+- **Owner approval:** still to come. The T10 checkpoint (the app run, the seven screenshots and the packaged gate) is deferred in this batch, so the owner has not seen these designs yet; the approval date, or the changes the owner asks for, go here once the checkpoint runs.
+- **Evidence:** `docs/screenshots/step-05c/` (24 to 30) once the screenshots are taken.
+
 ## 2026-10-30 - File tabs and the image viewer (Step 04a)
 
 - **What:** Figma shows file tabs only with Office, PDF and image editors. The Step 04a file tab uses the Figma window chrome: the Explorer tab shrinks to its house icon while files are open; file tabs show the type icon in the type's accent color; the navigation row (56 px) has Show in folder (up arrow), Reload, and the path ending in the file; the image viewer shows the picture on the media canvas color with the image shadow and a checkerboard behind transparency; the file tab has its own status bar with the image size, the file size, and Fit plus a zoom slider at the right.

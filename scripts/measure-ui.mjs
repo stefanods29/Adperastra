@@ -501,6 +501,31 @@ if (mode === "full") {
   ]);
   await sleep(500);
 
+  // Step 05c: the toolbar's right-click menu, from the command bar.
+  // Item 0 of the main menu is Toolbar position, item 2 is Layout preset;
+  // radio 2 of the position list is Left, radio 2 of the preset list is
+  // Classic (0 is Standard).
+  const openToolbarMenu = `document.querySelector(".adp-commandbar").dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 300, clientY: 110 }))`;
+  const mainMenuItem = (index) => `document.querySelectorAll(".adp-ctxmenu")[0].querySelectorAll("[role=menuitem]")[${index}].click()`;
+  const submenuRadio = (index) => `document.querySelectorAll(".adp-ctxmenu")[1].querySelectorAll("[role=menuitemradio]")[${index}].click()`;
+  const openSubmenu = (item) => `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(item)}; await window.__m.frame(); })()`;
+
+  results.push(
+    await measure(
+      "move the toolbar to the left (toolbar menu)",
+      openSubmenu(0),
+      submenuRadio(2),
+      `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(0)}; await window.__m.frame(); ${submenuRadio(0)}; })()`,
+    ),
+  );
+  results.push(
+    await measure(
+      "apply the Classic preset (toolbar menu)",
+      openSubmenu(2),
+      submenuRadio(2),
+      `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(2)}; await window.__m.frame(); ${submenuRadio(0)}; })()`,
+    ),
+  );
 }
 
 if (outFile && results.length > 0) {
