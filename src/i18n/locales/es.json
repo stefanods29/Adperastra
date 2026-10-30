@@ -448,7 +448,8 @@
     "notFoundTitle": "Este archivo se movió o se eliminó.",
     "notFoundBody": "Estaba en {folder}",
     "openFolder": "Abrir carpeta",
-    "openInWindowsApp": "Abrir en la aplicación de Windows"
+    "openInWindowsApp": "Abrir en la aplicación de Windows",
+    "searchIn": "Buscar en {name}"
   },
   "viewer": {
     "loadingImage": "Cargando imagen…",

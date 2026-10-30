@@ -448,7 +448,8 @@
     "notFoundTitle": "This file was moved or deleted.",
     "notFoundBody": "It was in {folder}",
     "openFolder": "Open folder",
-    "openInWindowsApp": "Open in Windows app"
+    "openInWindowsApp": "Open in Windows app",
+    "searchIn": "Search in {name}"
   },
   "viewer": {
     "loadingImage": "Loading image…",

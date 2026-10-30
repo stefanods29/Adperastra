@@ -448,7 +448,8 @@
     "notFoundTitle": "[Thïs fïlë wäs møvëd ør dëlëtëd. ~~~~~~~~~~]",
     "notFoundBody": "[Ït wäs ïñ {folder} ~~~]",
     "openFolder": "[Øpëñ føldër ~~~~]",
-    "openInWindowsApp": "[Øpëñ ïñ Wïñdøws äpp ~~~~~~~]"
+    "openInWindowsApp": "[Øpëñ ïñ Wïñdøws äpp ~~~~~~~]",
+    "searchIn": "[Sëärçh ïñ {name} ~~~~]"
   },
   "viewer": {
     "loadingImage": "[Løädïñg ïmägë… ~~~~~]",

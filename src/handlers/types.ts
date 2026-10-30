@@ -21,6 +21,14 @@ export interface FileTabStatus {
   };
 }
 
+/** The file tab's search box (Step 04b): the text to find, and a counter
+ * that grows each time the user asks for the next (or previous) match. */
+export interface FindRequest {
+  text: string;
+  request: number;
+  backwards: boolean;
+}
+
 export interface HandlerViewProps {
   info: FileTypeInfo;
   /** Where the file's bytes are served (`fileUrl(token, name)`). */
@@ -34,6 +42,8 @@ export interface HandlerViewProps {
   onStatus: (status: FileTabStatus) => void;
   /** Open this file in its Windows default app (used by error states). */
   onOpenInWindowsApp: () => void;
+  /** What the search box asks for; views with `supportsFind` follow it. */
+  find: FindRequest;
 }
 
 export interface Handler {
@@ -53,5 +63,8 @@ export interface Handler {
   maxBytes: number;
   helpSlug: string;
   speedTier: "fast" | "waiting";
+  /** True when the view can search its content: the file tab shows its
+   * search box and Ctrl+F focuses it. */
+  supportsFind: boolean;
   view: LazyExoticComponent<ComponentType<HandlerViewProps>>;
 }
