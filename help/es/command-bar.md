@@ -14,4 +14,6 @@ La barra de comandos está debajo de la barra de direcciones y reúne las accion
 
 Cuando la ventana es angosta, los botones que no caben pasan a **Ver más**.
 
+Para mover la barra de comandos abajo o a un lado, o para cambiar su estilo, haz clic derecho en una parte vacía de ella (consulta «Mover barras de herramientas y paneles»).
+
 Consulta también: «Vistas: iconos, lista, detalles, mosaicos y contenido» y «Seleccionar archivos».

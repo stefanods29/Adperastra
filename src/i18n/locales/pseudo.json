@@ -327,7 +327,18 @@
     "deletePermanently": "[Dëlëtë përmäñëñtlÿ ~~~~~~~]",
     "undo": "[Üñdø ~~]",
     "redo": "[Rëdø ~~]",
-    "recentActions": "[Rëçëñt äçtïøñs ~~~~~~]"
+    "recentActions": "[Rëçëñt äçtïøñs ~~~~~~]",
+    "toolbarTop": "[Tøp ~~]",
+    "toolbarBottom": "[Bøttøm ~~~]",
+    "toolbarLeft": "[Lëft ~~]",
+    "toolbarRight": "[Rïght ~~]",
+    "toolbarFull": "[Ïçøñs äñd läbëls ~~~~~~]",
+    "toolbarCompact": "[Çømpäçt ~~~]",
+    "toolbarIconsOnly": "[Ïçøñs øñlÿ ~~~~]",
+    "toolbarAutoHide": "[Hïdë üñtïl pøïñtëd ät ~~~~~~~~]",
+    "presetStandard": "[Stäñdärd ~~~~]",
+    "presetMinimal": "[Mïñïmäl ~~~]",
+    "presetClassic": "[Çlässïç ~~~]"
   },
   "errors": {
     "rename": {
@@ -581,5 +592,11 @@
     "openTitle": "[Øpëñ thïs lïñk? ~~~~~]",
     "openBody": "[Ït øpëñs ïñ ÿøür wëb brøwsër ør mäïl äpp: ~~~~~~~~~~~~~]",
     "open": "[Øpëñ lïñk ~~~~]"
+  },
+  "layout": {
+    "toolbarPosition": "[Tøølbär pøsïtïøñ ~~~~~~]",
+    "toolbarStyle": "[Tøølbär stÿlë ~~~~~]",
+    "preset": "[Läÿøüt prësët ~~~~~]",
+    "menuLabel": "[Tøølbär øptïøñs ~~~~~~]"
   }
 }

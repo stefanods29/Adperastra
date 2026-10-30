@@ -327,7 +327,18 @@
     "deletePermanently": "Delete permanently",
     "undo": "Undo",
     "redo": "Redo",
-    "recentActions": "Recent actions"
+    "recentActions": "Recent actions",
+    "toolbarTop": "Top",
+    "toolbarBottom": "Bottom",
+    "toolbarLeft": "Left",
+    "toolbarRight": "Right",
+    "toolbarFull": "Icons and labels",
+    "toolbarCompact": "Compact",
+    "toolbarIconsOnly": "Icons only",
+    "toolbarAutoHide": "Hide until pointed at",
+    "presetStandard": "Standard",
+    "presetMinimal": "Minimal",
+    "presetClassic": "Classic"
   },
   "errors": {
     "rename": {
@@ -581,5 +592,11 @@
     "openTitle": "Open this link?",
     "openBody": "It opens in your web browser or mail app:",
     "open": "Open link"
+  },
+  "layout": {
+    "toolbarPosition": "Toolbar position",
+    "toolbarStyle": "Toolbar style",
+    "preset": "Layout preset",
+    "menuLabel": "Toolbar options"
   }
 }

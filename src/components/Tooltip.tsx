@@ -4,8 +4,9 @@ export interface TooltipProps {
   label: string;
   shortcut?: string;
   children: ReactNode;
-  /** Bars at the top of the window show their tooltips below. */
-  placement?: "above" | "below";
+  /** Bars at the top of the window show their tooltips below; toolbars on a
+   * side show theirs beside the buttons (Step 05c). */
+  placement?: "above" | "below" | "right" | "left";
 }
 
 export default function Tooltip({ label, shortcut, children, placement = "above" }: TooltipProps) {
@@ -21,6 +22,8 @@ export default function Tooltip({ label, shortcut, children, placement = "above"
     setVisible(false);
   };
 
+  const placed = placement === "above" ? "" : ` adp-tooltip--${placement}`;
+
   return (
     <span
       className="adp-tooltip-wrap"
@@ -31,7 +34,7 @@ export default function Tooltip({ label, shortcut, children, placement = "above"
     >
       {children}
       {visible ? (
-        <span className={placement === "below" ? "adp-tooltip adp-tooltip--below" : "adp-tooltip"} role="tooltip">
+        <span className={`adp-tooltip${placed}`} role="tooltip">
           <span>{label}</span>
           {shortcut ? <span className="adp-tooltip-shortcut">{shortcut}</span> : null}
         </span>

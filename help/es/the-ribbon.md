@@ -14,4 +14,8 @@ Cada pestaña de archivo tiene arriba una cinta de opciones con los comandos par
 - Mientras mantienes **Alt**, pulsa una letra para usar ese botón. Por ejemplo, en una pestaña de imagen, **Alt+R** gira la imagen a la derecha.
 - Cuando una cinta tiene varias pestañas, sus letras cambian entre ellas.
 
+## Mover la cinta de opciones
+
+Haz clic derecho en una parte vacía de la cinta de opciones para moverla abajo o a un lado, o para cambiar su estilo. La misma opción se aplica a la barra de comandos del Explorador (consulta «Mover barras de herramientas y paneles»).
+
 Consulta también: «Ver texto y código», «Ver imágenes» y «Ver Markdown».

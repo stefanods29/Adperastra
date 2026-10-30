@@ -327,7 +327,18 @@
     "deletePermanently": "Eliminar permanentemente",
     "undo": "Deshacer",
     "redo": "Rehacer",
-    "recentActions": "Acciones recientes"
+    "recentActions": "Acciones recientes",
+    "toolbarTop": "Arriba",
+    "toolbarBottom": "Abajo",
+    "toolbarLeft": "Izquierda",
+    "toolbarRight": "Derecha",
+    "toolbarFull": "Iconos y etiquetas",
+    "toolbarCompact": "Compacta",
+    "toolbarIconsOnly": "Solo iconos",
+    "toolbarAutoHide": "Ocultar hasta señalarla",
+    "presetStandard": "Estándar",
+    "presetMinimal": "Mínimo",
+    "presetClassic": "Clásico"
   },
   "errors": {
     "rename": {
@@ -581,5 +592,11 @@
     "openTitle": "¿Abrir este vínculo?",
     "openBody": "Se abrirá en tu navegador web o en tu aplicación de correo:",
     "open": "Abrir vínculo"
+  },
+  "layout": {
+    "toolbarPosition": "Posición de la barra de herramientas",
+    "toolbarStyle": "Estilo de la barra de herramientas",
+    "preset": "Diseño predefinido",
+    "menuLabel": "Opciones de la barra de herramientas"
   }
 }

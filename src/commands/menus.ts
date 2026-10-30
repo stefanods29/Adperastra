@@ -1,4 +1,14 @@
-import { ArrowDownWideNarrow, FileCode, Group, List, Plus, type LucideIcon } from "lucide-react";
+import {
+  ArrowDownWideNarrow,
+  FileCode,
+  Group,
+  LayoutTemplate,
+  List,
+  PanelTop,
+  Plus,
+  Rows2,
+  type LucideIcon,
+} from "lucide-react";
 import { VIEW_MODE_IDS, type ViewModeId } from "../services/settings";
 import { VIEW_MODE_COMMANDS } from "./explorerCommands";
 import { isCommandVisible, type Command, type CommandContext } from "./registry";
@@ -128,12 +138,44 @@ export const commandBarFor = (order: readonly ViewModeId[]): BarEntry[] => [
 
 export const COMMAND_BAR: BarEntry[] = commandBarFor(VIEW_MODE_IDS);
 
+/** The toolbar's right-click menu (Step 05c): where it sits, how it looks
+ * and the ready-made presets. Saved presets live in Settings. */
+export const TOOLBAR_MENU: MenuEntry[] = [
+  {
+    type: "submenu",
+    id: "toolbarPosition",
+    labelKey: "layout.toolbarPosition",
+    icon: PanelTop,
+    entries: [cmd("layout.toolbarTop"), cmd("layout.toolbarBottom"), cmd("layout.toolbarLeft"), cmd("layout.toolbarRight")],
+  },
+  {
+    type: "submenu",
+    id: "toolbarStyle",
+    labelKey: "layout.toolbarStyle",
+    icon: Rows2,
+    entries: [
+      cmd("layout.toolbarFull"),
+      cmd("layout.toolbarCompact"),
+      cmd("layout.toolbarIconsOnly"),
+      cmd("layout.toolbarAutoHide"),
+    ],
+  },
+  separator,
+  {
+    type: "submenu",
+    id: "layoutPreset",
+    labelKey: "layout.preset",
+    icon: LayoutTemplate,
+    entries: [cmd("layout.presetStandard"), cmd("layout.presetMinimal"), cmd("layout.presetClassic")],
+  },
+];
+
 /** Drop unknown or hidden commands, empty submenus and icon rows, and
  * separators that would sit at an edge or next to another separator. */
-export function resolveMenu(
+export function resolveMenu<C = CommandContext>(
   entries: readonly MenuEntry[],
-  ctx: CommandContext,
-  lookup: (id: string) => Command | undefined,
+  ctx: C,
+  lookup: (id: string) => Command<C> | undefined,
 ): MenuEntry[] {
   const visible = (id: string) => {
     const command = lookup(id);

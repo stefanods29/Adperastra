@@ -14,4 +14,6 @@ The command bar sits under the address bar and holds the actions you use most. H
 
 When the window is narrow, buttons that don't fit move into **See more**.
 
+To move the command bar to the bottom or to a side, or to change its style, right-click an empty part of it (see "Moving toolbars and panels").
+
 See also: "Views: icons, list, details, tiles and content" and "Selecting files".

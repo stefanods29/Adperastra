@@ -14,4 +14,8 @@ Each file tab has a ribbon at the top with the commands for that kind of file, g
 - While holding **Alt**, press a letter to use that button. For example, in a picture tab **Alt+R** turns the picture to the right.
 - When a ribbon has several tabs, their letters switch between them.
 
+## Moving the ribbon
+
+Right-click an empty part of the ribbon to move it to the bottom or to a side, or to change its style. The same choice applies to the Explorer's command bar (see "Moving toolbars and panels").
+
 See also: "Viewing text and code", "Viewing images" and "Viewing Markdown".
