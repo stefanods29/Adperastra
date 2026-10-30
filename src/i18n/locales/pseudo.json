@@ -625,5 +625,13 @@
     "toolbarStyle": "[Tøølbär stÿlë ~~~~~]",
     "preset": "[Läÿøüt prësët ~~~~~]",
     "menuLabel": "[Tøølbär øptïøñs ~~~~~~]"
+  },
+  "themes": {
+    "light": "[Ädpërästrä lïght ~~~~~~]",
+    "bright": "[Brïght ~~~]",
+    "paper": "[Päpër ~~]",
+    "dark": "[Ädpërästrä därk ~~~~~~]",
+    "amoled": "[ÄMØLËD bläçk ~~~~~]",
+    "highContrast": "[Hïgh çøñträst ~~~~~]"
   }
 }

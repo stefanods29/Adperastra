@@ -1,0 +1,100 @@
+{
+  "_note": "Bright: neutral light theme with crisper borders (Step 05d).",
+  "color": {
+    "surface": {
+      "window": "#FFFFFF",
+      "chrome": "#F9F9F9",
+      "pane": "#FFFFFF",
+      "sidebar": "#F9F9F9",
+      "selected": "#EDEDED",
+      "tabInactive": "#EBEBEB",
+      "header": "#F5F5F5",
+      "segmentTrack": "#F0F0F0",
+      "canvasDoc": "#F5F5F5",
+      "canvasMedia": "#F3F3F3",
+      "selectedRow": "#CCE4F7"
+    },
+    "text": {
+      "primary": "#1B1B1B",
+      "secondary": "#5C5C5C",
+      "tertiary": "#767676",
+      "bodyMuted": "#2E2E2E",
+      "onAccent": "#FFFFFF"
+    },
+    "border": {
+      "default": "#E0E0E0",
+      "subtle": "#DADADA",
+      "panel": "#E5E5E5",
+      "input": "#8A8A8A",
+      "chip": "#C4C4C4"
+    },
+    "accent": {
+      "explorer": "#005FB8",
+      "excel": "#107C41",
+      "word": "#185ABD",
+      "pdf": "#E4181F",
+      "image": "#0A8A93",
+      "powerpoint": "#C43E1C",
+      "group": "#7F56D9"
+    },
+    "accentDark": {
+      "excel": "#185C37",
+      "word": "#0F4761"
+    },
+    "accentLight": {
+      "explorer": "#CCE4F7",
+      "excel": "#E6F2EA",
+      "word": "#EAF1FB",
+      "image": "#DEF3F4",
+      "group": "rgba(127,86,217,0.16)"
+    },
+    "status": {
+      "_note": "Message bars (Step 04c), from the Windows 11 caution colors.",
+      "caution": "#9D5D00",
+      "cautionBackground": "#FFF4CE"
+    }
+  },
+  "font": {
+    "family": "Inter, system-ui, sans-serif",
+    "size": {
+      "tiny": 9,
+      "caption": 10,
+      "small": 11,
+      "body": 12,
+      "command": 13,
+      "section": 13,
+      "gallerySample": 16
+    }
+  },
+  "radius": {
+    "xs": 2,
+    "sm": 4,
+    "md": 6,
+    "lg": 8,
+    "xl": 10,
+    "pill": 14,
+    "round": 16
+  },
+  "shadow": {
+    "page": "0 2px 10px rgba(0,0,0,.16)",
+    "card": "0 2px 8px rgba(0,0,0,.12)",
+    "segment": "0 1px 3px rgba(0,0,0,.14)",
+    "image": "0 4px 16px rgba(0,0,0,.22)"
+  },
+  "space": [2, 4, 6, 8, 10, 12, 14, 16, 18, 22, 25],
+  "syntax": {
+    "_note": "Code colors for viewers and editors (Step 04b), from the GitHub light palette; all reach 4.5:1 on white.",
+    "keyword": "#CF222E",
+    "string": "#0A3069",
+    "number": "#0550AE",
+    "comment": "#6E7781",
+    "function": "#8250DF",
+    "type": "#953800",
+    "tag": "#116329",
+    "attribute": "#0550AE",
+    "property": "#0550AE",
+    "invalid": "#82071E",
+    "match": "rgba(255, 223, 93, 0.55)",
+    "matchSelected": "rgba(255, 159, 67, 0.6)"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "_note": "High contrast: dark theme with every text at 7:1 or more (Step 05d).",
+  "color": {
+    "surface": {
+      "window": "#000000",
+      "chrome": "#000000",
+      "pane": "#000000",
+      "sidebar": "#000000",
+      "selected": "#2B2B2B",
+      "tabInactive": "#1A1A1A",
+      "header": "#0D0D0D",
+      "segmentTrack": "#1A1A1A",
+      "canvasDoc": "#000000",
+      "canvasMedia": "#000000",
+      "selectedRow": "#00385C"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#E6E6E6",
+      "tertiary": "#A6A6A6",
+      "bodyMuted": "#FFFFFF",
+      "onAccent": "#000000"
+    },
+    "border": {
+      "default": "#8C8C8C",
+      "subtle": "#6E6E6E",
+      "panel": "#8C8C8C",
+      "input": "#FFFFFF",
+      "chip": "#BFBFBF"
+    },
+    "accent": {
+      "explorer": "#1AEBFF",
+      "excel": "#3CCB7F",
+      "word": "#6CB8FF",
+      "pdf": "#FF6B6B",
+      "image": "#4FE0E8",
+      "powerpoint": "#FF8F6B",
+      "group": "#C3A6FF"
+    },
+    "accentDark": {
+      "excel": "#3CCB7F",
+      "word": "#6CB8FF"
+    },
+    "accentLight": {
+      "explorer": "rgba(26,235,255,0.25)",
+      "excel": "rgba(60,203,127,0.25)",
+      "word": "rgba(108,184,255,0.25)",
+      "image": "rgba(79,224,232,0.25)",
+      "group": "rgba(195,166,255,0.25)"
+    },
+    "status": {
+      "_note": "Message bars (Step 04c), from the Windows 11 caution colors.",
+      "caution": "#FFFF00",
+      "cautionBackground": "#2E2A00"
+    }
+  },
+  "font": {
+    "family": "Inter, system-ui, sans-serif",
+    "size": {
+      "tiny": 9,
+      "caption": 10,
+      "small": 11,
+      "body": 12,
+      "command": 13,
+      "section": 13,
+      "gallerySample": 16
+    }
+  },
+  "radius": {
+    "xs": 2,
+    "sm": 4,
+    "md": 6,
+    "lg": 8,
+    "xl": 10,
+    "pill": 14,
+    "round": 16
+  },
+  "shadow": {
+    "page": "0 2px 10px rgba(0,0,0,.16)",
+    "card": "0 2px 8px rgba(0,0,0,.12)",
+    "segment": "0 1px 3px rgba(0,0,0,.14)",
+    "image": "0 4px 16px rgba(0,0,0,.22)"
+  },
+  "space": [2, 4, 6, 8, 10, 12, 14, 16, 18, 22, 25],
+  "syntax": {
+    "_note": "Code colors with strong contrast on black (Step 05d).",
+    "keyword": "#FF9492",
+    "string": "#ADDCFF",
+    "number": "#91CBFF",
+    "comment": "#BDC4CC",
+    "function": "#DBB7FF",
+    "type": "#FFB757",
+    "tag": "#72F088",
+    "attribute": "#91CBFF",
+    "property": "#91CBFF",
+    "invalid": "#FFB1AF",
+    "match": "rgba(255,255,0,0.4)",
+    "matchSelected": "rgba(26,235,255,0.5)"
+  }
+}

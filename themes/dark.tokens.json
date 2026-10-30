@@ -19,7 +19,7 @@
       "secondary": "#B8B8B8",
       "tertiary": "#8A8A8A",
       "bodyMuted": "#DDDDDD",
-      "onAccent": "#FFFFFF"
+      "onAccent": "#000000"
     },
     "border": {
       "default": "#3D3D3D",

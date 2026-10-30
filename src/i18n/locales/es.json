@@ -625,5 +625,13 @@
     "toolbarStyle": "Estilo de la barra de herramientas",
     "preset": "Diseño predefinido",
     "menuLabel": "Opciones de la barra de herramientas"
+  },
+  "themes": {
+    "light": "Adperastra claro",
+    "bright": "Luminoso",
+    "paper": "Papel",
+    "dark": "Adperastra oscuro",
+    "amoled": "Negro AMOLED",
+    "highContrast": "Contraste alto"
   }
 }

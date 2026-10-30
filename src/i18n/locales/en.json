@@ -625,5 +625,13 @@
     "toolbarStyle": "Toolbar style",
     "preset": "Layout preset",
     "menuLabel": "Toolbar options"
+  },
+  "themes": {
+    "light": "Adperastra light",
+    "bright": "Bright",
+    "paper": "Paper",
+    "dark": "Adperastra dark",
+    "amoled": "AMOLED black",
+    "highContrast": "High contrast"
   }
 }
