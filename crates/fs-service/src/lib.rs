@@ -6,6 +6,7 @@
 //! same `Item` shape through `BackingKind`.
 
 pub mod details;
+pub mod folder_views;
 pub mod item;
 pub mod list;
 pub mod ops;
@@ -36,6 +37,9 @@ pub enum FsError {
 pub type Result<T> = std::result::Result<T, FsError>;
 
 pub use details::{attribute_names, filetime_to_unix, item_details, ItemDetails};
+pub use folder_views::{
+    is_view_mode, FolderView, FolderViews, MAX_FOLDER_VIEWS, MAX_FOLDER_VIEW_PATH, VIEW_MODES,
+};
 pub use item::{BackingKind, Item, ItemAttrs, ItemKind};
 pub use list::{
     file_id_is_stable, list_dir, list_dir_batched, list_dir_cancellable, list_dir_std,
