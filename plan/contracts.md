@@ -124,6 +124,13 @@ unverified item; when automatic restoration is unsafe, retain the recoverable
 item and clearly report the pending recovery. Journal and staging cleanup must
 not remove unrelated files. Normal operation and recovery must remain offline.
 
+**Step 03b status (owner decision 2026-10-30).** Replace is unavailable in
+Step 03b. The UI offers Merge for two folders with the same name, Skip, and
+Keep both; the command boundary returns `ops.replace_unavailable` for
+`replace`. Merge never replaces a file. Replace is enabled only when the
+full conflict window implements the approval and recovery rules above.
+This is the fail-safe branch of this contract, not a relaxation of it.
+
 **Implementation research still required.** The existing path-based
 `trash::delete` call does not establish that the item recycled is the one
 whose identity was approved. A handle-based rename to staging is a candidate,

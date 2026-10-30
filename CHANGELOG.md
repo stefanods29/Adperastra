@@ -8,15 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- File operations (Step 03b): New folder and text file, Cut, Copy, Paste, and Delete through the command bar, menus, and keyboard; big copies and moves run as background jobs with progress and Cancel; name conflicts ask first (Replace, Skip, or Keep both). Replace sends the item that was there to the Recycle Bin, so Undo brings it back; a file and a folder with the same name never replace each other, and a whole drive can never be moved or deleted.
+- File operations (Step 03b): New folder and text file, Cut, Copy, Paste, and Delete through the command bar, menus, and keyboard; big copies and moves run as background jobs with progress and Cancel; name conflicts ask first (Merge for two folders, Skip, or Keep both). Merge never touches an existing file; a file and a folder with the same name cannot be combined, and a whole drive can never be moved or deleted. Replace is not offered yet: it returns with the full conflict window, once recycling can be bound to the exact item you approved.
 - Undo for almost everything: Ctrl+Z / Ctrl+Y, an Undo button on the toast after each action, and a Recent actions list. Deleting goes to the Recycle Bin and restores from it; Shift+Delete deletes permanently after a warning that it cannot be undone.
 - Drag and drop: drag items onto folders in the list, navigation pane, address bar, or drives (Ctrl copies, Shift moves, Alt creates a shortcut), drag files in from Windows Explorer or the desktop, and drag files out to them.
-- Paste as file: pasted text becomes a .txt, .md, or .csv file and a pasted screenshot becomes a .png (or .jpg, chosen in Settings), with the name ready to edit.
+- Paste as file: pasted text becomes a .txt, .md, or .csv file and a pasted screenshot becomes a .png (or .jpg, chosen in Settings), with the name ready to edit. Image decoding runs in a separate helper process, so a damaged image cannot hang the app.
+- Duplicate names are clear: New items, downloads and pasted files count from one ("report (1)"); a copied item that keeps both uses Explorer's "report - Copy", and a moved item uses "report (1)".
 - Help pages for copying and moving, deleting and the Recycle Bin, undo, drag and drop, and paste as file, in English and Spanish.
 
 ### Fixed
 
-- Choosing Replace, Skip or Keep both for each conflict separately now works; a cancelled or partly finished move can be undone exactly; moving, recycling or deleting system items asks first.
+- Choosing each conflict separately now works; a cancelled or partly finished move can be undone exactly; moving, recycling or deleting system items asks first.
+- A copy or move can no longer recycle a file that appeared after the conflict prompt: Replace is unavailable until recycling can be bound to the exact approved item.
+- A move deletes a source only after its identity and bytes match the finished copy; a source changed or replaced during the job stays where it is.
+- Pasting an image can no longer overwrite a file created while it was being saved, and a damaged image is decoded in a separate process.
+- Redo after Undo never overwrites or recycles an item restored at the destination; it reports the conflict instead.
+- The speed and runtime checks stop only their own test app and its child processes, never every Adperastra window on the PC.
 - Tabs can be switched with the keyboard (arrow keys, Home, End).
 - Screen-reader fixes: the tab strip, column headers and the language tag of the page follow the accessibility rules, and the small "Folders in" arrows in the address bar are easier to hit.
 - Every app instance keeps its browser data in its own data folder, and the app talks to its core directly instead of through a slower fallback.

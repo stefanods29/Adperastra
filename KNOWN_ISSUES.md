@@ -11,35 +11,11 @@ that fixed it.
 
 ## Open
 
-### KI-029 - Clipboard image decoding runs in the app process (Blocker)
-- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (untrusted image parsing can crash or hang the main app).
-- **What:** Pasting a clipboard image invokes Windows image decoding in the main process without a helper timeout, contrary to R-SEC-9.
-- **Workaround:** Avoid pasting images as files until the decoder is isolated.
-- **Target:** Step 03b, before completion.
-
-### KI-028 - Redo fails after undoing a replacement (Blocker)
-- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (Redo of a normal file operation is broken).
-- **What:** Undo restores the original destination, but Redo then tries to create the replacement without first handling that restored item.
-- **Workaround:** Repeat the operation manually and choose the conflict action again.
-- **Target:** Step 03b, before completion; any correction must also satisfy the approved-target safety contract.
-
-### KI-025 - Pasting an image can overwrite a newly created file (Blocker)
-- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (possible data loss and unsafe image-buffer lifetime).
-- **What:** Image paste writes directly to a selected name, which another program may create before the write; failure cleanup can also remove that file. The PNG decoder may outlive its input buffer.
-- **Workaround:** Do not paste images as files until fixed.
-- **Target:** Step 03b, before completion.
-
-### KI-026 - Copy or move can replace a newly arrived destination without consent (Blocker)
-- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (possible data loss).
-- **What:** A destination can appear after the conflict check, and the completed copy can recycle or overwrite it without the user choosing Replace for that item.
-- **Workaround:** Avoid copying or moving into folders that other programs are changing.
-- **Target:** Step 03b, before completion.
-
-### KI-027 - A move can remove a source changed during copying (Blocker)
-- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (possible data loss).
-- **What:** A cross-volume or merged move copies a source and later deletes it by path even if another program changed or replaced it. Directory links introduced after preflight also need protection in the operation engine.
-- **Workaround:** Avoid moving files or folders while other programs are changing them.
-- **Target:** Step 03b, before completion.
+### KI-030 - Replacing existing files is not available yet (Minor, owner-approved deferral)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (a deliberate deferral approved by the owner; the step does not require it, and Merge / Skip / Keep both cover safe daily use).
+- **What:** A path-based Recycle Bin call cannot prove that it removes the exact file the user approved; another file can appear at the same path after the prompt. The command boundary therefore returns `ops.replace_unavailable` and the dialog offers Merge (folders), Skip and Keep both. Replace returns with the full conflict window and the approved-target mechanism in `plan/contracts.md`.
+- **Workaround:** choose Keep both to keep both files, or delete the old item first with Delete (it goes to the Recycle Bin). Merge adds new files to an existing folder without touching files already there.
+- **Target:** the full conflict window (Step 09f); reviewed at the v0.1 milestone.
 
 ### KI-023 - Builds before this fix left a WebView2 folder outside the data folder (Minor)
 - **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (disk space only, a one-time leftover).
@@ -47,9 +23,9 @@ that fixed it.
 - **Workaround:** the old folder can be deleted by hand; nothing in it is needed.
 - **Target:** the App storage page (Step 12a) lists and removes leftover app folders.
 
-### KI-024 - Two interactions measured over the 20% rule in one run (Minor)
+### KI-024 - Interactions measured over the 20% rule in speed comparisons (Minor)
 - **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (well inside the 100 ms tier; owner decision 2026-10-30 that unreliable speed results do not block).
-- **What:** One release run measured rename box (F2) 8.6 ms vs 5.9 ms in Step 03a, and 100k folder Shift+click range 30.6 ms vs 12.9 ms. On this PC, with other apps running, the same build varied up to 2x between runs: Shift+click measured 12.6, 16.1 and 34.8 ms in alternating runs against a mid-step build's 21.1, 27.5 and 52.4 ms. No full comparison with the Step 03a build has completed.
+- **What:** One release run measured rename box (F2) 8.6 ms vs 5.9 ms in Step 03a, and 100k folder Shift+click range 30.6 ms vs 12.9 ms. On this PC, with other apps running, the same build varied up to 2x between runs: Shift+click measured 12.6, 16.1 and 34.8 ms in alternating runs against a mid-step build's 21.1, 27.5 and 52.4 ms. A subsequent three-round alternating comparison against Step 03a measured selection at 10.1 ms vs 7.9 ms and 100k-folder Select All at 36.3 ms vs 28 ms. Both exceed the 20% regression check but remain within the 100 ms Instant tier. The full check therefore failed its speed regression gate; these are measurements on a dirty worktree, not the final code. Results: `build/verification/20261030-172031-402-full/speed-ui.json` (local generated evidence).
 - **Workaround:** none needed.
 - **Target:** check again at the next step's speed run.
 
@@ -121,6 +97,12 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-025, KI-026, KI-028, KI-029 - Unsafe image paste, an unapproved Replace, a broken Redo, and in-process image decoding (fixed in Step 03b)
+Replace is refused at the command boundary (`ops.replace_unavailable`), so a file that appears after the conflict prompt can never be recycled without a new decision; the dialog offers Merge / Skip / Keep both. A stored replacement history now fails safely with `ops.exists` and leaves the restored item in place. Clipboard images are encoded in a separate `--clipboard-image-helper` process with a 1.5 GiB job limit and a 15 s timeout; the parent owns an exclusive staging handle, publishes without replacing, and deletes only its own file on failure. The PNG input buffer lives through decoding. Fixed in commit `96dedb4`; tests `image_output_never_overwrites_a_destination_created_during_encoding`, `partial_creation_never_replaces_an_existing_file`, `staging_handle_denies_replacement_and_publishes_without_overwriting`, the helper frame/timeout/crash tests, `redo never recycles or overwrites a destination restored by undo`, and "does not offer Replace or Merge for a file conflict".
+
+### KI-027 - A move could remove a source changed during copying (fixed in Step 03b)
+The copy keeps the source's volume, file ID, attributes, times and size. Before deleting, the source is reopened with writes, renames and deletes denied, its identity and bytes are compared with the finished copy, and it is deleted through that handle only when unchanged. A source that changed or was replaced stays; directory links in a moved tree skip the whole top-level item, and a merge never writes through a junction in the destination. Fixed in commits `96dedb4` and `83ee390`; tests `merged_move_does_not_delete_a_file_recreated_after_it_was_copied`, `merged_move_preserves_an_identical_replacement_created_during_the_job`, `merged_move_preserves_source_when_its_attributes_change`, `merged_move_can_remove_a_readonly_source_when_it_is_unchanged`, `merged_move_never_removes_files_through_a_directory_junction`, `merge_never_writes_through_a_destination_junction`, and `cross_volume_path_flushes_then_deletes_the_exact_source_handle`.
 
 ### KI-022 - Earlier full-suite claims exceeded recorded verification (fixed in Step 03b)
 `scripts/test-all.ps1` now holds the promised runner, with license and vulnerability audits, packaged runtime checks with axe-core, scroll frame times and a speed gate; `docs/test-and-speed-plan.md` lists what actually runs and which later step builds the rest. Screenshot comparison stays by hand. Not yet run: full mode on GitHub. Commits `d39f90b`, `0d235b4`.

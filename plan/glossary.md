@@ -35,7 +35,7 @@ Spanish texts use Latin American Spanish, informal "tú", short and friendly, ma
 | Sort / Sort by / Group by / View | Ordenar / Ordenar por / Agrupar por / Ver |
 | Ascending / Descending | Ascendente / Descendente |
 | Hidden items / File name extensions / Item check boxes | Elementos ocultos / Extensiones de nombre de archivo / Casillas de elementos |
-| Replace / Skip / Keep both | Reemplazar / Omitir / Conservar ambos |
+| Replace / Merge / Skip / Keep both | Reemplazar / Combinar / Omitir / Conservar ambos |
 | Settings / Language / Theme / Light / Dark / System | Configuración / Idioma / Tema / Claro / Oscuro / Sistema |
 | Help / Search help / What's new | Ayuda / Buscar en la ayuda / Novedades |
 | Save / Cancel / Close / Done / Ready | Guardar / Cancelar / Cerrar / Listo / Listo |

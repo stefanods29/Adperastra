@@ -3,6 +3,13 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-30 - Conflict dialog: Merge instead of Replace, and numbered Keep both (Step 03b) - approved by the owner on 2026-10-30
+
+- **What:** after the safety review found that a path-based Recycle Bin call can remove a file that appeared after the prompt, the owner approved a revised conflict dialog. Figma has no conflict dialog; this is the 2026-10-28 extension with a smaller button set. For two folders with the same name it offers **Merge** (primary), **Skip** and **Keep both**, with the note "Merge adds the new files and keeps the files that are already there. Files with the same name are skipped." For a file it offers **Keep both** (primary) and **Skip**. **Replace** is not offered until the full conflict window can bind recycling to the exact approved item.
+- **Numbering:** New items, downloads and pasted files count from one ("report (1)", "report (2)"). A copied item that keeps both, including a same-folder paste, uses Windows' "report - Copy", then "report - Copy (2)". A moved item that keeps both uses "report (1)". The owner chose the numbered form for new files so duplicates are obviously related, and kept Explorer's copy name for copy-paste.
+- **Closest-option differences:** the note line uses the secondary text color at 11 px; it only appears for folder conflicts. The dialog keeps the 2026-10-28 size, radius, shadow and button order.
+- **Evidence:** `docs/screenshots/step-03b/09-conflict-*.png` will be refreshed after the change; the approved preview was shown in chat on 2026-10-30.
+
 ## 2026-10-30 - Accessibility fixes and the setup window's font (Step 03b) - agent decision, for owner review
 
 - **What:** the axe-core check (WCAG 2.2 AA) asks for clickable targets of at least 24 x 24 px. The breadcrumb's small "Folders in ..." chevrons were 15 px; their clickable area is now 24 x 24 px with the same 11 px icon, so the address bar's segments sit a few pixels further apart than in Figma. Column headers keep their look; their sort state is read out in the button label instead of an arrow-only cue.

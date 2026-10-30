@@ -150,6 +150,8 @@ engine risk is retired with evidence before any editor is built on it.
 
 Drive/share roots and the actual Windows/Program Files folders are always refused; confirmation cannot override this. Destructive operations do not follow directory links or junctions: a top-level item containing one is skipped with `link_not_supported`, leaving its source untouched. Copy keeps its existing source loop guard; Replace target checks also refuse directory reparse points. Metadata failures are skipped and reported. Undo/Redo transfer jobs check their existing source and destination paths under the same rules; missing counterpart paths are expected and are left for the operation engine to validate.
 
+**Step 03b status:** Replace is unavailable. The UI offers Merge for two folders with the same name, Skip, and Keep both; `file_op_start` returns `ops.replace_unavailable` for `replace`. Merge never replaces a file. Replace returns with the full conflict window and the approved-target mechanism below.
+
 ## Step 03b: exact transfer effects for Undo (contracts 10 and 11)
 
 A move report retains an exact transfer plan even when cancelled or only partly successful. Each TransferEffect records from, to, kind (file, directory scaffold, or atomic tree rename), source_removed, and destination_created. Directory scaffolds are never mistaken for an atomic renamed tree. File targets are the actual names written, including Keep both names. Effects are recorded as disk changes succeed; completed remains a user-facing top-level summary, never the source of truth for Undo.

@@ -14,8 +14,8 @@ problem so it can be recorded and fixed.
   .\scripts\measure-startup.ps1 -Step post-reboot -Runs 5
   ```
 
-  The script writes its measurements to `docs\benchmarks\` and stops
-  Adperastra and its WebView2 children during the measurement. Share the
+  The script writes its measurements to `docs\benchmarks\` and stops only
+  the isolated Adperastra test process and its children. Share the
   result for comparison with the 1-second startup tier. A miss needs a fix
   before the v0.1 milestone.
 
@@ -25,7 +25,8 @@ See `docs/step-reports/step-03b.md` for the full test checklist and build
 instructions. In English and Spanish, and in light and dark themes:
 
 - [ ] Check creation, copying, cutting and moving, rename, deletion, Undo and
-  Redo; test conflicts and restoring the replaced item. Use disposable files.
+  Redo; test the conflict choices (Merge two folders, Skip, Keep both) and the
+  numbered names. Use disposable files.
 - [ ] Cancel a large copy and check that no partial file remains; confirm Undo
   affects only completed work.
 - [ ] Check the system-item warning using a disposable test item, not an

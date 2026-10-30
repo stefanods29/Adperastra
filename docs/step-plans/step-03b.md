@@ -12,6 +12,7 @@
 
 - Branch `step-03b-file-operations` from `testing`; tag `v0.0.6-step03b`. Conventional Commits with `[step-03b]`; dependencies in their own `deps:` commits.
 - Owner decisions 2026-10-28: the new-screens design preview (progress panel, conflict dialog, permanent-delete warning, Recent actions, paste-as-file via the rename box) is approved; try full drag both ways and propose a split if the drag-out spike balloons; check the `trash` crate first (MIT gate) before hand-writing Recycle Bin code; conflicts offer Replace / Skip / Keep both with a for-all checkbox and same-folder paste auto-keeps both; pasted images default to PNG with a Settings choice, and undoing a copy sends the copies to the Recycle Bin.
+- Owner decisions 2026-10-30, after the safety review: **Replace is removed from this step** because Windows has no documented way to bind a Recycle Bin call to the exact file the user approved; the conflict dialog offers **Merge** (folders only), **Skip** and **Keep both**, approved as a revised preview. Replace returns with the full conflict window, where the approved-target mechanism in `plan/contracts.md` is built. **Keep both** and same-folder copies use `name (1)`, `name (2)` so the original and the new item are obviously related. The owner also chose to keep this step local-only: no push, pull request, or `main` change.
 - KI-014 (Major) must close: rename gets Undo. KI-015 closes for New/Cut/Copy/Paste/Delete; List/icon views stay disabled until Step 05.
 - Never overwrite silently. Delete goes to the Recycle Bin; Shift+Delete (`irreversible`) warns it cannot be undone before running.
 - Every new Tauri command: `ensure_main`, `validate_absolute_path`, `spawn_blocking` for disk work, `copy.<reason>`-style error codes, and an isolation allowlist entry.
@@ -27,6 +28,23 @@
 - Cut/paste with Windows Explorer works both ways (clipboard drop effect honored; a cut source is removed only after a successful paste).
 - Link loops inside copied folders are detected and never followed endlessly; access-denied items are skipped and listed, drives disappearing mid-job end the job cleanly.
 - Paths from the UI are validated in Rust; clipboard and drag payloads are treated as untrusted input.
+
+## Safety review (2026-10-30)
+
+A review of the finished step found five Blockers. The fixes are part of this
+step, not a later one:
+
+| Issue | Fix |
+|---|---|
+| KI-025: image paste could overwrite a file created after the name was chosen, and the PNG decoder could outlive its buffer | The image goes through an exclusive `create_new` staging handle; publishing renames by handle without replace; failure deletes only that handle's file; the input buffer lives through decoding. |
+| KI-026: copy/move could recycle a destination that appeared after the conflict prompt | Replace is refused at the command boundary (owner decision 2026-10-30). Merge never touches a file; Skip and Keep both are safe. Replace returns only with the exact approved-target mechanism. |
+| KI-027: a move could delete a source changed during the copy | The copy keeps a file-identity/metadata snapshot; the source is reopened with write/delete denied, compared with the copy and its snapshot, and deleted by handle only when unchanged. Merged moves refuse directory links; same-volume renames use a no-replace rename. |
+| KI-028: Redo after undoing a replacement failed | The UI path that produced it is gone with Replace. A stored replacement history now fails safely (`ops.exists`) and leaves the restored item untouched. |
+| KI-029: clipboard image decoding ran in the app process | The app starts `Adperastra.exe --clipboard-image-helper`; the parent attaches a memory-limited job and a 15 s timeout, drains a framed binary response, and owns the destination handle. The helper receives only `png` or `jpg`, never a path. |
+
+The same review found that the speed and runtime scripts stopped every
+`Adperastra.exe` and every WebView2 process on the PC. The scripts now start
+each test run in its own Windows job and stop only that job's processes.
 
 ---
 
@@ -45,7 +63,7 @@
 ### Slice 3: File operations through the registry
 
 - [x] Turn on New folder / New text file, Cut, Copy, Paste, Delete; add Paste as file and permanent delete commands; menus in `menus.ts` (command bar, item menu with Cut/Copy/Paste/Delete, background menu with Paste + Paste as file); keyboard Ctrl+X/C/V, Delete, Shift+Delete, Ctrl+Shift+N in FileList/Explorer.
-- [x] Conflict dialog (Replace / Skip / Keep both, for-all) and permanent-delete warning dialog (approved design); job panel with progress + Cancel and skipped-item report.
+- [x] Conflict dialog (Merge / Skip / Keep both, for-all; Replace removed by the 2026-10-30 owner decision) and permanent-delete warning dialog (approved design); job panel with progress + Cancel and skipped-item report.
 - [x] Clipboard in Rust: `clipboard_set_files` (CF_HDROP + Preferred DropEffect), `clipboard_read` (files + effect, text with size limit), paste honors cut by moving; friendly errors as `ops.<reason>` codes.
 
 ### Slice 4: Paste as file
