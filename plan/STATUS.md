@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `05c` is waiting for the owner's design approval (T10), then `05d`. Steps 04a to 05c are merged into local `testing`; their local tags wait for the speed runs, screenshots and hand checks listed in their reports.
+**Current step:** `05d`. Steps 04a to 05c are merged into local `testing`; their local tags wait for the speed runs, screenshots and hand checks listed in their reports.
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
@@ -26,7 +26,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 04c | Audio and video player, protected view, Open as text/hex, Default apps | in progress (speed, screenshots, hand checks left) | v0.0.9-step04c |
 | 05a | View modes: List, Icons, Tiles, Content | in progress (speed, screenshots, hand checks left) | v0.0.10-step05a |
 | 05b | Column view | in progress (speed, screenshots, hand checks left) | v0.0.11-step05b |
-| 05c | Movable toolbars and panels, layout presets | waiting for owner (T10 design approval) | v0.0.12-step05c |
+| 05c | Movable toolbars and panels, layout presets | in progress (speed, pseudo-locale screenshots, hand checks left) | v0.0.12-step05c |
 | 05d | Appearance, built-in themes, Settings page | guide | v0.0.13-step05d |
 | 06a | Text editing | guide | v0.0.14-step06a |
 | 06b | Version history | guide | v0.0.15-step06b |
@@ -91,6 +91,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 
 ## Owner decisions log (newest first)
 
+- 2026-10-30: Step 05c side and bottom designs approved from the T10 screenshots.
 - 2026-10-30: Coding agents building a step only document existing errors in `KNOWN_ISSUES.md`; they do not fix them. They fix only failures their own changes for that step caused.
 - 2026-10-30: Build faster, in parallel where it is safe. Coding agents work in separate git worktrees. Skip the full test run after each task: each task runs a quick check (formatting, compile, translations, IPC check, UI build), and the tests each step lists are still written. The full gate runs once per batch, before a step is merged into local `testing`; speed runs and screenshots run one at a time after that. Still local only: no push, pull request, tag on `main`, or `main` change.
 - 2026-10-30: Step 03b accepted. Skip repeated full test runs while building later steps; run the full suite at the end. Use subagents and git worktrees to build independent steps in parallel. Keep everything local: no push, pull request, or `main` change. Shared contracts and `plan/rules.md` still win over speed.

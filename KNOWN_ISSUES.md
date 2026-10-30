@@ -11,6 +11,17 @@ that fixed it.
 
 ## Open
 
+### KI-035 - The line under the toolbar stops partway across the window (Minor)
+- **Found in:** Step 05c screenshots, 2026-10-30. **Severity:** Minor (cosmetic).
+- **What:** With the toolbar on top in the moved-pane, tabs-on-the-left and Classic layouts, the thin line under the command bar ends before the right edge of the window.
+- **Target:** reviewed at the next milestone.
+
+### KI-034 - Narrow layouts crowd the address bar and the Size column (Minor)
+- **Found in:** Step 05c screenshots, 2026-10-30, at 1200 x 900. **Severity:** Minor (the owner approved the designs with these visible).
+- **What:** With tabs on the left, the last part of a long address wraps and runs into the search box. With the toolbar on the left and both panes open, the Size column is cut off.
+- **Workaround:** widen the window, hide a pane, or scroll the list sideways.
+- **Target:** reviewed at the next milestone.
+
 ### KI-033 - Going to the folder that is already open empties the list (Major)
 - **Found in:** Step 05c screenshot run, 2026-10-30; the code path dates from Steps 02 and 03a. **Severity:** Major until checked by hand (it can look as if a folder lost its files, though no file changes).
 - **What:** `goToLocation` in `src/views/ExplorerHome.tsx` clears the list, but the listing effect only reloads when the path, sort or refresh count changes. Typing the open folder's path in the address bar leaves the list empty, and the status bar says "No items". Other routes through `goToLocation`, such as clicking the open folder in the navigation pane, may do the same; they have not been tried.

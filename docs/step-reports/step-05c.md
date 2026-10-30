@@ -51,7 +51,7 @@ Dates: 2026-10-30. Status: built and committed on the local branch `step-05c-lay
   - Nothing else in 05c refers to 05b's code.
 - **T11 item 1** ("the step value `05b` becomes `05c`"): `scripts/measure-ui.mjs` has no literal `05b`; the step id always comes from the command line (`-Step`, else the branch name, `step-05c-layout` gives `05c`). Nothing to change there.
 - **T10 screenshot script:** the Step 03b screens delete the demo's `notes.txt` for good (Shift+Delete), so the script now recreates that file and reopens the demo folder right before the text-tab screenshot. Without this the 28 step would find no row to open. The text viewer's ribbon is what shows the **More options** flyout.
-- **T10 owner checkpoint not run:** this batch forbids starting the app, taking screenshots, running the packaged gate or asking questions, so the checkpoint is still open. `DESIGN_DEVIATIONS.md` records the design (with the 200 / 168 / 48 / 220 / 36 / 6 / 200 px values) and says the approval is pending.
+- **T10 owner checkpoint:** the worker did not run it, because the batch rules forbade screenshots. The screenshots were taken after the merge with Step 05b, and the owner approved the designs on 2026-10-30.
 - **Menu.tsx:** to make the component generic over its context without tripping the hardcoded-text check in `npm run lint:i18n`, its props are destructured in the signature (the same shape `Ribbon` uses). Behavior is unchanged; `resolveMenu` got the same default type parameter, so every existing caller and test is untouched.
 - **Ribbon multi-tab test:** the condition is `def.tabs.length >= 2` held in a local `multiTab`, the same condition as before, written so the i18n checker does not read it as JSX text.
 - **Command bar menu buttons** got an `aria-label` with their name: in Icons only the name is hidden, and every icon-only button needs an accessible name (R-UI-5).
@@ -101,7 +101,7 @@ The owner fills this table (or tells you the results in chat and you copy them).
 
 ## Screenshots
 
-`docs/screenshots/step-05c/` is still empty: `24-toolbar-left`, `25-toolbar-bottom-icons`, `26-tabs-left`, `27-panes-moved`, `28-ribbon-right-icons`, `29-classic`, `30-layout-settings`, in English light, Spanish dark and the pseudo-locale, are taken by the owner's run of `scripts/measure-ui.ps1 -ScreenshotsOnly` (the steps are in `scripts/measure-ui.mjs`). The side and bottom designs are recorded in `DESIGN_DEVIATIONS.md` and wait for the owner's approval at the T10 checkpoint.
+`docs/screenshots/step-05c/`: all earlier screens plus `24-toolbar-left`, `25-toolbar-bottom-icons`, `26-tabs-left`, `27-panes-moved`, `28-ribbon-right-icons`, `29-classic`, `30-layout-settings`, in English light and Spanish dark. The pseudo-locale set is pending.
 
 ## Known issues
 
@@ -111,7 +111,7 @@ The owner fills this table (or tells you the results in chat and you copy them).
 
 ## Design deviations, dependencies, licenses
 
-- `DESIGN_DEVIATIONS.md`: new section "2026-10-30 - Movable toolbars, panels and tabs (Step 05c)" (side and bottom values designed from the tokens; owner approval still to come).
+- `DESIGN_DEVIATIONS.md`: new section "2026-10-30 - Movable toolbars, panels and tabs (Step 05c)" (side and bottom values designed from the tokens; approved by the owner on 2026-10-30).
 - New dependencies: none.
 
 ## Commits
@@ -133,4 +133,4 @@ baa8752 feat(ribbon): ribbons on any side and in any style [step-05c/T6]
 
 ## Next step
 
-Step 05d: Appearance, built-in themes, Settings page (from `plan/STATUS.md`), after the rest of 05b is merged and step 05c's tests, screenshots and checkpoint are done.
+Step 05d: Appearance, built-in themes, Settings page (from `plan/STATUS.md`).
