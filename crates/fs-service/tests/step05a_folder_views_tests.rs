@@ -52,8 +52,8 @@ fn saves_and_loads_the_same_list() {
     let dir = tempfile::tempdir().unwrap();
     let file = dir.path().join("folder-views.json");
     let mut views = FolderViews::default();
-    views.set(r"C:\A", "tiles", 2);
-    views.set(r"C:\B", "list", 1);
+    views.set(r"C:\A", "tiles", 1);
+    views.set(r"C:\B", "list", 2);
     views.save(&file).unwrap();
     let loaded = FolderViews::load(&file);
     assert_eq!(loaded, views);
