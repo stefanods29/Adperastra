@@ -11,6 +11,7 @@ import {
   Binary,
   CalendarDays,
   ClipboardPaste,
+  Columns3,
   Copy,
   EllipsisVertical,
   ExternalLink,
@@ -65,6 +66,7 @@ export const VIEW_MODE_COMMANDS: Record<ViewModeId, string> = {
   details: "explorer.viewDetails",
   tiles: "explorer.viewTiles",
   content: "explorer.viewContent",
+  columns: "explorer.viewColumns",
 };
 
 export const VIEW_MODE_LABEL_KEYS: Record<ViewModeId, string> = {
@@ -76,6 +78,7 @@ export const VIEW_MODE_LABEL_KEYS: Record<ViewModeId, string> = {
   details: "commands.viewDetails",
   tiles: "commands.viewTiles",
   content: "commands.viewContent",
+  columns: "commands.viewColumns",
 };
 
 export const VIEW_MODE_ICONS: Record<ViewModeId, Command["icon"]> = {
@@ -87,10 +90,13 @@ export const VIEW_MODE_ICONS: Record<ViewModeId, Command["icon"]> = {
   details: List,
   tiles: LayoutList,
   content: AlignJustify,
+  columns: Columns3,
 };
 
-/** Ctrl+Shift+1 to Ctrl+Shift+8, by the mode's position in `VIEW_MODE_IDS`. */
-export function viewModeShortcut(mode: ViewModeId): string {
+/** Ctrl+Shift+1 to Ctrl+Shift+8, by the mode's position in `VIEW_MODE_IDS`.
+ * Column view has no shortcut (Step 05b D1). */
+export function viewModeShortcut(mode: ViewModeId): string | undefined {
+  if (mode === "columns") return undefined;
   return `Ctrl+Shift+${VIEW_MODE_IDS.indexOf(mode) + 1}`;
 }
 

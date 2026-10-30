@@ -174,6 +174,12 @@ describe("explorer commands", () => {
       .find((c) => c.id === "explorer.viewContent")
       ?.run(baseCtx);
     expect(actions.setViewMode).toHaveBeenCalledWith("content");
+    expect(byId["explorer.viewColumns"].shortcut).toBeUndefined();
+    const columnActions = makeActions();
+    createExplorerCommands(columnActions)
+      .find((c) => c.id === "explorer.viewColumns")
+      ?.run(baseCtx);
+    expect(columnActions.setViewMode).toHaveBeenCalledWith("columns");
   });
 
   it("file operations are live and follow their rules (Step 03b)", () => {

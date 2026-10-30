@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 6;
+export const SETTINGS_SCHEMA_VERSION = 7;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -14,7 +14,8 @@ export interface ThemeSettings {
   accent_custom: string | null;
 }
 
-/** How a folder shows its items (Step 05a D1), in Windows' View-menu order. */
+/** How a folder shows its items (Step 05a D1), in Windows' View-menu order.
+ * Step 05b D1 adds Column view as the ninth id. */
 export type ViewModeId =
   | "extraLargeIcons"
   | "largeIcons"
@@ -23,7 +24,8 @@ export type ViewModeId =
   | "list"
   | "details"
   | "tiles"
-  | "content";
+  | "content"
+  | "columns";
 
 /** Same ids and order as Rust `fs_service::VIEW_MODES`. */
 export const VIEW_MODE_IDS: readonly ViewModeId[] = [
@@ -35,13 +37,14 @@ export const VIEW_MODE_IDS: readonly ViewModeId[] = [
   "details",
   "tiles",
   "content",
+  "columns",
 ];
 
 export function isViewModeId(value: unknown): value is ViewModeId {
   return typeof value === "string" && (VIEW_MODE_IDS as readonly string[]).includes(value);
 }
 
-/** All eight ids: the given order first, then the missing ids in default order. */
+/** All nine ids: the given order first, then the missing ids in default order. */
 export function normalizeViewModeOrder(value: unknown): ViewModeId[] {
   if (!Array.isArray(value)) return [...VIEW_MODE_IDS];
   const result: ViewModeId[] = [];
@@ -64,9 +67,25 @@ export function normalizeHiddenViewModes(value: unknown): ViewModeId[] {
   return result;
 }
 
+/** Column view's standard column width in pixels (Step 05b D13). */
+export const COLUMN_WIDTH_DEFAULT = 240;
+/** Column view's narrowest column in pixels. */
+export const COLUMN_WIDTH_MIN = 160;
+/** Column view's widest column in pixels. */
+export const COLUMN_WIDTH_MAX = 480;
+
+export function clampColumnWidth(width: number): number {
+  return Math.min(COLUMN_WIDTH_MAX, Math.max(COLUMN_WIDTH_MIN, Math.round(width)));
+}
+
+export function normalizeColumnWidth(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? clampColumnWidth(value) : COLUMN_WIDTH_DEFAULT;
+}
+
 /** Explorer view options (schema 3): the View menu's toggles and the Sort
  * menu's grouping. Schema 6 (Step 05a) adds the view mode, per-folder
- * memory, and the View menu's order and hidden views. */
+ * memory, and the View menu's order and hidden views. Schema 7 (Step 05b)
+ * adds the Column view's column width and preview column. */
 export interface ExplorerViewSettings {
   show_hidden: boolean;
   show_extensions: boolean;
@@ -77,10 +96,14 @@ export interface ExplorerViewSettings {
   view_mode: ViewModeId;
   /** Remember a view per folder when this is on. */
   remember_view_per_folder: boolean;
-  /** The View menu's order: all eight ids, each once. */
+  /** The View menu's order: all nine ids, each once. */
   view_mode_order: ViewModeId[];
   /** Views left out of the View menu; never "details". */
   hidden_view_modes: ViewModeId[];
+  /** Column view's column width in pixels (schema 7). */
+  column_width: number;
+  /** Column view shows a preview of the selected file (schema 7). */
+  column_preview: boolean;
 }
 
 export type PasteImageFormat = "png" | "jpg";
@@ -135,6 +158,8 @@ export function defaultSettings(): AppSettings {
       remember_view_per_folder: true,
       view_mode_order: [...VIEW_MODE_IDS],
       hidden_view_modes: [],
+      column_width: COLUMN_WIDTH_DEFAULT,
+      column_preview: true,
     },
     files: {
       paste_image_format: "png",
@@ -221,6 +246,8 @@ export function normalizeSettings(input: unknown): AppSettings {
       remember_view_per_folder: flag(explorerInput.remember_view_per_folder, defaults.explorer.remember_view_per_folder),
       view_mode_order: normalizeViewModeOrder(explorerInput.view_mode_order),
       hidden_view_modes: hiddenViewModes,
+      column_width: normalizeColumnWidth(explorerInput.column_width),
+      column_preview: flag(explorerInput.column_preview, defaults.explorer.column_preview),
     },
     files: {
       paste_image_format: pick(filesInput.paste_image_format, ["png", "jpg"] as const, defaults.files.paste_image_format),

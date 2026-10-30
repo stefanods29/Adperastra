@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultSettings, normalizeSettings } from "../services/settings";
+import { clampColumnWidth, defaultSettings, normalizeSettings } from "../services/settings";
 
 describe("normalizeSettings", () => {
   it("returns defaults for non-object input", () => {
@@ -38,11 +38,13 @@ describe("normalizeSettings", () => {
       group_by: "none",
       view_mode: "details",
       remember_view_per_folder: true,
-      view_mode_order: ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content"],
+      view_mode_order: ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content", "columns"],
       hidden_view_modes: [],
+      column_width: 240,
+      column_preview: true,
     });
     expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
-    expect(defaultSettings().schema_version).toBe(6);
+    expect(defaultSettings().schema_version).toBe(7);
     expect(defaultSettings().files.paste_image_format).toBe("png");
     expect(normalizeSettings({ files: { paste_image_format: "jpg" } }).files.paste_image_format).toBe("jpg");
     expect(normalizeSettings({ files: { paste_image_format: "gif" } }).files.paste_image_format).toBe("png");
@@ -61,7 +63,7 @@ describe("normalizeSettings", () => {
   });
 
   it("normalizes the view settings (schema 6)", () => {
-    const order = ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content"];
+    const order = ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content", "columns"];
     const explorer = (input: Record<string, unknown>) => normalizeSettings({ explorer: input }).explorer;
     expect(explorer({})).toMatchObject({
       view_mode: "details",
@@ -85,10 +87,35 @@ describe("normalizeSettings", () => {
       "smallIcons",
       "list",
       "tiles",
+      "columns",
     ]);
     expect(explorer({ view_mode_order: "nope" }).view_mode_order).toEqual(order);
     expect(explorer({ remember_view_per_folder: false }).remember_view_per_folder).toBe(false);
     expect(explorer({ remember_view_per_folder: "no" }).remember_view_per_folder).toBe(true);
+  });
+
+  it("normalizes the Column view settings (schema 7)", () => {
+    const explorer = (input: Record<string, unknown>) => normalizeSettings({ explorer: input }).explorer;
+    expect(explorer({})).toMatchObject({ column_width: 240, column_preview: true });
+    expect(explorer({ column_width: 300 }).column_width).toBe(300);
+    expect(explorer({ column_width: 100 }).column_width).toBe(160);
+    expect(explorer({ column_width: 999 }).column_width).toBe(480);
+    expect(explorer({ column_width: 241.6 }).column_width).toBe(242);
+    expect(explorer({ column_width: "wide" }).column_width).toBe(240);
+    expect(explorer({ column_width: Number.POSITIVE_INFINITY }).column_width).toBe(240);
+    expect(explorer({ column_preview: false }).column_preview).toBe(false);
+    expect(explorer({ column_preview: "no" }).column_preview).toBe(true);
+    expect(explorer({ view_mode: "columns" }).view_mode).toBe("columns");
+    expect(explorer({ hidden_view_modes: ["columns"] }).hidden_view_modes).toEqual(["columns"]);
+    const eight = ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content"];
+    expect(explorer({ view_mode_order: eight }).view_mode_order).toEqual([...eight, "columns"]);
+  });
+
+  it("clampColumnWidth rounds and keeps the limits", () => {
+    expect(clampColumnWidth(159.4)).toBe(160);
+    expect(clampColumnWidth(300.4)).toBe(300);
+    expect(clampColumnWidth(480.5)).toBe(480);
+    expect(clampColumnWidth(-5)).toBe(160);
   });
 
   it("falls back per-field for invalid values", () => {

@@ -8,7 +8,7 @@ import {
 } from "../../../services/settings";
 
 /** Every view drawn as a grid (FileGrid). */
-export type GridModeId = Exclude<ViewModeId, "details" | "list">;
+export type GridModeId = Exclude<ViewModeId, "details" | "list" | "columns">;
 
 export type GridLayoutKind = "stacked" | "inline" | "tile" | "content";
 
@@ -53,7 +53,7 @@ export const ZOOM_ORDER: readonly ViewModeId[] = [
 ];
 
 export function isGridMode(mode: ViewModeId): mode is GridModeId {
-  return mode !== "details" && mode !== "list";
+  return mode !== "details" && mode !== "list" && mode !== "columns";
 }
 
 /** The views the View menu and Settings show, in the chosen order. */

@@ -33,7 +33,7 @@ mod shell;
 mod transfer_history;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 6;
+pub const CURRENT_SCHEMA: u32 = 7;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -155,6 +155,15 @@ fn default_view_mode() -> String {
     "details".to_string()
 }
 
+/// Column view's narrowest column, in pixels (Step 05b D13).
+pub const COLUMN_WIDTH_MIN: u32 = 160;
+/// Column view's widest column, in pixels (Step 05b D13).
+pub const COLUMN_WIDTH_MAX: u32 = 480;
+
+fn default_column_width() -> u32 {
+    240
+}
+
 /// Every view id in Windows' View-menu order (Step 05a D1).
 fn default_view_mode_order() -> Vec<String> {
     fs_service::VIEW_MODES
@@ -169,6 +178,7 @@ fn default_view_mode_order() -> Vec<String> {
 /// pane).
 /// Schema 6 (Step 05a) adds the view mode, per-folder memory, and the View
 /// menu's order and hidden views.
+/// Schema 7 (Step 05b) adds the Column view's column width and preview column.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExplorerViewSettings {
     #[serde(default)]
@@ -193,6 +203,12 @@ pub struct ExplorerViewSettings {
     /// Views left out of the View menu; never `"details"`.
     #[serde(default)]
     pub hidden_view_modes: Vec<String>,
+    /// Column view's column width in pixels (schema 7).
+    #[serde(default = "default_column_width")]
+    pub column_width: u32,
+    /// Column view shows a preview of the selected file (schema 7).
+    #[serde(default = "default_true")]
+    pub column_preview: bool,
 }
 
 impl Default for ExplorerViewSettings {
@@ -207,6 +223,8 @@ impl Default for ExplorerViewSettings {
             remember_view_per_folder: true,
             view_mode_order: default_view_mode_order(),
             hidden_view_modes: Vec::new(),
+            column_width: default_column_width(),
+            column_preview: true,
         }
     }
 }
@@ -389,6 +407,12 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
         }
         seen_hidden.push(mode.as_str());
     }
+    if !(COLUMN_WIDTH_MIN..=COLUMN_WIDTH_MAX).contains(&settings.explorer.column_width) {
+        return Err(AppError::Validation(format!(
+            "column_width {} is outside {COLUMN_WIDTH_MIN}..={COLUMN_WIDTH_MAX}",
+            settings.explorer.column_width
+        )));
+    }
     if settings.open.open_with.len() > MAX_OPEN_WITH {
         return Err(AppError::Validation(format!(
             "open_with has {} entries (at most {MAX_OPEN_WITH})",
@@ -498,7 +522,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
-            Some(4) | Some(5) => Ok(migrate_keep_known(value.clone())),
+            Some(4) | Some(5) | Some(6) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -2605,7 +2629,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 6);
+        assert_eq!(settings.schema_version, 7);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -2735,7 +2759,7 @@ mod tests {
             "open": { "protected_view": false, "open_with": { "txt": "windows" } }
         });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 6);
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert!(settings.explorer.show_hidden);
@@ -2749,6 +2773,80 @@ mod tests {
             settings.open.open_with.get("txt").map(String::as_str),
             Some("windows")
         );
+    }
+
+    #[test]
+    fn settings_v6_migrates_to_v7_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 6,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "explorer": {
+                "show_hidden": true,
+                "show_extensions": true,
+                "item_checkboxes": false,
+                "details_pane": true,
+                "group_by": "type",
+                "view_mode": "tiles",
+                "remember_view_per_folder": false,
+                "view_mode_order": [
+                    "extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons",
+                    "list", "details", "tiles", "content"
+                ],
+                "hidden_view_modes": ["list"]
+            },
+            "files": { "paste_image_format": "jpg" },
+            "open": { "protected_view": false, "open_with": { "txt": "windows" } }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(settings.explorer.show_hidden);
+        assert_eq!(settings.explorer.group_by, "type");
+        assert_eq!(settings.explorer.view_mode, "tiles");
+        assert!(!settings.explorer.remember_view_per_folder);
+        assert_eq!(
+            settings.explorer.view_mode_order,
+            vec![
+                "extraLargeIcons",
+                "largeIcons",
+                "mediumIcons",
+                "smallIcons",
+                "list",
+                "details",
+                "tiles",
+                "content"
+            ]
+        );
+        assert_eq!(settings.explorer.hidden_view_modes, vec!["list"]);
+        assert_eq!(settings.explorer.column_width, 240);
+        assert!(settings.explorer.column_preview);
+        assert!(!settings.open.protected_view);
+        assert_eq!(
+            settings.open.open_with.get("txt").map(String::as_str),
+            Some("windows")
+        );
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_column_width() {
+        for bad in [159, 481, 0] {
+            let mut settings = Settings::default();
+            settings.explorer.column_width = bad;
+            assert!(validate(&settings).is_err(), "{bad}");
+        }
+        for ok in [160, 480] {
+            let mut settings = Settings::default();
+            settings.explorer.column_width = ok;
+            assert!(validate(&settings).is_ok(), "{ok}");
+        }
+        let mut columns = Settings::default();
+        columns.explorer.view_mode = "columns".to_string();
+        assert!(validate(&columns).is_ok());
+        let mut hidden = Settings::default();
+        hidden.explorer.hidden_view_modes = vec!["columns".to_string()];
+        assert!(validate(&hidden).is_ok());
     }
 
     #[test]

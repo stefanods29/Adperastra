@@ -46,7 +46,8 @@ describe("ViewsSettings", () => {
     const order = defaultSettings().explorer.view_mode_order;
     expect(moveViewMode(order, "largeIcons", -1).slice(0, 2)).toEqual(["largeIcons", "extraLargeIcons"]);
     expect(moveViewMode(order, "extraLargeIcons", -1)).toEqual(order);
-    expect(moveViewMode(order, "content", 1)).toEqual(order);
+    expect(moveViewMode(order, "content", 1).slice(-3)).toEqual(["tiles", "columns", "content"]);
+    expect(moveViewMode(order, "columns", 1)).toEqual(order);
   });
 
   it("withViewModeHidden hides a view and resets the default", () => {
@@ -60,7 +61,7 @@ describe("ViewsSettings", () => {
 
   it("lists the views in order and hides one with its switch", async () => {
     const view = await renderViews();
-    expect(container!.querySelectorAll(".adp-views-item")).toHaveLength(8);
+    expect(container!.querySelectorAll(".adp-views-item")).toHaveLength(9);
     const detailsSwitch = container!.querySelector<HTMLButtonElement>("[role='switch'][aria-label='Details']")!;
     expect(detailsSwitch.disabled).toBe(true);
     await act(async () => {

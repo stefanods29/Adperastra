@@ -13,8 +13,9 @@ pub const MAX_FOLDER_VIEWS: usize = 1000;
 /// Characters, counted with `chars().count()`.
 pub const MAX_FOLDER_VIEW_PATH: usize = 1024;
 
-/// The eight view modes, in Windows' View-menu order (Step 05a D1).
-pub const VIEW_MODES: [&str; 8] = [
+/// The nine view modes, in Windows' View-menu order (Step 05a D1,
+/// Step 05b D1 adds `columns` last).
+pub const VIEW_MODES: [&str; 9] = [
     "extraLargeIcons",
     "largeIcons",
     "mediumIcons",
@@ -23,6 +24,7 @@ pub const VIEW_MODES: [&str; 8] = [
     "details",
     "tiles",
     "content",
+    "columns",
 ];
 
 fn default_schema() -> u32 {
@@ -57,7 +59,7 @@ impl Default for FolderViews {
     }
 }
 
-/// True when `mode` is one of the eight view ids, case-sensitively.
+/// True when `mode` is one of the nine view ids, case-sensitively.
 pub fn is_view_mode(mode: &str) -> bool {
     VIEW_MODES.contains(&mode)
 }

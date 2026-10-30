@@ -45,6 +45,8 @@ export default function ItemView({ mode, onZoomStep, ...props }: ItemViewCompone
   let content: ReactNode = null;
   if (mode === "details") content = <FileList {...props} />;
   else if (mode === "list") content = <ListModeView key="list" {...props} />;
+  // Column view arrives in Step 05b, T8.
+  else if (mode === "columns") content = <FileList {...props} />;
   else if (isGridMode(mode)) content = <FileGrid key={mode} mode={mode} {...props} />;
 
   return (

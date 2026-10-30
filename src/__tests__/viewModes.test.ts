@@ -4,6 +4,7 @@ import {
   GRID_SPECS,
   ZOOM_ORDER,
   effectiveViewMode,
+  isGridMode,
   skeletonVariant,
   viewModeFromKey,
   visibleViewModes,
@@ -36,7 +37,7 @@ describe("view modes", () => {
 
   it("visibleViewModes keeps the order and drops hidden views", () => {
     const modes = visibleViewModes(view({ hidden_view_modes: ["tiles", "details"] }));
-    expect(modes).toEqual(["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "content"]);
+    expect(modes).toEqual(["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "content", "columns"]);
   });
 
   it("zoomTarget walks the sizes and skips hidden views", () => {
@@ -48,6 +49,8 @@ describe("view modes", () => {
     expect(zoomTarget("mediumIcons", -1, all)).toBe("smallIcons");
     expect(zoomTarget("tiles", 1, all)).toBe("mediumIcons");
     expect(zoomTarget("content", -1, all)).toBe("details");
+    expect(zoomTarget("columns", 1, all)).toBe("mediumIcons");
+    expect(zoomTarget("columns", -1, all)).toBe("details");
     const withoutSmall: readonly ViewModeId[] = all.filter((mode) => mode !== "smallIcons");
     expect(zoomTarget("list", 1, withoutSmall)).toBe("mediumIcons");
     const withoutMedium: readonly ViewModeId[] = all.filter((mode) => mode !== "mediumIcons");
@@ -62,6 +65,12 @@ describe("view modes", () => {
     expect(viewModeFromKey(key({ shiftKey: false }))).toBeNull();
     expect(viewModeFromKey(key({ altKey: true }))).toBeNull();
     expect(viewModeFromKey(key({ code: "Digit2", ctrlKey: false, metaKey: true, shiftKey: true }))).toBe("largeIcons");
+  });
+
+  it("Column view is not a grid", () => {
+    expect(isGridMode("columns")).toBe(false);
+    expect(isGridMode("tiles")).toBe(true);
+    expect(skeletonVariant("columns")).toBe("rows");
   });
 
   it("skeletonVariant and sizes", () => {
