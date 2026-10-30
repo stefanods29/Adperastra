@@ -5,7 +5,7 @@ import Menu, { type MenuAnchor } from "../components/Menu";
 import Skeleton from "../components/Skeleton";
 import ToastStack, { type ToastData } from "../components/Toast";
 import { createExplorerCommands, type ExplorerActions, type ViewToggle } from "../commands/explorerCommands";
-import { BACKGROUND_MENU, COMMAND_BAR, ITEM_MENU, resolveMenu } from "../commands/menus";
+import { ITEM_MENU, backgroundMenuFor, commandBarFor, resolveMenu } from "../commands/menus";
 import { CommandRegistry, isCommandEnabled, type Command, type CommandContext } from "../commands/registry";
 import {
   addFavorite,
@@ -87,7 +87,7 @@ import {
   summarizeSelection,
   type SelectionState,
 } from "../services/selection";
-import { isTauriRuntime, type ExplorerViewSettings } from "../services/settings";
+import { defaultSettings, isTauriRuntime, type ExplorerViewSettings, type ViewModeId } from "../services/settings";
 import AddressBar from "./explorer/AddressBar";
 import CommandBar from "./explorer/CommandBar";
 import {
@@ -104,6 +104,7 @@ import FileList from "./explorer/FileList";
 import { fileExtension } from "./explorer/fileTile";
 import HomePage, { type HomeTab } from "./explorer/HomePage";
 import NavPane from "./explorer/NavPane";
+import { useViewMode } from "./explorer/views/useViewMode";
 
 /** What the status bar shows for the Explorer tab. */
 export interface ExplorerStats {
@@ -139,19 +140,10 @@ export interface ExplorerHomeProps {
   pasteImageFormat?: "png" | "jpg";
 }
 
-const DEFAULT_VIEW: ExplorerViewSettings = {
-  show_hidden: false,
-  show_extensions: true,
-  item_checkboxes: false,
-  details_pane: false,
-  group_by: "none",
-  view_mode: "details",
-  remember_view_per_folder: true,
-  view_mode_order: ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content"],
-  hidden_view_modes: [],
-};
+const DEFAULT_VIEW: ExplorerViewSettings = defaultSettings().explorer;
 
-const VIEW_SETTING: Record<ViewToggle, keyof Omit<ExplorerViewSettings, "group_by">> = {
+/** The toggles behind the View menu that patch one boolean field. */
+const VIEW_SETTING: Record<ViewToggle, "details_pane" | "show_hidden" | "show_extensions" | "item_checkboxes"> = {
   detailsPane: "details_pane",
   showHidden: "show_hidden",
   showExtensions: "show_extensions",
@@ -236,6 +228,14 @@ export default function ExplorerHome({
   const view = viewProp ?? DEFAULT_VIEW;
   const [history, setHistory] = useState<NavHistory>(() => createHistory({ type: "home" }));
   const location = history.current;
+  // The folder's own view when it has one, else the default view (Step 05a).
+  const viewModeState = useViewMode({
+    view,
+    onViewChange,
+    folderPath: location.type === "folder" ? location.path : null,
+  });
+  const viewModeRef = useRef(viewModeState);
+  viewModeRef.current = viewModeState;
   const [knownFolders, setKnownFolders] = useState<KnownFolder[]>([]);
   const [stateData, setStateData] = useState<ExplorerStateData>({ schema_version: 2, pinned_folders: [], recent_folders: [], favorites: [] });
   const [recent, setRecent] = useState<RecentItem[]>([]);
@@ -454,6 +454,8 @@ export default function ExplorerHome({
       groupBy: view.group_by,
       sortKey,
       sortDirection,
+      viewMode: viewModeState.mode,
+      hiddenViewModes: view.hidden_view_modes,
     },
     allFavorites,
     selectionInCurrentFolder: location.type === "folder",
@@ -969,6 +971,8 @@ export default function ExplorerHome({
         const key = VIEW_SETTING[option];
         onViewChange?.({ [key]: !live.current.view[key] });
       },
+      // Step 05a: runs the view the user chose (or Ctrl+wheel stepped to).
+      setViewMode: (mode: ViewModeId) => viewModeRef.current.setMode(mode),
       newFolder: () => void createNew("folder"),
       newTextFile: () => void createNew("file"),
       cut: () => {
@@ -1641,6 +1645,10 @@ export default function ExplorerHome({
     return cards;
   }, [knownFolders, stateData.pinned_folders]);
 
+  // Step 05a: the View menu and command bar follow the chosen order.
+  const commandBar = useMemo(() => commandBarFor(view.view_mode_order), [view.view_mode_order]);
+  const backgroundMenu = useMemo(() => backgroundMenuFor(view.view_mode_order), [view.view_mode_order]);
+
   const listProps = {
     selection,
     onSelectionChange: setSelection,
@@ -1760,7 +1768,7 @@ export default function ExplorerHome({
         search={search}
         onSearch={setSearch}
       />
-      <CommandBar entries={COMMAND_BAR} ctx={commandCtx} lookup={lookup} onRun={runCommand} onOpenHelp={() => onOpenHelp("command-bar")} />
+      <CommandBar entries={commandBar} ctx={commandCtx} lookup={lookup} onRun={runCommand} onOpenHelp={() => onOpenHelp("command-bar")} />
       <div className="adp-explorer-body">
         <NavPane
           knownFolders={knownFolders}
@@ -1875,7 +1883,7 @@ export default function ExplorerHome({
       ) : null}
       {menu ? (
         <Menu
-          entries={resolveMenu(menu.kind === "item" ? ITEM_MENU : BACKGROUND_MENU, commandCtx, lookup)}
+          entries={resolveMenu(menu.kind === "item" ? ITEM_MENU : backgroundMenu, commandCtx, lookup)}
           ctx={commandCtx}
           lookup={lookup}
           anchor={menu.anchor}

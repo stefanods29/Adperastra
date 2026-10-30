@@ -18,6 +18,7 @@ describe("AddressBar", () => {
       view: {
         showHidden: false, showExtensions: true, itemCheckboxes: false, detailsPane: false,
         groupBy: "none", sortKey: "name", sortDirection: "ascending",
+        viewMode: "details", hiddenViewModes: [],
       },
       allFavorites: false,
       selectionInCurrentFolder: true,

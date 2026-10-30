@@ -1,4 +1,6 @@
 import { ArrowDownWideNarrow, FileCode, Group, List, Plus, type LucideIcon } from "lucide-react";
+import { VIEW_MODE_IDS, type ViewModeId } from "../services/settings";
+import { VIEW_MODE_COMMANDS } from "./explorerCommands";
 import { isCommandVisible, type Command, type CommandContext } from "./registry";
 
 /** Menus from commands (contract 9): every menu and bar is data drawn by
@@ -36,18 +38,17 @@ export const SORT_MENU: MenuEntry[] = [
   { type: "submenu", id: "groupBy", labelKey: "commands.groupBy", icon: Group, entries: GROUP_MENU },
 ];
 
-export const VIEW_MENU: MenuEntry[] = [
-  cmd("explorer.viewDetails"),
-  cmd("explorer.viewList"),
-  cmd("explorer.viewSmallIcons"),
-  cmd("explorer.viewMediumIcons"),
-  cmd("explorer.viewLargeIcons"),
+/** The View menu in the order chosen in Settings > Views (Step 05a). */
+export const viewMenuFor = (order: readonly ViewModeId[]): MenuEntry[] => [
+  ...order.map((mode) => cmd(VIEW_MODE_COMMANDS[mode])),
   separator,
   cmd("explorer.toggleDetailsPane"),
   cmd("explorer.toggleHiddenItems"),
   cmd("explorer.toggleExtensions"),
   cmd("explorer.toggleCheckboxes"),
 ];
+
+export const VIEW_MENU: MenuEntry[] = viewMenuFor(VIEW_MODE_IDS);
 
 export const OVERFLOW_MENU: MenuEntry[] = [
   cmd("explorer.undo"),
@@ -83,8 +84,8 @@ export const ITEM_MENU: MenuEntry[] = [
 ];
 
 /** Right-click on empty space in a folder. */
-export const BACKGROUND_MENU: MenuEntry[] = [
-  { type: "submenu", id: "view", labelKey: "commands.view", icon: List, entries: VIEW_MENU },
+export const backgroundMenuFor = (order: readonly ViewModeId[]): MenuEntry[] => [
+  { type: "submenu", id: "view", labelKey: "commands.view", icon: List, entries: viewMenuFor(order) },
   { type: "submenu", id: "sort", labelKey: "commands.sortBy", icon: ArrowDownWideNarrow, entries: SORT_MENU },
   { type: "submenu", id: "new", labelKey: "commands.new", icon: Plus, entries: NEW_MENU },
   separator,
@@ -96,6 +97,8 @@ export const BACKGROUND_MENU: MenuEntry[] = [
   cmd("explorer.showMoreOptions"),
 ];
 
+export const BACKGROUND_MENU: MenuEntry[] = backgroundMenuFor(VIEW_MODE_IDS);
+
 export type BarEntry =
   | { type: "menu"; id: string; labelKey: string; icon: LucideIcon; entries: MenuEntry[] }
   | { type: "command"; id: string; showLabel?: boolean }
@@ -105,7 +108,7 @@ export type BarEntry =
 
 /** The Explorer command bar, in the Figma order, with Windows 11's
  * Details toggle at the right. */
-export const COMMAND_BAR: BarEntry[] = [
+export const commandBarFor = (order: readonly ViewModeId[]): BarEntry[] => [
   { type: "menu", id: "new", labelKey: "commands.new", icon: Plus, entries: NEW_MENU },
   { type: "separator" },
   { type: "command", id: "explorer.cut" },
@@ -116,12 +119,14 @@ export const COMMAND_BAR: BarEntry[] = [
   { type: "command", id: "explorer.delete" },
   { type: "separator" },
   { type: "menu", id: "sort", labelKey: "commands.sort", icon: ArrowDownWideNarrow, entries: SORT_MENU },
-  { type: "menu", id: "view", labelKey: "commands.view", icon: List, entries: VIEW_MENU },
+  { type: "menu", id: "view", labelKey: "commands.view", icon: List, entries: viewMenuFor(order) },
   { type: "separator" },
   { type: "overflow", entries: OVERFLOW_MENU },
   { type: "spacer" },
   { type: "command", id: "explorer.toggleDetailsPane", showLabel: true },
 ];
+
+export const COMMAND_BAR: BarEntry[] = commandBarFor(VIEW_MODE_IDS);
 
 /** Drop unknown or hidden commands, empty submenus and icon rows, and
  * separators that would sit at an edge or next to another separator. */

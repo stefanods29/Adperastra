@@ -1,4 +1,5 @@
 import {
+  AlignJustify,
   AppWindow,
   ArrowDownAZ,
   ArrowDownWideNarrow,
@@ -26,6 +27,7 @@ import {
   Group,
   Info,
   LayoutGrid,
+  LayoutList,
   Link,
   List,
   ListChecks,
@@ -48,9 +50,49 @@ import {
 } from "lucide-react";
 import type { SortDirection, SortKey } from "../services/explorer";
 import type { GroupBy } from "../services/grouping";
+import { VIEW_MODE_IDS, type ViewModeId } from "../services/settings";
 import type { Command, CommandContext } from "./registry";
 
 export type ViewToggle = "detailsPane" | "showHidden" | "showExtensions" | "itemCheckboxes";
+
+/** Command id, label key and icon per view mode (Step 05a). */
+export const VIEW_MODE_COMMANDS: Record<ViewModeId, string> = {
+  extraLargeIcons: "explorer.viewExtraLargeIcons",
+  largeIcons: "explorer.viewLargeIcons",
+  mediumIcons: "explorer.viewMediumIcons",
+  smallIcons: "explorer.viewSmallIcons",
+  list: "explorer.viewList",
+  details: "explorer.viewDetails",
+  tiles: "explorer.viewTiles",
+  content: "explorer.viewContent",
+};
+
+export const VIEW_MODE_LABEL_KEYS: Record<ViewModeId, string> = {
+  extraLargeIcons: "commands.viewExtraLargeIcons",
+  largeIcons: "commands.viewLargeIcons",
+  mediumIcons: "commands.viewMediumIcons",
+  smallIcons: "commands.viewSmallIcons",
+  list: "commands.viewList",
+  details: "commands.viewDetails",
+  tiles: "commands.viewTiles",
+  content: "commands.viewContent",
+};
+
+export const VIEW_MODE_ICONS: Record<ViewModeId, Command["icon"]> = {
+  extraLargeIcons: Square,
+  largeIcons: LayoutGrid,
+  mediumIcons: Grid2x2,
+  smallIcons: Grid3x3,
+  list: Rows3,
+  details: List,
+  tiles: LayoutList,
+  content: AlignJustify,
+};
+
+/** Ctrl+Shift+1 to Ctrl+Shift+8, by the mode's position in `VIEW_MODE_IDS`. */
+export function viewModeShortcut(mode: ViewModeId): string {
+  return `Ctrl+Shift+${VIEW_MODE_IDS.indexOf(mode) + 1}`;
+}
 
 /** Actions the Explorer view injects; commands never touch state directly. */
 export interface ExplorerActions {
@@ -81,6 +123,8 @@ export interface ExplorerActions {
   setSortDirection: (direction: SortDirection) => void;
   setGroupBy: (groupBy: GroupBy) => void;
   toggleView: (option: ViewToggle) => void;
+  /** Step 05a: remember the folder's view or change the default one. */
+  setViewMode: (mode: ViewModeId) => void;
   showMoreOptions: () => void;
   newFolder: () => void;
   newTextFile: () => void;
@@ -121,18 +165,18 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
     enabledWhen: (ctx) => ctx.location === "folder",
     run: () => actions.setGroupBy(value),
   });
-  const viewMode = (id: string, labelKey: string, icon: Command["icon"], current: boolean): Command => ({
-    id,
-    labelKey,
-    icon,
+  const viewMode = (mode: ViewModeId): Command => ({
+    id: VIEW_MODE_COMMANDS[mode],
+    labelKey: VIEW_MODE_LABEL_KEYS[mode],
+    icon: VIEW_MODE_ICONS[mode],
+    shortcut: viewModeShortcut(mode),
     risk: "read-only",
-    helpSlug: "command-bar",
+    helpSlug: "view-modes",
     checkKind: "radio",
-    checkedWhen: () => current,
-    enabledWhen: () => true,
-    // List and icon views arrive with the view modes in Step 05.
-    pending: !current,
-    run: () => undefined,
+    checkedWhen: (ctx) => ctx.view.viewMode === mode,
+    enabledWhen: (ctx) => ctx.location === "folder",
+    visibleWhen: (ctx) => !ctx.view.hiddenViewModes.includes(mode),
+    run: () => actions.setViewMode(mode),
   });
   const viewToggle = (id: string, option: ViewToggle, labelKey: string, icon: Command["icon"], shortcut?: string): Command => ({
     id,
@@ -497,11 +541,7 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
     groupBy("explorer.groupByModified", "modified", "commands.sortModified"),
     groupBy("explorer.groupByType", "type", "commands.sortType"),
     groupBy("explorer.groupBySize", "size", "commands.sortSize"),
-    viewMode("explorer.viewDetails", "commands.viewDetails", List, true),
-    viewMode("explorer.viewList", "commands.viewList", Rows3, false),
-    viewMode("explorer.viewSmallIcons", "commands.viewSmallIcons", Grid3x3, false),
-    viewMode("explorer.viewMediumIcons", "commands.viewMediumIcons", Grid2x2, false),
-    viewMode("explorer.viewLargeIcons", "commands.viewLargeIcons", LayoutGrid, false),
+    ...VIEW_MODE_IDS.map((mode) => viewMode(mode)),
     viewToggle("explorer.toggleDetailsPane", "detailsPane", "commands.detailsPane", PanelRight, "Alt+Shift+P"),
     viewToggle("explorer.toggleHiddenItems", "showHidden", "commands.hiddenItems", Eye),
     viewToggle("explorer.toggleExtensions", "showExtensions", "commands.fileExtensions", FileType),

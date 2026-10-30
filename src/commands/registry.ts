@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { SortDirection, SortKey } from "../services/explorer";
 import type { GroupBy } from "../services/grouping";
+import type { ViewModeId } from "../services/settings";
 
 /** Command registry v1 (contract 7). Bars, menus, ribbons, shortcuts and
  * the palette are all callers; every action in the app registers here. */
@@ -26,6 +27,10 @@ export interface ViewContext {
   groupBy: GroupBy;
   sortKey: SortKey;
   sortDirection: SortDirection;
+  /** The view the folder is shown in (Step 05a). */
+  viewMode: ViewModeId;
+  /** Views left out of the View menu (Step 05a). */
+  hiddenViewModes: readonly ViewModeId[];
 }
 
 export interface CommandContext {
