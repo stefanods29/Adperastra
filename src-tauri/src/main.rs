@@ -1373,19 +1373,33 @@ fn validate_op_sources(sources: &[String]) -> Result<Vec<PathBuf>, String> {
 }
 
 /// Existing items a copy/move would land on; the UI asks the user first.
+#[derive(Debug, Clone, Serialize)]
+pub struct ConflictInfo {
+    pub path: String,
+    pub is_dir: bool,
+}
+
 #[tauri::command]
 async fn check_conflicts(
     window: WebviewWindow,
     sources: Vec<String>,
     dest_dir: String,
-) -> Result<Vec<fs_service::Conflict>, String> {
+) -> Result<Vec<ConflictInfo>, String> {
     ensure_main(window.label())?;
     let sources = validate_op_sources(&sources)?;
     validate_absolute_path(&dest_dir).map_err(|_| "ops.not_found".to_string())?;
     let dest = PathBuf::from(dest_dir);
-    tauri::async_runtime::spawn_blocking(move || fs_service::check_conflicts(&sources, &dest))
-        .await
-        .map_err(|e| e.to_string())
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::check_conflicts(&sources, &dest)
+            .into_iter()
+            .map(|conflict| ConflictInfo {
+                path: conflict.path.to_string_lossy().into_owned(),
+                is_dir: conflict.is_dir,
+            })
+            .collect::<Vec<ConflictInfo>>()
+    })
+    .await
+    .map_err(|e| e.to_string())
 }
 
 /// Create an empty folder or file ("New"); returns its real path, which
