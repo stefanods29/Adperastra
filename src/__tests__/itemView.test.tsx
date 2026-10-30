@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "../i18n";
 import ItemView from "../views/explorer/views/ItemView";
+import type { ColumnViewOptions } from "../views/explorer/views/columnTrail";
 import type { ItemViewProps } from "../views/explorer/views/useItemInteractions";
 import type { ViewModeId } from "../services/settings";
 import type { ExplorerItem } from "../services/explorer";
@@ -41,7 +42,11 @@ afterEach(async () => {
   container = null;
 });
 
-async function renderItemView(mode: ViewModeId, onZoomStep?: (direction: 1 | -1) => void) {
+async function renderItemView(
+  mode: ViewModeId,
+  onZoomStep?: (direction: 1 | -1) => void,
+  columnOptions?: ColumnViewOptions,
+) {
   if (root) await act(async () => root?.unmount());
   container?.remove();
   container = document.createElement("div");
@@ -67,7 +72,7 @@ async function renderItemView(mode: ViewModeId, onZoomStep?: (direction: 1 | -1)
     label: "Files",
   };
   await act(async () => {
-    root!.render(<ItemView mode={mode} onZoomStep={onZoomStep} {...props} />);
+    root!.render(<ItemView mode={mode} onZoomStep={onZoomStep} columnOptions={columnOptions} {...props} />);
   });
   return container.querySelector<HTMLElement>(".adp-itemview")!;
 }
@@ -86,6 +91,27 @@ describe("ItemView", () => {
     expect(container!.querySelector(".adp-flowlist")).not.toBeNull();
     await renderItemView("tiles");
     expect(container!.querySelector(".adp-itemgrid--tiles")).not.toBeNull();
+  });
+
+  it("Column view needs its options", async () => {
+    const options: ColumnViewOptions = {
+      folder: "C:\\F",
+      root: "C:\\F",
+      note: null,
+      loading: false,
+      showHidden: false,
+      groupBy: "none",
+      refreshKey: 0,
+      width: 240,
+      showPreview: true,
+      onWidthChange: () => undefined,
+      onNavigate: () => undefined,
+      onDragItem: () => undefined,
+    };
+    await renderItemView("columns", undefined, options);
+    expect(container!.querySelector(".adp-colview")).not.toBeNull();
+    await renderItemView("columns");
+    expect(container!.querySelector(".adp-filelist-header")).not.toBeNull();
   });
 
   it("Ctrl+wheel steps the view and never scrolls the page", async () => {

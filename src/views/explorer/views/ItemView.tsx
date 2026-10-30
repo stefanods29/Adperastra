@@ -1,8 +1,10 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import type { ViewModeId } from "../../../services/settings";
 import FileList from "../FileList";
+import ColumnView from "./ColumnView";
 import FileGrid from "./FileGrid";
 import ListModeView from "./ListModeView";
+import type { ColumnViewOptions } from "./columnTrail";
 import type { ItemViewProps } from "./useItemInteractions";
 import { ZOOM_STEP_DELTA, ZOOM_STEP_INTERVAL_MS, isGridMode } from "./viewModes";
 
@@ -10,11 +12,13 @@ interface ItemViewComponentProps extends ItemViewProps {
   mode: ViewModeId;
   /** Ctrl+wheel steps the view (Step 05a D6). */
   onZoomStep?: (direction: 1 | -1) => void;
+  /** Column view only (Step 05b). */
+  columnOptions?: ColumnViewOptions;
 }
 
 /** Draws the folder in the chosen view (Step 05a D2) and handles
  * Ctrl+mouse wheel over the items. */
-export default function ItemView({ mode, onZoomStep, ...props }: ItemViewComponentProps) {
+export default function ItemView({ mode, onZoomStep, columnOptions, ...props }: ItemViewComponentProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef(onZoomStep);
   zoomRef.current = onZoomStep;
@@ -45,9 +49,13 @@ export default function ItemView({ mode, onZoomStep, ...props }: ItemViewCompone
   let content: ReactNode = null;
   if (mode === "details") content = <FileList {...props} />;
   else if (mode === "list") content = <ListModeView key="list" {...props} />;
-  // Column view arrives in Step 05b, T8.
-  else if (mode === "columns") content = <FileList {...props} />;
-  else if (isGridMode(mode)) content = <FileGrid key={mode} mode={mode} {...props} />;
+  else if (mode === "columns") {
+    content = columnOptions ? (
+      <ColumnView key="columns" {...props} options={columnOptions} />
+    ) : (
+      <FileList {...props} />
+    );
+  } else if (isGridMode(mode)) content = <FileGrid key={mode} mode={mode} {...props} />;
 
   return (
     <div className="adp-itemview" ref={rootRef}>

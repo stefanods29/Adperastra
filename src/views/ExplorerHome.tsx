@@ -110,6 +110,8 @@ import { fileExtension } from "./explorer/fileTile";
 import HomePage, { type HomeTab } from "./explorer/HomePage";
 import NavPane from "./explorer/NavPane";
 import ItemView from "./explorer/views/ItemView";
+import type { ColumnViewOptions } from "./explorer/views/columnTrail";
+import { useColumnNavigation } from "./explorer/views/useColumnNavigation";
 import { useViewMode } from "./explorer/views/useViewMode";
 import { skeletonVariant, viewModeFromKey } from "./explorer/views/viewModes";
 
@@ -303,6 +305,7 @@ export default function ExplorerHome({
   const [dragBadge, setDragBadge] = useState<{ x: number; y: number; key: string; name: string } | null>(null);
   const loadModeRef = useRef<"hard" | "soft">("hard");
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [columnsNonce, setColumnsNonce] = useState(0);
   const [homeNonce, setHomeNonce] = useState(0);
   const generationRef = useRef(0);
   type CancelFn = Awaited<ReturnType<typeof startListDir>>["cancel"];
@@ -376,6 +379,8 @@ export default function ExplorerHome({
     if (location.type === "folder") {
       loadModeRef.current = "soft";
       setRefreshNonce((value) => value + 1);
+      // F5 and every file operation reload the side columns too (Step 05b D7).
+      setColumnsNonce((value) => value + 1);
     } else if (location.type === "home") setHomeNonce((value) => value + 1);
     else if (location.type === "drives") setRefreshNonce((value) => value + 1);
   }, [location.type]);
@@ -1406,6 +1411,18 @@ export default function ExplorerHome({
     setMenu({ kind: item ? "item" : "background", anchor: { kind: "point", x: point.x, y: point.y }, startedAt: performance.now(), focusFirst: false });
   }, []);
   const closeMenu = useCallback(() => setMenu(null), []);
+  // Opening a folder from Column view (Step 05b): select an item in it,
+  // then open its menu once it is selected.
+  const navigateColumns = useColumnNavigation({
+    location,
+    orderPaths,
+    selection,
+    itemByPath,
+    goToFolder,
+    setSelection,
+    pendingSelectRef,
+    openContextMenu,
+  });
   const onMenuShown = useCallback(() => {
     const opened = live.current.menu;
     if (!opened) return;
@@ -1736,15 +1753,34 @@ export default function ExplorerHome({
       const showTimedOut = loadTimedOut && loading;
       const showEmpty = !loading && visibleItems.length === 0 && !search;
       const showNoResults = !loading && items.length > 0 && visibleItems.length === 0 && Boolean(search);
+      const columnsMode = viewModeState.mode === "columns";
+      const showList = visibleItems.length > 0 || columnsMode;
+      const columnOptions: ColumnViewOptions = {
+        folder: location.path,
+        root: viewModeState.columnRoot ?? location.path,
+        note: showSkeleton ? "loading" : showEmpty ? "empty" : showNoResults ? "noResults" : null,
+        loading,
+        showHidden: view.show_hidden,
+        groupBy: view.group_by,
+        refreshKey: columnsNonce,
+        width: view.column_width,
+        showPreview: view.column_preview,
+        onWidthChange: (width) => onViewChange?.({ column_width: width }),
+        onNavigate: navigateColumns,
+        onDragItem: (event, item) => {
+          if (event.button !== 0) return;
+          dragSession.current = { mode: "pending", paths: [item.path], x: event.clientX, y: event.clientY };
+        },
+      };
       folderContent = (
         <>
-          {showSkeleton ? <Skeleton variant={skeletonVariant(viewModeState.mode)} count={10} /> : null}
+          {!columnsMode && showSkeleton ? <Skeleton variant={skeletonVariant(viewModeState.mode)} count={10} /> : null}
           {showSlow ? <p className="adp-note">{t("explorer.stillLoading")}</p> : null}
           {showTimedOut ? <p className="adp-note">{t("explorer.notAvailable")}</p> : null}
           {partialCount > 0 ? <p className="adp-note" role="status">{t("explorer.someItemsUnreadable")}</p> : null}
-          {showEmpty ? <p className="adp-empty-note">{t("explorer.emptyFolder")}</p> : null}
-          {showNoResults ? <p className="adp-empty-note">{t("explorer.noSearchResults")}</p> : null}
-          {visibleItems.length > 0 ? (
+          {!columnsMode && showEmpty ? <p className="adp-empty-note">{t("explorer.emptyFolder")}</p> : null}
+          {!columnsMode && showNoResults ? <p className="adp-empty-note">{t("explorer.noSearchResults")}</p> : null}
+          {showList ? (
             <ItemView
               {...listProps}
               items={visibleItems}
@@ -1754,6 +1790,7 @@ export default function ExplorerHome({
               label={t("explorer.fileListLabel")}
               mode={viewModeState.mode}
               onZoomStep={viewModeState.zoomStep}
+              columnOptions={columnsMode ? columnOptions : undefined}
             />
           ) : null}
         </>
