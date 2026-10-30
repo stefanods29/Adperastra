@@ -1,6 +1,7 @@
 # Adperastra Step 01b packaging: builds the Tauri app and places it next to
 # the setup launcher in build\Adperastra, so AdperastraSetup.exe starts it.
 # Run from the repo root:  .\scripts\package-app.ps1
+param([switch]$ReuseSetup)
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -15,7 +16,21 @@ npx -y @tauri-apps/cli@2 build --no-bundle
 if ($LASTEXITCODE -ne 0) { throw "tauri build failed" }
 
 # Make sure the setup launcher package is current, then add the app exe.
-& (Join-Path $PSScriptRoot "package-setup.ps1")
+if ($ReuseSetup) {
+    # App-only updates reuse the already signed setup manifest. No private
+    # signing key is read, and verification uses the repository's public key.
+    $setupFolder = Join-Path $root "build\Adperastra"
+    $signedManifest = Join-Path $setupFolder "dependencies.json"
+    if (-not (Test-Path -LiteralPath $signedManifest)) { throw "An existing signed setup package is required for -ReuseSetup." }
+    $publicManifest = Get-Content -LiteralPath (Join-Path $root "dependencies.json") -Raw | ConvertFrom-Json
+    cargo build --release -p setup --bins
+    if ($LASTEXITCODE -ne 0) { throw "setup tools build failed" }
+    & (Join-Path $env:CARGO_TARGET_DIR "release\manifest-tool.exe") verify $signedManifest $publicManifest.signature.public_key
+    if ($LASTEXITCODE -ne 0) { throw "Existing setup manifest signature verification failed" }
+    Copy-Item -LiteralPath (Join-Path $env:CARGO_TARGET_DIR "release\AdperastraSetup.exe") -Destination $setupFolder -Force
+} else {
+    & (Join-Path $PSScriptRoot "package-setup.ps1")
+}
 $out = Join-Path $root "build\Adperastra"
 Copy-Item (Join-Path $env:CARGO_TARGET_DIR "release\Adperastra.exe") $out -Force
 Copy-Item (Join-Path $root "help") (Join-Path $out "help") -Recurse -Force

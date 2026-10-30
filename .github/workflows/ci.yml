@@ -3,10 +3,26 @@ name: CI
 on:
   push:
   pull_request:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Verification scope
+        type: choice
+        default: full
+        options: [quick, full]
+
+permissions:
+  contents: read
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}\target
+      CARGO_TERM_COLOR: never
     steps:
       - uses: actions/checkout@v4
 
@@ -14,52 +30,55 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Set up Rust (stable)
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
 
-      - name: Check for files over 50 MB
+      - name: Install pinned developer audit tools
         shell: pwsh
         run: |
-          $big = Get-ChildItem -Recurse -File | Where-Object { $_.Length -gt 50MB }
-          if ($big) { $big | ForEach-Object { Write-Error $_.FullName }; exit 1 }
+          $toolRoot = Join-Path $env:LOCALAPPDATA 'AdperastraDevTools'
+          cargo install cargo-audit --version 0.22.2 --locked --root $toolRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo install cargo-deny --version 0.20.2 --locked --root $toolRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Check for secrets
-        shell: pwsh
-        run: |
-          # Built at run time so this workflow file does not match itself, and
-          # case-sensitive so the error message below does not match either.
-          $marker = "PRIVATE" + " KEY"
-          if (Select-String -Path (Get-ChildItem -Recurse -File).FullName -Pattern $marker -SimpleMatch -CaseSensitive -List -ErrorAction SilentlyContinue) { Write-Error "Private key marker found"; exit 1 }
-          if (Get-ChildItem -Recurse -File -Filter "*.key" | Where-Object { $_.FullName -match "\.adperastra" }) { Write-Error "Signing key file found"; exit 1 }
-
-      - name: Install dependencies
+      - name: Install JavaScript dependencies
         run: npm ci
 
-      - name: Check translations
-        run: npm run lint:i18n
-
-      - name: Run UI tests
-        run: npm test
-
-      - name: Build UI
-        run: npm run build
-
-      - name: Run Rust tests
-        run: cargo test --workspace
-
-      - name: Build app (no bundle)
-        run: npx -y @tauri-apps/cli@2 build --no-bundle
-
-      - name: Package portable zip
+      - name: Run the same verification as the development PC
         shell: pwsh
         run: |
-          $exe = Get-ChildItem -Recurse -Filter "Adperastra.exe" | Select-Object -First 1
-          if (-not $exe) { throw "Adperastra.exe not found" }
-          Compress-Archive -Path $exe.FullName, "dependencies.json" -DestinationPath "adperastra-portable.zip"
+          $mode = '${{ github.event_name == 'schedule' && 'full' || inputs.mode || 'quick' }}'
+          .\scripts\test-all.ps1 -Mode $mode
 
-      - name: Upload portable zip
+      - name: Upload verification report and evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: adperastra-portable
-          path: adperastra-portable.zip
+          name: verification-${{ github.run_id }}
+          path: build/verification/
+          if-no-files-found: warn
+
+      # A developer app build, not the public portable/installer release.
+      # Public release packaging and install tests arrive in Step 08d.
+      - name: Package developer app artifact
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'adperastra-developer-app'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          Copy-Item -LiteralPath (Join-Path $env:CARGO_TARGET_DIR 'release\Adperastra.exe') -Destination $out
+          Copy-Item -LiteralPath help -Destination $out -Recurse
+          Copy-Item -LiteralPath dependencies.json -Destination $out
+          Set-Content -LiteralPath (Join-Path $out 'README.txt') -Value 'Developer app build for verification. This is not an installer or a public portable release. Requires Windows 11 and WebView2.'
+          Compress-Archive -Path (Join-Path $out '*') -DestinationPath adperastra-developer-app.zip
+
+      - name: Upload developer app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: adperastra-developer-app
+          path: adperastra-developer-app.zip
+
