@@ -52,17 +52,21 @@ foreach ($variant in $variants) {
         $deadline = [DateTime]::UtcNow.AddSeconds(90)
         $ready = $false
         while (-not $ready -and -not $process.HasExited -and [DateTime]::UtcNow -lt $deadline) {
-            try { $targets = Invoke-RestMethod -Uri "http://127.0.0.1:$port/json/list" -TimeoutSec 1; $ready = @($targets | Where-Object type -eq 'page').Count -gt 0 } catch { Start-Sleep -Milliseconds 150 }
+            try { $targets = Invoke-RestMethod -Uri "http://127.0.0.1:$port/json/list" -TimeoutSec 1; $ready = @($targets | Where-Object type -eq 'page').Count -gt 0 } catch { $lastError = $_.Exception.Message; Start-Sleep -Milliseconds 150 }
         }
         if (-not $ready) {
             $state = if ($process.HasExited) { "exited with code $($process.ExitCode)" } else { 'still running, no page on the debugging port after 90 s' }
             Write-Output "App $state. Files in the test data folder:"
-            Get-ChildItem -LiteralPath $dataDir -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Output "Last request error: $lastError"
+            Get-ChildItem -LiteralPath $dataDir -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike '*\EBWebView\*' -or $_.Name -eq 'DevToolsActivePort' } | ForEach-Object {
                 Write-Output "  $($_.FullName.Substring($dataDir.Length)) ($($_.Length) bytes)"
                 if ($_.Extension -in '.log', '.txt' -and $_.Length -lt 65536) { Get-Content -LiteralPath $_.FullName -TotalCount 25 | ForEach-Object { Write-Output "    $_" } }
             }
             $webview = @(Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue).Count
             Write-Output "WebView2 processes running: $webview"
+            Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -notmatch '--type=' } | ForEach-Object { Write-Output "WebView2 browser process: $($_.CommandLine)" }
+            Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalAddress -in '127.0.0.1','::1' } | ForEach-Object { Write-Output "Listening: $($_.LocalAddress):$($_.LocalPort) pid $($_.OwningProcess)" }
+            Write-Output "Asked for port $port. Session: $([Diagnostics.Process]::GetCurrentProcess().SessionId). Interactive: $([Environment]::UserInteractive)"
             throw "The isolated WebView2 test app did not start ($state)"
         }
         node (Join-Path $PSScriptRoot 'verify-runtime.mjs') $port $fixture $OutputDirectory $variant.language $variant.theme $Mode ([string]$variant.scale)
