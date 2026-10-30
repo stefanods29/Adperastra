@@ -11,6 +11,12 @@ that fixed it.
 
 ## Open
 
+### KI-033 - Going to the folder that is already open empties the list (Major)
+- **Found in:** Step 05c screenshot run, 2026-10-30; the code path dates from Steps 02 and 03a. **Severity:** Major until checked by hand (it can look as if a folder lost its files, though no file changes).
+- **What:** `goToLocation` in `src/views/ExplorerHome.tsx` clears the list, but the listing effect only reloads when the path, sort or refresh count changes. Typing the open folder's path in the address bar leaves the list empty, and the status bar says "No items". Other routes through `goToLocation`, such as clicking the open folder in the navigation pane, may do the same; they have not been tried.
+- **Workaround:** press F5, or open another folder and come back.
+- **Target:** not fixed yet; the owner decides when. Steps building other work only document it (owner's decision, 2026-10-30).
+
 ### KI-032 - The hex viewer has no search or Go to offset yet (Minor, deferral)
 - **Found in:** Step 04c, 2026-10-30. **Severity:** Minor (deliberate deferral named in the step file; the viewer scrolls the whole 1 MB part, and larger files use the part buttons).
 - **What:** The hex viewer shows offsets, hex and text, with zoom and 1 MB parts, but a byte sequence cannot be searched and there is no Go to offset box. Both are scheduled with the other hex tools.

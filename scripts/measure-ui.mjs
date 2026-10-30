@@ -467,8 +467,8 @@ if (mode === "full") {
     await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
     // Closing the last file tab must leave the Explorer active before the
     // classic-menu measurement opens a folder again.
-    await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tablist [role=tab]").length === 1)`);
-    await page(`document.querySelector(".adp-tablist [role=tab]").click(); true`);
+    await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+    await page(`document.querySelector(".adp-tabbar [role=tab]").click(); true`);
     await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
   } catch (error) {
     console.log(`step 04a measurements failed: ${error.message ?? error}`);
@@ -722,8 +722,12 @@ if (shotDir) {
   await sleep(300);
   await shot("12-image-tab");
   await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
-  // Step 04b: the text viewer with its ribbon, and a Markdown page.
-  await openFolder(demo);
+  // Step 04b: the text viewer with its ribbon, and a Markdown page. Closing
+  // the image tab returns to the Explorer in the demo folder, as in Step 04a's
+  // measurement, so do not type the path into the address bar here.
+  await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+  await page(`document.querySelector(".adp-tabbar [role=tab]").click(); true`);
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("server-5mb.log")))`);
   await step(`[...window.__m.rows()].find((r) => r.textContent.includes("server-5mb.log"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
   await page(`window.__m.waitFor(() => (document.querySelector(".adp-filetab:not([hidden]) .cm-content")?.textContent ?? "").includes("processed item"), 15000)`);
   await sleep(300);
@@ -814,7 +818,10 @@ if (shotDir) {
   await shot("27-panes-moved");
   // The file operations screens deleted the demo's notes.txt for good.
   if (!existsSync(join(demo, "notes.txt"))) writeFileSync(join(demo, "notes.txt"), "notes");
-  await openFolder(demo);
+  // Still in the demo folder: refresh it, because going to the open folder
+  // again empties the list (KI-033).
+  await step(`window.__m.key(window, { key: "F5" })`);
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("notes.txt")))`);
   await settings([
     ["nav_pane_position", "left"],
     ["details_pane", rememberedDetails],
