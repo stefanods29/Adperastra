@@ -816,13 +816,13 @@ Replace with:
 In `src-tauri/tauri.conf.json`, find exactly:
 
 ```json
-"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'",
+"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; form-action 'none'",
 ```
 
 Replace with:
 
 ```json
-"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://adpfile.localhost; media-src 'self' blob: http://adpfile.localhost; font-src 'self' data: http://adpfile.localhost; connect-src 'self' http://adpfile.localhost; object-src 'none'; base-uri 'none'; form-action 'none'",
+"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://adpfile.localhost; media-src 'self' blob: http://adpfile.localhost; font-src 'self' data: http://adpfile.localhost; connect-src 'self' ipc: http://ipc.localhost http://adpfile.localhost; object-src 'none'; base-uri 'none'; form-action 'none'",
 ```
 
 **Tests:** the 9 tests inside `files.rs` (`range_without_header_is_full`, `range_forms`, `range_past_the_end_is_unsatisfiable`, `open_ended_range_is_capped`, `tokens_are_32_lowercase_hex`, `grants_are_limited`, `detect_recognizes_content_and_reports_errors`, `serve_answers_ranges_and_refuses_unknown_tokens`, `extensions_and_types`) and `session_keeps_file_tab_path_and_handler` in `main.rs`.
