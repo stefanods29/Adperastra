@@ -10,6 +10,23 @@ $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 if (-not $env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR = Join-Path $env:TEMP 'adperastra-target' }
 if (-not $Exe) { $Exe = Join-Path $env:CARGO_TARGET_DIR 'release\Adperastra.exe' }
+# Hosted runners' WebView2 ignores WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS and its
+# policy (no port on its command line), but honors the window's own arguments.
+# So there the test build gets a fixed port through a build-time config; the
+# workflow rebuilds without it before packaging anything.
+$hostedPort = 0
+if ($env:GITHUB_ACTIONS -eq 'true') {
+    $hostedPort = 9444
+    if (-not $NoBuild) {
+        $window = (Get-Content -LiteralPath (Join-Path $repo 'src-tauri\tauri.conf.json') -Raw | ConvertFrom-Json).app.windows[0]
+        $window | Add-Member -NotePropertyName additionalBrowserArgs -NotePropertyValue "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --remote-debugging-port=$hostedPort --disable-background-timer-throttling --disable-renderer-backgrounding" -Force
+        $overlay = Join-Path $env:RUNNER_TEMP 'adperastra-runtime-test.conf.json'
+        @{ app = @{ windows = @($window) } } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $overlay -Encoding utf8NoBOM
+        npx -y @tauri-apps/cli@2 build --no-bundle --config $overlay
+        if ($LASTEXITCODE -ne 0) { throw 'Runtime app build failed' }
+        $NoBuild = $true
+    }
+}
 $latestSource = Get-ChildItem -LiteralPath (Join-Path $repo 'src'),(Join-Path $repo 'src-tauri\src'),(Join-Path $repo 'crates') -Recurse -File | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
 if (-not $NoBuild -and (-not (Test-Path -LiteralPath $Exe) -or (Get-Item -LiteralPath $Exe).LastWriteTimeUtc -lt $latestSource.LastWriteTimeUtc)) {
     npx -y @tauri-apps/cli@2 build --no-bundle
@@ -40,20 +57,13 @@ foreach ($variant in $variants) {
     # Ask Windows for an unused local port; each app gets its own profile.
     $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,0)
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop()
+    if ($hostedPort) { $port = $hostedPort }
     $savedData = $env:ADPERASTRA_DATA_DIR
     $savedBrowserArgs = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
     $process = $null
     try {
         $env:ADPERASTRA_DATA_DIR = $dataDir
         $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$port --disable-background-timer-throttling --disable-renderer-backgrounding"
-        # Hosted runners' WebView2 ignored the environment variable (no debugging
-        # port on its command line), so there also set Microsoft's documented
-        # per-exe policy. Those machines are disposable; never done on a real PC.
-        if ($env:GITHUB_ACTIONS -eq 'true') {
-            $policy = 'HKCU:\Software\Policies\Microsoft\Edge\WebView2\AdditionalBrowserArguments'
-            New-Item -Path $policy -Force | Out-Null
-            New-ItemProperty -Path $policy -Name (Split-Path -Leaf $Exe) -Value $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS -PropertyType String -Force | Out-Null
-        }
         $process = Start-Process -FilePath $Exe -PassThru -WindowStyle Hidden
         # A fresh WebView2 profile on a cold machine (hosted runners) can take
         # far longer than on the development PC; stop early if the app exits.
