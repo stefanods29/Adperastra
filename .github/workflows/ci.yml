@@ -64,6 +64,15 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
+      - name: Check Tauri commands
+        run: npm run lint:ipc
+
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+
+      - name: Rust lints
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
       - name: Run the same verification as the development PC
         shell: pwsh
         run: |
