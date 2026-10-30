@@ -43,6 +43,35 @@ Contracts are the plug-in points every feature builds on. They were designed in 
 4. Changing an existing field's meaning is not allowed. Add a new optional field instead.
 
 
+## Clipboard image parser isolation (contract 5, Step 03b)
+
+Paste as file runs Windows clipboard image decoding and encoding in a separate
+`Adperastra.exe --clipboard-image-helper` process. The helper starts before the
+normal app initialization, receives only the explicitly validated output format
+(`png` or `jpg`), and opens the clipboard itself; it receives no destination
+path or file handle. Clipboard formats, dimensions, decoded pixels, and encoded
+output remain bounded, including the existing 32,768-pixel axis, 64-million-pixel,
+512 MiB encoded input, and 321 MiB encoded output limits. Image bytes never
+travel through the UI or JSON.
+
+The parent drains the helper's bounded binary output concurrently with its
+execution, requires a complete framed response and a successful process exit,
+and enforces a 15-second wall-clock timeout. On timeout, abnormal exit, malformed
+or truncated output, or output over the cap, it terminates and reaps the helper
+and reports a translated failure. The parent alone owns the destination's
+exclusive staging handle, copies at most the bounded output into it, flushes it,
+and publishes by handle without replacing an existing item. Failure removes only
+the staging file identified by that handle. A process/job limit and cleanup must
+not be described as a filesystem or network sandbox unless those restrictions
+are actually enforced.
+
+Tests use synthetic images and controlled helper responses, never the owner's
+clipboard. They cover PNG and JPEG, malformed and oversized inputs and outputs,
+short or malformed frames, timeout, crash, process cleanup, and a destination
+appearing during encoding. An error or timeout must not leave a published file
+or remove another item. The helper-process transport is a narrow early use of
+contract 5; Step 06d may generalize it without changing these guarantees.
+
 ## File-operation safety (contract 10, Step 03b)
 
 `FileOpRequest.allow_system` defaults to `false`. A job checks fresh metadata before making any change, including system items nested inside moved/deleted folders and existing Replace targets. If confirmation is needed, the job returns `ops.system_confirmation_required` with no changes; the UI shows a translated warning with Cancel focused and can retry that same operation once with `allow_system: true` after Continue. Ordinary jobs never show this warning. Cancellation during the check returns a cancelled report without changing files. The check reads metadata only, reports progress through the existing job transport, and never reads file contents.
