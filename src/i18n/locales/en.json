@@ -449,7 +449,8 @@
   "handlers": {
     "image": "Image",
     "text": "Text",
-    "markdown": "Markdown"
+    "markdown": "Markdown",
+    "media": "Audio and video"
   },
   "protected": {
     "message": "This file came from the internet, so it opened in protected view.",
@@ -485,7 +486,9 @@
     "view": "View",
     "zoom": "Zoom",
     "show": "Show",
-    "rotate": "Rotate"
+    "rotate": "Rotate",
+    "play": "Play",
+    "playback": "Playback"
   },
   "text": {
     "position": "Ln {line}, Col {column}",
@@ -513,6 +516,21 @@
   "markdown": {
     "renderedMode": "Reading view",
     "sourceMode": "Source"
+  },
+  "media": {
+    "play": "Play",
+    "pause": "Pause",
+    "loop": "Loop",
+    "speed": "Speed",
+    "speedValue": "{speed, number}×",
+    "subtitles": "Subtitles",
+    "subtitlesOff": "Off",
+    "noSubtitles": "None found",
+    "subtitlesFailed": "The subtitle file couldn't be read.",
+    "video": "Video",
+    "audio": "Audio",
+    "cantPlay": "This file can't be played here: the built-in player doesn't support its format.",
+    "noPicture": "There is no picture to show. If this video should have one, its format isn't supported here."
   },
   "links": {
     "openTitle": "Open this link?",

@@ -29,6 +29,14 @@ describe("open pipeline (Step 04b)", () => {
     expect(decideOpen(info("huge.md", "text/markdown", 6 * 1024 * 1024), registry)).toMatchObject({ kind: "tab", handler: { id: "text" } });
   });
 
+  it("plays audio and video in the app, other video types in Windows (Step 04c)", () => {
+    expect(decideOpen(info("clip.mp4", "video/mp4"), registry)).toMatchObject({ kind: "tab", handler: { id: "media" } });
+    expect(decideOpen(info("song.mp3", "audio/mpeg"), registry)).toMatchObject({ kind: "tab", handler: { id: "media" } });
+    expect(decideOpen(info("voice.wav", "audio/x-wav"), registry)).toMatchObject({ kind: "tab", handler: { id: "media" } });
+    expect(decideOpen(info("film.mkv", "video/x-matroska"), registry).kind).toBe("windows");
+    expect(decideOpen(info("old.avi", "video/x-msvideo"), registry).kind).toBe("windows");
+  });
+
   it("always opens programs, shortcuts and web pages in Windows", () => {
     for (const name of ["setup.exe", "link.url", "page.html", "install.msi", "app.lnk"]) {
       expect(decideOpen(info(name, "text/plain"), registry).kind).toBe("windows");

@@ -449,7 +449,8 @@
   "handlers": {
     "image": "[Ïmägë ~~]",
     "text": "[Tëxt ~~]",
-    "markdown": "[Märkdøwñ ~~~~]"
+    "markdown": "[Märkdøwñ ~~~~]",
+    "media": "[Äüdïø äñd vïdëø ~~~~~~]"
   },
   "protected": {
     "message": "[Thïs fïlë çämë frøm thë ïñtërñët, sø ït øpëñëd ïñ prøtëçtëd vïëw. ~~~~~~~~~~~~~~~~~~~~~]",
@@ -485,7 +486,9 @@
     "view": "[Vïëw ~~]",
     "zoom": "[Zøøm ~~]",
     "show": "[Shøw ~~]",
-    "rotate": "[Røtätë ~~~]"
+    "rotate": "[Røtätë ~~~]",
+    "play": "[Pläÿ ~~]",
+    "playback": "[Pläÿbäçk ~~~~]"
   },
   "text": {
     "position": "[Lñ {line}, Çøl {column} ~~]",
@@ -513,6 +516,21 @@
   "markdown": {
     "renderedMode": "[Rëädïñg vïëw ~~~~~]",
     "sourceMode": "[Søürçë ~~~]"
+  },
+  "media": {
+    "play": "[Pläÿ ~~]",
+    "pause": "[Päüsë ~~]",
+    "loop": "[Løøp ~~]",
+    "speed": "[Spëëd ~~]",
+    "speedValue": "[{speed, number}× ~~]",
+    "subtitles": "[Sübtïtlës ~~~~]",
+    "subtitlesOff": "[Øff ~~]",
+    "noSubtitles": "[Ñøñë føüñd ~~~~]",
+    "subtitlesFailed": "[Thë sübtïtlë fïlë çøüldñ't bë rëäd. ~~~~~~~~~~~~]",
+    "video": "[Vïdëø ~~]",
+    "audio": "[Äüdïø ~~]",
+    "cantPlay": "[Thïs fïlë çäñ't bë pläÿëd hërë: thë büïlt-ïñ pläÿër døësñ't süppørt ïts førmät. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "noPicture": "[Thërë ïs ñø pïçtürë tø shøw. Ïf thïs vïdëø shøüld hävë øñë, ïts førmät ïsñ't süppørtëd hërë. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
   },
   "links": {
     "openTitle": "[Øpëñ thïs lïñk? ~~~~~]",

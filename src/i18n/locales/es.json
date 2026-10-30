@@ -449,7 +449,8 @@
   "handlers": {
     "image": "Imagen",
     "text": "Texto",
-    "markdown": "Markdown"
+    "markdown": "Markdown",
+    "media": "Audio y video"
   },
   "protected": {
     "message": "Este archivo proviene de Internet, así que se abrió en vista protegida.",
@@ -485,7 +486,9 @@
     "view": "Vista",
     "zoom": "Zoom",
     "show": "Mostrar",
-    "rotate": "Girar"
+    "rotate": "Girar",
+    "play": "Reproducir",
+    "playback": "Reproducción"
   },
   "text": {
     "position": "Lín. {line}, col. {column}",
@@ -513,6 +516,21 @@
   "markdown": {
     "renderedMode": "Vista de lectura",
     "sourceMode": "Código fuente"
+  },
+  "media": {
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "loop": "Repetir",
+    "speed": "Velocidad",
+    "speedValue": "{speed, number}×",
+    "subtitles": "Subtítulos",
+    "subtitlesOff": "Desactivados",
+    "noSubtitles": "No se encontraron",
+    "subtitlesFailed": "No se pudo leer el archivo de subtítulos.",
+    "video": "Video",
+    "audio": "Audio",
+    "cantPlay": "Este archivo no se puede reproducir aquí: el reproductor integrado no admite su formato.",
+    "noPicture": "No hay imagen para mostrar. Si este video debería tener una, su formato no se admite aquí."
   },
   "links": {
     "openTitle": "¿Abrir este vínculo?",
