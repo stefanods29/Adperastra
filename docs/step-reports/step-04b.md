@@ -9,7 +9,7 @@ Dates: 2026-10-30. Status: **built and committed on local branch `step-04b-ribbo
 .\build\Adperastra\Adperastra.exe
 ```
 
-Packing uses the owner's signing key, so the owner runs these two commands.
+App-only packaging reuses the already signed setup manifest and reads no private signing key.
 
 ## Owner checklist
 
