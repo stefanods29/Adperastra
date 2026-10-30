@@ -279,7 +279,10 @@ fn main() {
         let _ = eframe::run_native(
             "adperastra-setup",
             options,
-            Box::new(|_cc| Ok(Box::new(app))),
+            Box::new(|cc| {
+                theme::install_fonts(&cc.egui_ctx, &exe_dir());
+                Ok(Box::new(app))
+            }),
         );
         if !fixed.load(Ordering::Relaxed) {
             std::process::exit(4);
@@ -342,7 +345,10 @@ fn main() {
         let _ = eframe::run_native(
             "adperastra-setup",
             options,
-            Box::new(|_cc| Ok(Box::new(app))),
+            Box::new(|cc| {
+                theme::install_fonts(&cc.egui_ctx, &cfg.base_dir);
+                Ok(Box::new(app))
+            }),
         );
         let reports = verify_all(&cfg.manifest, &cfg.base_dir, true);
         if !missing_required(&cfg.manifest, &reports).is_empty() {
@@ -366,7 +372,10 @@ fn main() {
         let _ = eframe::run_native(
             "adperastra-setup",
             options,
-            Box::new(|_cc| Ok(Box::new(app))),
+            Box::new(|cc| {
+                theme::install_fonts(&cc.egui_ctx, &cfg.base_dir);
+                Ok(Box::new(app))
+            }),
         );
     }
 
@@ -520,7 +529,6 @@ impl RepairApp {
 impl eframe::App for RepairApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.fonts_done {
-            theme::install_fonts(ctx, &self.base_dir);
             theme::apply(
                 ctx,
                 self.theme_name == "dark"
@@ -628,7 +636,6 @@ impl eframe::App for RepairApp {
 // ---------- First-run window ----------
 
 struct WizardApp {
-    base_dir: PathBuf,
     data_dir: PathBuf,
     lang: String,
     theme: String,
@@ -641,7 +648,6 @@ struct WizardApp {
 impl WizardApp {
     fn new(cfg: &Cfg, theme_name: String) -> Self {
         Self {
-            base_dir: cfg.base_dir.clone(),
             data_dir: cfg.data_dir.clone(),
             lang: cfg.lang.clone(),
             theme: theme_name,
@@ -662,7 +668,6 @@ impl WizardApp {
 impl eframe::App for WizardApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.fonts_done {
-            theme::install_fonts(ctx, &self.base_dir);
             self.fonts_done = true;
         }
         let dark = self.theme == "dark" || (self.theme == "system" && theme::system_dark(ctx));
@@ -784,7 +789,6 @@ impl SignatureApp {
 impl eframe::App for SignatureApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.fonts_done {
-            theme::install_fonts(ctx, &exe_dir());
             let dark = self.theme_name == "dark"
                 || (self.theme_name == "system" && theme::system_dark(ctx));
             theme::apply(ctx, dark);

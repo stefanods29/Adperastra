@@ -11,8 +11,8 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | Tokens to CSS (01b) | Style Dictionary (Apache-2.0) | small custom script | Build-time only |
 | i18n (01b) | i18next + ICU (MIT) | Lingui (MIT); Project Fluent (Apache-2.0) | ICU plurals + pseudo-locale required |
 | Storage (01b/04a) | rusqlite/SQLite (MIT; SQLite public domain) | plain JSON + files | Cache, indexes, tags |
-| Setup launcher (01a) | egui (MIT/Apache-2.0) | Win32 via windows crate | Never Slint (conditional license) |
-| Downloads (01a) | reqwest + sha2 + minisign (MIT/Apache-2.0) | OS downloader | Verify manifest signature first |
+| Setup launcher (01a) | egui (MIT/Apache-2.0), built-in fonts off (their Ubuntu font license is not allowed); Inter, else the Windows UI font read at run time | Win32 via windows crate | Never Slint (conditional license) |
+| Downloads (01a) | reqwest + sha2 + minisign (MIT/Apache-2.0); TLS roots from the Windows certificate store via rustls-native-certs + schannel (MIT/Apache-2.0/ISC), not webpki-roots (CDLA-Permissive-2.0, not allowed) | OS downloader | Verify manifest signature first |
 | Windows APIs (02+) | windows crate (MIT/Apache-2.0); windows-collections 0.2 (MIT/Apache-2.0, same project, adopted in Step 03a for the share sheet's item list) | hand-written FFI | Known folders, shell, share sheet, classic menu, OCR seams |
 | FS walk/watch (02) | notify 8.2.1 (CC0-1.0, adopted in Step 02 for `watch(path)`); walkdir/rayon/tokio not adopted - `std::fs` listing is enough so far | std only | Behind FS-service trait |
 | Recycle Bin (03b) | trash 5.2.9 (MIT, adopted in Step 03b for delete-to-Recycle-Bin and restore; verified on crates.io/docs.rs 2026-10-28, maintained, Windows backend uses the `windows` crate) | Hand-written `IFileOperation` + Recycle Bin enumeration via the windows crate | Restore-by-original-path powers Undo of Delete |

@@ -56,18 +56,42 @@ pub fn apply(ctx: &egui::Context, dark: bool) {
 /// proportional font, if present. All failures are ignored: the
 /// built-in egui fonts are an acceptable fallback.
 pub fn install_fonts(ctx: &egui::Context, base_dir: &Path) {
-    let path = base_dir.join("payload").join("fonts").join("Inter.ttf");
-    let bytes = match std::fs::read(&path) {
-        Ok(b) => b,
-        Err(_) => return,
-    };
-    let mut defs = FontDefinitions::default();
-    defs.font_data
-        .insert("inter".to_owned(), Arc::new(FontData::from_owned(bytes)));
-    defs.families
-        .entry(FontFamily::Proportional)
-        .or_default()
-        .insert(0, "inter".to_owned());
+    // egui's built-in fonts are turned off (their Ubuntu font license is not
+    // on the allowed list), so every text family must be bound here before
+    // the first frame. The bundled Inter comes first; the Windows UI font is
+    // read from the system (never bundled) for when Inter is missing, which
+    // is exactly when this window runs to repair it.
+    let mut defs = FontDefinitions::empty();
+    let windows = std::env::var_os("WINDIR").unwrap_or_else(|| r"C:\Windows".into());
+    let candidates = [
+        (
+            "inter",
+            base_dir.join("payload").join("fonts").join("Inter.ttf"),
+        ),
+        (
+            "system",
+            Path::new(&windows).join("Fonts").join("segoeui.ttf"),
+        ),
+        (
+            "system-mono",
+            Path::new(&windows).join("Fonts").join("consola.ttf"),
+        ),
+    ];
+    let mut names = Vec::new();
+    for (name, path) in candidates {
+        if let Ok(bytes) = std::fs::read(&path) {
+            defs.font_data
+                .insert(name.to_owned(), Arc::new(FontData::from_owned(bytes)));
+            names.push(name.to_owned());
+        }
+    }
+    if names.is_empty() {
+        return;
+    }
+    let mut mono = names.clone();
+    mono.sort_by_key(|n| n != "system-mono");
+    defs.families.insert(FontFamily::Proportional, names);
+    defs.families.insert(FontFamily::Monospace, mono);
     ctx.set_fonts(defs);
 }
 

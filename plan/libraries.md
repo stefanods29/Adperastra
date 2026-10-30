@@ -15,8 +15,8 @@ Licenses allowed: `plan/rules.md` R-LIC.
 | windows-collections | 0.2 | MIT / Apache-2.0 | Share sheet item lists |
 | notify | 8 (8.2.1) | CC0-1.0 | Folder watching |
 | trash | 5.2.9 | MIT | Recycle Bin and restore |
-| eframe, egui | 0.32 | MIT / Apache-2.0 | Setup window |
-| reqwest | 0.12 (rustls) | MIT / Apache-2.0 | Setup window downloads |
+| eframe, egui | 0.32 (default features off: accesskit, glow; no default fonts) | MIT / Apache-2.0 | Setup window |
+| reqwest | 0.12 (rustls-tls-native-roots) | MIT / Apache-2.0 | Setup window downloads |
 | sha2 | 0.10 | MIT / Apache-2.0 | Download checksums |
 | minisign | 0.8 | MIT | Manifest signatures |
 | fs2 | 0.4 | MIT / Apache-2.0 | File locks in the setup window |
