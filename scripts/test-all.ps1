@@ -76,6 +76,9 @@ function Assert-PinnedTool {
 }
 
 Invoke-Verification 'Verification helper regression tests' { node --test scripts/verification-checks.test.mjs }
+Invoke-Verification 'Test process isolation' {
+    & $processShell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'test-process-job-check.ps1')
+}
 Invoke-Verification 'Tracked file sizes and secrets' { node scripts/verification-checks.mjs repo }
 Invoke-Verification 'Rust formatting' { cargo fmt --all -- --check }
 Invoke-Verification 'Rust lints' { cargo clippy --workspace --all-targets --locked -- -D warnings }

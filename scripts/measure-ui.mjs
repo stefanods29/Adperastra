@@ -310,7 +310,7 @@ if (mode === "full") {
   execFileSync("powershell.exe", [
     "-NoProfile",
     "-Command",
-    "Get-CimInstance Win32_Process -Filter \"Name = 'Adperastra.exe'\" | Where-Object { $_.CommandLine -like '*--classic-menu*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
+    "$testId = 0; if (-not [int]::TryParse($env:ADPERASTRA_TEST_APP_PID, [ref]$testId) -or $testId -le 0) { throw 'Missing test app process id' }; Get-CimInstance Win32_Process -Filter \"ParentProcessId=$testId\" | Where-Object { $_.CommandLine -like '*--classic-menu*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
   ]);
   await sleep(500);
 

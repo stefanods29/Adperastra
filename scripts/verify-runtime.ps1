@@ -6,6 +6,7 @@ param(
     [switch]$NoBuild
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'test-process-job.ps1')
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 if (-not $env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR = Join-Path $env:TEMP 'adperastra-target' }
@@ -60,11 +61,12 @@ foreach ($variant in $variants) {
     if ($hostedPort) { $port = $hostedPort }
     $savedData = $env:ADPERASTRA_DATA_DIR
     $savedBrowserArgs = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
-    $process = $null
+    $job = $null
     try {
         $env:ADPERASTRA_DATA_DIR = $dataDir
         $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$port --disable-background-timer-throttling --disable-renderer-backgrounding"
-        $process = Start-Process -FilePath $Exe -PassThru -WindowStyle Hidden
+        $job = [AdperastraTestProcessJob]::Start([IO.Path]::GetFullPath($Exe), '', $true)
+        $process = $job.Process
         # A fresh WebView2 profile on a cold machine (hosted runners) can take
         # far longer than on the development PC; stop early if the app exits.
         $deadline = [DateTime]::UtcNow.AddSeconds(90)
@@ -80,27 +82,23 @@ foreach ($variant in $variants) {
                 Write-Output "  $($_.FullName.Substring($dataDir.Length)) ($($_.Length) bytes)"
                 if ($_.Extension -in '.log', '.txt' -and $_.Length -lt 65536) { Get-Content -LiteralPath $_.FullName -TotalCount 25 | ForEach-Object { Write-Output "    $_" } }
             }
-            $webview = @(Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue).Count
-            Write-Output "WebView2 processes running: $webview"
-            Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -notmatch '--type=' } | ForEach-Object { Write-Output "WebView2 browser process: $($_.CommandLine)" }
-            Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalAddress -in '127.0.0.1','::1' } | ForEach-Object { Write-Output "Listening: $($_.LocalAddress):$($_.LocalPort) pid $($_.OwningProcess)" }
+            $testWebview = @(Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($dataDir, [StringComparison]::OrdinalIgnoreCase) -ge 0 })
+            Write-Output "WebView2 processes using the test profile: $($testWebview.Count)"
+            Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue | Where-Object { $_.LocalAddress -in '127.0.0.1','::1' } | ForEach-Object { Write-Output "Requested port listener: $($_.LocalAddress):$($_.LocalPort) pid $($_.OwningProcess)" }
             Write-Output "Asked for port $port. Session: $([Diagnostics.Process]::GetCurrentProcess().SessionId). Interactive: $([Environment]::UserInteractive)"
             throw "The isolated WebView2 test app did not start ($state)"
         }
         node (Join-Path $PSScriptRoot 'verify-runtime.mjs') $port $fixture $OutputDirectory $variant.language $variant.theme $Mode ([string]$variant.scale)
         if ($LASTEXITCODE -ne 0) { throw "Runtime verification failed ($($variant.language)/$($variant.theme)/$($variant.scale))" }
     } finally {
-        if ($process) {
-            $children = @(Get-CimInstance Win32_Process -Filter "ParentProcessId=$($process.Id)" -ErrorAction SilentlyContinue)
-            $children | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+        try { if ($job) { $job.Dispose() } } finally {
+            $env:ADPERASTRA_DATA_DIR = $savedData
+            $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $savedBrowserArgs
+            $resolvedTemp = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
+            $resolvedRuntime = [IO.Path]::GetFullPath($runtimeRoot)
+            if (-not $resolvedRuntime.StartsWith($resolvedTemp,[StringComparison]::OrdinalIgnoreCase) -or (Split-Path -Leaf $resolvedRuntime) -notlike 'adperastra-runtime-*') { throw 'Refusing cleanup outside the generated test folder' }
+            Remove-Item -LiteralPath $resolvedRuntime -Recurse -Force -ErrorAction SilentlyContinue
         }
-        $env:ADPERASTRA_DATA_DIR = $savedData
-        $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $savedBrowserArgs
-        $resolvedTemp = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
-        $resolvedRuntime = [IO.Path]::GetFullPath($runtimeRoot)
-        if (-not $resolvedRuntime.StartsWith($resolvedTemp,[StringComparison]::OrdinalIgnoreCase) -or (Split-Path -Leaf $resolvedRuntime) -notlike 'adperastra-runtime-*') { throw 'Refusing cleanup outside the generated test folder' }
-        Remove-Item -LiteralPath $resolvedRuntime -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 Write-Output "Runtime $Mode verification passed. Reports: $OutputDirectory"
