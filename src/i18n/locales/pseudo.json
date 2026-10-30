@@ -451,6 +451,12 @@
     "text": "[Tëxt ~~]",
     "markdown": "[Märkdøwñ ~~~~]"
   },
+  "protected": {
+    "message": "[Thïs fïlë çämë frøm thë ïñtërñët, sø ït øpëñëd ïñ prøtëçtëd vïëw. ~~~~~~~~~~~~~~~~~~~~~]",
+    "unblock": "[Üñbløçk ~~~]",
+    "unblockTitle": "[Üñbløçk thïs fïlë? ~~~~~~]",
+    "unblockBody": "[Øñlÿ üñbløçk fïlës frøm pëøplë äñd wëbsïtës ÿøü trüst. Wïñdøws wïll støp trëätïñg “{name}” äs ä fïlë frøm thë ïñtërñët. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
+  },
   "fileTab": {
     "showInFolder": "[Shøw ïñ føldër ~~~~~]",
     "reload": "[Rëløäd ~~~]",

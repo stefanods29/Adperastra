@@ -528,6 +528,7 @@ export default function App() {
               onClose={() => closeTab(tab.id)}
               onViewState={(view) => setTabsState((current) => setTabView(current, tab.id, view))}
               onOpenHelp={(slug) => openTab("help", slug)}
+              protectedViewEnabled={settings.open.protected_view}
             />
           ))}
         {activeTab.kind === "help" ? (

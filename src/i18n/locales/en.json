@@ -451,6 +451,12 @@
     "text": "Text",
     "markdown": "Markdown"
   },
+  "protected": {
+    "message": "This file came from the internet, so it opened in protected view.",
+    "unblock": "Unblock",
+    "unblockTitle": "Unblock this file?",
+    "unblockBody": "Only unblock files from people and websites you trust. Windows will stop treating “{name}” as a file from the internet."
+  },
   "fileTab": {
     "showInFolder": "Show in folder",
     "reload": "Reload",

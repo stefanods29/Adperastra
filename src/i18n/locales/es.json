@@ -451,6 +451,12 @@
     "text": "Texto",
     "markdown": "Markdown"
   },
+  "protected": {
+    "message": "Este archivo proviene de Internet, así que se abrió en vista protegida.",
+    "unblock": "Desbloquear",
+    "unblockTitle": "¿Desbloquear este archivo?",
+    "unblockBody": "Desbloquea solo archivos de personas y sitios web en los que confíes. Windows dejará de tratar «{name}» como un archivo de Internet."
+  },
   "fileTab": {
     "showInFolder": "Mostrar en la carpeta",
     "reload": "Volver a cargar",

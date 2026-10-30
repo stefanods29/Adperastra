@@ -1,8 +1,9 @@
-import { ArrowUp, FileQuestion, RotateCw } from "lucide-react";
+import { ArrowUp, FileQuestion, RotateCw, ShieldAlert } from "lucide-react";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
+import Dialog from "../components/Dialog";
 import HelpButton from "../components/HelpButton";
 import IconButton from "../components/IconButton";
 import SearchBox from "../components/SearchBox";
@@ -12,7 +13,7 @@ import { handlers } from "../handlers";
 import type { FileTabStatus, FindRequest } from "../handlers/types";
 import { errorCode, errorText } from "../services/errors";
 import { displayPath, openItem, parentPathOf, pathSegments } from "../services/explorer";
-import { fileDetect, fileGrant, fileRevoke, fileUrl, type FileTypeInfo } from "../services/files";
+import { fileDetect, fileGrant, fileRevoke, fileUnblock, fileUrl, type FileTypeInfo } from "../services/files";
 import { isTauriRuntime } from "../services/settings";
 import type { TabState } from "../services/tabs";
 
@@ -26,6 +27,8 @@ export interface FileTabViewProps {
   onClose: () => void;
   onViewState: (state: unknown) => void;
   onOpenHelp: (slug: string) => void;
+  /** Settings > Opening files > Protected view (Step 04c). */
+  protectedViewEnabled: boolean;
 }
 
 type Phase =
@@ -37,7 +40,7 @@ type Phase =
 /** One file tab (Step 04a): navigation row, the handler's view, and the
  * file tab's own status bar. Gets a file token when it mounts and gives it
  * back when it unmounts (plan/pitfalls.md P-28). */
-export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder, onClose, onViewState, onOpenHelp }: FileTabViewProps) {
+export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder, onClose, onViewState, onOpenHelp, protectedViewEnabled }: FileTabViewProps) {
   const { t } = useTranslation();
   const path = tab.path ?? "";
   const handler = tab.handler ? handlers.get(tab.handler) : undefined;
@@ -46,6 +49,9 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
   const [reloadKey, setReloadKey] = useState(0);
   const [find, setFind] = useState<FindRequest>({ text: "", request: 0, backwards: false });
   const searchRef = useRef<HTMLDivElement | null>(null);
+  const [unblocked, setUnblocked] = useState(false);
+  const [askUnblock, setAskUnblock] = useState(false);
+  const [unblockError, setUnblockError] = useState<string | null>(null);
   const canFind = handler?.supportsFind === true;
   const findAgain = useCallback((backwards: boolean) => {
     setFind((current) => ({ ...current, request: current.request + 1, backwards }));
@@ -100,6 +106,19 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
     if (isTauriRuntime()) void openItem(path).catch(() => undefined);
   }, [path]);
 
+  // Protected view (Step 04c): a file from the internet shows a yellow bar;
+  // Unblock removes the mark after the user confirms.
+  const protectedView = phase.kind === "ready" && phase.info.from_internet && protectedViewEnabled && !unblocked;
+  const unblock = useCallback(() => {
+    void fileUnblock(path)
+      .then(() => {
+        setUnblocked(true);
+        setAskUnblock(false);
+        setUnblockError(null);
+      })
+      .catch((error: unknown) => setUnblockError(errorText(t, error, "files")));
+  }, [path, t]);
+
   const folder = parentPathOf(path);
   const segments = pathSegments(path).map((segment, index, all) => ({
     id: index === all.length - 1 ? "" : segment.path,
@@ -135,6 +154,14 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
         ) : null}
         <HelpButton onOpenHelp={() => onOpenHelp(handler?.helpSlug ?? "opening-files")} />
       </div>
+      {protectedView ? (
+        <div className="adp-protected-bar" role="status">
+          <ShieldAlert size={16} aria-hidden="true" className="adp-protected-icon" />
+          <span className="adp-protected-text">{t("protected.message")}</span>
+          <Button onClick={() => setAskUnblock(true)}>{t("protected.unblock")}</Button>
+          <HelpButton onOpenHelp={() => onOpenHelp("protected-view")} />
+        </div>
+      ) : null}
       <div className="adp-filetab-body">
         {phase.kind === "loading" ? <Skeleton variant="tiles" count={1} /> : null}
         {phase.kind === "missing" ? (
@@ -168,10 +195,27 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
               onStatus={setStatus}
               onOpenInWindowsApp={openInWindowsApp}
               find={find}
+              protectedView={protectedView}
             />
           </Suspense>
         ) : null}
       </div>
+      {askUnblock ? (
+        <Dialog title={t("protected.unblockTitle")} onClose={() => setAskUnblock(false)}>
+          <p className="adp-dialog-text">{t("protected.unblockBody", { name: tab.title ?? "" })}</p>
+          {unblockError ? (
+            <p className="adp-dialog-text adp-protected-error" role="alert">
+              {unblockError}
+            </p>
+          ) : null}
+          <div className="adp-dialog-actions">
+            <Button variant="primary" onClick={unblock}>
+              {t("protected.unblock")}
+            </Button>
+            <Button onClick={() => setAskUnblock(false)}>{t("common.cancel")}</Button>
+          </div>
+        </Dialog>
+      ) : null}
       <footer className="adp-statusbar adp-filetab-status">
         {status.items.map((item) => (
           <span key={item}>{item}</span>
