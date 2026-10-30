@@ -58,3 +58,52 @@ Undo first recreates source directory scaffolds that the operation removed, move
 Undo and redo never overwrite a new item at an expected target, and nonempty scaffolds changed by another program are preserved. A skipped, failed, or cancelled history operation raises its translated error and leaves the history cursor unchanged. The existing file_op_start transport executes transfer history as a job with cancel/progress and the same absolute-path, root, reparse-point and system-item checks as other operations. Transfer plans stay in Rust behind opaque identifiers so a large folder does not turn into a large UI response; identifiers are local, bounded with the 100-entry undo history, and never commands or paths supplied without validation.
 
 Transfer history reserves at most 32 MiB per forward operation before any mutation and keeps at most 100 referenced plans within 128 MiB total. Capacity exhaustion returns FsError::UndoLimit / ops.undo_limit, not a filename error; no effects are clipped or silently evicted. The user can select fewer items or restart to begin a fresh local history. Plans already referenced by Undo/Redo, including pending groups and in-flight jobs, remain retained.
+
+## Step 03b: approved Replace targets and recovery (contracts 10 and 11)
+
+**Required behavior.** Replace is permission to replace the specific items
+shown to the user, not blanket permission to recycle whatever later occupies
+the same paths. Conflict discovery produces a bounded, Rust-owned snapshot of
+the existing conflicting targets, including nested file conflicts in merged
+folders, and returns an opaque token plus the information needed to display
+the choices. It uses metadata only and obeys cancellation, link, system-item,
+and online-only rules. The UI associates each Replace choice (including
+"Do this for all") with the displayed snapshot. An optional token on the
+existing request carries that approval; a missing, expired, invalid, changed,
+or incomplete approval never authorizes a replacement. No path, identity, or
+token supplied by the UI bypasses Rust validation. New conflicts or changed
+targets are skipped and reported or require a fresh confirmation; they are
+never silently recycled. Conflict snapshots have explicit memory and item
+limits, fail without mutation when capacity is exceeded, and have a bounded
+lifetime. Existing non-Replace requests need no token.
+
+Before any target changes, the job revalidates the approved identity (on
+Windows, a stable volume and file identity obtained from the opened object),
+its type and applicable safety checks. Publishing the completed, flushed
+temporary copy uses an atomic no-replace operation. If another item appears at
+the destination at any point, that item remains untouched. The original
+approved item is recoverable, with its exact Recycle Bin identity and original
+path recorded for Undo; a failed or cancelled operation reports every effect
+that occurred. Undo and Redo obey the same identity, no-overwrite and safety
+rules and do not advance the history cursor on incomplete work.
+
+If a replacement needs intermediate staging, persist a bounded recovery
+journal under the app data folder before the first mutation, with durable state
+and enough identity and path information to recover safely after a crash at
+any transition. Recovery never overwrites a new destination or deletes an
+unverified item; when automatic restoration is unsafe, retain the recoverable
+item and clearly report the pending recovery. Journal and staging cleanup must
+not remove unrelated files. Normal operation and recovery must remain offline.
+
+**Implementation research still required.** The existing path-based
+`trash::delete` call does not establish that the item recycled is the one
+whose identity was approved. A handle-based rename to staging is a candidate,
+but by itself does not prove that a later path-based recycle cannot race with
+replacement of the staged path. Before enabling Replace, prove and test an
+end-to-end Windows mechanism that binds recycling to the approved object,
+including protection of any staging path, failure handling, and crash
+recovery. If that guarantee cannot be established, fail safely and leave
+Replace unavailable for the affected case; do not weaken this contract or
+claim that identity revalidation alone closes the race. Tests must exercise
+new, changed, and swapped targets, nested conflicts, cancellation and failures,
+and crash recovery at each durable transition using disposable folders.
