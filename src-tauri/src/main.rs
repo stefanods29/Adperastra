@@ -83,6 +83,11 @@ fn session_path(data_dir: &Path) -> PathBuf {
     data_dir.join("session.json")
 }
 
+/// The WebView2 profile (cache, storage) of the main window.
+fn webview_profile_dir(data_dir: &Path) -> PathBuf {
+    data_dir.join("webview")
+}
+
 fn logs_dir(data_dir: &Path) -> PathBuf {
     data_dir.join("logs")
 }
@@ -2288,12 +2293,28 @@ fn main() {
             watch_next_id: AtomicU64::new(0),
         })
         .setup(|app| {
+            // The main window is created here, not from tauri.conf.json, so
+            // its WebView2 profile lives under the app's data folder
+            // (R-BG-2): ADPERASTRA_DATA_DIR then isolates every instance,
+            // and nothing is written to a second folder in %LOCALAPPDATA%.
+            let config = app
+                .config()
+                .app
+                .windows
+                .iter()
+                .find(|window| window.label == "main")
+                .cloned()
+                .ok_or("main window missing from tauri.conf.json")?;
+            let profile = webview_profile_dir(&app.state::<AppState>().data_dir);
+            let window = tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?
+                .data_directory(profile)
+                .build()?;
             // Snap layouts: subclass the main window so Windows treats the
             // custom maximize button as the native maximize button.
             #[cfg(windows)]
-            if let Some(window) = app.get_webview_window("main") {
-                install_snap_subclass(&window);
-            }
+            install_snap_subclass(&window);
+            #[cfg(not(windows))]
+            let _ = window;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -2357,6 +2378,19 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn webview_profile_lives_under_the_data_folder() {
+        // R-BG-2: one data folder per instance, nothing elsewhere. The main
+        // window must be built in setup (create: false) to use this folder.
+        let data = Path::new(r"C:\data\Adperastra");
+        assert_eq!(webview_profile_dir(data), data.join("webview"));
+        let config: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let main = &config["app"]["windows"][0];
+        assert_eq!(main["label"], "main");
+        assert_eq!(main["create"], false);
+    }
 
     #[test]
     fn settings_defaults() {
