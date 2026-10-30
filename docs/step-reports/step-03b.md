@@ -104,9 +104,9 @@ See `git log --oneline testing..step-03b-file-operations` (52 commits on 2026-10
 
 ## Open before merging (state on 2026-10-30)
 
-1. **Speed gate run:** `.\scripts\measure-ab.ps1 -Step 03b -Baseline v0.0.5-step03a -Out docs\benchmarks\2026-10-30-ui-step03b.json`, then `node scripts/compare-benchmarks.mjs` on that file. The first attempt failed: the new build's measurement timed out three times while opening a folder, right after the old version had finished building (the PC was busy). Run by hand afterwards, the same measurement passed once and timed out once at a later point. Not explained yet. `measure-ui.mjs` now reports what the page showed when opening a folder times out, so the next run says where it is stuck. A real hang in the app has not been ruled out.
-2. **Possible address-bar regression to check:** with a long path, the empty space you click to type a path in the address bar is 0 px wide. The wider 24 px arrows may have used up that space. Check it against the previous build, and keep a way to click into the address bar.
-3. **Slow recycle + restore:** one measurement took 2.2 s (others 0.3-0.4 s). Check it with the speed gate.
+1. **Speed gate run (owner decision 2026-10-30, plan/STATUS.md):** an unreliable speed check does not block this step; only a result that is clearly slow for the user would. The A/B run against `v0.0.5-step03a` timed out on some attempts and has not completed; the cause is not known, and a real hang has not been ruled out.
+2. **Address bar (owner decision 2026-10-30):** with a long path the empty click space is 0 px wide; accepted.
+3. **Slow recycle + restore (owner decision 2026-10-30):** one measurement took 2.2 s (others 0.3-0.4 s); left for later.
 4. GitHub CI green on the latest push, then close KI-022, finish this report (speed table, commit list), merge into `testing`, pull request to `main`, tag `v0.0.6-step03b`, update `plan/STATUS.md`.
 5. For P2: its recipe stages `CLAUDE.md`, which is never committed (owner decision, git-excluded): copy it locally only. Its CI change (T3) was written before `scripts/test-all.ps1` took over CI and must be adapted.
 
