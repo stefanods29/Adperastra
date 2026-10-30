@@ -278,6 +278,47 @@ if (mode === "full") {
   results.push(await measure("100k folder: switch to Large icons (Ctrl+Shift+2)", `true`, `window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
   results.push(await measure("100k folder: arrow key move in Large icons", `window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true }); window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "ArrowRight" })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
   results.push(await measure("100k folder: switch to List (Ctrl+Shift+5)", `true`, `window.__m.key(window, { key: "%", code: "Digit5", ctrlKey: true, shiftKey: true })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  // Step 05b: Column view. The Columns entry is the ninth view in the
+  // default View menu; Ctrl+Shift+6 (back to Details) closes every run.
+  const columnsEntry = `document.querySelectorAll(".adp-ctxmenu [role=menuitemradio]")[8]`;
+  results.push(
+    await measure(
+      "100k folder: switch to Column view (View menu)",
+      `window.__m.menuButton(2).click(); true`,
+      `window.__m.click(${columnsEntry})`,
+      `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`,
+    ),
+  );
+  results.push(
+    await measure(
+      "100k folder: arrow key move in Column view",
+      `(async () => { window.__m.menuButton(2).click(); await window.__m.frame(); ${columnsEntry}.click(); await window.__m.waitFor(() => window.__m.rows().length > 0); window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); return true; })()`,
+      `window.__m.key(window.__m.list(), { key: "ArrowDown" })`,
+      `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`,
+    ),
+  );
+  {
+    // Switch to Column view once, then open each of the first subfolders.
+    await page(`(async () => {
+      window.__m.menuButton(2).click();
+      await window.__m.frame();
+      ${columnsEntry}.click();
+      await window.__m.waitFor(() => window.__m.rows().length > 0);
+      return true;
+    })()`);
+    const values = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      values.push(
+        await page(
+          `window.__m.timeUntil(() => window.__m.click(window.__m.rows()[${run}]), () => document.querySelector(".adp-colview-column--child")?.querySelector("[role='option'], .adp-empty-note") != null)`,
+        ),
+      );
+    }
+    await page(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`);
+    const result = { name: "100k folder: show a subfolder's column", median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+    console.log(`${result.name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+    results.push(result);
+  }
   // Smooth tier: scroll the 100k list one wheel-step per frame for 2 s and
   // record every frame interval. The display's own frame time is the median
   // interval; a frame slower than 1.5x of it is a dropped frame.
@@ -710,6 +751,18 @@ if (shotDir) {
   await sleep(200);
   await shot("21-view-menu");
   await step(`window.__m.closeMenus()`);
+  await step(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true })`);
+  // Step 05b: Column view, and the preview of the selected file.
+  await step(`window.__m.menuButton(2).click()`);
+  await step(`document.querySelectorAll(".adp-ctxmenu [role=menuitemradio]")[8].click()`);
+  await sleep(300);
+  await step(`[...document.querySelectorAll(".adp-colview-row")].find((r) => r.textContent.includes("Invoices"))?.click()`);
+  await sleep(600);
+  await step(`document.activeElement?.blur()`);
+  await shot("22-column-view");
+  await step(`[...document.querySelectorAll(".adp-colview-row")].find((r) => r.textContent.includes("Q4 Budget 2026.xlsx"))?.click()`);
+  await sleep(300);
+  await shot("23-column-preview");
   await step(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true })`);
 
   // Step 05c: the toolbar, the tabs and the panes in every place.

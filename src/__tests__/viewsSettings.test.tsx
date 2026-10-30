@@ -82,6 +82,24 @@ describe("ViewsSettings", () => {
     expect(view.changes.at(-1)!.view_mode_order.slice(0, 2)).toEqual(["largeIcons", "extraLargeIcons"]);
   });
 
+  it("changes the Column view settings", async () => {
+    const view = await renderViews();
+    const input = container!.querySelector<HTMLInputElement>("input[type='range']")!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => {
+      setter.call(input, "300");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(view.changes.at(-1)!.column_width).toBe(300);
+    await act(async () => {
+      container!
+        .querySelector<HTMLButtonElement>("[role='switch'][aria-label='Show a preview of the selected file']")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(view.changes.at(-1)!.column_preview).toBe(false);
+  });
+
   it("changes the default view", async () => {
     const view = await renderViews();
     const select = container!.querySelector<HTMLSelectElement>("select")!;

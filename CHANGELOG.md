@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Column view (Step 05b): each folder in its own column, the selected folder's contents on the right, and a preview of the selected file; the open folder's column keeps the blue selection and the columns to its left show the way. Right and Left move between columns, clicking anything in another column opens that folder, and files can be dragged onto folders or the empty part of any column. The column width is dragged or set in Settings > Views, the preview column can be turned off, and Column view can be hidden, reordered, made the default and remembered per folder like every other view (settings schema 7).
 - Movable toolbars, panels and tabs (Step 05c): put the toolbar at the top, at the bottom or on either side, in the standard, compact, icons-only or hide-until-pointed-at look, from its right-click menu; the same choice applies to the Explorer's command bar and to every file tab's ribbon. Tabs can sit at the top, at the bottom or in a column, which can shrink to icons. The navigation pane can go right or hide, and the Details pane can sit under the files. Three ready-made layout presets (Standard, Minimal, Classic) set everything at once, and up to 20 presets of your own are saved in Settings > Layout. Your layout comes back after a restart.
 - Audio and video player; protected view for downloads; Open as text or hex; choose where each file type opens (Step 04c).
 - File operations (Step 03b): New folder and text file, Cut, Copy, Paste, and Delete through the command bar, menus, and keyboard; big copies and moves run as background jobs with progress and Cancel; name conflicts ask first (Merge for two folders, Skip, or Keep both). Merge never touches an existing file; a file and a folder with the same name cannot be combined, and a whole drive can never be moved or deleted. Replace is not offered yet: it returns with the full conflict window, once recycling can be bound to the exact item you approved.
@@ -19,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- A cancelled folder listing is dropped at once, so its items no longer stay in memory (needed by Column view, which cancels many listings).
 - Choosing each conflict separately now works; a cancelled or partly finished move can be undone exactly; moving, recycling or deleting system items asks first.
 - A copy or move can no longer recycle a file that appeared after the conflict prompt: Replace is unavailable until recycling can be bound to the exact approved item.
 - A move deletes a source only after its identity and bytes match the finished copy; a source changed or replaced during the job stays where it is.
