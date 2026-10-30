@@ -8,6 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "lint:i18n": "node scripts/check-i18n.mjs",
+    "lint:ipc": "node scripts/check-ipc.mjs",
+    "i18n:pseudo": "node scripts/make-pseudo.mjs",
     "tokens": "node scripts/build-tokens.mjs"
   },
   "dependencies": {
