@@ -129,6 +129,8 @@ export interface ExplorerHomeProps {
   /** Open a file through the app's open pipeline (Step 04a). Rejects with
    * a `files.*` error code. Without it, files open in their Windows app. */
   onOpenFile?: (path: string, background: boolean) => Promise<void>;
+  /** "Open as text" and "Open as hex" (Step 04c): show a file in a chosen viewer. */
+  onOpenFileWith?: (path: string, handlerId: string) => void;
   navigateRequest?: ExplorerNavigateRequest | null;
   /** View options from settings (schema 3); defaults when absent. */
   view?: ExplorerViewSettings;
@@ -218,6 +220,7 @@ export default function ExplorerHome({
   onStatsChange,
   onOpenHelp,
   onOpenFile,
+  onOpenFileWith,
   navigateRequest = null,
   view: viewProp,
   onViewChange,
@@ -887,6 +890,18 @@ export default function ExplorerHome({
         for (const path of files.slice(0, OPEN_LIMIT)) void openItem(path).catch((error: unknown) => notifyError(error, "open"));
         if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
       },
+      openAsText: () => {
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        const files = paths.filter((path) => byPath.get(path)?.kind === "file");
+        for (const path of files.slice(0, OPEN_LIMIT)) onOpenFileWith?.(path, "text");
+        if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
+      },
+      openAsHex: () => {
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        const files = paths.filter((path) => byPath.get(path)?.kind === "file");
+        for (const path of files.slice(0, OPEN_LIMIT)) onOpenFileWith?.(path, "hex");
+        if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
+      },
       openWith: () => {
         const paths = live.current.selectedPaths;
         if (paths.length === 1 && isTauriRuntime()) void openWithDialog(paths[0]).catch((error: unknown) => notifyError(error, "openWith"));
@@ -1020,7 +1035,7 @@ export default function ExplorerHome({
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [goToFolder, goToLocation, i18n, notify, notifyError, onViewChange, openOne, refresh, t, pasteImageFormat],
+    [goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);

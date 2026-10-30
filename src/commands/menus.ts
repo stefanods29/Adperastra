@@ -1,4 +1,4 @@
-import { ArrowDownWideNarrow, Group, List, Plus, type LucideIcon } from "lucide-react";
+import { ArrowDownWideNarrow, FileCode, Group, List, Plus, type LucideIcon } from "lucide-react";
 import { isCommandVisible, type Command, type CommandContext } from "./registry";
 
 /** Menus from commands (contract 9): every menu and bar is data drawn by
@@ -72,6 +72,7 @@ export const ITEM_MENU: MenuEntry[] = [
   cmd("explorer.open"),
   cmd("explorer.openInWindowsApp"),
   cmd("explorer.openWith"),
+  { type: "submenu", id: "openAs", labelKey: "commands.openAs", icon: FileCode, entries: [cmd("explorer.openAsText"), cmd("explorer.openAsHex")] },
   cmd("explorer.toggleFavorite"),
   cmd("explorer.showInFolder"),
   cmd("explorer.copyPath"),

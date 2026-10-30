@@ -235,6 +235,13 @@ export default function App() {
     await openItem(path);
   }, []);
 
+  /** "Open as text" and "Open as hex" (Step 04c): a chosen viewer for a
+   * file, whatever its type. The same file can have one tab per viewer. */
+  const openFileWith = useCallback((path: string, handlerId: string) => {
+    const title = path.split(/[\\/]/).pop() ?? path;
+    setTabsState((current) => openFileTab(current, { path, handler: handlerId, title }, false));
+  }, []);
+
   /** Switch to the Explorer tab and open a folder there, optionally
    * selecting one item in it. */
   const showInExplorer = useCallback((folder: string, select: string | null) => {
@@ -510,6 +517,7 @@ export default function App() {
             onStatsChange={setExplorerStats}
             onOpenHelp={(slug) => openTab("help", slug ?? "browsing-folders")}
             onOpenFile={openFile}
+            onOpenFileWith={openFileWith}
             navigateRequest={navigateRequest}
             view={settings.explorer}
             onViewChange={onViewChange}

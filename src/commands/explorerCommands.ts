@@ -7,6 +7,7 @@ import {
   ArrowRight,
   ArrowUp,
   ArrowUpNarrowWide,
+  Binary,
   CalendarDays,
   ClipboardPaste,
   Copy,
@@ -14,6 +15,7 @@ import {
   ExternalLink,
   Eye,
   FilePlus,
+  FileText,
   FileType,
   FolderOpen,
   FolderPlus,
@@ -64,6 +66,9 @@ export interface ExplorerActions {
   openWith: () => void;
   /** Open the selected files in their Windows default apps (Step 04a). */
   openInWindowsApp: () => void;
+  /** Open the selected files in the text or hex viewer (Step 04c). */
+  openAsText: () => void;
+  openAsHex: () => void;
   copyPath: () => void;
   toggleFavorite: () => void;
   showInFolder: () => void;
@@ -362,6 +367,26 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       visibleWhen: (ctx) => ctx.selection.count === 1 && ctx.selection.files === 1,
       enabledWhen: (ctx) => ctx.selection.count === 1 && ctx.selection.files === 1,
       run: () => actions.openWith(),
+    },
+    {
+      id: "explorer.openAsText",
+      labelKey: "commands.openAsText",
+      icon: FileText,
+      risk: "read-only",
+      helpSlug: "open-as-text-or-hex",
+      visibleWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      run: () => actions.openAsText(),
+    },
+    {
+      id: "explorer.openAsHex",
+      labelKey: "commands.openAsHex",
+      icon: Binary,
+      risk: "read-only",
+      helpSlug: "open-as-text-or-hex",
+      visibleWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      run: () => actions.openAsHex(),
     },
     {
       id: "explorer.copyPath",
