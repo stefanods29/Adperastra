@@ -15,10 +15,14 @@ param(
   [ValidateSet("en", "es", "pseudo")][string]$Language = "en",
   [ValidateSet("light", "dark")][string]$Theme = "light",
   [int]$Port = 9333,
+  [string]$Step = "",
   [switch]$ScreenshotsOnly
 )
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'test-process-job.ps1')
 $root = Split-Path -Parent $PSScriptRoot
+# The step names the results: from -Step, else the branch (step-<id>-...).
+if (-not $Step) { $Step = if ((git -C $root branch --show-current) -match '^step-([0-9a-zA-Z]+)-') { $Matches[1] } else { "unknown" } }
 if (-not (Test-Path $Exe)) { throw "Build the app first: $Exe not found" }
 if (-not (Test-Path $BigFolder)) { throw "Run scripts\generate-corpus.ps1 first: $BigFolder not found" }
 
@@ -46,17 +50,24 @@ if (-not (Test-Path $demo)) {
 $dataDir = Join-Path $env:TEMP ("adperastra-ui-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force $dataDir | Out-Null
 $settings = @{
-  schema_version = 3; language = $Language
+  schema_version = 4; language = $Language
+  files = @{ paste_image_format = "png" }
   theme = @{ mode = $Theme; accent_source = "design"; accent_custom = "#0067C0" }
   explorer = @{ show_hidden = $false; show_extensions = $true; item_checkboxes = $false; details_pane = $true; group_by = "none" }
 }
 [IO.File]::WriteAllText((Join-Path $dataDir "settings.json"), ($settings | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding($false)))
 
+$savedData = $env:ADPERASTRA_DATA_DIR
+$savedBrowserArgs = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
+$savedTestPid = $env:ADPERASTRA_TEST_APP_PID
 $env:ADPERASTRA_DATA_DIR = $dataDir
 # Keep wry's own WebView2 switches and add the debugging port.
 $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$Port --disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection"
-$proc = Start-Process -FilePath $Exe -PassThru
+$job = $null
 try {
+  $job = [AdperastraTestProcessJob]::Start([IO.Path]::GetFullPath($Exe), '', $true)
+  $proc = $job.Process
+  $env:ADPERASTRA_TEST_APP_PID = [string]$proc.Id
   $deadline = [DateTime]::UtcNow.AddSeconds(30)
   $ready = $false
   while (-not $ready -and [DateTime]::UtcNow -lt $deadline) {
@@ -67,12 +78,17 @@ try {
   $mode = if ($ScreenshotsOnly) { "screenshots" } else { "full" }
   # PowerShell drops empty arguments, so "-" stands for "none".
   $outPath = if ($Out) { $Out } else { "-" }
-  $shotPath = if ($Shots) { Join-Path $root $Shots } else { "-" }
-  node (Join-Path $PSScriptRoot "measure-ui.mjs") $Port $demo $BigFolder $mode $outPath $shotPath $Language $Theme
+  $shotPath = if (-not $Shots) { "-" } elseif ([IO.Path]::IsPathRooted($Shots)) { $Shots } else { Join-Path $root $Shots }
+  node (Join-Path $PSScriptRoot "measure-ui.mjs") $Port $demo $BigFolder $mode $outPath $shotPath $Language $Theme $Step
   if ($LASTEXITCODE -ne 0) { throw "measure-ui.mjs failed" }
 } finally {
-  Remove-Item Env:\WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS -ErrorAction SilentlyContinue
-  Remove-Item Env:\ADPERASTRA_DATA_DIR -ErrorAction SilentlyContinue
-  Get-Process Adperastra -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-  Remove-Item -Recurse -Force $dataDir -ErrorAction SilentlyContinue
+  try { if ($job) { $job.Dispose() } } finally {
+    $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $savedBrowserArgs
+    $env:ADPERASTRA_DATA_DIR = $savedData
+    $env:ADPERASTRA_TEST_APP_PID = $savedTestPid
+    $resolvedTemp = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
+    $resolvedData = [IO.Path]::GetFullPath($dataDir)
+    if (-not $resolvedData.StartsWith($resolvedTemp, [StringComparison]::OrdinalIgnoreCase) -or (Split-Path -Leaf $resolvedData) -notlike 'adperastra-ui-*') { throw 'Refusing cleanup outside the generated test folder' }
+    Remove-Item -LiteralPath $resolvedData -Recurse -Force -ErrorAction SilentlyContinue
+  }
 }

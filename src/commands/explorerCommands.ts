@@ -18,6 +18,7 @@ import {
   FolderPlus,
   FolderSearch,
   Grid2x2,
+  History,
   Grid3x3,
   Group,
   Info,
@@ -27,6 +28,7 @@ import {
   ListChecks,
   PanelRight,
   Pin,
+  Redo2,
   RefreshCw,
   Rows3,
   Ruler,
@@ -39,6 +41,7 @@ import {
   Star,
   TextCursorInput,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import type { SortDirection, SortKey } from "../services/explorer";
 import type { GroupBy } from "../services/grouping";
@@ -71,6 +74,17 @@ export interface ExplorerActions {
   setGroupBy: (groupBy: GroupBy) => void;
   toggleView: (option: ViewToggle) => void;
   showMoreOptions: () => void;
+  newFolder: () => void;
+  newTextFile: () => void;
+  cut: () => void;
+  copy: () => void;
+  paste: () => void;
+  pasteAsFile: () => void;
+  deleteItems: () => void;
+  deletePermanently: () => void;
+  undo: () => void;
+  redo: () => void;
+  recentActions: () => void;
 }
 
 const inList = (ctx: CommandContext) => ctx.location === "folder" || ctx.location === "home";
@@ -124,18 +138,7 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
     enabledWhen: () => true,
     run: () => actions.toggleView(option),
   });
-  // File operations arrive with the job runner and undo stack in Step 03b.
-  const fileOperation = (id: string, labelKey: string, icon: Command["icon"], shortcut: string, risk: Command["risk"], needsSelection: boolean): Command => ({
-    id,
-    labelKey,
-    icon,
-    shortcut,
-    risk,
-    helpSlug: "command-bar",
-    pending: true,
-    enabledWhen: (ctx) => (needsSelection ? hasSelection(ctx) : ctx.location === "folder"),
-    run: () => undefined,
-  });
+  const inFolder = (ctx: CommandContext) => ctx.location === "folder";
 
   return [
     {
@@ -210,12 +213,113 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       enabledWhen: (ctx) => ctx.location === "folder" && ctx.currentPath !== null,
       run: () => actions.togglePin(),
     },
-    fileOperation("explorer.newFolder", "commands.newFolder", FolderPlus, "Ctrl+Shift+N", "change", false),
-    fileOperation("explorer.newTextFile", "commands.newTextFile", FilePlus, "", "change", false),
-    fileOperation("explorer.cut", "commands.cut", Scissors, "Ctrl+X", "change", true),
-    fileOperation("explorer.copy", "commands.copy", Copy, "Ctrl+C", "read-only", true),
-    fileOperation("explorer.paste", "commands.paste", ClipboardPaste, "Ctrl+V", "change", false),
-    fileOperation("explorer.delete", "commands.delete", Trash2, "Delete", "recycle", true),
+    {
+      id: "explorer.newFolder",
+      labelKey: "commands.newFolder",
+      icon: FolderPlus,
+      shortcut: "Ctrl+Shift+N",
+      risk: "change",
+      helpSlug: "copying-and-moving",
+      enabledWhen: inFolder,
+      run: () => actions.newFolder(),
+    },
+    {
+      id: "explorer.newTextFile",
+      labelKey: "commands.newTextFile",
+      icon: FilePlus,
+      risk: "change",
+      helpSlug: "copying-and-moving",
+      enabledWhen: inFolder,
+      run: () => actions.newTextFile(),
+    },
+    {
+      id: "explorer.cut",
+      labelKey: "commands.cut",
+      icon: Scissors,
+      shortcut: "Ctrl+X",
+      risk: "change",
+      helpSlug: "copying-and-moving",
+      enabledWhen: (ctx) => hasSelection(ctx) && inList(ctx),
+      run: () => actions.cut(),
+    },
+    {
+      id: "explorer.copy",
+      labelKey: "commands.copy",
+      icon: Copy,
+      shortcut: "Ctrl+C",
+      risk: "read-only",
+      helpSlug: "copying-and-moving",
+      enabledWhen: (ctx) => hasSelection(ctx) && inList(ctx),
+      run: () => actions.copy(),
+    },
+    {
+      id: "explorer.paste",
+      labelKey: "commands.paste",
+      icon: ClipboardPaste,
+      shortcut: "Ctrl+V",
+      risk: "change",
+      helpSlug: "copying-and-moving",
+      enabledWhen: inFolder,
+      run: () => actions.paste(),
+    },
+    {
+      id: "explorer.pasteAsFile",
+      labelKey: "commands.pasteAsFile",
+      icon: ClipboardPaste,
+      risk: "change",
+      helpSlug: "paste-as-file",
+      enabledWhen: inFolder,
+      run: () => actions.pasteAsFile(),
+    },
+    {
+      id: "explorer.delete",
+      labelKey: "commands.delete",
+      icon: Trash2,
+      shortcut: "Delete",
+      risk: "recycle",
+      helpSlug: "deleting-and-the-recycle-bin",
+      enabledWhen: (ctx) => hasSelection(ctx) && inList(ctx),
+      run: () => actions.deleteItems(),
+    },
+    {
+      id: "explorer.deletePermanently",
+      labelKey: "commands.deletePermanently",
+      icon: Trash2,
+      shortcut: "Shift+Delete",
+      risk: "irreversible",
+      helpSlug: "deleting-and-the-recycle-bin",
+      enabledWhen: (ctx) => hasSelection(ctx) && inList(ctx),
+      run: () => actions.deletePermanently(),
+    },
+    {
+      id: "explorer.undo",
+      labelKey: "commands.undo",
+      icon: Undo2,
+      shortcut: "Ctrl+Z",
+      risk: "change",
+      helpSlug: "undo",
+      enabledWhen: (ctx) => ctx.canUndo,
+      run: () => actions.undo(),
+    },
+    {
+      id: "explorer.redo",
+      labelKey: "commands.redo",
+      icon: Redo2,
+      shortcut: "Ctrl+Y",
+      risk: "change",
+      helpSlug: "undo",
+      enabledWhen: (ctx) => ctx.canRedo,
+      run: () => actions.redo(),
+    },
+    {
+      id: "explorer.recentActions",
+      labelKey: "commands.recentActions",
+      icon: History,
+      risk: "read-only",
+      helpSlug: "undo",
+      enabledWhen: () => true,
+      run: () => actions.recentActions(),
+    },
     {
       id: "explorer.rename",
       labelKey: "commands.rename",

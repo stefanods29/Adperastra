@@ -11,6 +11,24 @@ that fixed it.
 
 ## Open
 
+### KI-030 - Replacing existing files is not available yet (Minor, owner-approved deferral)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (a deliberate deferral approved by the owner; the step does not require it, and Merge / Skip / Keep both cover safe daily use).
+- **What:** A path-based Recycle Bin call cannot prove that it removes the exact file the user approved; another file can appear at the same path after the prompt. The command boundary therefore returns `ops.replace_unavailable` and the dialog offers Merge (folders), Skip and Keep both. Replace returns with the full conflict window and the approved-target mechanism in `plan/contracts.md`.
+- **Workaround:** choose Keep both to keep both files, or delete the old item first with Delete (it goes to the Recycle Bin). Merge adds new files to an existing folder without touching files already there.
+- **Target:** the full conflict window (Step 09f); reviewed at the v0.1 milestone.
+
+### KI-023 - Builds before this fix left a WebView2 folder outside the data folder (Minor)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (disk space only, a one-time leftover).
+- **What:** Until commit `4725674` the window's WebView2 profile (cache and browser storage, no user files or settings) was kept in `%LOCALAPPDATA%\<app identifier>\EBWebView` instead of the app's data folder. It now lives in `<data>\webview`, so the old folder is no longer used; the first start after updating creates the new profile once (about the cost in KI-001).
+- **Workaround:** the old folder can be deleted by hand; nothing in it is needed.
+- **Target:** the App storage page (Step 12a) lists and removes leftover app folders.
+
+### KI-024 - Interactions measured over the 20% rule in speed comparisons (Minor)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (well inside the 100 ms tier; owner decision 2026-10-30 that unreliable speed results do not block).
+- **What:** One release run measured rename box (F2) 8.6 ms vs 5.9 ms in Step 03a, and 100k folder Shift+click range 30.6 ms vs 12.9 ms. On this PC, with other apps running, the same build varied up to 2x between runs: Shift+click measured 12.6, 16.1 and 34.8 ms in alternating runs against a mid-step build's 21.1, 27.5 and 52.4 ms. A subsequent three-round alternating comparison against Step 03a measured selection at 10.1 ms vs 7.9 ms and 100k-folder Select All at 36.3 ms vs 28 ms. Both exceed the 20% regression check but remain within the 100 ms Instant tier. The final step build measured, in two consecutive full runs, select 10.7 then 9.5 ms (Step 03a 8 ms) and Select All 31.1 then 30.5 ms (Step 03a 25.9 ms): the first run failed the 20% rule on both rows, the second passed all rows. Startup runs 2-6 were ready in 898-969 ms (median 929 ms) versus the Step 03a median 779 ms, 19% slower and inside the 20% rule. The full speed check therefore depends on run-to-run noise; the owner decided on 2026-10-30 that unreliable speed results do not block. Results: `docs/benchmarks/2026-10-30-ui-step03b-final.json`, `-final-2.json`, and `2026-10-30-startup-step03b.json`.
+- **Workaround:** none needed.
+- **Target:** check again at the next step's speed run.
+
 ### KI-001 - First-ever run takes about 2.2 seconds (Minor)
 - **Found in:** Step 01b. **Severity:** Minor (one-time cost).
 - **What:** The very first launch creates the WebView2 profile and takes
@@ -66,18 +84,11 @@ that fixed it.
 - **Workaround:** unpin the stale entry (open it fails, so use the unpin button next to it) and pin the renamed folder; or restart the app.
 - **Target:** Step 07a background refresh (the metadata service can verify pinned paths then).
 
-### KI-014 - Renaming has no Undo yet (Major, deferral approved)
-- **Found in:** Step 03a. **Severity:** Major (rules.md section 3 asks for an undo toast after every rename).
-- **What:** Rename works (F2 or a second click on the name), never overwrites another item, and explains every refusal, but there is no Undo toast or Ctrl+Z for it yet.
-- **Workaround:** rename the item back.
-- **Approval:** the owner approved deferring it to Step 03b on 2026-10-28 (the undo stack arrives there).
-- **Target:** Step 03b (undo stack v1); must be fixed before v0.1.
-
 ### KI-015 - Some command bar and menu entries are placeholders (Minor)
 - **Found in:** Step 03a. **Severity:** Minor (placeholders, by owner decision on 2026-10-28).
-- **What:** New, Cut, Copy, Paste and Delete are shown but disabled until the file-operation engine (Step 03b); the List and icon views under View are disabled until the view modes (Step 05). Their tooltips say they arrive in a later update.
+- **What:** The List and icon views under View are disabled until the view modes (Step 05); their tooltips say they arrive in a later update. (New, Cut, Copy, Paste and Delete were placeholders too until Step 03b turned them on.)
 - **Workaround:** Windows' own commands are available through Show more options.
-- **Target:** Steps 03b and 05.
+- **Target:** Step 05.
 
 ### KI-016 - Some classic-menu commands may do nothing (Minor)
 - **Found in:** Step 03a. **Severity:** Minor (rare, Windows design).
@@ -86,6 +97,30 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-025, KI-026, KI-028, KI-029 - Unsafe image paste, an unapproved Replace, a broken Redo, and in-process image decoding (fixed in Step 03b)
+Replace is refused at the command boundary (`ops.replace_unavailable`), so a file that appears after the conflict prompt can never be recycled without a new decision; the dialog offers Merge / Skip / Keep both. A stored replacement history now fails safely with `ops.exists` and leaves the restored item in place. Clipboard images are encoded in a separate `--clipboard-image-helper` process with a 1.5 GiB job limit and a 15 s timeout; the parent owns an exclusive staging handle, publishes without replacing, and deletes only its own file on failure. The PNG input buffer lives through decoding. Fixed in commit `96dedb4`; tests `image_output_never_overwrites_a_destination_created_during_encoding`, `partial_creation_never_replaces_an_existing_file`, `staging_handle_denies_replacement_and_publishes_without_overwriting`, the helper frame/timeout/crash tests, `redo never recycles or overwrites a destination restored by undo`, and "does not offer Replace or Merge for a file conflict".
+
+### KI-027 - A move could remove a source changed during copying (fixed in Step 03b)
+The copy keeps the source's volume, file ID, attributes, times and size. Before deleting, the source is reopened with writes, renames and deletes denied, its identity and bytes are compared with the finished copy, and it is deleted through that handle only when unchanged. A source that changed or was replaced stays; directory links in a moved tree skip the whole top-level item, and a merge never writes through a junction in the destination. Fixed in commits `96dedb4` and `83ee390`; tests `merged_move_does_not_delete_a_file_recreated_after_it_was_copied`, `merged_move_preserves_an_identical_replacement_created_during_the_job`, `merged_move_preserves_source_when_its_attributes_change`, `merged_move_can_remove_a_readonly_source_when_it_is_unchanged`, `merged_move_never_removes_files_through_a_directory_junction`, `merge_never_writes_through_a_destination_junction`, and `cross_volume_path_flushes_then_deletes_the_exact_source_handle`.
+
+### KI-022 - Earlier full-suite claims exceeded recorded verification (fixed in Step 03b)
+`scripts/test-all.ps1` now holds the promised runner, with license and vulnerability audits, packaged runtime checks with axe-core, scroll frame times and a speed gate; `docs/test-and-speed-plan.md` lists what actually runs and which later step builds the rest. Screenshot comparison stays by hand. Not yet run: full mode on GitHub. Commits `d39f90b`, `0d235b4`.
+
+### KI-018 - Individual conflict choices were ignored (fixed in Step 03b)
+The destination template now builds the real target path, so with "Do this for all" cleared each conflict asks and gets its own Replace, Keep both or Skip. Fixed in commit `3652e53`; test "applies Replace then Keep both separately when the for-all box is cleared" (`src/__tests__/fileOpConfirmations.test.tsx`).
+
+### KI-019 - Some partial moves had no Undo entry (fixed in Step 03b)
+Moves keep an exact transfer plan (`crates/fs-service/src/transfer.rs`), and an Undo entry is pushed whenever anything changed on disk, even when the job was cancelled before a single source finished. Fixed in commit `3652e53`; tests `cancelled_move_undoes_retained_copies_and_redoes_only_written_files`, `partial_move_deletion_failure_separates_moved_files_from_retained_copies` and "records destination changes from a cancelled move before any source completed".
+
+### KI-020 - Move and delete did not warn about system items (fixed in Step 03b)
+Move, recycle, permanent delete and Replace check fresh attributes (also inside folders) before changing anything and ask first, with Cancel focused (`src-tauri/src/operation_safety.rs`). Fixed in commit `3652e53`; Rust tests in `operation_safety.rs` and UI tests in `fileOpConfirmations.test.tsx`.
+
+### KI-021 - Restore and Replace Undo tests failed on Windows CI (fixed in Step 03b)
+Cause: GitHub's runner keeps its temporary folder under a short 8.3 name (`C:\Users\RUNNER~1\...`), while the Recycle Bin records the long path, so restore lookups found no match. Paths are now compared in their long form (`winpath::long_path_wide`). Fixed in commit `3652e53` (tests `restore_accepts_a_short_parent_path_without_swapping_extensions`, `replacing_with_a_short_parent_path_keeps_the_exact_undo_entry`); the three tests pass on GitHub run 41001206899.
+
+### KI-014 - Renaming had no Undo (fixed in Step 03b)
+Rename now pushes an undo entry: the toast after a rename has an Undo button (Ctrl+Z), Ctrl+Y redoes it, and Recent actions lists it. The undo stack (contract 11) is shared by rename, copy, move, delete, create, and paste. Fixed in commit `815731b` (engine and jobs in `4330f4b`/`ec167e4`).
 
 ### KI-017 - App start looked slower than Step 01b (closed after measuring, Step 03a)
 One early 03a run took 1.14 s to be ready. Measured side by side with

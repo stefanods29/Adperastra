@@ -1,0 +1,45 @@
+﻿{
+    "step":  "03b",
+    "machine":  "docs/benchmarks/MACHINE.md",
+    "note":  "Run right after a reboot for true cold-cache numbers. First-ever run (creates the WebView2 profile) is a one-time cost and is measured separately.",
+    "method":  "A separate WebView2 profile and process job for each run; first paint = PrintWindow pixel; content ready = session.json written",
+    "date":  "2026-10-30",
+    "runs":  [
+                 {
+                     "first_paint_ms":  158,
+                     "run":  1,
+                     "window_handle_ms":  138,
+                     "content_ready_ms":  1329
+                 },
+                 {
+                     "first_paint_ms":  76,
+                     "run":  2,
+                     "window_handle_ms":  54,
+                     "content_ready_ms":  929
+                 },
+                 {
+                     "first_paint_ms":  75,
+                     "run":  3,
+                     "window_handle_ms":  55,
+                     "content_ready_ms":  919
+                 },
+                 {
+                     "first_paint_ms":  129,
+                     "run":  4,
+                     "window_handle_ms":  109,
+                     "content_ready_ms":  955
+                 },
+                 {
+                     "first_paint_ms":  74,
+                     "run":  5,
+                     "window_handle_ms":  56,
+                     "content_ready_ms":  969
+                 },
+                 {
+                     "first_paint_ms":  79,
+                     "run":  6,
+                     "window_handle_ms":  61,
+                     "content_ready_ms":  898
+                 }
+             ]
+}

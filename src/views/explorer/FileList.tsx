@@ -44,6 +44,8 @@ export interface FileListProps {
   /** Keys that run registry commands (Enter, F2, Alt+Enter, ...); the
    * point says where a keyboard-opened menu should appear. */
   onCommandKey: (commandId: string, point?: { x: number; y: number }) => void;
+  /** Mouse-down on a row, for starting a drag (Step 03b). */
+  onItemMouseDown?: (event: ReactMouseEvent, item: ExplorerItem) => void;
   onFirstPaint?: () => void;
   /** Short Home lists render every row; folders virtualize. */
   virtual?: boolean;
@@ -306,6 +308,9 @@ export default function FileList(props: FileListProps) {
         aria-selected={selected}
         className={className}
         style={style}
+        data-drop-folder={item.kind === "folder" || item.kind === "drive" ? item.path : undefined}
+        data-drop-name={item.kind === "folder" || item.kind === "drive" ? item.name : undefined}
+        onMouseDown={(event) => props.onItemMouseDown?.(event, item)}
         onClick={(event) => onRowClick(event, item)}
         onDoubleClick={(event) => {
           event.stopPropagation();
@@ -362,7 +367,7 @@ export default function FileList(props: FileListProps) {
   const header = (key: SortKey, labelKey: string, className: string) => {
     if (!props.onSort) {
       return (
-        <span role="columnheader" className={`adp-filelist-header-cell adp-filelist-header-cell--static ${className}`}>
+        <span className={`adp-filelist-header-cell adp-filelist-header-cell--static ${className}`}>
           {t(labelKey)}
         </span>
       );
@@ -370,10 +375,12 @@ export default function FileList(props: FileListProps) {
     return (
       <button
         type="button"
-        role="columnheader"
         className={`adp-filelist-header-cell ${className}`}
-        aria-label={t("explorer.sortBy", { name: t(labelKey) })}
-        aria-sort={props.sortKey === key ? (props.sortDirection === "ascending" ? "ascending" : "descending") : undefined}
+        aria-label={
+          props.sortKey === key
+            ? t(props.sortDirection === "ascending" ? "explorer.sortedAscending" : "explorer.sortedDescending", { name: t(labelKey) })
+            : t("explorer.sortBy", { name: t(labelKey) })
+        }
         onClick={() => props.onSort?.(key)}
       >
         <span>{t(labelKey)}</span>
@@ -387,7 +394,7 @@ export default function FileList(props: FileListProps) {
 
   return (
     <div className={virtual ? "adp-filelist" : "adp-filelist adp-filelist--static"}>
-      <div className="adp-filelist-header" role="row">
+      <div className="adp-filelist-header" role="group" aria-label={t("explorer.columnsLabel")}>
         {props.checkboxes ? (
           <span
             className={`adp-row-check adp-row-check--header${allSelected ? " adp-row-check--on" : ""}`}

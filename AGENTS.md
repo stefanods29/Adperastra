@@ -13,7 +13,7 @@ I may not be an experienced programmer: explain decisions in plain language, giv
 1. Always read this file and every file in `plan/` except the `steps/` folder: `rules.md`, `speed.md`, `git-and-testing.md`, `contracts.md`, plus `design.md` when the step builds UI and `ai.md` when the step uses AI.
 2. Then read only the current step file in `plan/steps/`. Don't read ahead into later steps except to check that nothing you build blocks them (Step 00 reads all of them once).
 3. If a step file and a shared file disagree, the shared file wins; tell me about the conflict.
-4. If something is unclear or a decision is mine to make, ask me instead of guessing (at most 5 questions at a time).
+4. If something is unclear, decide it the way the plan and the existing code point, and write the decision down. Ask me only about the cases in section 4, "When to stop and ask me" (at most 5 questions at a time).
 
 ## 3. Decisions already made
 
@@ -36,13 +36,34 @@ I may not be an experienced programmer: explain decisions in plain language, giv
 
 ## 4. How to work
 
-- Finish and test a step before starting the next. Keep the app working at the end of every step. If a step turns out bigger than expected, propose splitting it before continuing. Never skip ahead.
+- **Work continuously.** Go from one step to the next without waiting for my "go". Finish and test each step before starting the next, keep the app working at the end of every step, and never skip ahead. If a step turns out bigger than expected, split it yourself, write the split in `plan/STATUS.md` and the step file, and continue.
 - If a feature needs a change to core code, stop and extend the contract in `plan/contracts.md` first. Features plug in; they don't patch the core.
 - Follow the Git workflow and testing rules in `plan/git-and-testing.md` on every step.
-- A step is done only when: its "Done when" checks pass, the full local test suite passes on the `testing` branch, the speed tiers in `plan/speed.md` are met for everything the step touches, its help pages exist in every app language, and I approve.
-- **Known issues:** every defect, deferral, and speed miss is logged in `KNOWN_ISSUES.md` with a severity. **Blocker** (data loss, security hole, crash/freeze in a normal flow, broken core feature, license problem, accessibility barrier): fix before the step is done, never deferred. **Major** (daily-use speed miss, partly-working feature, serious usability/accessibility problem with a workaround): may be deferred only with my approval, must be fixed before the next milestone release. **Minor** (cosmetic, one-time costs, rare edge cases, placeholders): may wait, reviewed at every milestone. When unsure, choose the higher severity and ask me. Every step report lists new, open, and fixed known issues; a milestone release can't be published with a Blocker or Major open; speed misses are logged, never silently relaxed. Full rules: `plan/rules.md` section 11.
-- **Step report** (after every step): how to build and run it; a test checklist for me; what works and what doesn't; speed measurements against `plan/speed.md`; screenshots next to the matching Figma frames; new entries in `DESIGN_DEVIATIONS.md`; new help pages; license and dependency changes; the list of commits and the tag; and your proposal for the next step. Then wait for my "go".
-- When a step reaches a milestone (section 6), also prepare the GitHub release (`plan/steps/step-08c.md` explains how) and ask me before publishing.
+- **When something breaks, fix it.** Find the cause and fix it there; a workaround that only hides the problem is not a fix. Never weaken, skip, or delete a test to make it pass. If the plan itself is wrong (an API it names doesn't exist, a recipe contradicts the code), choose a solution that keeps every rule in `plan/rules.md`, correct the plan file in its own `docs(plan)` commit, and say so in the step report. When the same approach has failed twice, try a different one.
+- **When a session stopped midway** (a crash, a usage limit, a closed window), the next session picks up from the repository, not from memory. Finished tasks have commits. Uncommitted changes belong to the next task: check them, repair them, and finish that task. If every task is done, continue the finishing commands below from the first one that hasn't run.
+- A step is done only when: its "Done when" checks pass, the full local test suite passes on the `testing` branch, the speed tiers in `plan/speed.md` are met for everything the step touches, its help pages exist in every app language, and nothing is left that breaks the app, slows it down, or makes it worse to use (no open Blocker or Major for anything the step touches). You don't need my approval. I check finished steps afterwards, and any problem I report is fixed as a new `F` task on the step you're working on.
+- **Known issues:** every defect, deferral, and speed miss is logged in `KNOWN_ISSUES.md` with a severity. **Blocker** (data loss, security hole, crash/freeze in a normal flow, broken core feature, license problem, accessibility barrier): fix before the step is done, never deferred. **Major** (daily-use speed miss, partly-working feature, serious usability/accessibility problem with a workaround): fix before the step is done; only when the fix needs a later step's work may it move to that step (before the next milestone), with the step and the reason written in the issue. **Minor** (cosmetic, one-time costs, rare edge cases, placeholders): may wait, reviewed at every milestone. When unsure, choose the higher severity. Every step report lists new, open, and fixed known issues; a milestone release can't be published with a Blocker or Major open; speed misses are logged, never silently relaxed. Full rules: `plan/rules.md` section 11.
+- **Step report** (after every step): how to build and run it; a test checklist for me; what works and what doesn't; speed measurements against `plan/speed.md`; screenshots next to the matching Figma frames; new entries in `DESIGN_DEVIATIONS.md`; new help pages; license and dependency changes; decisions you made and plan changes; the list of commits and the tag; and the next step. Then finish the step with the commands below and start the next one without waiting for me.
+- **Finishing a step** (no approval needed): merge it into `testing`, put it on `main` through a pull request, and tag it:
+  ```powershell
+  git checkout testing
+  git pull
+  git merge --no-ff <step-branch> -m "merge: step <id> into testing [step-<id>]"
+  .\scripts\gate.ps1 -Package
+  git push
+  gh pr create --base main --head testing --title "Step <id>: <step name>" --body-file docs/step-reports/step-<id>.md
+  gh pr checks --watch
+  gh pr merge --merge
+  git checkout main
+  git pull
+  git tag -a <tag-from-step-file> -m "Step <id>: <step name>"
+  git push origin <tag-from-step-file>
+  git checkout testing
+  git merge --ff-only main
+  ```
+  If the pull request's checks fail, fix the cause on the step branch, merge it into `testing` again, and repeat from `gh pr checks`. Then mark the step done in `plan/STATUS.md`, tell me in one short message that it's on `main` and where its report is, and start the next step.
+- When a step reaches a milestone (section 6), also prepare the GitHub release (`plan/steps/step-08c.md` explains how) and ask me before publishing it. Publishing always needs my yes; keep working on the next steps while you wait.
+- **When to stop and ask me:** only when a fix needs something only I can decide or do (a license that isn't on the allowed list in `plan/rules.md`, anything that costs money, my accounts or passwords, installing a program on my PC), when every fix you can find would break a rule in `plan/rules.md`, or after five genuinely different approaches have failed on the same problem. Then write `BLOCKED.md` (`plan/templates/blocked.md`), tell me, and first finish whatever doesn't depend on my answer.
 
 ## 5. Roadmap
 

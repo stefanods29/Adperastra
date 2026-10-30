@@ -12,17 +12,23 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
 mod classic_menu;
+mod clipboard;
+#[cfg(windows)]
+mod clipboard_image_helper;
+mod drag;
 mod explorer;
+mod operation_safety;
 mod shell;
+mod transfer_history;
 
-pub const CURRENT_SCHEMA: u32 = 3;
+pub const CURRENT_SCHEMA: u32 = 4;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -77,6 +83,11 @@ fn settings_path(data_dir: &Path) -> PathBuf {
 
 fn session_path(data_dir: &Path) -> PathBuf {
     data_dir.join("session.json")
+}
+
+/// The WebView2 profile (cache, storage) of the main window.
+fn webview_profile_dir(data_dir: &Path) -> PathBuf {
+    data_dir.join("webview")
 }
 
 fn logs_dir(data_dir: &Path) -> PathBuf {
@@ -165,6 +176,26 @@ impl Default for ExplorerViewSettings {
     }
 }
 
+fn default_paste_image_format() -> String {
+    "png".to_string()
+}
+
+/// File-operation choices (schema 4, Step 03b).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FileSettings {
+    /// What Paste as file saves clipboard images as: "png" or "jpg".
+    #[serde(default = "default_paste_image_format")]
+    pub paste_image_format: String,
+}
+
+impl Default for FileSettings {
+    fn default() -> Self {
+        Self {
+            paste_image_format: default_paste_image_format(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default = "default_schema_version")]
@@ -175,6 +206,8 @@ pub struct Settings {
     pub theme: ThemeSettings,
     #[serde(default)]
     pub explorer: ExplorerViewSettings,
+    #[serde(default)]
+    pub files: FileSettings,
 }
 
 impl Default for Settings {
@@ -184,6 +217,7 @@ impl Default for Settings {
             language: default_language(),
             theme: ThemeSettings::default(),
             explorer: ExplorerViewSettings::default(),
+            files: FileSettings::default(),
         }
     }
 }
@@ -226,6 +260,12 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             settings.theme.accent_custom
         )));
     }
+    if !matches!(settings.files.paste_image_format.as_str(), "png" | "jpg") {
+        return Err(AppError::Validation(format!(
+            "unsupported paste_image_format {:?} (expected png or jpg)",
+            settings.files.paste_image_format
+        )));
+    }
     if !matches!(
         settings.explorer.group_by.as_str(),
         "none" | "name" | "modified" | "type" | "size"
@@ -259,6 +299,24 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
             ..ThemeSettings::default()
         },
         explorer: ExplorerViewSettings::default(),
+        files: FileSettings::default(),
+    }
+}
+
+/// Schema 3 had no file-operation choices; schema 4 adds them with the
+/// PNG default. A v3 file keeps its language, theme and view options.
+fn migrate_v3(value: serde_json::Value) -> Settings {
+    match serde_json::from_value::<Settings>(value) {
+        Ok(mut settings) => {
+            settings.schema_version = CURRENT_SCHEMA;
+            settings.files = FileSettings::default();
+            if validate(&settings).is_ok() {
+                settings
+            } else {
+                Settings::default()
+            }
+        }
+        Err(_) => Settings::default(),
     }
 }
 
@@ -296,6 +354,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
+            Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
             _ => Ok(Settings::default()),
@@ -756,6 +815,8 @@ pub struct AppState {
     data_dir: PathBuf,
     settings: Mutex<Settings>,
     list_jobs: Mutex<HashMap<String, ListJob>>,
+    file_jobs: Mutex<HashMap<String, FileJob>>,
+    transfer_history: Arc<Mutex<transfer_history::TransferHistory>>,
     explorer_state_lock: Mutex<()>,
     watch: Mutex<Option<WatchControl>>,
     watch_next_id: AtomicU64,
@@ -1253,6 +1314,9 @@ async fn rename_item(
     }
     let old_path = path.clone();
     let new_path = tauri::async_runtime::spawn_blocking(move || {
+        if operation_safety::protected_path(Path::new(&path)) {
+            return Err("rename.protected_path".to_string());
+        }
         fs_service::rename_in_place(Path::new(&path), &new_name)
             .map(|p| p.to_string_lossy().into_owned())
             .map_err(|e| format!("rename.{}", fs_service::rename_error_reason(&e)))
@@ -1263,6 +1327,592 @@ async fn rename_item(
     // turn that into an error.
     let _ = update_explorer_state(&state, |s| s.move_favorites(&old_path, &new_path));
     Ok(new_path)
+}
+
+/// Most sources one file operation may name at once.
+pub const MAX_OP_SOURCES: usize = 10_000;
+
+pub struct FileJob {
+    progress: fs_service::OpProgress,
+    done: bool,
+    report: Option<fs_service::OpReport>,
+    error: Option<String>,
+    token: fs_service::CancellationToken,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileOpPoll {
+    pub progress: fs_service::OpProgress,
+    pub done: bool,
+    pub report: Option<fs_service::OpReport>,
+    pub error: Option<String>,
+}
+
+fn parse_conflict_policy(value: &str) -> Result<fs_service::ConflictPolicy, String> {
+    match value {
+        // Replace stays unavailable until recycling can be bound to the
+        // exact item the user approved (contract 10, full conflict window).
+        "replace" => Err("ops.replace_unavailable".to_string()),
+        "skip" => Ok(fs_service::ConflictPolicy::Skip),
+        "keepBoth" => Ok(fs_service::ConflictPolicy::KeepBoth),
+        "merge" => Ok(fs_service::ConflictPolicy::Merge),
+        _ => Err(format!("invalid conflict policy {value:?}")),
+    }
+}
+
+fn validate_op_sources(sources: &[String]) -> Result<Vec<PathBuf>, String> {
+    if sources.is_empty() || sources.len() > MAX_OP_SOURCES {
+        return Err("ops.invalid_request".to_string());
+    }
+    let mut paths = Vec::with_capacity(sources.len());
+    for source in sources {
+        validate_absolute_path(source).map_err(|_| "ops.not_found".to_string())?;
+        paths.push(PathBuf::from(source));
+    }
+    Ok(paths)
+}
+
+/// Existing items a copy/move would land on; the UI asks the user first.
+#[derive(Debug, Clone, Serialize)]
+pub struct ConflictInfo {
+    pub path: String,
+    pub is_dir: bool,
+}
+
+#[tauri::command]
+async fn check_conflicts(
+    window: WebviewWindow,
+    sources: Vec<String>,
+    dest_dir: String,
+) -> Result<Vec<ConflictInfo>, String> {
+    ensure_main(window.label())?;
+    let sources = validate_op_sources(&sources)?;
+    validate_absolute_path(&dest_dir).map_err(|_| "ops.not_found".to_string())?;
+    let dest = PathBuf::from(dest_dir);
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::check_conflicts(&sources, &dest)
+            .into_iter()
+            .map(|conflict| ConflictInfo {
+                path: conflict.path.to_string_lossy().into_owned(),
+                is_dir: conflict.is_dir,
+            })
+            .collect::<Vec<ConflictInfo>>()
+    })
+    .await
+    .map_err(|e| e.to_string())
+}
+
+/// Create an empty folder or file ("New"); returns its real path, which
+/// has a numbered name if the wanted name was taken. Errors are
+/// `ops.<reason>` codes the UI translates.
+#[tauri::command]
+async fn create_item(
+    window: WebviewWindow,
+    parent: String,
+    name: String,
+    kind: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    validate_absolute_path(&parent).map_err(|_| "ops.not_found".to_string())?;
+    if name.chars().count() > 255 {
+        return Err("ops.invalid_name".to_string());
+    }
+    let kind = match kind.as_str() {
+        "folder" => fs_service::CreateKind::Folder,
+        "file" => fs_service::CreateKind::File,
+        _ => return Err("ops.invalid_request".to_string()),
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        fs_service::create_item(Path::new(&parent), &name, kind)
+            .map(|path| path.to_string_lossy().into_owned())
+            .map_err(|e| format!("ops.{}", fs_service::op_error_reason(&e)))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// One file-operation request (a single argument keeps the command
+/// inside clippy's argument limit and groups what belongs together).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileOpRequest {
+    pub kind: String,
+    pub sources: Vec<String>,
+    pub dest_dir: Option<String>,
+    #[serde(default = "default_conflict_policy")]
+    pub conflict: String,
+    /// For `restore`: the exact Recycle Bin entries (one per source) that
+    /// a Replace sent there, so Undo restores those and not a newer item
+    /// with the same original path.
+    #[serde(default)]
+    pub bin_ids: Option<Vec<String>>,
+    /// "foreground" (the user is waiting), "normal" (default) or
+    /// "background" (later background tasks: low CPU and disk priority).
+    #[serde(default = "default_job_priority")]
+    pub priority: String,
+    /// The UI may set this only after the separate system-item warning.
+    #[serde(default)]
+    pub allow_system: bool,
+    /// Opaque, in-memory transfer plan used by Undo/Redo.
+    #[serde(default)]
+    pub transfer_id: Option<String>,
+    #[serde(default)]
+    pub reverse: bool,
+    /// Absent for direct developer callers; present for the UI history.
+    #[serde(default)]
+    pub retained_transfers: Option<Vec<String>>,
+}
+
+fn default_job_priority() -> String {
+    "normal".to_string()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JobPriority {
+    Foreground,
+    Normal,
+    Background,
+}
+
+fn parse_job_priority(value: &str) -> Result<JobPriority, String> {
+    match value {
+        "foreground" => Ok(JobPriority::Foreground),
+        "normal" => Ok(JobPriority::Normal),
+        "background" => Ok(JobPriority::Background),
+        _ => Err("ops.invalid_request".to_string()),
+    }
+}
+
+/// Runs the current worker thread at a job's priority until dropped
+/// (pool threads are reused, so the priority is always put back).
+struct ThreadPriorityGuard(JobPriority);
+
+impl ThreadPriorityGuard {
+    fn enter(priority: JobPriority) -> Self {
+        #[cfg(windows)]
+        {
+            use windows::Win32::System::Threading::{
+                GetCurrentThread, SetThreadPriority, THREAD_MODE_BACKGROUND_BEGIN,
+                THREAD_PRIORITY_ABOVE_NORMAL,
+            };
+            // SAFETY: the pseudo-handle of the calling thread is always valid.
+            unsafe {
+                let _ = match priority {
+                    JobPriority::Foreground => {
+                        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL)
+                    }
+                    JobPriority::Background => {
+                        SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN)
+                    }
+                    JobPriority::Normal => Ok(()),
+                };
+            }
+        }
+        Self(priority)
+    }
+}
+
+impl Drop for ThreadPriorityGuard {
+    fn drop(&mut self) {
+        #[cfg(windows)]
+        {
+            use windows::Win32::System::Threading::{
+                GetCurrentThread, SetThreadPriority, THREAD_MODE_BACKGROUND_END,
+                THREAD_PRIORITY_NORMAL,
+            };
+            // SAFETY: as in `enter`.
+            unsafe {
+                let _ = match self.0 {
+                    JobPriority::Foreground => {
+                        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL)
+                    }
+                    JobPriority::Background => {
+                        SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_END)
+                    }
+                    JobPriority::Normal => Ok(()),
+                };
+            }
+        }
+    }
+}
+
+/// Validate Recycle Bin entry ids sent by the UI: one per source, each an
+/// absolute `$R...` path inside a `$Recycle.Bin` folder.
+fn validate_bin_ids(ids: &[String], sources: &[PathBuf]) -> Result<(), String> {
+    if ids.len() != sources.len() {
+        return Err("ops.invalid_request".to_string());
+    }
+    for id in ids {
+        validate_absolute_path(id).map_err(|_| "ops.invalid_request".to_string())?;
+        let path = Path::new(id);
+        let in_bin = path
+            .components()
+            .any(|c| c.as_os_str().eq_ignore_ascii_case("$Recycle.Bin"));
+        let data_name = path
+            .file_name()
+            .is_some_and(|n| n.to_string_lossy().starts_with("$R"));
+        if !in_bin || !data_name {
+            return Err("ops.invalid_request".to_string());
+        }
+    }
+    Ok(())
+}
+
+fn default_conflict_policy() -> String {
+    "skip".to_string()
+}
+
+/// Create a text file with contents (Paste as file for clipboard text).
+/// The wanted name is numbered when taken. Errors are `ops.<reason>`.
+#[tauri::command]
+async fn create_text_file(
+    window: WebviewWindow,
+    parent: String,
+    name: String,
+    contents: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    validate_absolute_path(&parent).map_err(|_| "ops.not_found".to_string())?;
+    if contents.len() > clipboard::MAX_CLIPBOARD_TEXT_BYTES {
+        return Err("ops.too_large".to_string());
+    }
+    fs_service::validate_new_name(&name).map_err(|_| "ops.invalid_name".to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let dir = Path::new(&parent);
+        let target = fs_service::unique_destination(dir, &name);
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&target)
+            .map_err(|e| format!("ops.{}", fs_service::op_error_reason(&e.into())))?;
+        use std::io::Write;
+        file.write_all(contents.as_bytes())
+            .map_err(|e| format!("ops.{}", fs_service::op_error_reason(&e.into())))?;
+        Ok::<String, String>(target.to_string_lossy().into_owned())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Start a file operation as a background job (contract 10). Kinds:
+/// copy, move, recycle, restore, permanent. Progress and the final
+/// report are drained with `file_op_poll`; `file_op_cancel` asks the
+/// engine to stop between chunks and items.
+#[tauri::command]
+fn file_op_start(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    app: AppHandle,
+    request: FileOpRequest,
+    request_id: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    let FileOpRequest {
+        kind,
+        sources,
+        dest_dir,
+        conflict,
+        bin_ids,
+        priority,
+        allow_system,
+        transfer_id,
+        reverse,
+        retained_transfers,
+    } = request;
+    let priority = parse_job_priority(&priority)?;
+    if !matches!(
+        kind.as_str(),
+        "copy" | "move" | "recycle" | "restore" | "permanent" | "transfer"
+    ) {
+        return Err("ops.invalid_request".to_string());
+    }
+    if let Some(ids) = &retained_transfers {
+        if ids.len() > 1024 {
+            return Err("ops.undo_limit".to_string());
+        }
+        for id in ids {
+            valid_request_id(id).map_err(|_| "ops.invalid_request".to_string())?;
+        }
+    }
+    let sources = if kind == "transfer" {
+        if !sources.is_empty() || bin_ids.is_some() || dest_dir.is_some() {
+            return Err("ops.invalid_request".to_string());
+        }
+        Vec::new()
+    } else {
+        if transfer_id.is_some() || reverse {
+            return Err("ops.invalid_request".to_string());
+        }
+        validate_op_sources(&sources)?
+    };
+    let transfer_plan = if kind == "transfer" {
+        let id = transfer_id
+            .as_deref()
+            .ok_or_else(|| "ops.invalid_request".to_string())?;
+        valid_request_id(id).map_err(|_| "ops.invalid_request".to_string())?;
+        Some(
+            state
+                .transfer_history
+                .lock()
+                .map_err(|_| "ops.other".to_string())?
+                .get(id)?,
+        )
+    } else {
+        None
+    };
+    let replaced: Option<Vec<fs_service::ReplacedItem>> = match (kind.as_str(), bin_ids) {
+        ("restore", Some(ids)) => {
+            validate_bin_ids(&ids, &sources)?;
+            Some(
+                sources
+                    .iter()
+                    .zip(ids)
+                    .map(|(path, id)| fs_service::ReplacedItem {
+                        path: path.clone(),
+                        bin_id: Some(id),
+                    })
+                    .collect(),
+            )
+        }
+        (_, Some(_)) => return Err("ops.invalid_request".to_string()),
+        (_, None) => None,
+    };
+    let policy = parse_conflict_policy(&conflict).map_err(|_| "ops.invalid_request".to_string())?;
+    let dest = match (kind.as_str(), dest_dir) {
+        ("copy" | "move", Some(dest)) => {
+            validate_absolute_path(&dest).map_err(|_| "ops.not_found".to_string())?;
+            Some(PathBuf::from(dest))
+        }
+        ("copy" | "move", None) => return Err("ops.invalid_request".to_string()),
+        _ => None,
+    };
+    let history = Arc::clone(&state.transfer_history);
+    let reserve_transfer = matches!(kind.as_str(), "copy" | "move");
+    if reserve_transfer {
+        history
+            .lock()
+            .map_err(|_| "ops.other".to_string())?
+            .reserve(&request_id, retained_transfers.as_deref())?;
+    }
+    let token = fs_service::new_cancellation_token();
+    {
+        let mut jobs = match state.file_jobs.lock() {
+            Ok(jobs) => jobs,
+            Err(_) => {
+                if reserve_transfer {
+                    if let Ok(mut history) = history.lock() {
+                        history.abort(&request_id);
+                    }
+                }
+                return Err("ops.other".to_string());
+            }
+        };
+        if jobs.contains_key(&request_id) {
+            if reserve_transfer {
+                if let Ok(mut history) = history.lock() {
+                    history.abort(&request_id);
+                }
+            }
+            return Err("ops.invalid_request".to_string());
+        }
+        jobs.insert(
+            request_id.clone(),
+            FileJob {
+                progress: fs_service::OpProgress {
+                    items_done: 0,
+                    items_total: sources.len(),
+                    bytes_done: 0,
+                    bytes_total: 0,
+                    current: String::new(),
+                },
+                done: false,
+                report: None,
+                error: None,
+                token: token.clone(),
+            },
+        );
+    }
+    let job_id = request_id;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _priority = ThreadPriorityGuard::enter(priority);
+        let job_state = app.state::<AppState>();
+        let set_progress = |progress: &fs_service::OpProgress| {
+            if let Ok(mut jobs) = job_state.file_jobs.lock() {
+                if let Some(job) = jobs.get_mut(&job_id) {
+                    job.progress = progress.clone();
+                }
+            }
+        };
+        let mut result = (|| -> Result<fs_service::OpReport, String> {
+            let safety_paths: Vec<PathBuf> = if let Some(plan) = &transfer_plan {
+                plan.iter()
+                    .flat_map(|effect| [effect.from.clone(), effect.to.clone()])
+                    .collect()
+            } else {
+                sources.clone()
+            };
+            let checked = operation_safety::check(
+                &kind,
+                &safety_paths,
+                dest.as_deref(),
+                policy,
+                allow_system,
+                &token,
+                &mut |progress| set_progress(progress),
+            )?;
+            if checked.cancelled {
+                return Ok(fs_service::OpReport {
+                    cancelled: true,
+                    skipped: checked.skipped,
+                    ..Default::default()
+                });
+            }
+            if kind == "transfer" && !checked.skipped.is_empty() {
+                return Ok(fs_service::OpReport {
+                    skipped: checked.skipped,
+                    ..Default::default()
+                });
+            }
+            let sources = checked.sources;
+            let mut report = match kind.as_str() {
+                "copy" => fs_service::copy_items(
+                    &sources,
+                    dest.as_ref().expect("dest checked"),
+                    policy,
+                    &token,
+                    &mut |progress| set_progress(progress),
+                ),
+                "move" => fs_service::move_items(
+                    &sources,
+                    dest.as_ref().expect("dest checked"),
+                    policy,
+                    &token,
+                    &mut |progress| set_progress(progress),
+                ),
+                "recycle" => fs_service::recycle_items(&sources, &token, &mut |progress| {
+                    set_progress(progress)
+                }),
+                "restore" => match &replaced {
+                    Some(items) => fs_service::restore_bin_items(items),
+                    None => fs_service::restore_items(&sources),
+                },
+                "transfer" => fs_service::ops::apply_transfer(
+                    transfer_plan.as_ref().expect("transfer checked"),
+                    reverse,
+                    &token,
+                    &mut |progress| set_progress(progress),
+                ),
+                _ => fs_service::delete_permanently(&sources, &token, &mut |progress| {
+                    set_progress(progress)
+                }),
+            }
+            .map_err(|error| format!("ops.{}", fs_service::op_error_reason(&error)))?;
+            report.skipped.extend(checked.skipped);
+            Ok(report)
+        })();
+        if reserve_transfer {
+            match history.lock() {
+                Ok(mut history) => match &mut result {
+                    Ok(report) => {
+                        match history.finish(&job_id, std::mem::take(&mut report.transfer)) {
+                            Ok(id) => report.transfer_id = id,
+                            Err(error) => result = Err(error),
+                        }
+                    }
+                    Err(_) => history.abort(&job_id),
+                },
+                Err(_) => result = Err("ops.other".to_string()),
+            }
+        }
+        let (report, error) = match result {
+            Ok(report) => (Some(report), None),
+            Err(error) => (None, Some(error)),
+        };
+        // Favorites follow completed moves; state failure cannot undo disk work.
+        if kind == "move" {
+            if let Some(report) = &report {
+                let pairs: Vec<(String, String)> = report
+                    .completed
+                    .iter()
+                    .map(|item| {
+                        (
+                            item.from.to_string_lossy().into_owned(),
+                            item.to.to_string_lossy().into_owned(),
+                        )
+                    })
+                    .collect();
+                if !pairs.is_empty() {
+                    let _ = update_explorer_state(&job_state, |state| {
+                        for (from, to) in &pairs {
+                            state.move_favorites(from, to);
+                        }
+                    });
+                }
+            }
+        }
+        if let Ok(mut jobs) = job_state.file_jobs.lock() {
+            if let Some(job) = jobs.get_mut(&job_id) {
+                job.done = true;
+                job.report = report;
+                job.error = error;
+            }
+        };
+    });
+    Ok(())
+}
+
+#[tauri::command]
+fn file_op_poll(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    request_id: String,
+) -> Result<FileOpPoll, String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    let mut jobs = state
+        .file_jobs
+        .lock()
+        .map_err(|_| "file jobs lock poisoned".to_string())?;
+    let Some(job) = jobs.get(&request_id) else {
+        return Err(format!("unknown file job {request_id:?}"));
+    };
+    let poll = FileOpPoll {
+        progress: job.progress.clone(),
+        done: job.done,
+        report: job.report.clone(),
+        error: job.error.clone(),
+    };
+    if poll.done {
+        if let Some(id) = poll
+            .report
+            .as_ref()
+            .and_then(|report| report.transfer_id.as_deref())
+        {
+            state
+                .transfer_history
+                .lock()
+                .map_err(|_| "ops.other".to_string())?
+                .delivered(id);
+        }
+        jobs.remove(&request_id);
+    }
+    Ok(poll)
+}
+
+#[tauri::command]
+fn file_op_cancel(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+    request_id: String,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    valid_request_id(&request_id)?;
+    if let Ok(jobs) = state.file_jobs.lock() {
+        if let Some(job) = jobs.get(&request_id) {
+            job.token.store(true, Ordering::Relaxed);
+        }
+    }
+    Ok(())
 }
 
 /// Favorites are stored exactly as the list shows them (not resolved), so
@@ -1368,6 +2018,124 @@ async fn open_in_terminal(window: WebviewWindow, folder: String) -> Result<(), S
     tauri::async_runtime::spawn_blocking(move || shell::open_in_terminal(&folder))
         .await
         .map_err(|e| e.to_string())?
+}
+
+/// Put files on the Windows clipboard (Cut or Copy), so Paste works in
+/// Explorer and other apps. Errors are `clipboard.<reason>` codes.
+#[tauri::command]
+async fn clipboard_set_files(
+    window: WebviewWindow,
+    paths: Vec<String>,
+    cut: bool,
+) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > clipboard::MAX_CLIPBOARD_FILES {
+        return Err("clipboard.failed".to_string());
+    }
+    for path in &paths {
+        validate_absolute_path(path)?;
+    }
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || clipboard::set_files(owner, &paths, cut))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// What the Windows clipboard holds right now (files and how they got
+/// there, or text/image flags), without reading any file contents.
+#[tauri::command]
+async fn clipboard_read(window: WebviewWindow) -> Result<clipboard::ClipboardData, String> {
+    ensure_main(window.label())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || clipboard::read(owner))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// The clipboard's text (size-limited in Rust), for Paste and Paste as file.
+#[tauri::command]
+async fn clipboard_text(window: WebviewWindow) -> Result<Option<String>, String> {
+    ensure_main(window.label())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || clipboard::text(owner))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// Save the clipboard image as a PNG/JPG file in `parent` (Paste as
+/// file). Returns the created path. Errors are `image.<reason>` codes.
+#[tauri::command]
+async fn clipboard_image_file(
+    window: WebviewWindow,
+    parent: String,
+    base_name: String,
+    format: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    validate_absolute_path(&parent).map_err(|_| "image.failed".to_string())?;
+    if !matches!(format.as_str(), "png" | "jpg") || base_name.chars().count() > 200 {
+        return Err("image.failed".to_string());
+    }
+    fs_service::validate_new_name(&format!("{base_name}.{format}"))
+        .map_err(|_| "image.failed".to_string())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || {
+        clipboard::save_image(owner, Path::new(&parent), &base_name, &format)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Empty the Windows clipboard (a cut-paste clears what it consumed).
+#[tauri::command]
+async fn clipboard_clear(window: WebviewWindow) -> Result<(), String> {
+    ensure_main(window.label())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || clipboard::clear(owner))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// Start a native file drag to other apps; resolves with the effect
+/// the drop target chose. A "move" result means the caller finishes
+/// the move (the target copied the files; sources are removed).
+#[tauri::command]
+async fn start_external_drag(window: WebviewWindow, paths: Vec<String>) -> Result<String, String> {
+    ensure_main(window.label())?;
+    if paths.is_empty() || paths.len() > drag::MAX_DRAG_FILES {
+        return Err("drag.failed".to_string());
+    }
+    for path in &paths {
+        validate_absolute_path(path).map_err(|_| "drag.failed".to_string())?;
+    }
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || drag::start_drag(owner, &paths))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// Create a shortcut (.lnk) to `target` in `folder` (Alt-drag).
+#[tauri::command]
+async fn create_shortcut(
+    window: WebviewWindow,
+    target: String,
+    folder: String,
+    name: String,
+) -> Result<String, String> {
+    ensure_main(window.label())?;
+    validate_absolute_path(&target).map_err(|_| "shortcut.failed".to_string())?;
+    validate_absolute_path(&folder).map_err(|_| "shortcut.failed".to_string())?;
+    if name.chars().count() > 200 {
+        return Err("shortcut.failed".to_string());
+    }
+    fs_service::validate_new_name(&format!("{name}.lnk"))
+        .map_err(|_| "shortcut.failed".to_string())?;
+    let owner = window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || {
+        shell::create_shortcut(owner, &target, &folder, &name)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// The Windows share sheet for files. Windows UI for a window has to be
@@ -1513,6 +2281,12 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     Ok(())
 }
 fn main() {
+    #[cfg(windows)]
+    if std::env::args().nth(1).as_deref() == Some(clipboard_image_helper::HELPER_FLAG) {
+        std::process::exit(clipboard_image_helper::run(
+            std::env::args().nth(2).as_deref(),
+        ));
+    }
     // The classic-menu helper is this executable started with a flag; it
     // never starts the app itself.
     if std::env::args().nth(1).as_deref() == Some(classic_menu::HELPER_FLAG) {
@@ -1532,17 +2306,35 @@ fn main() {
             data_dir,
             settings: Mutex::new(initial_settings),
             list_jobs: Mutex::new(HashMap::new()),
+            file_jobs: Mutex::new(HashMap::new()),
+            transfer_history: Arc::new(Mutex::new(transfer_history::TransferHistory::default())),
             explorer_state_lock: Mutex::new(()),
             watch: Mutex::new(None),
             watch_next_id: AtomicU64::new(0),
         })
         .setup(|app| {
+            // The main window is created here, not from tauri.conf.json, so
+            // its WebView2 profile lives under the app's data folder
+            // (R-BG-2): ADPERASTRA_DATA_DIR then isolates every instance,
+            // and nothing is written to a second folder in %LOCALAPPDATA%.
+            let config = app
+                .config()
+                .app
+                .windows
+                .iter()
+                .find(|window| window.label == "main")
+                .cloned()
+                .ok_or("main window missing from tauri.conf.json")?;
+            let profile = webview_profile_dir(&app.state::<AppState>().data_dir);
+            let window = tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?
+                .data_directory(profile)
+                .build()?;
             // Snap layouts: subclass the main window so Windows treats the
             // custom maximize button as the native maximize button.
             #[cfg(windows)]
-            if let Some(window) = app.get_webview_window("main") {
-                install_snap_subclass(&window);
-            }
+            install_snap_subclass(&window);
+            #[cfg(not(windows))]
+            let _ = window;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1572,6 +2364,12 @@ fn main() {
             watch_stop,
             item_details,
             rename_item,
+            check_conflicts,
+            create_item,
+            create_text_file,
+            file_op_start,
+            file_op_poll,
+            file_op_cancel,
             add_favorite,
             remove_favorite,
             list_favorite_items,
@@ -1580,7 +2378,14 @@ fn main() {
             show_properties,
             open_in_terminal,
             share_items,
-            show_classic_menu
+            show_classic_menu,
+            clipboard_set_files,
+            clipboard_read,
+            clipboard_text,
+            clipboard_image_file,
+            clipboard_clear,
+            start_external_drag,
+            create_shortcut
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
@@ -1595,10 +2400,23 @@ mod tests {
     use super::*;
 
     #[test]
+    fn webview_profile_lives_under_the_data_folder() {
+        // R-BG-2: one data folder per instance, nothing elsewhere. The main
+        // window must be built in setup (create: false) to use this folder.
+        let data = Path::new(r"C:\data\Adperastra");
+        assert_eq!(webview_profile_dir(data), data.join("webview"));
+        let config: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let main = &config["app"]["windows"][0];
+        assert_eq!(main["label"], "main");
+        assert_eq!(main["create"], false);
+    }
+
+    #[test]
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 3);
+        assert_eq!(settings.schema_version, 4);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -1610,7 +2428,7 @@ mod tests {
     fn migrate_v1_flat_json() {
         let value = serde_json::json!({ "language": "es", "theme": "dark" });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 3);
+        assert_eq!(settings.schema_version, 4);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_source, "design");
@@ -1633,7 +2451,7 @@ mod tests {
             "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#112233" }
         });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 3);
+        assert_eq!(settings.schema_version, 4);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_custom, "#112233");
@@ -1651,6 +2469,28 @@ mod tests {
         }
         settings.explorer.group_by = "colour".to_string();
         assert!(validate(&settings).is_err());
+    }
+
+    #[test]
+    fn migrate_v3_keeps_everything_and_adds_file_choices() {
+        let value = serde_json::json!({
+            "schema_version": 3,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#112233" },
+            "explorer": { "show_hidden": true, "show_extensions": false, "item_checkboxes": true, "details_pane": true, "group_by": "type" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(settings.explorer.show_hidden);
+        assert_eq!(settings.explorer.group_by, "type");
+        assert_eq!(settings.files.paste_image_format, "png");
+        let mut custom = Settings::default();
+        custom.files.paste_image_format = "jpg".to_string();
+        assert!(validate(&custom).is_ok());
+        custom.files.paste_image_format = "gif".to_string();
+        assert!(validate(&custom).is_err());
     }
 
     #[test]
@@ -1833,6 +2673,92 @@ mod tests {
         assert!(validate_absolute_path(r"relative\file.txt").is_err());
         assert!(validate_absolute_path(r"C:\Users\..\Windows").is_err());
         assert!(validate_absolute_path("").is_err());
+    }
+
+    #[test]
+    fn file_op_request_parsing() {
+        // Replace is refused until exact approved targets exist; the UI
+        // offers Merge, Skip and Keep both instead.
+        assert_eq!(
+            parse_conflict_policy("replace").err().as_deref(),
+            Some("ops.replace_unavailable")
+        );
+        assert_eq!(
+            parse_conflict_policy("keepBoth").unwrap(),
+            fs_service::ConflictPolicy::KeepBoth
+        );
+        assert_eq!(
+            parse_conflict_policy("merge").unwrap(),
+            fs_service::ConflictPolicy::Merge
+        );
+        assert!(parse_conflict_policy("mergeEverything").is_err());
+        // The conflict policy defaults to the safe choice.
+        let request: FileOpRequest = serde_json::from_value(serde_json::json!({
+            "kind": "copy", "sources": ["C:\\a.txt"], "dest_dir": "D:\\out"
+        }))
+        .unwrap();
+        assert_eq!(request.conflict, "skip");
+        assert!(!request.allow_system);
+        assert!(request.transfer_id.is_none());
+        assert!(request.retained_transfers.is_none());
+        assert!(!request.reverse);
+        let sources = validate_op_sources(&[r"C:\a.txt".to_string()]).unwrap();
+        assert_eq!(sources.len(), 1);
+        assert!(validate_op_sources(&[]).is_err());
+        assert!(validate_op_sources(&[r"relative\a.txt".to_string()]).is_err());
+        assert!(validate_op_sources(&[r"C:\a\..\b.txt".to_string()]).is_err());
+    }
+
+    #[test]
+    fn bin_ids_must_be_recycle_bin_entries_one_per_source() {
+        let sources = vec![PathBuf::from(r"C:\docs\a.txt")];
+        let good = vec![r"C:\$Recycle.Bin\S-1-5-21-1\$RABC123.txt".to_string()];
+        assert!(validate_bin_ids(&good, &sources).is_ok());
+        // Wrong count, outside the bin, the $I record, or a relative path.
+        assert!(validate_bin_ids(&[], &sources).is_err());
+        assert!(validate_bin_ids(&[r"C:\docs\$Rnot-bin.txt".to_string()], &sources).is_err());
+        assert!(
+            validate_bin_ids(&[r"C:\$Recycle.Bin\S-1\$IABC123.txt".to_string()], &sources).is_err()
+        );
+        assert!(validate_bin_ids(&[r"$Recycle.Bin\$RABC.txt".to_string()], &sources).is_err());
+        // Only restore takes bin ids; the request field is optional.
+        let request: FileOpRequest = serde_json::from_value(serde_json::json!({
+            "kind": "restore", "sources": ["C:\\a.txt"]
+        }))
+        .unwrap();
+        assert!(request.bin_ids.is_none());
+        assert_eq!(request.priority, "normal");
+    }
+
+    #[test]
+    fn job_priorities_parse_and_reset_the_thread() {
+        assert_eq!(
+            parse_job_priority("foreground").unwrap(),
+            JobPriority::Foreground
+        );
+        assert_eq!(parse_job_priority("normal").unwrap(), JobPriority::Normal);
+        assert_eq!(
+            parse_job_priority("background").unwrap(),
+            JobPriority::Background
+        );
+        assert!(parse_job_priority("realtime").is_err());
+        #[cfg(windows)]
+        {
+            use windows::Win32::System::Threading::{
+                GetCurrentThread, GetThreadPriority, THREAD_PRIORITY_NORMAL,
+            };
+            let normal = THREAD_PRIORITY_NORMAL.0;
+            for priority in [JobPriority::Foreground, JobPriority::Background] {
+                let guard = ThreadPriorityGuard::enter(priority);
+                // SAFETY: the calling thread's pseudo-handle is always valid.
+                let inside = unsafe { GetThreadPriority(GetCurrentThread()) };
+                assert!(inside != normal, "{priority:?} did not change the thread");
+                drop(guard);
+                // SAFETY: as above.
+                let after = unsafe { GetThreadPriority(GetCurrentThread()) };
+                assert_eq!(after, normal, "{priority:?} was not put back");
+            }
+        }
     }
 
     #[test]

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import i18n from "../i18n";
+import i18n, { applyLanguage, htmlLang } from "../i18n";
 import en from "../i18n/locales/en.json";
 import es from "../i18n/locales/es.json";
 import pseudo from "../i18n/locales/pseudo.json";
@@ -32,6 +32,16 @@ describe("locale parity", () => {
     expect(es.explorer.statusItems).toContain("plural");
   });
 
+  it("pseudo-locale ICU strings still format (no raw {count, plural} leaks)", async () => {
+    await i18n.changeLanguage("pseudo");
+    for (const key of ["jobs.copying", "jobs.skippedItems", "toast.copied", "dialogs.permanentBody"]) {
+      const text = i18n.t(key, { count: 3 });
+      expect(text, key).not.toContain("plural");
+      expect(text, key).toContain("3");
+    }
+    await i18n.changeLanguage("en");
+  });
+
   it("formats ICU plurals at runtime", async () => {
     await i18n.changeLanguage("en");
     expect(i18n.t("explorer.statusItems", { count: 0 })).toBe("No items");
@@ -42,5 +52,17 @@ describe("locale parity", () => {
     expect(i18n.t("explorer.statusItems", { count: 1 })).toBe("1 elemento");
     expect(i18n.t("explorer.statusItems", { count: 5 })).toBe("5 elementos");
     await i18n.changeLanguage("en");
+  });
+});
+describe("page language", () => {
+  it("uses a valid language tag for every app language", async () => {
+    expect(htmlLang("en")).toBe("en");
+    expect(htmlLang("es")).toBe("es");
+    expect(htmlLang("pseudo")).toBe("en-XA");
+    for (const lang of ["en", "es", "pseudo"]) {
+      await applyLanguage(lang);
+      expect(() => new Intl.Locale(document.documentElement.lang)).not.toThrow();
+    }
+    await applyLanguage("en");
   });
 });

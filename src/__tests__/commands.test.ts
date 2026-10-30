@@ -96,6 +96,8 @@ const baseCtx: CommandContext = {
   },
   allFavorites: false,
   selectionInCurrentFolder: true,
+  canUndo: false,
+  canRedo: false,
 };
 
 const oneFile = { paths: ["C:\\Users\\a.txt"], count: 1, files: 1, folders: 0 };
@@ -135,11 +137,31 @@ describe("explorer commands", () => {
 
   it("keeps not-yet-built commands disabled even with a selection", () => {
     const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
-    for (const id of ["explorer.cut", "explorer.copy", "explorer.paste", "explorer.delete", "explorer.newFolder", "explorer.viewList"]) {
+    // Only the Step 05 view modes are still placeholders after Step 03b.
+    for (const id of ["explorer.viewList", "explorer.viewSmallIcons", "explorer.viewMediumIcons", "explorer.viewLargeIcons"]) {
       expect(byId[id].pending).toBe(true);
       expect(isCommandEnabled(byId[id], { ...baseCtx, selection: oneFile })).toBe(false);
     }
     expect(isCommandEnabled(byId["explorer.viewDetails"], baseCtx)).toBe(true);
+  });
+
+  it("file operations are live and follow their rules (Step 03b)", () => {
+    const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
+    for (const id of ["explorer.cut", "explorer.copy", "explorer.paste", "explorer.pasteAsFile", "explorer.delete", "explorer.deletePermanently", "explorer.newFolder", "explorer.newTextFile"]) {
+      expect(byId[id].pending).toBeFalsy();
+    }
+    expect(isCommandEnabled(byId["explorer.cut"], baseCtx)).toBe(false);
+    expect(isCommandEnabled(byId["explorer.cut"], { ...baseCtx, selection: oneFile })).toBe(true);
+    expect(isCommandEnabled(byId["explorer.paste"], { ...baseCtx, location: "home", currentPath: null })).toBe(false);
+    expect(isCommandEnabled(byId["explorer.paste"], baseCtx)).toBe(true);
+    expect(byId["explorer.delete"].risk).toBe("recycle");
+    expect(byId["explorer.deletePermanently"].risk).toBe("irreversible");
+    expect(byId["explorer.undo"].shortcut).toBe("Ctrl+Z");
+    expect(isCommandEnabled(byId["explorer.undo"], baseCtx)).toBe(false);
+    expect(isCommandEnabled(byId["explorer.undo"], { ...baseCtx, canUndo: true })).toBe(true);
+    expect(isCommandEnabled(byId["explorer.redo"], { ...baseCtx, canRedo: true })).toBe(true);
+    // Menu data names only registered commands (checked for all menus above).
+    expect(resolveMenu(BACKGROUND_MENU, baseCtx, (id) => byId[id]).flatMap((e) => (e.type === "command" ? [e.id] : []))).toContain("explorer.pasteAsFile");
   });
 
   it("labels and checks follow the context", () => {

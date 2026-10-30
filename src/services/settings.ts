@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 3;
+export const SETTINGS_SCHEMA_VERSION = 4;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -24,11 +24,19 @@ export interface ExplorerViewSettings {
   group_by: GroupBy;
 }
 
+export type PasteImageFormat = "png" | "jpg";
+
+/** File-operation choices (schema 4): what Paste as file saves images as. */
+export interface FileSettings {
+  paste_image_format: PasteImageFormat;
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
   theme: ThemeSettings;
   explorer: ExplorerViewSettings;
+  files: FileSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -52,6 +60,9 @@ export function defaultSettings(): AppSettings {
       item_checkboxes: false,
       details_pane: false,
       group_by: "none",
+    },
+    files: {
+      paste_image_format: "png",
     },
   };
 }
@@ -80,6 +91,7 @@ export function normalizeSettings(input: unknown): AppSettings {
 
   const themeInput = isRecord(input.theme) ? input.theme : {};
   const explorerInput = isRecord(input.explorer) ? input.explorer : {};
+  const filesInput = isRecord(input.files) ? input.files : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
@@ -100,6 +112,9 @@ export function normalizeSettings(input: unknown): AppSettings {
       item_checkboxes: flag(explorerInput.item_checkboxes, defaults.explorer.item_checkboxes),
       details_pane: flag(explorerInput.details_pane, defaults.explorer.details_pane),
       group_by: pick(explorerInput.group_by, GROUP_BY, defaults.explorer.group_by),
+    },
+    files: {
+      paste_image_format: pick(filesInput.paste_image_format, ["png", "jpg"] as const, defaults.files.paste_image_format),
     },
   };
 }

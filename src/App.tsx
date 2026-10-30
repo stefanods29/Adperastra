@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { CircleHelp, Copy, Home, LayoutGrid, Minus, Plus, Settings as SettingsIcon, Square, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { tabKeyTarget } from "./services/tabKeys";
 import DropdownMenu from "./components/DropdownMenu";
 import IconButton from "./components/IconButton";
 import { applyLanguage } from "./i18n";
@@ -79,6 +80,16 @@ function requestedView(): TabState | null {
 
 export default function App() {
   const { t, i18n } = useTranslation();
+
+  // Tauri's isolation frame (R-SEC) is invisible: hide it from assistive
+  // technology and give it a name, as every frame needs one.
+  useEffect(() => {
+    const frame = document.getElementById("__tauri_isolation__");
+    if (!frame) return;
+    frame.setAttribute("title", t("window.securityFrame"));
+    frame.setAttribute("aria-hidden", "true");
+    frame.setAttribute("tabindex", "-1");
+  }, [t, i18n.language]);
   const [settings, setSettings] = useState<AppSettings>(() => defaultSettings());
   const [tabs, setTabs] = useState([EXPLORER_TAB]);
   const [activeId, setActiveId] = useState("explorer");
@@ -101,7 +112,6 @@ export default function App() {
           : "light"
         : next.theme.mode;
     document.documentElement.dataset.theme = resolved;
-    document.documentElement.lang = next.language;
     await applyLanguage(next.language);
     let accent = "var(--adp-accent-explorer)";
     if (next.theme.accent_source === "custom") {
@@ -384,8 +394,9 @@ export default function App() {
   return (
     <div className="adp-shell">
       <header className="adp-titlebar" data-tauri-drag-region="">
-        <div className="adp-tabbar" role="tablist">
-          {tabs.map((tab) => {
+        <div className="adp-tabbar">
+          <div className="adp-tablist" role="tablist">
+          {tabs.map((tab, tabIndex) => {
             const Icon =
               tab.kind === "explorer"
                 ? Home
@@ -399,6 +410,15 @@ export default function App() {
                 key={tab.id}
                 role="tab"
                 aria-selected={tab.id === activeId}
+                tabIndex={tab.id === activeId ? 0 : -1}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  const target = tabKeyTarget(event.key, tabIndex, tabs.length);
+                  if (target === null) return;
+                  event.preventDefault();
+                  setActiveId(tabs[target].id);
+                  (event.currentTarget.parentElement?.children[target] as HTMLElement | undefined)?.focus();
+                }}
                 className={tab.id === activeId ? "adp-tab adp-tab--active" : "adp-tab"}
                 draggable={false}
                 onClick={() => setActiveId(tab.id)}
@@ -409,10 +429,11 @@ export default function App() {
                 <Icon size={14} aria-hidden="true" />
                 <span className="adp-tab-label">{tab.title ?? tabLabel(tab)}</span>
                 {tab.kind !== "explorer" ? (
-                  <button
-                    type="button"
+                  // A mouse target only: a tab may not contain another control.
+                  // The keyboard closes the current tab with Ctrl+W.
+                  <span
                     className="adp-tab-close"
-                    aria-label={t("tabs.close")}
+                    aria-hidden="true"
                     title={t("tabs.close")}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -420,11 +441,12 @@ export default function App() {
                     }}
                   >
                     <X size={12} aria-hidden="true" />
-                  </button>
+                  </span>
                 ) : null}
               </div>
             );
           })}
+          </div>
           <DropdownMenu
             ariaLabel={t("tabs.newTab")}
             icon={Plus}
@@ -494,6 +516,7 @@ export default function App() {
             onOpenHelp={(slug) => openTab("help", slug ?? "browsing-folders")}
             view={settings.explorer}
             onViewChange={onViewChange}
+            pasteImageFormat={settings.files?.paste_image_format ?? "png"}
           />
         ) : null}
         {activeTab.kind === "help" ? (

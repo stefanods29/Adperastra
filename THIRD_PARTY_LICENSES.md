@@ -52,9 +52,13 @@ file lists everything that ships inside the app folder.
 - **i18next + i18next-icu** (MIT) - translations with locale-aware messages.
 - **markdown-it** (MIT) + **DOMPurify** (Apache-2.0) - safe rendering of help pages.
 - **Lucide icons** (ISC) - icons in the interface.
-- **egui** (MIT / Apache-2.0) - setup window.
+- **axe-core** 4.14.0 (MPL-2.0) - accessibility check in development only; never shipped with the app.
+- **egui** (MIT / Apache-2.0) - setup window. Built without egui's bundled default fonts (Ubuntu Font Licence, not on the allowed list); the window uses Inter, or the Windows UI font installed on the PC (read at run time, never bundled).
+- **reqwest** (MIT / Apache-2.0) with **rustls-native-certs** (Apache-2.0 / ISC / MIT) and **schannel** (MIT) - setup downloads, trusting the certificates in the Windows certificate store.
 - **notify** (CC0-1.0) - folder watching for the Explorer (Step 02).
+- **trash** 5.2.9 (MIT) - move items to the Windows Recycle Bin and restore them for Undo (Step 03b).
 - **TanStack Virtual** (MIT) - virtualized file lists (Step 02).
 - **windows** 0.61 and **windows-collections** 0.2 (MIT / Apache-2.0) - Windows APIs: known folders, drives, file details, rename, Open, Open with, Properties, the share sheet and the classic menu (Steps 02 and 03a).
+- **windows-core** 0.61.2 (MIT OR Apache-2.0) - implements a size-limited Windows image stream for safe clipboard image paste (Step 03b). Already included transitively by windows 0.61.3; now also a direct dependency.
 - **minisign** (MIT) - manifest signatures.
 

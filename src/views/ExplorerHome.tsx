@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { supportedLanguages } from "../i18n";
 import Menu, { type MenuAnchor } from "../components/Menu";
@@ -43,6 +43,29 @@ import {
   type SortDirection,
   type SortKey,
 } from "../services/explorer";
+import {
+  clipboardClear,
+  clipboardImageFile,
+  clipboardRead,
+  clipboardSetFiles,
+  clipboardText,
+  checkConflicts,
+  createItem,
+  createShortcut,
+  createTextFile,
+  entryForJob,
+  executeFileAction,
+  runFileJob,
+  startExternalDrag,
+  startFileJob,
+  setRetainedTransfers,
+  type ConflictInfo,
+  type ConflictPolicy,
+  type OpReport,
+} from "../services/fileops";
+import { classifyClipboardText, pastedStamp, pastedTextExtension } from "../services/paste";
+import { formatShortcut } from "../services/shortcuts";
+import { UndoStack, type UndoEntry } from "../services/undo";
 import { groupItems } from "../services/grouping";
 import {
   canGoBack,
@@ -67,6 +90,14 @@ import {
 import { isTauriRuntime, type ExplorerViewSettings } from "../services/settings";
 import AddressBar from "./explorer/AddressBar";
 import CommandBar from "./explorer/CommandBar";
+import {
+  ConflictDialog,
+  PermanentDialog,
+  RecentActionsDialog,
+  SystemItemsDialog,
+  type ConflictAnswer,
+} from "./explorer/FileOpDialogs";
+import JobsPanel, { type JobView } from "./explorer/JobsPanel";
 import DetailsPane from "./explorer/DetailsPane";
 import DriveList, { type DriveLoadState } from "./explorer/DriveList";
 import FileList from "./explorer/FileList";
@@ -88,6 +119,8 @@ export interface ExplorerHomeProps {
   /** View options from settings (schema 3); defaults when absent. */
   view?: ExplorerViewSettings;
   onViewChange?: (patch: Partial<ExplorerViewSettings>) => void;
+  /** Pasted-image format from settings (schema 4). */
+  pasteImageFormat?: "png" | "jpg";
 }
 
 const DEFAULT_VIEW: ExplorerViewSettings = {
@@ -166,7 +199,7 @@ function plainText(text: string): string {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
-export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp, onViewChange }: ExplorerHomeProps) {
+export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp, onViewChange, pasteImageFormat = "png" }: ExplorerHomeProps) {
   const { t, i18n } = useTranslation();
   const view = viewProp ?? DEFAULT_VIEW;
   const [history, setHistory] = useState<NavHistory>(() => createHistory({ type: "home" }));
@@ -195,6 +228,29 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [busyNote, setBusyNote] = useState<string | null>(null);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
+  // File operations (Step 03b): undo stack, jobs, and dialogs.
+  const undoStack = useRef(new UndoStack());
+  const [, setUndoVersion] = useState(0);
+  const toastEntryRef = useRef(new Map<number, number>());
+  const [jobs, setJobs] = useState<JobView[]>([]);
+  const [jobsOpen, setJobsOpen] = useState(false);
+  const jobCancelRef = useRef(new Map<string, () => void>());
+  const jobIdRef = useRef(0);
+  const [conflictAsk, setConflictAsk] = useState<{
+    name: string;
+    more: number;
+    isFolder: boolean;
+    answer: (answer: ConflictAnswer | null) => void;
+  } | null>(null);
+  const [permanentAsk, setPermanentAsk] = useState<{
+    count: number;
+    answer: (confirmed: boolean) => void;
+  } | null>(null);
+  const systemQueue = useRef<((confirmed: boolean) => void)[]>([]);
+  const [systemAsk, setSystemAsk] = useState<((confirmed: boolean) => void) | null>(null);
+  const [recentOpen, setRecentOpen] = useState(false);
+  const pendingRenameRef = useRef<string | null>(null);
+  const [dragBadge, setDragBadge] = useState<{ x: number; y: number; key: string; name: string } | null>(null);
   const loadModeRef = useRef<"hard" | "soft">("hard");
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [homeNonce, setHomeNonce] = useState(0);
@@ -218,6 +274,40 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
       notify(t(`errors.${action}.${reason}`, { defaultValue: t(`errors.${action}.other`) }));
     },
     [notify, t],
+  );
+  /** Errors from file operations carry their own prefix (ops.*, ...). */
+  const notifyOpError = useCallback(
+    (error: unknown) => {
+      const raw = typeof error === "string" ? error : error instanceof Error ? error.message : "";
+      const action = ["ops", "rename", "clipboard", "image", "shortcut"].find((name) =>
+        raw.startsWith(`${name}.`),
+      );
+      if (action) notifyError(error, action);
+      else notify(t("errors.ops.other"));
+    },
+    [notify, notifyError, t],
+  );
+  const touchUndo = useCallback(() => {
+    setRetainedTransfers(undoStack.current.retainedEntries);
+    setUndoVersion((value) => value + 1);
+  }, []);
+  /** Toast for a finished action, with an Undo button wired to its entry. */
+  const notifyAction = useCallback(
+    (message: string, entry: UndoEntry | null) => {
+      toastIdRef.current += 1;
+      const id = toastIdRef.current;
+      if (entry) toastEntryRef.current.set(id, entry.id);
+      setToasts((list) => [
+        ...list.slice(-2),
+        {
+          id,
+          message,
+          showUndo: entry !== null,
+          shortcutHint: entry ? formatShortcut("Ctrl+Z", t) : undefined,
+        },
+      ]);
+    },
+    [t],
   );
 
   const goToLocation = useCallback((next: ExplorerLocation) => {
@@ -293,6 +383,17 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     }
   }, [orderPaths, location.type]);
 
+  useEffect(() => {
+    const wanted = pendingRenameRef.current;
+    if (!wanted || location.type !== "folder") return;
+    const match = orderPaths.find((path) => samePath(path, wanted));
+    if (match) {
+      pendingRenameRef.current = null;
+      setSelection(selectOnly(match));
+      setRenamingPath(match);
+    }
+  }, [orderPaths, location.type]);
+
   const summary = useMemo(() => summarizeSelection(selection.selected, (path) => itemByPath.get(path)), [selection.selected, itemByPath]);
   const selectedPaths = useMemo(() => orderPaths.filter((path) => selection.selected.has(path)), [orderPaths, selection.selected]);
   const selectedItems = useMemo(
@@ -324,6 +425,8 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     },
     allFavorites,
     selectionInCurrentFolder: location.type === "folder",
+    canUndo: undoStack.current.canUndo,
+    canRedo: undoStack.current.canRedo,
   };
   const commandCtxRef = useRef(commandCtx);
   commandCtxRef.current = commandCtx;
@@ -348,6 +451,323 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     },
     [goToFolder, notifyError],
   );
+
+
+  // -------------------------------------------------------------------
+  // File operations (Step 03b): jobs with progress, conflicts, undo.
+  // -------------------------------------------------------------------
+  const refreshAfterOp = () => {
+    refresh();
+    if (live.current.location.type === "home") setHomeNonce((value) => value + 1);
+  };
+
+  const askConflict = (name: string, more: number, isFolder: boolean) =>
+    new Promise<ConflictAnswer | null>((resolve) => {
+      setConflictAsk({
+        name,
+        more,
+        isFolder,
+        answer: (answer) => {
+          setConflictAsk(null);
+          resolve(answer);
+        },
+      });
+    });
+
+  const askPermanent = (count: number) =>
+    new Promise<boolean>((resolve) => {
+      setPermanentAsk({
+        count,
+        answer: (confirmed) => {
+          setPermanentAsk(null);
+          resolve(confirmed);
+        },
+      });
+    });
+
+  const askSystemItems = () => new Promise<boolean>((resolve) => {
+    const answer = (confirmed: boolean) => {
+      systemQueue.current.shift();
+      setSystemAsk(() => systemQueue.current[0] ?? null);
+      resolve(confirmed);
+    };
+    systemQueue.current.push(answer);
+    if (systemQueue.current.length === 1) setSystemAsk(() => answer);
+  });
+
+  const baseNameOf = (path: string) => displayPath(path).split("\\").filter(Boolean).pop() ?? path;
+
+  /** Run one job in the panel; resolves with its report. */
+  const runTracked = async (
+    verbKey: string,
+    kind: "copy" | "move" | "recycle" | "restore" | "permanent",
+    sources: string[],
+    options: { destDir?: string; conflict?: ConflictPolicy } = {},
+  ): Promise<OpReport> => {
+    jobIdRef.current += 1;
+    const id = `job-${jobIdRef.current}`;
+    const openTimer = window.setTimeout(() => setJobsOpen(true), 400);
+    setJobs((list) =>
+      [
+        {
+          id,
+          verbKey,
+          count: sources.length,
+          progress: null,
+          status: "running" as const,
+          skipped: [],
+          onCancel: () => jobCancelRef.current.get(id)?.(),
+        },
+        ...list,
+      ].slice(0, 6),
+    );
+    try {
+      let allowSystem = false;
+      for (;;) {
+        try {
+          const job = await startFileJob(kind, sources, {
+            ...options,
+            allowSystem,
+            onProgress: (progress) =>
+              setJobs((list) => list.map((entry) => (entry.id === id ? { ...entry, progress } : entry))),
+          });
+          jobCancelRef.current.set(id, () => void job.cancel());
+          const report = await job.completion;
+          window.clearTimeout(openTimer);
+          setJobs((list) =>
+            list.map((entry) =>
+              entry.id === id
+                ? { ...entry, status: report.cancelled ? ("cancelled" as const) : ("done" as const), skipped: report.skipped }
+                : entry,
+            ),
+          );
+          if (report.cancelled) setJobsOpen(true);
+          return report;
+        } catch (error) {
+          const code = error instanceof Error ? error.message : String(error);
+          if (code !== "ops.system_confirmation_required" || allowSystem) throw error;
+          jobCancelRef.current.delete(id);
+          if (!(await askSystemItems())) {
+            window.clearTimeout(openTimer);
+            setJobs((list) => list.map((entry) => entry.id === id ? { ...entry, status: "cancelled" as const } : entry));
+            return { completed: [], skipped: [], replaced: [], created: [], cancelled: true };
+          }
+          allowSystem = true;
+        }
+      }
+    } catch (error) {
+      window.clearTimeout(openTimer);
+      setJobs((list) =>
+        list.map((entry) => (entry.id === id ? { ...entry, status: "failed" as const } : entry)),
+      );
+      throw error;
+    } finally {
+      jobCancelRef.current.delete(id);
+    }
+  };
+
+  /** Record a finished copy/move/recycle in the undo stack; returns the
+   * entry to offer in the toast, or null when nothing changed. */
+  const recordJob = (
+    kind: "copy" | "move" | "recycle",
+    report: OpReport,
+    destDir: string | null,
+  ): UndoEntry | null => {
+    const input = entryForJob(kind, report, destDir);
+    if (!input) return null;
+    undoStack.current.push(input);
+    touchUndo();
+    return undoStack.current.peekUndo();
+  };
+
+  const toastReport = (entry: UndoEntry | null, report: OpReport) => {
+    if (entry) notifyAction(t(entry.labelKey, entry.labelArgs), entry);
+    if (report.skipped.length > 0) notify(t("jobs.skippedItems", { count: report.skipped.length }));
+    if (report.cancelled) notify(t("jobs.cancelled"));
+  };
+
+  /** Copy or move with the conflict flow: same-folder copies keep both,
+   * other conflicts ask (once for all, or one by one). */
+  const performCopyMove = async (
+    kind: "copy" | "move",
+    sources: string[],
+    destDir: string,
+  ): Promise<OpReport | null> => {
+    if (sources.length === 0) return null;
+    let conflicts: ConflictInfo[] = [];
+    try {
+      conflicts = await checkConflicts(sources, destDir);
+    } catch {
+      conflicts = [];
+    }
+    const verbKey = kind === "copy" ? "copying" : "moving";
+    const sameFolderCopy =
+      kind === "copy" &&
+      sources.every((source) => {
+        const parent = parentPathOf(source);
+        return parent !== null && samePath(parent, destDir);
+      });
+    if (conflicts.length === 0 || sameFolderCopy) {
+      const report = await runTracked(verbKey, kind, sources, {
+        destDir,
+        conflict: sameFolderCopy ? "keepBoth" : "skip",
+      });
+      refreshAfterOp();
+      toastReport(recordJob(kind, report, destDir), report);
+      return report;
+    }
+    const firstName = baseNameOf(conflicts[0].path);
+    const answer = await askConflict(firstName, conflicts.length - 1, conflicts[0].is_dir);
+    if (!answer) return null;
+    if (answer.forAll) {
+      const report = await runTracked(verbKey, kind, sources, { destDir, conflict: answer.policy });
+      refreshAfterOp();
+      toastReport(recordJob(kind, report, destDir), report);
+      return report;
+    }
+    // One by one: plain items first, then each conflict asks again.
+    const conflictByTarget = new Map(
+      conflicts.map((conflict) => [displayPath(conflict.path).toLowerCase(), conflict]),
+    );
+    const conflictTargets = new Set(conflictByTarget.keys());
+    const targetOf = (source: string) => `${displayPath(destDir).replace(/\\$/, "")}\\${baseNameOf(source)}`;
+    const plain = sources.filter((source) => !conflictTargets.has(targetOf(source).toLowerCase()));
+    const clashing = sources.filter((source) => conflictTargets.has(targetOf(source).toLowerCase()));
+    undoStack.current.beginGroup(kind === "copy" ? "toast.copied" : "toast.moved", {
+      count: sources.length,
+    });
+    let last: OpReport | null = null;
+    try {
+      if (plain.length > 0) {
+        last = await runTracked(verbKey, kind, plain, { destDir, conflict: "skip" });
+        recordJob(kind, last, destDir);
+      }
+      for (const [index, source] of clashing.entries()) {
+        const isFolder =
+          conflictByTarget.get(targetOf(source).toLowerCase())?.is_dir ?? false;
+        const policy =
+          index === 0
+            ? answer.policy
+            : (await askConflict(baseNameOf(source), clashing.length - index - 1, isFolder))?.policy;
+        if (!policy) break;
+        last = await runTracked(verbKey, kind, [source], { destDir, conflict: policy });
+        recordJob(kind, last, destDir);
+      }
+    } finally {
+      undoStack.current.endGroup();
+      touchUndo();
+    }
+    refreshAfterOp();
+    const top = undoStack.current.peekUndo();
+    if (last) toastReport(top, last);
+    return last;
+  };
+
+  const performUndo = async () => {
+    const entry = undoStack.current.peekUndo();
+    if (!entry) return;
+    try {
+      await executeFileAction(entry.undo, askSystemItems);
+      undoStack.current.confirmUndo();
+      touchUndo();
+      notify(t("toast.actionUndone"));
+      refreshAfterOp();
+    } catch (error) {
+      notifyOpError(error);
+    }
+  };
+
+  const performRedo = async () => {
+    const entry = undoStack.current.peekRedo();
+    if (!entry) return;
+    try {
+      await executeFileAction(entry.redo, askSystemItems);
+      undoStack.current.confirmRedo();
+      touchUndo();
+      notify(t("toast.actionRedone"));
+      refreshAfterOp();
+    } catch (error) {
+      notifyOpError(error);
+    }
+  };
+
+  /** Undo a specific toast's action (only in stack order, like Ctrl+Z). */
+  const undoFromToast = (toastId: number) => {
+    setToasts((list) => list.filter((toast) => toast.id !== toastId));
+    const entryId = toastEntryRef.current.get(toastId);
+    toastEntryRef.current.delete(toastId);
+    if (entryId === undefined) return;
+    if (undoStack.current.peekUndo()?.id === entryId) void performUndo();
+    else notify(t("toast.undoNewerFirst"));
+  };
+
+  const afterCreate = (path: string) => {
+    undoStack.current.push({
+      labelKey: "toast.pasted",
+      labelArgs: { name: baseNameOf(path) },
+      undo: { type: "recycle", paths: [path] },
+      redo: { type: "restore", originals: [path] },
+    });
+    touchUndo();
+    const entry = undoStack.current.peekUndo();
+    notifyAction(t("toast.pasted", { name: baseNameOf(path) }), entry);
+    pendingRenameRef.current = path;
+    refreshAfterOp();
+  };
+
+  const createNew = async (kind: "folder" | "file") => {
+    const current = live.current.location;
+    if (current.type !== "folder" || !isTauriRuntime()) return;
+    try {
+      const wanted = kind === "folder" ? t("files.newFolderName") : t("files.newTextFileName");
+      const path = await createItem(current.path, wanted, kind);
+      undoStack.current.push({
+        labelKey: "toast.created",
+        labelArgs: { name: baseNameOf(path) },
+        undo: { type: "recycle", paths: [path] },
+        redo: { type: "restore", originals: [path] },
+      });
+      touchUndo();
+      notifyAction(t("toast.created", { name: baseNameOf(path) }), undoStack.current.peekUndo());
+      pendingRenameRef.current = path;
+      refreshAfterOp();
+    } catch (error) {
+      notifyOpError(error);
+    }
+  };
+
+  const pasteIntoFolder = async () => {
+    const current = live.current.location;
+    if (current.type !== "folder" || !isTauriRuntime()) return;
+    const destDir = current.path;
+    try {
+      const data = await clipboardRead();
+      if (data.files.length > 0) {
+        const report = await performCopyMove(data.cut ? "move" : "copy", data.files, destDir);
+        if (data.cut && report && report.completed.length > 0) {
+          void clipboardClear().catch(() => undefined);
+        }
+        return;
+      }
+      if (data.has_image) {
+        const base = t("files.pastedImageName", { stamp: pastedStamp(new Date()) });
+        afterCreate(await clipboardImageFile(destDir, base, pasteImageFormat));
+        return;
+      }
+      if (data.has_text) {
+        const text = await clipboardText();
+        if (text) {
+          const kind = classifyClipboardText(text);
+          const base = t("files.pastedTextName", { stamp: pastedStamp(new Date()) });
+          afterCreate(await createTextFile(destDir, `${base}${pastedTextExtension(kind)}`, text));
+          return;
+        }
+      }
+      notify(t("toast.nothingToPaste"));
+    } catch (error) {
+      notifyOpError(error);
+    }
+  };
 
   const actions: ExplorerActions = useMemo(
     () => ({
@@ -483,6 +903,53 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         const key = VIEW_SETTING[option];
         onViewChange?.({ [key]: !live.current.view[key] });
       },
+      newFolder: () => void createNew("folder"),
+      newTextFile: () => void createNew("file"),
+      cut: () => {
+        const paths = live.current.selectedPaths;
+        if (paths.length > 0 && isTauriRuntime())
+          void clipboardSetFiles(paths, true).catch((error: unknown) => notifyOpError(error));
+      },
+      copy: () => {
+        const paths = live.current.selectedPaths;
+        if (paths.length > 0 && isTauriRuntime())
+          void clipboardSetFiles(paths, false).catch((error: unknown) => notifyOpError(error));
+      },
+      paste: () => void pasteIntoFolder(),
+      pasteAsFile: () => void pasteIntoFolder(),
+      deleteItems: () => {
+        const paths = live.current.selectedPaths;
+        if (paths.length === 0 || !isTauriRuntime()) return;
+        void (async () => {
+          try {
+            const report = await runTracked("recycling", "recycle", paths);
+            refreshAfterOp();
+            toastReport(recordJob("recycle", report, null), report);
+          } catch (error) {
+            notifyOpError(error);
+          }
+        })();
+      },
+      deletePermanently: () => {
+        const paths = live.current.selectedPaths;
+        if (paths.length === 0 || !isTauriRuntime()) return;
+        void (async () => {
+          if (!(await askPermanent(paths.length))) return;
+          try {
+            const report = await runTracked("deletingPermanently", "permanent", paths);
+            refreshAfterOp();
+            if (report.completed.length > 0)
+              notify(t("toast.deletedPermanently", { count: report.completed.length }));
+            if (report.skipped.length > 0)
+              notify(t("jobs.skippedItems", { count: report.skipped.length }));
+          } catch (error) {
+            notifyOpError(error);
+          }
+        })();
+      },
+      undo: () => void performUndo(),
+      redo: () => void performRedo(),
+      recentActions: () => setRecentOpen(true),
       showMoreOptions: () => {
         const { selectedPaths: paths, location: current } = live.current;
         if (!isTauriRuntime()) return;
@@ -505,7 +972,8 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
           });
       },
     }),
-    [goToFolder, goToLocation, i18n, notify, notifyError, onViewChange, openOne, refresh, t],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [goToFolder, goToLocation, i18n, notify, notifyError, onViewChange, openOne, refresh, t, pasteImageFormat],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);
@@ -532,8 +1000,37 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
+      if (document.querySelector("[role='dialog']")) return;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
-      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && (event.key === "a" || event.key === "A")) {
+      const ctrl = event.ctrlKey || event.metaKey;
+      if (ctrl && !event.altKey && (event.key === "z" || event.key === "Z") && !event.shiftKey) {
+        event.preventDefault();
+        runById("explorer.undo");
+      } else if (
+        (ctrl && !event.altKey && (event.key === "y" || event.key === "Y")) ||
+        (ctrl && event.shiftKey && (event.key === "z" || event.key === "Z"))
+      ) {
+        event.preventDefault();
+        runById("explorer.redo");
+      } else if (ctrl && !event.altKey && (event.key === "x" || event.key === "X")) {
+        event.preventDefault();
+        runById("explorer.cut");
+      } else if (ctrl && !event.altKey && (event.key === "c" || event.key === "C")) {
+        event.preventDefault();
+        runById("explorer.copy");
+      } else if (ctrl && !event.altKey && (event.key === "v" || event.key === "V")) {
+        event.preventDefault();
+        runById("explorer.paste");
+      } else if (ctrl && event.shiftKey && (event.key === "n" || event.key === "N")) {
+        event.preventDefault();
+        runById("explorer.newFolder");
+      } else if (event.key === "Delete" && event.shiftKey) {
+        event.preventDefault();
+        runById("explorer.deletePermanently");
+      } else if (event.key === "Delete") {
+        event.preventDefault();
+        runById("explorer.delete");
+      } else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && (event.key === "a" || event.key === "A")) {
         // Select all files, never the page's own text.
         event.preventDefault();
         runById("explorer.selectAll");
@@ -812,6 +1309,14 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         const newPath = displayPath(await renameItem(item.path, newName));
         setItems((list) => list.map((entry) => (entry.path === item.path ? { ...entry, path: newPath, name: newName } : entry)));
         setSelection(selectOnly(newPath));
+        undoStack.current.push({
+          labelKey: "toast.renamed",
+          labelArgs: { name: newName },
+          undo: { type: "rename", from: newPath, to: item.path },
+          redo: { type: "rename", from: item.path, to: newPath },
+        });
+        touchUndo();
+        notifyAction(t("toast.renamed", { name: newName }), undoStack.current.peekUndo());
         setRenamingPath(null);
         if (live.current.location.type === "home") setHomeNonce((value) => value + 1);
         // Rust moved any favorites along with the item.
@@ -824,8 +1329,206 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         return t(`errors.rename.${reason}`, { defaultValue: t("errors.rename.other") });
       }
     },
-    [t],
+    [t, notifyAction, touchUndo],
   );
+
+
+  // -------------------------------------------------------------------
+  // Drag and drop (Step 03b): a mouse-driven session inside the app,
+  // handed to a native Windows drag when the pointer leaves the window;
+  // drops from other apps arrive through Tauri's drag-drop event.
+  // -------------------------------------------------------------------
+  type DragEffect = "copy" | "move" | "link" | "none";
+  interface DragSession {
+    mode: "idle" | "pending" | "dragging" | "external";
+    paths: string[];
+    x: number;
+    y: number;
+  }
+  const dragSession = useRef<DragSession>({ mode: "idle", paths: [], x: 0, y: 0 });
+  const dragTargetEl = useRef<Element | null>(null);
+  const opsRef = useRef({ performCopyMove, createShortcuts: (_paths: string[], _target: string) => {}, finishExternalMove: (_paths: string[]) => {} });
+  opsRef.current = {
+    performCopyMove,
+    createShortcuts: (paths: string[], target: string) => {
+      void (async () => {
+        try {
+          const created: string[] = [];
+          for (const path of paths) {
+            created.push(await createShortcut(path, target, t("files.shortcutName", { name: baseNameOf(path) })));
+          }
+          if (created.length > 0) {
+            undoStack.current.push({
+              labelKey: "toast.created",
+              labelArgs: { name: baseNameOf(created[0]) },
+              undo: { type: "recycle", paths: created },
+              redo: { type: "restore", originals: created },
+            });
+            touchUndo();
+            notifyAction(t("toast.created", { name: baseNameOf(created[0]) }), undoStack.current.peekUndo());
+            refreshAfterOp();
+          }
+        } catch (error) {
+          notifyOpError(error);
+        }
+      })();
+    },
+    finishExternalMove: (paths: string[]) => {
+      // The drop target copied the files; a Windows move is finished by
+      // removing the sources. Where they went is not reported back, so
+      // this one action cannot be offered as an undo - the sources go to
+      // the Recycle Bin, never away for good, in case the target failed.
+      // (After an optimized same-drive move they are already gone.)
+      void (async () => {
+        try {
+          const report = await runFileJob("recycle", paths);
+          if (report.completed.length > 0) notify(t("toast.moved", { count: report.completed.length }));
+          refreshAfterOp();
+        } catch (error) {
+          notifyOpError(error);
+        }
+      })();
+    },
+  };
+
+  useEffect(() => {
+    const driveRoot = (path: string) => {
+      const shown = displayPath(path);
+      if (shown.startsWith("\\\\")) return shown.split("\\").slice(0, 4).join("\\").toUpperCase();
+      return `${shown.split("\\")[0]}\\`.toUpperCase();
+    };
+    const targetFromPoint = (x: number, y: number) => {
+      const element = document.elementFromPoint(x, y)?.closest?.("[data-drop-folder]");
+      if (!element) return null;
+      const path = element.getAttribute("data-drop-folder");
+      if (!path) return null;
+      return { element, path, name: element.getAttribute("data-drop-name") ?? path };
+    };
+    const effectFor = (paths: string[], targetPath: string, event: MouseEvent): DragEffect => {
+      const sameFolder = paths.every((path) => {
+        const parent = parentPathOf(path);
+        return parent !== null && samePath(parent, targetPath);
+      });
+      if (sameFolder) return "none";
+      if (event.altKey) return "link";
+      if (event.ctrlKey || event.metaKey) return "copy";
+      if (event.shiftKey) return "move";
+      return driveRoot(paths[0]) === driveRoot(targetPath) ? "move" : "copy";
+    };
+    const clearTarget = () => {
+      dragTargetEl.current?.classList.remove("adp-drop-target");
+      dragTargetEl.current = null;
+    };
+    const endSession = () => {
+      dragSession.current = { mode: "idle", paths: [], x: 0, y: 0 };
+      clearTarget();
+      setDragBadge(null);
+    };
+    const onMove = (event: MouseEvent) => {
+      const session = dragSession.current;
+      if (session.mode === "pending") {
+        if (Math.hypot(event.clientX - session.x, event.clientY - session.y) < 6) return;
+        session.mode = "dragging";
+      }
+      if (session.mode !== "dragging") return;
+      const target = targetFromPoint(event.clientX, event.clientY);
+      clearTarget();
+      if (target) {
+        dragTargetEl.current = target.element;
+        target.element.classList.add("adp-drop-target");
+      }
+      const effect = target ? effectFor(session.paths, target.path, event) : "none";
+      if (target && effect !== "none") {
+        const key = effect === "copy" ? "drag.copyTo" : effect === "move" ? "drag.moveTo" : "drag.shortcutTo";
+        setDragBadge({ x: event.clientX, y: event.clientY, key, name: target.name });
+      } else {
+        setDragBadge(null);
+      }
+      session.x = event.clientX;
+      session.y = event.clientY;
+    };
+    const onUp = (event: MouseEvent) => {
+      const session = dragSession.current;
+      if (session.mode === "pending") {
+        session.mode = "idle";
+        return;
+      }
+      if (session.mode !== "dragging") return;
+      const target = targetFromPoint(event.clientX, event.clientY);
+      const effect = target ? effectFor(session.paths, target.path, event) : "none";
+      const paths = session.paths;
+      endSession();
+      if (!target || effect === "none") return;
+      if (effect === "link") opsRef.current.createShortcuts(paths, target.path);
+      else void opsRef.current.performCopyMove(effect, paths, target.path);
+    };
+    const onLeave = () => {
+      const session = dragSession.current;
+      if (session.mode !== "dragging" || !isTauriRuntime()) return;
+      const paths = session.paths;
+      session.mode = "external";
+      clearTarget();
+      setDragBadge(null);
+      startExternalDrag(paths)
+        .then((effect) => {
+          if (effect === "move") opsRef.current.finishExternalMove(paths);
+          if (effect !== "none") refreshAfterOp();
+        })
+        .catch((error: unknown) => notifyOpError(error))
+        .finally(() => {
+          dragSession.current.mode = "idle";
+        });
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && dragSession.current.mode === "dragging") endSession();
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("mouseleave", onLeave);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("mouseleave", onLeave);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Drops from other apps (Explorer, desktop): Tauri reports the paths
+  // and the window position; the folder under the pointer is the target.
+  useEffect(() => {
+    if (!isTauriRuntime()) return;
+    let unlisten: (() => void) | undefined;
+    let disposed = false;
+    void import("@tauri-apps/api/webview")
+      .then(({ getCurrentWebview }) =>
+        getCurrentWebview().onDragDropEvent((event) => {
+          if (event.payload.type !== "drop" || event.payload.paths.length === 0) return;
+          const scale = window.devicePixelRatio || 1;
+          const x = event.payload.position.x / scale;
+          const y = event.payload.position.y / scale;
+          const element = document.elementFromPoint(x, y)?.closest?.("[data-drop-folder]");
+          const attr = element?.getAttribute("data-drop-folder");
+          const current = live.current.location;
+          const dest = attr ?? (current.type === "folder" ? current.path : null);
+          if (!dest) return;
+          const paths = event.payload.paths.map(displayPath);
+          const rootOf = (path: string) => displayPath(path).split("\\")[0].toUpperCase();
+          const effect = paths.every((path) => rootOf(path) === rootOf(dest)) ? "move" : "copy";
+          void opsRef.current.performCopyMove(effect as "copy" | "move", paths, dest);
+        }),
+      )
+      .then((fn) => {
+        if (disposed) fn();
+        else unlisten = fn;
+      })
+      .catch(() => undefined);
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, []);
 
   const segments =
     location.type === "folder"
@@ -885,6 +1588,13 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     onOpen: openOne,
     onContextMenu: openContextMenu,
     onCommandKey: runById,
+    onItemMouseDown: (event: ReactMouseEvent, item: ExplorerItem) => {
+      if (event.button !== 0) return;
+      const selected = live.current.selectedPaths;
+      const paths = selected.includes(item.path) ? selected : [item.path];
+      if (!selected.includes(item.path)) setSelection(selectOnly(item.path));
+      dragSession.current = { mode: "pending", paths, x: event.clientX, y: event.clientY };
+    },
   };
 
   let folderContent = null;
@@ -1047,6 +1757,50 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
           />
         ) : null}
       </div>
+      {conflictAsk ? (
+        <ConflictDialog
+          name={conflictAsk.name}
+          moreCount={conflictAsk.more}
+          isFolder={conflictAsk.isFolder}
+          onAnswer={conflictAsk.answer}
+        />
+      ) : null}
+      {permanentAsk ? <PermanentDialog count={permanentAsk.count} onAnswer={permanentAsk.answer} /> : null}
+      {systemAsk ? <SystemItemsDialog onAnswer={systemAsk} onOpenHelp={() => onOpenHelp("copying-and-moving")} /> : null}
+      {recentOpen ? (
+        <RecentActionsDialog
+          items={undoStack.current.recent(20)}
+          onUndo={(entry) => {
+            if (undoStack.current.isTopUndo(entry)) void performUndo();
+            else notify(t("toast.undoNewerFirst"));
+          }}
+          onRedo={(entry) => {
+            if (undoStack.current.isTopRedo(entry)) void performRedo();
+            else notify(t("toast.undoNewerFirst"));
+          }}
+          onClose={() => setRecentOpen(false)}
+        />
+      ) : null}
+      {dragBadge ? (
+        <div
+          className="adp-drag-badge"
+          style={{ left: dragBadge.x + 14, top: dragBadge.y + 18 }}
+        >
+          {t(dragBadge.key, { name: dragBadge.name })}
+        </div>
+      ) : null}
+      {jobsOpen ? (
+        <JobsPanel
+          jobs={jobs}
+          onDismiss={(id) => setJobs((list) => list.filter((job) => job.id !== id))}
+          onClose={() => setJobsOpen(false)}
+        />
+      ) : jobs.length > 0 ? (
+        <button type="button" className="adp-jobs-button" onClick={() => setJobsOpen(true)}>
+          {t("jobs.title")}
+          {` (${jobs.length})`}
+        </button>
+      ) : null}
       {menu ? (
         <Menu
           entries={resolveMenu(menu.kind === "item" ? ITEM_MENU : BACKGROUND_MENU, commandCtx, lookup)}
@@ -1065,7 +1819,11 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
           {busyNote}
         </div>
       ) : null}
-      <ToastStack toasts={toasts} onDismiss={(id) => setToasts((list) => list.filter((toast) => toast.id !== id))} />
+      <ToastStack
+        toasts={toasts}
+        onDismiss={(id) => setToasts((list) => list.filter((toast) => toast.id !== id))}
+        onUndo={undoFromToast}
+      />
     </div>
   );
 }

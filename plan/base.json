@@ -1,0 +1,23 @@
+{
+  "_note": "Files that Steps P2, 04a, 04b and 04c change, with their Git blob hashes at commit 11aced2 (the last Step 03b commit when the recipes were written). Checked by scripts/check-base.mjs.",
+  "commit": "11aced2",
+  "files": {
+    ".github/workflows/ci.yml": "1dd5cae9de70390ce8f1c76b036dc3ddd296d2a0",
+    "CONTRIBUTING.md": "577af50c3dbc159dc10d4246cf8617cc7f63dc98",
+    "scripts/measure-ui.mjs": "66b1baddc51a91de33e96b3c8db10ac44d2d99f3",
+    "src-tauri/Cargo.toml": "d33b8bf7f41fcb3504fc6cb1d840f2ece2f456b2",
+    "src-tauri/isolation/index.html": "19ec2a5b7bd1bba85ccbdaf69371711bdff2cd35",
+    "src-tauri/src/main.rs": "750f363a69a94924a45d48ad3a0660ff559547b4",
+    "src-tauri/tauri.conf.json": "4ce51499deeff8caa97697a6fd9e7bcb6f7579bf",
+    "src/App.tsx": "1d5cc307462d942ff58cafbdc00050930a9278cb",
+    "src/commands/explorerCommands.ts": "5568535975a6b743791b7f000c71b7ea5488e856",
+    "src/commands/menus.ts": "3ad53d1472f5bad7686ee968a1442061c4de6ca6",
+    "src/commands/registry.ts": "c8aa5cc761ec8aa85a6bdbf0c01229a57c10fb1c",
+    "src/main.tsx": "d4b2650ecfd30f96fb80e9e2676fc571fa943a48",
+    "src/views/ExplorerHome.tsx": "56e0cda82e589ae538e31f0956e16e2d6e05410f",
+    "src/views/explorer/AddressBar.tsx": "22edd710fdc0df1d8202c630c7b9005f03e0e88a",
+    "src/views/explorer/FileList.tsx": "2a427ac3696b6a50adb5553a720cc11d2cdaa315",
+    "themes/dark.tokens.json": "afb83623b7c15f3bd7424cb3d48c4bb9a7c1d879",
+    "themes/light.tokens.json": "83bf19910150c28f214a0ed920f2efa37aebafc0"
+  }
+}

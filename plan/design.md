@@ -7,15 +7,13 @@ The Figma file is an **example of the design style**, not a specification of con
 
 ## Rules
 
-1. **How to read it:** use `plan/design-spec.md` (every color, font, size, spacing, radius, shadow, and icon measured from the Figma file) and the screenshots in `plan/design/screens/`. Don't connect to Figma. If something you need isn't in the spec, ask me for an exported screenshot instead of guessing.
-2. **Step 00 deliverables:** an inventory of every frame and component; a table mapping each frame to the steps that build it; the list of screens the plan needs that Figma doesn't have (section "Screens still to design").
-3. **Tokens:** take colors, type scale, spacing, radii, shadows, borders, and icon sizes from `plan/design-spec.md` and store them as design tokens (theme JSON, then CSS variables). Derive hover, pressed, disabled, and focus states and motion consistently from them, and show me the derived values. The Figma look is the default theme. Every other theme uses the same token structure.
-4. **Component gallery:** before assembling screens, build a developer-only gallery of every base component in every state and compare it with the Figma screenshots.
-5. **Text:** the Figma text is Spanish example content. Never copy it as fixed text; every label comes from translation files (see `rules.md`, section 2).
-6. **Adapting open-source parts:** use each library's core and put our own UI and tokens on top; never ship a library's default look. Theme adapters cover editor syntax colors, PDF page background, scrollbars, selection colors, canvas tool chrome, and the Office engine's page surface. When something can't match the design, choose the closest option, log it in `DESIGN_DEVIATIONS.md`, and ask me to approve.
-7. **Extending the design:** where the plan needs something Figma doesn't show (for example toolbars docked on the side), keep Figma's visual language, extend it consistently, and show me the design before building it.
-8. **Checks:** for every step, compare screenshots of built screens with the matching Figma frames at 100% and 150% scale, and report differences. If the design has low contrast or missing focus states, flag it instead of copying it.
-9. **Assets:** use icons and fonts from the Figma file only if their licenses allow MIT redistribution; otherwise pick open alternatives and ask me.
+1. **How to read it:** use `plan/design-spec.md` (every color, font, size, spacing, radius, shadow and icon measured from the Figma file) and the screenshots in `plan/design/screens/`. Do not connect to Figma.
+2. **Tokens only:** colors, sizes, radii and shadows come from the CSS variables in `src/styles/tokens.css` (generated from `themes/*.tokens.json`). Never type a hex color in a component.
+3. **Text:** the Figma text is Spanish example content. Every label comes from the translation files (`plan/rules.md` R-LANG).
+4. **New screens:** where Figma has nothing (dialogs, panels, viewers), the step recipe gives the layout and sizes, built from the same tokens. Follow the recipe; where it misses a value, use the closest value from `plan/design-spec.md` and list it under "Design deviations" in the step report and in `DESIGN_DEVIATIONS.md`.
+5. **Open-source parts** (editors, PDF viewer, 3D view) are styled with our tokens; never ship a library's default look.
+6. **Checks:** each step's screenshots (English light, Spanish dark, pseudo-locale) are compared with the matching Figma frame; differences go in the report. Low contrast or a missing focus state is flagged, not copied.
+7. **Assets:** icons from Lucide (ISC) and the Inter font (SIL OFL) only. No Microsoft icons or fonts.
 
 ## What the Figma file contains (read on 27 Oct 2026)
 
@@ -60,6 +58,6 @@ One page, six frames, all 1200 × 900, light theme only, window corner radius 10
 - Right properties panel with collapsible sections: "Crop and rotate" (aspect presets Free, Original, 1:1, 16:9, 4:3, 3:2; rotate left/right, flip; angle slider), "Resize" (pixels/percentage, width/height with a lock, keep proportions), "Filters" (Original, Vivid, Warm, Cool, B/W, Sepia, with thumbnails), "Adjustments" (collapsed).
 - Crop overlay on the canvas with rule-of-thirds lines and a size label.
 
-## Screens still to design
+## Screens Figma does not have
 
-Design these in the same style and show me before building them (rule 7): dark theme and the other built-in themes; the Explorer inside a folder (not Home) with the Details pane; right-click menus; the setup window and first-run checklist; the Quick Convert window and the job queue; the toolbar docked at the bottom, left, and right; text/Markdown/code, CSV, archive, audio/video, e-book, 3D, and PowerPoint-style tabs; the Draw mode panels (brushes, colors, sizes, shapes); the Gallery view; the File (backstage) page; Settings, including App storage and Background work; the help center; tab-group menus; the copy window and conflict window; the shelf; empty states, errors, and loading skeletons.
+Figma has no frames for these, so each step recipe specifies them from the same tokens (rule 4): the other built-in themes; the Explorer view modes and Column view; file-tab viewers (text, Markdown, images, media, PDF, archives, tables, e-books, 3D, fonts); the ribbon on viewers; toolbars docked at the bottom, left and right; the Settings sections; the Quick Convert window and job queue; version history; the privacy cleaner; the Gallery; later: tab-group menus, the copy and conflict windows, the shelf, Draw mode panels, the File (backstage) page, App storage and Background work pages.

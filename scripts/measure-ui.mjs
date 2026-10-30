@@ -3,13 +3,14 @@
 // is dispatched, then the clock stops at the next painted frame (two
 // animation frames), which is what the user sees. Median of RUNS runs.
 //
-// node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme>
+// node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme> [step]
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const args = process.argv.slice(2).map((value) => (value === "-" ? "" : value));
-const [port, demo, big, mode, outFile, shotDir, lang, theme] = args;
+const [port, demo, big, mode, outFile, shotDir, lang, theme, stepId] = args;
+if (mode === "full" && outFile && !stepId) throw new Error("measure-ui.mjs needs the step id (9th argument)");
 const RUNS = 7;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -43,14 +44,17 @@ async function connect() {
 const cdp = await connect();
 async function page(expression) {
   const result = await cdp.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
-  if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+  if (result.exceptionDetails) {
+    console.error("page error:", result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+    throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+  }
   return result.result.value;
 }
 
 await page(`window.__m = {
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
   async time(fn) { const t0 = performance.now(); fn(); await this.frame(); return performance.now() - t0; },
-  async timeUntil(fn, done) { const t0 = performance.now(); fn(); while (!done()) await new Promise((r) => requestAnimationFrame(r)); await this.frame(); return performance.now() - t0; },
+  async timeUntil(fn, done) { const t0 = performance.now(); fn(); while (!done()) { if (performance.now() - t0 > 20000) throw new Error('timeUntil timeout'); await new Promise((r) => requestAnimationFrame(r)); } await this.frame(); return performance.now() - t0; },
   async waitFor(pred, ms = 20000) { const t0 = performance.now(); while (!pred()) { if (performance.now() - t0 > ms) throw new Error("timeout"); await new Promise((r) => setTimeout(r, 20)); } },
   rows: () => [...document.querySelectorAll(".adp-filelist-scroll [role=option]")],
   list: () => document.querySelector(".adp-filelist-scroll"),
@@ -85,7 +89,18 @@ async function openFolder(path, settleMs = 500) {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(path)});
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input.form.requestSubmit();
-    await window.__m.waitFor(() => document.querySelector(".adp-address-box")?.textContent.includes(${JSON.stringify(name)}) && window.__m.rows().length > 0);
+    try {
+      await window.__m.waitFor(() => document.querySelector(".adp-address-box")?.textContent.includes(${JSON.stringify(name)}) && window.__m.rows().length > 0);
+    } catch (error) {
+      // Say what the page showed instead of a bare timeout.
+      throw new Error("opening " + ${JSON.stringify(name)} + " timed out: " + JSON.stringify({
+        address: document.querySelector(".adp-address-box")?.textContent ?? null,
+        editing: !!document.querySelector(".adp-address-input"),
+        rows: window.__m.rows().length,
+        dialog: document.querySelector("[role=dialog]")?.textContent?.slice(0, 120) ?? null,
+        status: document.querySelector(".adp-statusbar")?.textContent ?? null,
+      }));
+    }
     return true;
   })()`);
   await sleep(settleMs);
@@ -160,8 +175,122 @@ if (mode === "full") {
   results.push(await measure("100k folder: select all (Ctrl+A)", `window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "a", ctrlKey: true })`));
   results.push(await measure("100k folder: right-click with all selected", `window.__m.list().focus(); window.__m.key(window.__m.list(), { key: "a", ctrlKey: true }); true`, `window.__m.context(window.__m.rows()[2])`, `window.__m.closeMenus(); true`));
   results.push(await measure("100k folder: Shift+click range", `window.__m.click(window.__m.rows()[0]); true`, `window.__m.click(window.__m.rows()[20], { shiftKey: true })`));
+  // Smooth tier: scroll the 100k list one wheel-step per frame for 2 s and
+  // record every frame interval. The display's own frame time is the median
+  // interval; a frame slower than 1.5x of it is a dropped frame.
+  const scroll = await page(`(async () => {
+    const list = window.__m.list(); list.scrollTop = 0; await window.__m.frame();
+    const gaps = []; let last = performance.now(); const end = last + 2000;
+    while (performance.now() < end) {
+      list.scrollTop += 120;
+      await new Promise((r) => requestAnimationFrame(r));
+      const now = performance.now(); gaps.push(now - last); last = now;
+    }
+    gaps.sort((a, b) => a - b);
+    const at = (q) => gaps[Math.min(gaps.length - 1, Math.floor(q * gaps.length))];
+    const display = at(0.5);
+    return { frames: gaps.length, display_ms: display, p95_ms: at(0.95), max_ms: gaps[gaps.length - 1], dropped: gaps.filter((g) => g > display * 1.5).length };
+  })()`);
+  results.push({ name: "100k folder: scroll frame time (p95)", median_ms: Math.round(scroll.p95_ms * 10) / 10, p95_frame_ms: Math.round(scroll.p95_ms * 10) / 10, max_ms: Math.round(scroll.max_ms * 10) / 10, runs: scroll.frames, display_frame_ms: Math.round(scroll.display_ms * 10) / 10, dropped_frames: scroll.dropped, tier: "smooth" });
+  console.log(`100k folder: scroll ${scroll.frames} frames, display ${scroll.display_ms.toFixed(1)} ms, p95 ${scroll.p95_ms.toFixed(1)} ms, dropped ${scroll.dropped}`);
   const menuMs = await page(`Number(document.querySelector(".adp-explorer").dataset.lastMenuOpenMs ?? -1)`);
   console.log(`last instrumented menu open: ${menuMs} ms`);
+
+  // Step 03b: file operations, driven through the app's own commands
+  // with hard deadlines (a failure is recorded, never a hang). These
+  // mutate the demo folder and clean up after themselves with node fs.
+  const cleanup03b = () => {
+    for (const target of [
+      join(demo, "BenchCopy"),
+      join(demo, "Invoices", "notes.txt"),
+      join(demo, "Invoices", "notes (2).txt"),
+    ]) {
+      try { rmSync(target, { recursive: true, force: true }); } catch { /* best effort */ }
+    }
+  };
+  try {
+    cleanup03b();
+    await openFolder(demo);
+    const timed = async (name, expression) => {
+      try {
+        const value = await page(expression);
+        const result = { name, median_ms: typeof value === "number" ? Math.round(value * 10) / 10 : null, max_ms: typeof value === "number" ? Math.round(value * 10) / 10 : null, runs: 1, note: typeof value === "number" ? undefined : String(value) };
+        console.log(`${name}: ${result.median_ms ?? result.note}`);
+        results.push(result);
+      } catch (error) {
+        console.log(`${name}: FAILED ${error.message ?? error}`);
+        results.push({ name, median_ms: null, max_ms: null, runs: 1, note: String(error.message ?? error) });
+      }
+      await sleep(300);
+    };
+    // Instant tier: the New menu in the command bar.
+    await timed("command bar New menu", `window.__m.time(() => { window.__m.menuButton(0).click(); })`);
+    await page(`window.__m.closeMenus(); true`);
+    // Fast tier: a small copy job (all demo files) start-to-report.
+    await timed("copy demo files (job, start to report)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const fs = ${JSON.stringify(["Q4 Budget 2026.xlsx", "Meeting Notes.docx", "notes.txt"])};
+      const dest = ${JSON.stringify(join(demo, "BenchCopy"))};
+      const t0 = performance.now();
+      const id = "bench-copy";
+      await invoke("file_op_start", { request: { kind: "copy", sources: fs.map((f) => ${JSON.stringify(demo)} + "\\\\" + f), dest_dir: dest, conflict: "skip" }, requestId: id });
+      for (let i = 0; i < 200; i += 1) {
+        const poll = await invoke("file_op_poll", { requestId: id });
+        if (poll.done) return performance.now() - t0;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      return "timeout";
+    })()`);
+    // Recycle + restore round trip through the job commands.
+    await timed("recycle + restore one file (jobs)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const target = ${JSON.stringify(join(demo, "BenchCopy", "notes.txt"))};
+      const run = async (kind, sources) => {
+        const id = "bench-" + kind;
+        await invoke("file_op_start", { request: { kind, sources, dest_dir: null, conflict: "skip" }, requestId: id });
+        for (let i = 0; i < 200; i += 1) {
+          const poll = await invoke("file_op_poll", { requestId: id });
+          if (poll.done) return poll.report;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        throw new Error("timeout");
+      };
+      const t0 = performance.now();
+      await run("recycle", [target]);
+      await run("restore", [target]);
+      return performance.now() - t0;
+    })()`);
+    // Keep both + Undo: the numbered copy is created next to the original
+    // and Undo sends only that copy to the Recycle Bin.
+    await timed("copy with Keep both, then undo it (jobs)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const source = ${JSON.stringify(join(demo, "notes.txt"))};
+      const dest = ${JSON.stringify(join(demo, "BenchCopy"))};
+      const run = async (request) => {
+        const id = "bench-" + request.kind + "-" + Math.random().toString(36).slice(2);
+        await invoke("file_op_start", { request: { dest_dir: null, conflict: "skip", ...request }, requestId: id });
+        for (let i = 0; i < 200; i += 1) {
+          const poll = await invoke("file_op_poll", { requestId: id });
+          if (poll.error) throw new Error(poll.error);
+          if (poll.done) return poll.report;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        throw new Error("timeout");
+      };
+      const t0 = performance.now();
+      const copied = await run({ kind: "copy", sources: [source], dest_dir: dest, conflict: "keepBoth" });
+      const created = (copied.created ?? [])[0];
+      if (!created) return "kept copy not reported: " + JSON.stringify(copied);
+      const recycled = await run({ kind: "recycle", sources: [created.to] });
+      if (recycled.completed.length !== 1) return "undo failed: " + JSON.stringify(recycled);
+      return performance.now() - t0;
+    })()`);
+    cleanup03b();
+  } catch (error) {
+    console.log(`step 03b measurements failed: ${error.message ?? error}`);
+  }
+
+
 
   // Classic menu: time until the helper's menu is on screen. The runner
   // closes it afterwards.
@@ -179,15 +308,16 @@ if (mode === "full") {
   execFileSync("powershell.exe", [
     "-NoProfile",
     "-Command",
-    "Get-CimInstance Win32_Process -Filter \"Name = 'Adperastra.exe'\" | Where-Object { $_.CommandLine -like '*--classic-menu*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
+    "$testId = 0; if (-not [int]::TryParse($env:ADPERASTRA_TEST_APP_PID, [ref]$testId) -or $testId -le 0) { throw 'Missing test app process id' }; Get-CimInstance Win32_Process -Filter \"ParentProcessId=$testId\" | Where-Object { $_.CommandLine -like '*--classic-menu*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
   ]);
   await sleep(500);
+
 }
 
 if (outFile && results.length > 0) {
   const record = {
     date: new Date().toISOString(),
-    step: "03a",
+    step: stepId,
     build: "release (tauri build --no-bundle)",
     method: "Inside the packaged app's page: action dispatched, clock stopped at the next painted frame (two animation frames). Median of 7 runs.",
     language: lang,
@@ -256,6 +386,70 @@ if (shotDir) {
   await sleep(200);
   await shot("06-sort-menu");
   await step(`window.__m.closeMenus()`);
+  // Step 03b screens: undo toast, permanent-delete warning, conflict,
+  // Recent actions, and the jobs panel.
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
+  await step(`window.__m.key(window, { key: "Delete" })`);
+  await sleep(300);
+  await shot("07-delete-toast");
+  await step(`[...document.querySelectorAll(".adp-toast button")].find((b) => b.querySelector("span"))?.click()`);
+  await page(`window.__m.waitFor(() => window.__m.rows().some((r) => r.textContent.includes("notes.txt")), 15000)`);
+  await sleep(300);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
+  await step(`window.__m.key(window, { key: "Delete", shiftKey: true })`);
+  await sleep(300);
+  await shot("08-permanent-delete");
+  await step(`document.querySelector(".adp-dialog-actions .adp-btn--primary")?.click()`);
+  await page(`window.__TAURI_INTERNALS__.invoke("clipboard_set_files", { paths: [${JSON.stringify(join(demo, "notes.txt"))}], cut: false }).then(() => true)`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Invoices")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await sleep(700);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(700);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(400);
+  await shot("09-conflict");
+  await step(`document.querySelectorAll(".adp-dialog-actions .adp-btn")[1]?.click()`);
+  await sleep(300);
+  await step(`document.querySelectorAll(".adp-commandbar .adp-cmd-icon")[6]?.click()`);
+  await sleep(300);
+  await step(`[...document.querySelectorAll(".adp-ctxmenu-item")].pop()?.click()`);
+  await sleep(300);
+  await shot("10-recent-actions");
+  await step(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
+  // A real UI copy of the 100k corpus folder into Archive 2025: long
+  // enough for the jobs panel to open over it; cancelled right after.
+  await openFolder(join(big, ".."), 4000);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("folder-100k")))`);
+  await step(`window.__m.key(window, { key: "c", ctrlKey: true })`);
+  await sleep(400);
+  await openFolder(demo);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Archive 2025")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await sleep(600);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(4500);
+  await shot("11-jobs-panel");
+  await step(`document.querySelector(".adp-jobs-panel .adp-job-row .adp-btn")?.click()`);
+  await sleep(800);
+  // Folder conflict: Merge is the primary action. The source folder is
+  // outside the demo folder so this is a real name clash, not a paste here.
+  const folderSource = join(demo, "..", "adperastra-demo-folder-source");
+  try { rmSync(folderSource, { recursive: true, force: true }); } catch { /* best effort */ }
+  mkdirSync(join(folderSource, "Invoices"), { recursive: true });
+  writeFileSync(join(folderSource, "Invoices", "new.txt"), "new");
+  await openFolder(folderSource);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("Invoices")))`);
+  await step(`window.__m.key(window, { key: "c", ctrlKey: true })`);
+  await sleep(300);
+  await openFolder(demo);
+  await sleep(300);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(600);
+  await shot("12-conflict-folder");
+  await step(`document.querySelector(".adp-dialog-actions .adp-btn")?.click()`);
+  await sleep(300);
+  try { rmSync(folderSource, { recursive: true, force: true }); } catch { /* best effort */ }
+  try { rmSync(join(demo, "Archive 2025", "folder-100k"), { recursive: true, force: true }); } catch { /* best effort */ }
+  try { rmSync(join(demo, "Invoices", "notes.txt"), { force: true }); } catch { /* best effort */ }
 }
 
 cdp.close();

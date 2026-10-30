@@ -6,6 +6,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+#[cfg(windows)]
+use windows::core::Interface;
 
 /// What the UI should do after "Open": folders, and shortcuts that point
 /// at folders, open inside the Explorer instead of a Windows window.
@@ -285,4 +287,59 @@ pub fn open_in_terminal(folder: &str) -> Result<(), String> {
         }
         Err(_) => Err("terminal.failed".to_string()),
     }
+}
+
+/// Create a Windows shortcut (.lnk) to `target` inside `folder`, named
+/// `name` (without extension). Returns the shortcut's path.
+#[cfg(windows)]
+pub fn create_shortcut(
+    owner: isize,
+    target: &str,
+    folder: &str,
+    name: &str,
+) -> Result<String, String> {
+    use windows::core::PCWSTR;
+    use windows::Win32::System::Com::{CoCreateInstance, IPersistFile, CLSCTX_INPROC_SERVER};
+    use windows::Win32::UI::Shell::{IShellLinkW, ShellLink};
+
+    let _com = crate::explorer::ComGuard::new();
+    let target_path = Path::new(target);
+    let parent = target_path
+        .parent()
+        .map(|p| p.to_string_lossy().into_owned());
+    let destination = fs_service::unique_destination(Path::new(folder), &format!("{name}.lnk"));
+    let wide = |value: &str| {
+        value
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect::<Vec<u16>>()
+    };
+    // SAFETY: COM is initialized on this thread; buffers outlive the calls.
+    unsafe {
+        let link: IShellLinkW = CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)
+            .map_err(|_| "shortcut.failed".to_string())?;
+        let target_wide = wide(target);
+        link.SetPath(PCWSTR(target_wide.as_ptr()))
+            .map_err(|_| "shortcut.failed".to_string())?;
+        if let Some(parent) = &parent {
+            let parent_wide = wide(parent);
+            let _ = link.SetWorkingDirectory(PCWSTR(parent_wide.as_ptr()));
+        }
+        let file: IPersistFile = link.cast().map_err(|_| "shortcut.failed".to_string())?;
+        let dest_wide = wide(&destination.to_string_lossy());
+        file.Save(PCWSTR(dest_wide.as_ptr()), true)
+            .map_err(|_| "shortcut.failed".to_string())?;
+    }
+    let _ = owner;
+    Ok(destination.to_string_lossy().into_owned())
+}
+
+#[cfg(not(windows))]
+pub fn create_shortcut(
+    _owner: isize,
+    _target: &str,
+    _folder: &str,
+    _name: &str,
+) -> Result<String, String> {
+    Err("shortcut.failed".to_string())
 }

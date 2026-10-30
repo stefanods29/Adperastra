@@ -43,6 +43,9 @@ export interface CommandContext {
   allFavorites: boolean;
   /** The selection is in the folder on screen (false for Home lists). */
   selectionInCurrentFolder: boolean;
+  /** Undo stack state (Step 03b): Undo/Redo enablement. */
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export interface Command {
