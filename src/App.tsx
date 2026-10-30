@@ -1,11 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { CircleHelp, Copy, Home, LayoutGrid, List, Minus, Plus, Settings as SettingsIcon, Square, X } from "lucide-react";
+import { CircleHelp, Copy, Home, LayoutGrid, List, Minus, Settings as SettingsIcon, Square, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { tabKeyTarget } from "./services/tabKeys";
-import DropdownMenu from "./components/DropdownMenu";
+import { LayoutContext } from "./layout/LayoutContext";
+import TabStrip from "./layout/TabStrip";
 import { KeyTipsContext } from "./ribbon/keyTips";
 import IconButton from "./components/IconButton";
 import { applyLanguage } from "./i18n";
@@ -138,6 +138,13 @@ export default function App() {
       applySettings({ ...settingsRef.current, explorer: { ...settingsRef.current.explorer, ...patch } }),
     [applySettings],
   );
+
+  // Where the toolbar, the tabs and the panes go (Step 05c).
+  const onLayoutChange = useCallback(
+    (layout: AppSettings["layout"]) => applySettings({ ...settingsRef.current, layout }),
+    [applySettings],
+  );
+  const layoutValue = useMemo(() => ({ layout: settings.layout, onLayoutChange }), [settings.layout, onLayoutChange]);
 
   // No browser menu (Back, Refresh, Print...) anywhere in the app; text
   // boxes and help text keep their copy and paste menu.
@@ -359,7 +366,6 @@ export default function App() {
   };
 
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
-  const hasFileTabs = tabs.some((tab) => tab.kind === "file");
   const tabLabel = (tab: TabState): string => {
     if (tab.kind === "explorer") return t("tabs.explorer");
     if (tab.kind === "help") return t("help.title");
@@ -379,86 +385,28 @@ export default function App() {
             : Home;
 
   return (
+    <LayoutContext.Provider value={layoutValue}>
     <div className="adp-shell">
       <header className="adp-titlebar" data-tauri-drag-region="">
-        <div className="adp-tabbar">
-          <div className="adp-tablist" role="tablist">
-          {tabs.map((tab, tabIndex) => {
-            const handler = tab.kind === "file" && tab.handler ? handlers.get(tab.handler) : undefined;
-            const Icon =
-              tab.kind === "explorer"
-                ? Home
-                : tab.kind === "help"
-                  ? CircleHelp
-                  : tab.kind === "settings"
-                    ? SettingsIcon
-                    : tab.kind === "file"
-                      ? (handler?.icon ?? LayoutGrid)
-                      : LayoutGrid;
-            const iconOnly = tab.kind === "explorer" && hasFileTabs;
-            const classes = ["adp-tab", tab.id === activeId ? "adp-tab--active" : "", iconOnly ? "adp-tab--icon-only" : ""]
-              .filter(Boolean)
-              .join(" ");
-            return (
-              <div
-                key={tab.id}
-                role="tab"
-                aria-selected={tab.id === activeId}
-                aria-label={tabLabel(tab)}
-                title={tab.kind === "file" ? tab.path : undefined}
-                tabIndex={tab.id === activeId ? 0 : -1}
-                onKeyDown={(event) => {
-                  if (event.target !== event.currentTarget) return;
-                  const target = tabKeyTarget(event.key, tabIndex, tabs.length);
-                  if (target === null) return;
-                  event.preventDefault();
-                  const nextId = tabs[target].id;
-                  setTabsState((current) => activateTab(current, nextId));
-                  (event.currentTarget.parentElement?.children[target] as HTMLElement | undefined)?.focus();
-                }}
-                className={classes}
-                draggable={false}
-                onClick={() => setTabsState((current) => activateTab(current, tab.id))}
-                onAuxClick={(event) => {
-                  if (event.button === 1) closeTab(tab.id);
-                }}
-              >
-                <Icon
-                  size={14}
-                  aria-hidden="true"
-                  style={handler ? { color: `var(--adp-accent-${handler.accent})` } : undefined}
-                />
-                {iconOnly ? null : <span className="adp-tab-label">{tabLabel(tab)}</span>}
-                {tab.kind !== "explorer" ? (
-                  // A mouse target only: a tab may not contain another control.
-                  // The keyboard closes the current tab with Ctrl+W.
-                  <span
-                    className="adp-tab-close"
-                    aria-hidden="true"
-                    title={t("tabs.close")}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      closeTab(tab.id);
-                    }}
-                  >
-                    <X size={12} aria-hidden="true" />
-                  </span>
-                ) : null}
-              </div>
-            );
-          })}
-          </div>
-          <DropdownMenu
-            ariaLabel={t("tabs.newTab")}
-            icon={Plus}
-            items={[
-              { id: "help", label: t("help.title") },
-              { id: "settings", label: t("settings.title") },
-              { id: "gallery", label: t("gallery.title") },
-            ]}
-            onSelect={(id) => openTab(id as "help" | "settings" | "gallery")}
+        {settings.layout.tab_bar_position === "top" ? (
+          <TabStrip
+            tabs={tabs}
+            activeId={activeId}
+            side="top"
+            collapsed={settings.layout.tab_bar_collapsed}
+            label={tabLabel}
+            onActivate={(id) => setTabsState((current) => activateTab(current, id))}
+            onClose={closeTab}
+            onNewTab={openTab}
+            onToggleCollapsed={() =>
+              onLayoutChange({ ...settings.layout, tab_bar_collapsed: !settings.layout.tab_bar_collapsed })
+            }
           />
-        </div>
+        ) : (
+          <span className="adp-titlebar-title" data-tauri-drag-region="">
+            {tabLabel(activeTab)}
+          </span>
+        )}
         <div className="adp-button-row">
           <IconButton
             icon={CircleHelp}
@@ -513,6 +461,23 @@ export default function App() {
         </div>
       </header>
 
+      {/* Two fixed slots, so changing the side never remounts `main` (D10). */}
+      <div className={`adp-workspace adp-workspace--tabs-${settings.layout.tab_bar_position}`}>
+        {settings.layout.tab_bar_position === "top" ? null : (
+          <TabStrip
+            tabs={tabs}
+            activeId={activeId}
+            side={settings.layout.tab_bar_position}
+            collapsed={settings.layout.tab_bar_collapsed}
+            label={tabLabel}
+            onActivate={(id) => setTabsState((current) => activateTab(current, id))}
+            onClose={closeTab}
+            onNewTab={openTab}
+            onToggleCollapsed={() =>
+              onLayoutChange({ ...settings.layout, tab_bar_collapsed: !settings.layout.tab_bar_collapsed })
+            }
+          />
+        )}
       <KeyTipsContext.Provider value={showKeyTips}>
       <main className="adp-main">
         {/* The Explorer stays mounted so it keeps its folder, selection and
@@ -566,6 +531,7 @@ export default function App() {
         ) : null}
       </main>
       </KeyTipsContext.Provider>
+      </div>
 
       <footer className="adp-statusbar" hidden={activeTab.kind === "file"}>
         {activeTab.kind === "explorer" ? (
@@ -611,5 +577,6 @@ export default function App() {
         </span>
       </footer>
     </div>
+    </LayoutContext.Provider>
   );
 }

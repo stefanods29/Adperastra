@@ -59,3 +59,24 @@
 .adp-explorer-center > .adp-explorer-content { flex:1; }
 .adp-explorer-body--nav-right > .adp-explorer-nav { order:1; border-right:none; border-left:1px solid var(--adp-color-border-panel); }
 .adp-details-pane--bottom { flex:none; overflow-y:auto; width:auto; height:200px; border-left:none; border-top:1px solid var(--adp-color-border-panel); }
+
+/* Tabs at the top, at the bottom or in a column (Step 05c). */
+.adp-workspace { display:flex; flex:1; min-height:0; }
+.adp-workspace--tabs-top { flex-direction:row; }
+.adp-workspace--tabs-left { flex-direction:row; }
+.adp-workspace--tabs-right { flex-direction:row-reverse; }
+.adp-workspace--tabs-bottom { flex-direction:column-reverse; }
+.adp-workspace > .adp-main { flex:1; min-width:0; min-height:0; }
+.adp-titlebar-title { flex:1; display:flex; align-items:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; padding:0 var(--adp-space-4); color:var(--adp-color-text-secondary); font-size:var(--adp-font-body); }
+.adp-tabbar--bottom { flex:none; display:flex; align-items:flex-start; height:36px; padding:0 var(--adp-space-2); gap:var(--adp-space-1); background:var(--adp-color-surface-chrome); border-top:1px solid var(--adp-color-border-default); }
+.adp-tabbar--bottom .adp-tab { border-top:none; border-radius:0 0 var(--adp-radius-md) var(--adp-radius-md); }
+.adp-tabrail { display:flex; flex-direction:column; flex:none; overflow-y:auto; width:220px; padding:var(--adp-space-2); gap:2px; background:var(--adp-color-surface-chrome); }
+.adp-tabrail--left { border-right:1px solid var(--adp-color-border-default); }
+.adp-tabrail--right { border-left:1px solid var(--adp-color-border-default); }
+.adp-tabrail--collapsed { align-items:center; width:48px; }
+.adp-tabrail .adp-tab { justify-content:flex-start; width:100%; max-width:none; height:36px; border:none; border-radius:var(--adp-radius-sm); }
+.adp-tabrail--collapsed .adp-tab { justify-content:center; width:36px; padding:0; }
+.adp-tabrail--left .adp-tab--active { box-shadow:inset 3px 0 0 var(--adp-accent-current); }
+.adp-tabrail--right .adp-tab--active { box-shadow:inset -3px 0 0 var(--adp-accent-current); }
+.adp-tabrail .adp-tab-close { margin-left:auto; }
+.adp-tabrail-toggle { align-self:flex-start; }

@@ -3,7 +3,9 @@
     "explorer": "[Ëxplørër ~~~~]",
     "file": "[Fïlë ~~]",
     "newTab": "[Ñëw täb ~~~]",
-    "close": "[Çløsë täb ~~~~]"
+    "close": "[Çløsë täb ~~~~]",
+    "collapse": "[Shøw øñlÿ ïçøñs ~~~~~~]",
+    "expand": "[Shøw ñämës ~~~~]"
   },
   "window": {
     "minimize": "[Mïñïmïzë ~~~~]",

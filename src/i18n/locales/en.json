@@ -3,7 +3,9 @@
     "explorer": "Explorer",
     "file": "File",
     "newTab": "New tab",
-    "close": "Close tab"
+    "close": "Close tab",
+    "collapse": "Show only icons",
+    "expand": "Show names"
   },
   "window": {
     "minimize": "Minimize",

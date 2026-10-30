@@ -3,7 +3,9 @@
     "explorer": "Explorador",
     "file": "Archivo",
     "newTab": "Nueva pestaña",
-    "close": "Cerrar pestaña"
+    "close": "Cerrar pestaña",
+    "collapse": "Mostrar solo iconos",
+    "expand": "Mostrar nombres"
   },
   "window": {
     "minimize": "Minimizar",
