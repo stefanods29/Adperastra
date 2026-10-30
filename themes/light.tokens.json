@@ -76,5 +76,20 @@
     "segment": "0 1px 3px rgba(0,0,0,.14)",
     "image": "0 4px 16px rgba(0,0,0,.22)"
   },
-  "space": [2, 4, 6, 8, 10, 12, 14, 16, 18, 22, 25]
+  "space": [2, 4, 6, 8, 10, 12, 14, 16, 18, 22, 25],
+  "syntax": {
+    "_note": "Code colors for viewers and editors (Step 04b), from the GitHub light palette; all reach 4.5:1 on white.",
+    "keyword": "#CF222E",
+    "string": "#0A3069",
+    "number": "#0550AE",
+    "comment": "#6E7781",
+    "function": "#8250DF",
+    "type": "#953800",
+    "tag": "#116329",
+    "attribute": "#0550AE",
+    "property": "#0550AE",
+    "invalid": "#82071E",
+    "match": "rgba(255, 223, 93, 0.55)",
+    "matchSelected": "rgba(255, 159, 67, 0.6)"
+  }
 }

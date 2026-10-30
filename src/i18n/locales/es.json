@@ -385,6 +385,11 @@
     "shortcut": {
       "failed": "No se pudo crear el acceso directo.",
       "other": "No se pudo crear el acceso directo."
+    },
+    "links": {
+      "invalid": "Este vínculo no se puede abrir desde aquí.",
+      "failed": "No se pudo abrir el vínculo.",
+      "other": "No se pudo abrir el vínculo."
     }
   },
   "keys": {
@@ -440,7 +445,9 @@
     "shortcutTo": "Crear acceso directo en {name}"
   },
   "handlers": {
-    "image": "Imagen"
+    "image": "Imagen",
+    "text": "Texto",
+    "markdown": "Markdown"
   },
   "fileTab": {
     "showInFolder": "Mostrar en la carpeta",
@@ -448,13 +455,60 @@
     "notFoundTitle": "Este archivo se movió o se eliminó.",
     "notFoundBody": "Estaba en {folder}",
     "openFolder": "Abrir carpeta",
-    "openInWindowsApp": "Abrir en la aplicación de Windows"
+    "openInWindowsApp": "Abrir en la aplicación de Windows",
+    "searchIn": "Buscar en {name}"
   },
   "viewer": {
     "loadingImage": "Cargando imagen…",
     "imageError": "No se pudo mostrar esta imagen. Puede estar dañada o en un formato que el visor no admite.",
     "dimensions": "{width} × {height} px",
     "zoom": "Zoom",
-    "fit": "Ajustar"
+    "fit": "Ajustar",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "zoomReset": "Restablecer el zoom",
+    "fitToWindow": "Ajustar a la ventana",
+    "actualSize": "Tamaño real",
+    "rotateLeft": "Girar a la izquierda",
+    "rotateRight": "Girar a la derecha",
+    "matches": "{count, plural, =0 {Sin coincidencias} one {# coincidencia} other {# coincidencias}}"
+  },
+  "ribbon": {
+    "view": "Vista",
+    "zoom": "Zoom",
+    "show": "Mostrar",
+    "rotate": "Girar"
+  },
+  "text": {
+    "position": "Lín. {line}, col. {column}",
+    "lines": "{count, plural, one {# línea} other {# líneas}}",
+    "lineEnding": {
+      "crlf": "Windows (CRLF)",
+      "lf": "Unix (LF)",
+      "mixed": "Finales de línea mixtos"
+    },
+    "part": "Parte {part} de {parts}",
+    "parts": "Partes",
+    "previousPart": "Parte anterior",
+    "nextPart": "Parte siguiente",
+    "wordWrap": "Ajuste de línea",
+    "lineNumbers": "Números de línea",
+    "encoding": "Codificación",
+    "largeFileNotice": "Este archivo es grande, así que se abre en modo de solo lectura, en partes de {size}. Usa Parte siguiente para seguir leyendo.",
+    "loadError": "No se pudo mostrar este archivo.",
+    "cm": {
+      "currentMatch": "coincidencia actual",
+      "onLine": "en la línea",
+      "controlCharacter": "Carácter de control"
+    }
+  },
+  "markdown": {
+    "renderedMode": "Vista de lectura",
+    "sourceMode": "Código fuente"
+  },
+  "links": {
+    "openTitle": "¿Abrir este vínculo?",
+    "openBody": "Se abrirá en tu navegador web o en tu aplicación de correo:",
+    "open": "Abrir vínculo"
   }
 }

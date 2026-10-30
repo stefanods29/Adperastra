@@ -385,6 +385,11 @@
     "shortcut": {
       "failed": "[Thë shørtçüt çøüldñ't bë çrëätëd. ~~~~~~~~~~~]",
       "other": "[Thë shørtçüt çøüldñ't bë çrëätëd. ~~~~~~~~~~~]"
+    },
+    "links": {
+      "invalid": "[Thïs lïñk çäñ't bë øpëñëd frøm hërë. ~~~~~~~~~~~~]",
+      "failed": "[Thë lïñk çøüldñ't bë øpëñëd. ~~~~~~~~~]",
+      "other": "[Thë lïñk çøüldñ't bë øpëñëd. ~~~~~~~~~]"
     }
   },
   "keys": {
@@ -440,7 +445,9 @@
     "shortcutTo": "[Çrëätë shørtçüt ïñ {name} ~~~~~~~]"
   },
   "handlers": {
-    "image": "[Ïmägë ~~]"
+    "image": "[Ïmägë ~~]",
+    "text": "[Tëxt ~~]",
+    "markdown": "[Märkdøwñ ~~~~]"
   },
   "fileTab": {
     "showInFolder": "[Shøw ïñ føldër ~~~~~]",
@@ -448,13 +455,60 @@
     "notFoundTitle": "[Thïs fïlë wäs møvëd ør dëlëtëd. ~~~~~~~~~~]",
     "notFoundBody": "[Ït wäs ïñ {folder} ~~~]",
     "openFolder": "[Øpëñ føldër ~~~~]",
-    "openInWindowsApp": "[Øpëñ ïñ Wïñdøws äpp ~~~~~~~]"
+    "openInWindowsApp": "[Øpëñ ïñ Wïñdøws äpp ~~~~~~~]",
+    "searchIn": "[Sëärçh ïñ {name} ~~~~]"
   },
   "viewer": {
     "loadingImage": "[Løädïñg ïmägë… ~~~~~]",
     "imageError": "[Thïs ïmägë çøüldñ't bë shøwñ. Ït mäÿ bë dämägëd, ør ïñ ä førmät thë vïëwër døësñ't süppørt. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
     "dimensions": "[{width} × {height} px ~~]",
     "zoom": "[Zøøm ~~]",
-    "fit": "[Fït ~~]"
+    "fit": "[Fït ~~]",
+    "zoomIn": "[Zøøm ïñ ~~~]",
+    "zoomOut": "[Zøøm øüt ~~~]",
+    "zoomReset": "[Rësët zøøm ~~~~]",
+    "fitToWindow": "[Fït tø wïñdøw ~~~~~]",
+    "actualSize": "[Äçtüäl sïzë ~~~~]",
+    "rotateLeft": "[Røtätë lëft ~~~~]",
+    "rotateRight": "[Røtätë rïght ~~~~~]",
+    "matches": "[{count, plural, =0 {Ñø mätçhës} one {# mätçh} other {# mätçhës}} ~~~~]"
+  },
+  "ribbon": {
+    "view": "[Vïëw ~~]",
+    "zoom": "[Zøøm ~~]",
+    "show": "[Shøw ~~]",
+    "rotate": "[Røtätë ~~~]"
+  },
+  "text": {
+    "position": "[Lñ {line}, Çøl {column} ~~]",
+    "lines": "[{count, plural, one {# lïñë} other {# lïñës}} ~~]",
+    "lineEnding": {
+      "crlf": "[Wïñdøws (ÇRLF) ~~~~~]",
+      "lf": "[Üñïx (LF) ~~~]",
+      "mixed": "[Mïxëd lïñë ëñdïñgs ~~~~~~~]"
+    },
+    "part": "[Pärt {part} øf {parts} ~~~]",
+    "parts": "[Pärts ~~]",
+    "previousPart": "[Prëvïøüs pärt ~~~~~]",
+    "nextPart": "[Ñëxt pärt ~~~~]",
+    "wordWrap": "[Wørd wräp ~~~~]",
+    "lineNumbers": "[Lïñë ñümbërs ~~~~~]",
+    "encoding": "[Ëñçødïñg ~~~~]",
+    "largeFileNotice": "[Thïs fïlë ïs lärgë, sø ït øpëñs rëäd-øñlÿ ïñ pärts øf {size}. Üsë Ñëxt pärt tø këëp rëädïñg. ~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "loadError": "[Thïs fïlë çøüldñ't bë shøwñ. ~~~~~~~~~]",
+    "cm": {
+      "currentMatch": "[çürrëñt mätçh ~~~~~]",
+      "onLine": "[øñ lïñë ~~~]",
+      "controlCharacter": "[Çøñtrøl çhäräçtër ~~~~~~~]"
+    }
+  },
+  "markdown": {
+    "renderedMode": "[Rëädïñg vïëw ~~~~~]",
+    "sourceMode": "[Søürçë ~~~]"
+  },
+  "links": {
+    "openTitle": "[Øpëñ thïs lïñk? ~~~~~]",
+    "openBody": "[Ït øpëñs ïñ ÿøür wëb brøwsër ør mäïl äpp: ~~~~~~~~~~~~~]",
+    "open": "[Øpëñ lïñk ~~~~]"
   }
 }

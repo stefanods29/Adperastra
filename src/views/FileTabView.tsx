@@ -1,14 +1,15 @@
 import { ArrowUp, FileQuestion, RotateCw } from "lucide-react";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import HelpButton from "../components/HelpButton";
 import IconButton from "../components/IconButton";
+import SearchBox from "../components/SearchBox";
 import Skeleton from "../components/Skeleton";
 import Slider from "../components/Slider";
 import { handlers } from "../handlers";
-import type { FileTabStatus } from "../handlers/types";
+import type { FileTabStatus, FindRequest } from "../handlers/types";
 import { errorCode, errorText } from "../services/errors";
 import { displayPath, openItem, parentPathOf, pathSegments } from "../services/explorer";
 import { fileDetect, fileGrant, fileRevoke, fileUrl, type FileTypeInfo } from "../services/files";
@@ -43,6 +44,30 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
   const [status, setStatus] = useState<FileTabStatus>({ items: [] });
   const [reloadKey, setReloadKey] = useState(0);
+  const [find, setFind] = useState<FindRequest>({ text: "", request: 0, backwards: false });
+  const searchRef = useRef<HTMLDivElement | null>(null);
+  const canFind = handler?.supportsFind === true;
+  const findAgain = useCallback((backwards: boolean) => {
+    setFind((current) => ({ ...current, request: current.request + 1, backwards }));
+  }, []);
+
+  // Ctrl+F focuses the search box; F3 / Shift+F3 find the next / previous match.
+  useEffect(() => {
+    if (!active || !canFind) return;
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && (event.key === "f" || event.key === "F")) {
+        event.preventDefault();
+        const input = searchRef.current?.querySelector("input");
+        input?.focus();
+        input?.select();
+      } else if (event.key === "F3") {
+        event.preventDefault();
+        findAgain(event.shiftKey);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active, canFind, findAgain]);
 
   useEffect(() => {
     if (!isTauriRuntime() || !path) return;
@@ -88,6 +113,26 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
         <div className="adp-filetab-address">
           <Breadcrumb segments={segments} onNavigate={(id) => (id ? onOpenFolder(id) : undefined)} />
         </div>
+        {canFind ? (
+          <div
+            ref={searchRef}
+            className="adp-filetab-search"
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                findAgain(event.shiftKey);
+              } else if (event.key === "Escape") {
+                setFind((current) => ({ ...current, text: "" }));
+              }
+            }}
+          >
+            <SearchBox
+              value={find.text}
+              onChange={(text) => setFind((current) => ({ ...current, text }))}
+              placeholder={t("fileTab.searchIn", { name: tab.title ?? "" })}
+            />
+          </div>
+        ) : null}
         <HelpButton onOpenHelp={() => onOpenHelp(handler?.helpSlug ?? "opening-files")} />
       </div>
       <div className="adp-filetab-body">
@@ -122,6 +167,7 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
               onStateChange={onViewState}
               onStatus={setStatus}
               onOpenInWindowsApp={openInWindowsApp}
+              find={find}
             />
           </Suspense>
         ) : null}

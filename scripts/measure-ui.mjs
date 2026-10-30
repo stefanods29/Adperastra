@@ -15,6 +15,21 @@ if (mode === "full" && outFile && !stepId) throw new Error("measure-ui.mjs needs
 const RUNS = 7;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Text samples for the 04b measurements: a 5 MB log and a Markdown page. */
+function writeTextSamples(folder) {
+  const lines = [];
+  for (let index = 0; lines.join("\n").length < 5 * 1024 * 1024; index += 1000) {
+    for (let line = index; line < index + 1000; line += 1) {
+      lines.push(`2026-10-28 12:00:${String(line % 60).padStart(2, "0")} INFO  worker-${line % 8} processed item ${line} in ${line % 97} ms`);
+    }
+  }
+  writeFileSync(join(folder, "server-5mb.log"), lines.join("\r\n"));
+  writeFileSync(
+    join(folder, "guide.md"),
+    ["# Project guide", "", "Some **bold** text and a [link](https://example.com).", "", "## Steps", "", "1. One", "2. Two", "", "| Name | Size |", "|---|---|", "| a | 1 |", "", "```js", "const x = 1;", "```"].join("\n"),
+  );
+}
+
 /** A real PNG (a color gradient), so "open image" measures a real decode. */
 function writeGradientPng(path, width, height) {
   const crcTable = Array.from({ length: 256 }, (_, n) => {
@@ -182,6 +197,7 @@ async function shot(name) {
 }
 
 writeGradientPng(join(demo, "photo-1920.png"), 1920, 1080);
+writeTextSamples(demo);
 await openFolder(demo);
 const results = [];
 
@@ -378,6 +394,39 @@ if (mode === "full") {
     console.log(`step 04a measurements failed: ${error.message ?? error}`);
   }
 
+  // Step 04b: open a 5 MB log in the text viewer, and a Markdown page.
+  try {
+    await openFolder(demo);
+    const firstView = async (name, fileName, done) => {
+      const values = [];
+      for (let run = 0; run < 5; run += 1) {
+        values.push(
+          await page(`window.__m.timeUntil(
+            () => [...window.__m.rows()].find((r) => r.textContent.includes(${JSON.stringify(fileName)})).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+            () => (${done})())`),
+        );
+        await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+        await sleep(200);
+      }
+      const result = { name, median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+      console.log(`${name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+      results.push(result);
+    };
+    await firstView(
+      "open a 5 MB log in the text viewer (first view)",
+      "server-5mb.log",
+      `() => (document.querySelector(".adp-filetab:not([hidden]) .cm-content")?.textContent ?? "").includes("processed item")`,
+    );
+    await firstView(
+      "open a Markdown file (first view)",
+      "guide.md",
+      `() => document.querySelector(".adp-filetab:not([hidden]) .adp-markdown-frame")?.contentDocument?.querySelector("main h1") != null`,
+    );
+  } catch (error) {
+    console.log(`step 04b measurements failed: ${error.message ?? error}`);
+  }
+
   // Classic menu: time until the helper's menu is on screen. The runner
   // closes it afterwards. Closing the image tab returns to the Explorer in
   // the demo folder, so do not re-enter the path in the address bar here.
@@ -546,6 +595,18 @@ if (shotDir) {
   await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-image-stage[style]") !== null, 15000)`);
   await sleep(300);
   await shot("12-image-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  // Step 04b: the text viewer with its ribbon, and a Markdown page.
+  await openFolder(demo);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("server-5mb.log"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => (document.querySelector(".adp-filetab:not([hidden]) .cm-content")?.textContent ?? "").includes("processed item"), 15000)`);
+  await sleep(300);
+  await shot("13-text-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("guide.md"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-markdown-frame")?.contentDocument?.querySelector("main h1") != null, 15000)`);
+  await sleep(300);
+  await shot("14-markdown-tab");
   await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
 }
 

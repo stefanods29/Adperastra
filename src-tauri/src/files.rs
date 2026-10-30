@@ -168,13 +168,18 @@ pub fn detect(path: &Path) -> Result<FileTypeInfo, String> {
         .take(HEAD_BYTES as u64)
         .read_to_end(&mut head)
         .map_err(|e| read_error_code(&e))?;
+    let by_ext = mime_from_ext(&ext)
+        .split(';')
+        .next()
+        .unwrap_or("application/octet-stream");
     let mime = match infer::get(&head) {
         Some(kind) => kind.mime_type().to_string(),
-        None => mime_from_ext(&ext)
-            .split(';')
-            .next()
-            .unwrap_or("application/octet-stream")
-            .to_string(),
+        // Unknown extension, but the content looks like text (README,
+        // LICENSE, .log.1, ...): show it in the text viewer (Step 04b).
+        None if by_ext == "application/octet-stream" && looks_like_text(&head) => {
+            "text/plain".to_string()
+        }
+        None => by_ext.to_string(),
     };
     Ok(FileTypeInfo {
         path: path.to_string_lossy().into_owned(),
@@ -186,6 +191,22 @@ pub fn detect(path: &Path) -> Result<FileTypeInfo, String> {
         online_only: item.attrs.online_only,
         read_only: meta.permissions().readonly(),
     })
+}
+
+/// True when the first bytes look like text: a UTF-16 byte-order mark, or
+/// no zero bytes and almost no control characters (Step 04b).
+pub fn looks_like_text(head: &[u8]) -> bool {
+    if head.starts_with(&[0xFF, 0xFE]) || head.starts_with(&[0xFE, 0xFF]) {
+        return true;
+    }
+    if head.contains(&0) {
+        return false;
+    }
+    let controls = head
+        .iter()
+        .filter(|&&byte| byte < 0x20 && !matches!(byte, b'\t' | b'\n' | b'\r' | 0x0C | 0x1B))
+        .count();
+    controls * 100 <= head.len()
 }
 
 fn read_error_code(error: &std::io::Error) -> String {
@@ -570,6 +591,23 @@ mod tests {
             serve(Some(file), &Method::POST, None).status(),
             StatusCode::METHOD_NOT_ALLOWED
         );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn text_is_recognized_by_content() {
+        assert!(looks_like_text(b"Hello\r\nWorld\tdone\n"));
+        assert!(looks_like_text("año ñandú".as_bytes()));
+        assert!(looks_like_text(&[0xFF, 0xFE, b'h', 0, b'i', 0]));
+        assert!(!looks_like_text(&[b'M', b'Z', 0x90, 0, 3, 0]));
+        assert!(!looks_like_text(&[1, 2, 3, 4, 5, 6, 7, 8]));
+        let dir = temp_dir("text");
+        let readme = dir.join("README");
+        fs::write(&readme, "Read me first.\n").unwrap();
+        assert_eq!(detect(&readme).unwrap().mime, "text/plain");
+        let binary = dir.join("data.bin");
+        fs::write(&binary, [0u8, 1, 2, 3, 0, 0, 7]).unwrap();
+        assert_eq!(detect(&binary).unwrap().mime, "application/octet-stream");
         let _ = fs::remove_dir_all(&dir);
     }
 

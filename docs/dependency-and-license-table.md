@@ -20,7 +20,7 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | File types and tokens (04a) | infer 0.22 (MIT), uuid 1 (Apache-2.0 OR MIT), both already in the lock file through Tauri, adopted in Step 04a | | |
 | Virtual lists (02/05) | TanStack Virtual/Table (MIT) | custom | 100k items at 16 ms/frame |
 | Docking (05) | dockview (MIT) | FlexLayout (MIT); custom | Layout stays our JSON |
-| Text editor (04b/06a) | CodeMirror 6 (MIT) | Monaco (MIT) | Streamed large-file mode is ours |
+| Text editor (04b/06a) | CodeMirror 6 (MIT), adopted in Step 04b (@codemirror/state 6.7.6, view 6.43.15, language 6.13.1, commands 6.11.1, search 6.7.2, 13 language packages, legacy-modes 6.5.5, @lezer/highlight 1.2.5) | Monaco (MIT) | Large files open in 1 MB parts (ours) |
 | Markdown (04b) | markdown-it (MIT) + DOMPurify (Apache-2.0 leg) | marked (MIT) | Sandboxed, scripts off |
 | Image decode (04b/07a) | image crate (MIT/Apache-2.0) | libwebp (BSD-3); libvips (LGPL, separate DLL only) | Default avoids LGPL |
 | SVG (04b) | resvg (MPL-2.0) | sandboxed browser SVG | Scriptless rendering |

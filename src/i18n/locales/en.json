@@ -385,6 +385,11 @@
     "shortcut": {
       "failed": "The shortcut couldn't be created.",
       "other": "The shortcut couldn't be created."
+    },
+    "links": {
+      "invalid": "This link can't be opened from here.",
+      "failed": "The link couldn't be opened.",
+      "other": "The link couldn't be opened."
     }
   },
   "keys": {
@@ -440,7 +445,9 @@
     "shortcutTo": "Create shortcut in {name}"
   },
   "handlers": {
-    "image": "Image"
+    "image": "Image",
+    "text": "Text",
+    "markdown": "Markdown"
   },
   "fileTab": {
     "showInFolder": "Show in folder",
@@ -448,13 +455,60 @@
     "notFoundTitle": "This file was moved or deleted.",
     "notFoundBody": "It was in {folder}",
     "openFolder": "Open folder",
-    "openInWindowsApp": "Open in Windows app"
+    "openInWindowsApp": "Open in Windows app",
+    "searchIn": "Search in {name}"
   },
   "viewer": {
     "loadingImage": "Loading image…",
     "imageError": "This image couldn't be shown. It may be damaged, or in a format the viewer doesn't support.",
     "dimensions": "{width} × {height} px",
     "zoom": "Zoom",
-    "fit": "Fit"
+    "fit": "Fit",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomReset": "Reset zoom",
+    "fitToWindow": "Fit to window",
+    "actualSize": "Actual size",
+    "rotateLeft": "Rotate left",
+    "rotateRight": "Rotate right",
+    "matches": "{count, plural, =0 {No matches} one {# match} other {# matches}}"
+  },
+  "ribbon": {
+    "view": "View",
+    "zoom": "Zoom",
+    "show": "Show",
+    "rotate": "Rotate"
+  },
+  "text": {
+    "position": "Ln {line}, Col {column}",
+    "lines": "{count, plural, one {# line} other {# lines}}",
+    "lineEnding": {
+      "crlf": "Windows (CRLF)",
+      "lf": "Unix (LF)",
+      "mixed": "Mixed line endings"
+    },
+    "part": "Part {part} of {parts}",
+    "parts": "Parts",
+    "previousPart": "Previous part",
+    "nextPart": "Next part",
+    "wordWrap": "Word wrap",
+    "lineNumbers": "Line numbers",
+    "encoding": "Encoding",
+    "largeFileNotice": "This file is large, so it opens read-only in parts of {size}. Use Next part to keep reading.",
+    "loadError": "This file couldn't be shown.",
+    "cm": {
+      "currentMatch": "current match",
+      "onLine": "on line",
+      "controlCharacter": "Control character"
+    }
+  },
+  "markdown": {
+    "renderedMode": "Reading view",
+    "sourceMode": "Source"
+  },
+  "links": {
+    "openTitle": "Open this link?",
+    "openBody": "It opens in your web browser or mail app:",
+    "open": "Open link"
   }
 }
