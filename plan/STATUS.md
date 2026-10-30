@@ -2,9 +2,9 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `03b` (in progress), then `P2` (adopt plan v2, see `plan/steps/step-P2.md`), then `04a`.
-**Last tag:** `v0.0.5-step03a`
-**Next step tag:** `v0.0.6-step03b`
+**Current steps:** `P2` (plan v2 tools) and `04a` (file tabs and open pipeline) in parallel, then `04b` (needs 04a), then `04c`.
+**Last tag:** `v0.0.6-step03b` (local)
+**Next step tag:** `v0.0.7-step04a`
 
 ## Steps
 
@@ -19,9 +19,9 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 01b | App shell, tokens, theme, languages, help, security base | done | v0.0.3-step01b |
 | 02 | Browse folders, Home page, command registry | done | v0.0.4-step02 |
 | 03a | Selection, Details pane, command bar, right-click menu | done | v0.0.5-step03a |
-| 03b | File operations, jobs, undo, drag and drop, paste as file | in progress | v0.0.6-step03b |
-| P2 | Adopt plan v2 (tools and plan files, no app changes) | ready | (none) |
-| 04a | File tabs, file access, file-type handlers, image viewer | ready | v0.0.7-step04a |
+| 03b | File operations, jobs, undo, drag and drop, paste as file | done | v0.0.6-step03b |
+| P2 | Adopt plan v2 (tools and plan files, no app changes) | in progress | (none) |
+| 04a | File tabs, file access, file-type handlers, image viewer | in progress | v0.0.7-step04a |
 | 04b | Ribbon framework, text and code viewer, Markdown viewer | ready | v0.0.8-step04b |
 | 04c | Audio and video player, protected view, Open as text/hex, Default apps | ready | v0.0.9-step04c |
 | 05a | View modes: List, Icons, Tiles, Content | guide | v0.0.10-step05a |
@@ -91,6 +91,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 
 ## Owner decisions log (newest first)
 
+- 2026-10-30: Step 03b accepted. Skip repeated full test runs while building later steps; run the full suite at the end. Use subagents and git worktrees to build independent steps in parallel. Keep everything local: no push, pull request, or `main` change. Shared contracts and `plan/rules.md` still win over speed.
 - 2026-10-30: Step 03b safety review. Replace is removed until the full conflict window can bind recycling to the exact approved item; the conflict dialog offers Merge (folders), Skip and Keep both, approved from a revised preview. New items, downloads and pasted files count from one ("report (1)"); copied items that keep both use Explorer's "report - Copy"; moved items use "report (1)". Keep the step local-only: no push, pull request, or `main` change. Replace is KI-030 (Minor deferral, owner-approved).
 - 2026-10-30: Continue locally from Step 03b through the roadmap without waiting between steps. Do not push, pull, create pull requests or releases, publish, or change `main`; use local `testing` and local tags. Run `scripts/test-all.ps1 -Full` before and after merging each step until P2, then `scripts/gate.ps1 -Package`. Record owner-only actions and problems that remain after five genuinely different attempts in `OWNER_TODO.md`; prepare releases without publishing. Developer tools may be installed per-user, and libraries that pass R-LIC may be added following the dependency recipe. The initial review found no questions requiring an owner decision.
 - 2026-10-30: `plan/` is the only plan folder. The `adperastra-plan-*` folders were deleted, and the files Step P2 still needs (the new agent files and scripts) moved to `plan/p2-files/` until P2 puts them in place. Plan changes go directly into `plan/`, in their own `docs(plan)` commit; older entries that mention plan folders or plan updates no longer apply.
