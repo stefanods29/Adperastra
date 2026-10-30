@@ -30,6 +30,35 @@ function writeTextSamples(folder) {
   );
 }
 
+/** Step 04c samples: a 10 s tone as WAV, and a Markdown file marked as
+ * downloaded from the internet (its Zone.Identifier stream). */
+function writeMediaSamples(folder) {
+  const rate = 44100;
+  const samples = rate * 10;
+  const data = Buffer.alloc(samples * 2);
+  for (let i = 0; i < samples; i += 1) data.writeInt16LE(Math.round(Math.sin((2 * Math.PI * 440 * i) / rate) * 8000), i * 2);
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0, "ascii");
+  header.writeUInt32LE(36 + data.length, 4);
+  header.write("WAVEfmt ", 8, "ascii");
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20); // PCM
+  header.writeUInt16LE(1, 22); // mono
+  header.writeUInt32LE(rate, 24);
+  header.writeUInt32LE(rate * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write("data", 36, "ascii");
+  header.writeUInt32LE(data.length, 40);
+  writeFileSync(join(folder, "tone-10s.wav"), Buffer.concat([header, data]));
+  writeFileSync(join(folder, "downloaded.md"), "# Downloaded notes\n\nA [web link](https://example.com).\n");
+  try {
+    writeFileSync(join(folder, "downloaded.md:Zone.Identifier"), "[ZoneTransfer]\r\nZoneId=3\r\n");
+  } catch {
+    // Not NTFS: the protected view screenshot shows no bar.
+  }
+}
+
 /** A real PNG (a color gradient), so "open image" measures a real decode. */
 function writeGradientPng(path, width, height) {
   const crcTable = Array.from({ length: 256 }, (_, n) => {
@@ -198,6 +227,7 @@ async function shot(name) {
 
 writeGradientPng(join(demo, "photo-1920.png"), 1920, 1080);
 writeTextSamples(demo);
+writeMediaSamples(demo);
 await openFolder(demo);
 const results = [];
 
@@ -421,6 +451,27 @@ if (mode === "full") {
     console.log(`step 04b measurements failed: ${error.message ?? error}`);
   }
 
+  // Step 04c: open a WAV file in the player (until its length is known).
+  try {
+    await openFolder(demo);
+    const values = [];
+    for (let run = 0; run < 5; run += 1) {
+      values.push(
+        await page(`window.__m.timeUntil(
+          () => [...window.__m.rows()].find((r) => r.textContent.includes("tone-10s.wav")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+          () => (document.querySelector(".adp-filetab:not([hidden]) audio")?.readyState ?? 0) >= 1)`),
+      );
+      await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+      await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+      await sleep(200);
+    }
+    const result = { name: "open a WAV file in the player (first view)", median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+    console.log(`${result.name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+    results.push(result);
+  } catch (error) {
+    console.log(`step 04c measurements failed: ${error.message ?? error}`);
+  }
+
   // Classic menu: time until the helper's menu is on screen. The runner
   // closes it afterwards.
   await openFolder(demo);
@@ -597,6 +648,17 @@ if (shotDir) {
   await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-markdown-frame")?.contentDocument?.querySelector("main h1") != null, 15000)`);
   await sleep(300);
   await shot("14-markdown-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  // Step 04c: the audio player, and a downloaded file in protected view.
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("tone-10s.wav"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => (document.querySelector(".adp-filetab:not([hidden]) audio")?.readyState ?? 0) >= 1, 15000)`);
+  await sleep(300);
+  await shot("15-audio-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("downloaded.md"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-markdown-frame")?.contentDocument?.querySelector("main h1") != null, 15000)`);
+  await sleep(300);
+  await shot("16-protected-view");
   await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
 }
 
