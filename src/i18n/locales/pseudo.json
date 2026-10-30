@@ -467,6 +467,10 @@
       "bad_mode": "[Thät vïëw ïsñ't äväïläblë. ~~~~~~~~~]",
       "path_too_long": "[Thïs føldër's päth ïs tøø løñg tø rëmëmbër ïts vïëw. ~~~~~~~~~~~~~~~~~]",
       "other": "[Çøüldñ't çhäñgë thë rëmëmbërëd føldër vïëws. Trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~]"
+    },
+    "appearance": {
+      "other": "[Çøüldñ't çhäñgë thë sçälë. Trÿ ägäïñ. ~~~~~~~~~~~~]",
+      "bad_scale": "[Thät sçälë ïsñ't äväïläblë. ~~~~~~~~~]"
     }
   },
   "keys": {

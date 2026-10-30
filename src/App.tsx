@@ -5,6 +5,7 @@ import { CircleHelp, Copy, Home, LayoutGrid, List, Minus, Settings as SettingsIc
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { applyAppearanceAttributes, applyThemeAttributes } from "./appearance/applyAppearance";
+import { setUiZoom } from "./services/appearance";
 import { LayoutContext } from "./layout/LayoutContext";
 import TabStrip from "./layout/TabStrip";
 import { KeyTipsContext } from "./ribbon/keyTips";
@@ -101,6 +102,7 @@ export default function App() {
       window.matchMedia("(prefers-color-scheme: dark)").matches,
     );
     applyAppearanceAttributes(document.documentElement, next.appearance);
+    void setUiZoom(next.appearance.ui_scale).catch(() => undefined);
     await applyLanguage(next.language);
     let accent = "var(--adp-accent-explorer)";
     if (next.theme.accent_source === "custom") {

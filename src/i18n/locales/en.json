@@ -467,6 +467,10 @@
       "bad_mode": "That view isn't available.",
       "path_too_long": "This folder's path is too long to remember its view.",
       "other": "Couldn't change the remembered folder views. Try again."
+    },
+    "appearance": {
+      "other": "Couldn't change the scale. Try again.",
+      "bad_scale": "That scale isn't available."
     }
   },
   "keys": {

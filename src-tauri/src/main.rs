@@ -18,6 +18,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
+mod appearance;
 mod classic_menu;
 mod clipboard;
 #[cfg(windows)]
@@ -2682,6 +2683,7 @@ async fn share_items(
 #[tauri::command]
 async fn show_classic_menu(
     window: WebviewWindow,
+    state: State<'_, AppState>,
     paths: Vec<String>,
     background: bool,
     x: i32,
@@ -2701,11 +2703,19 @@ async fn show_classic_menu(
     let scale = window
         .scale_factor()
         .map_err(|_| "moreOptions.failed".to_string())?;
+    // The page zoom changes how many screen pixels a CSS pixel covers.
+    let ui_scale = state
+        .settings
+        .lock()
+        .map_err(|_| "moreOptions.failed".to_string())?
+        .appearance
+        .ui_scale;
+    let (x, y) = appearance::screen_point((origin.x, origin.y), (x, y), scale, ui_scale);
     let request = classic_menu::MenuRequest {
         paths,
         background,
-        x: origin.x + (f64::from(x) * scale).round() as i32,
-        y: origin.y + (f64::from(y) * scale).round() as i32,
+        x,
+        y,
     };
     tauri::async_runtime::spawn_blocking(move || classic_menu::show(&request))
         .await
@@ -2839,6 +2849,12 @@ fn main() {
             let window = tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?
                 .data_directory(profile)
                 .build()?;
+            // The saved UI scale, before the page paints (Step 05d D5).
+            let ui_scale = match app.state::<AppState>().settings.lock() {
+                Ok(settings) => settings.appearance.ui_scale,
+                Err(_) => 100,
+            };
+            appearance::apply_startup_zoom(&window, ui_scale);
             // Snap layouts: subclass the main window so Windows treats the
             // custom maximize button as the native maximize button.
             #[cfg(windows)]
@@ -2905,6 +2921,7 @@ fn main() {
             links::open_external_url,
             zone::file_unblock,
             media::media_sidecars,
+            appearance::appearance_set_zoom,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

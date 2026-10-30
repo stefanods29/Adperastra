@@ -467,6 +467,10 @@
       "bad_mode": "Esa vista no está disponible.",
       "path_too_long": "La ruta de esta carpeta es demasiado larga para recordar su vista.",
       "other": "No se pudieron cambiar las vistas de carpetas recordadas. Vuelve a intentarlo."
+    },
+    "appearance": {
+      "other": "No se pudo cambiar la escala. Vuelve a intentarlo.",
+      "bad_scale": "Esa escala no está disponible."
     }
   },
   "keys": {
