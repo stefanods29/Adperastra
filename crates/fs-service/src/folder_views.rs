@@ -72,7 +72,8 @@ impl FolderViews {
     pub fn normalized(mut self) -> Self {
         self.folders
             .retain(|entry| valid_path(&entry.path) && is_view_mode(&entry.mode));
-        self.folders.sort_by(|a, b| b.used_unix.cmp(&a.used_unix));
+        self.folders
+            .sort_by_key(|entry| std::cmp::Reverse(entry.used_unix));
         let mut seen: HashSet<String> = HashSet::new();
         self.folders
             .retain(|entry| seen.insert(normalize_for_compare(&entry.path)));
