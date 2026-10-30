@@ -1,6 +1,6 @@
 # Step 03b report - File operations, jobs, undo, drag and drop, paste as file
 
-Dates: 2026-10-28 to 2026-10-30. Status: **finished locally, not on `testing` or `main`** by the owner's local-only decision on 2026-10-30. The safety review (KI-025 through KI-029) is fixed and verified. Planned local tag `v0.0.6-step03b`; the owner decides when it moves to `main`.
+Dates: 2026-10-28 to 2026-10-30. Status: **finished and merged into local `testing`; not pushed and not on `main`** by the owner's local-only decision on 2026-10-30. The safety review (KI-025 through KI-029) is fixed and verified. Planned local tag `v0.0.6-step03b`; the owner decides when it moves to `main`.
 
 ## Latest verification, 2026-10-30
 
