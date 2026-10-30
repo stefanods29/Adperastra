@@ -24,6 +24,7 @@ mod clipboard;
 mod clipboard_image_helper;
 mod drag;
 mod explorer;
+mod files;
 mod operation_safety;
 mod shell;
 mod transfer_history;
@@ -398,6 +399,11 @@ pub struct SessionTab {
     pub kind: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    /// File tabs (Step 04a): the file's path and the handler that shows it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub handler: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -2312,6 +2318,8 @@ fn main() {
             watch: Mutex::new(None),
             watch_next_id: AtomicU64::new(0),
         })
+        .manage(files::FileGrants::default())
+        .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
             // its WebView2 profile lives under the app's data folder
@@ -2385,7 +2393,10 @@ fn main() {
             clipboard_image_file,
             clipboard_clear,
             start_external_drag,
-            create_shortcut
+            create_shortcut,
+            files::file_detect,
+            files::file_grant,
+            files::file_revoke,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
@@ -2398,6 +2409,24 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn session_keeps_file_tab_path_and_handler() {
+        let json = serde_json::json!({
+            "tabs": [
+                { "id": "explorer", "kind": "explorer" },
+                { "id": "f1", "kind": "file", "title": "a.png", "path": "C:\\Pictures\\a.png", "handler": "image" }
+            ],
+            "active_tab": "f1",
+            "saved_unix": 1
+        });
+        let session: SessionState = serde_json::from_value(json).unwrap();
+        assert_eq!(session.tabs[1].path.as_deref(), Some("C:\\Pictures\\a.png"));
+        assert_eq!(session.tabs[1].handler.as_deref(), Some("image"));
+        let back = serde_json::to_value(&session).unwrap();
+        assert_eq!(back["tabs"][1]["handler"], "image");
+        assert!(back["tabs"][0].get("path").is_none());
+    }
 
     #[test]
     fn webview_profile_lives_under_the_data_folder() {
@@ -2559,11 +2588,15 @@ mod tests {
                     id: "explorer".to_string(),
                     kind: "explorer".to_string(),
                     title: None,
+                    path: None,
+                    handler: None,
                 },
                 SessionTab {
                     id: "tab-1".to_string(),
                     kind: "help".to_string(),
                     title: Some("Getting started".to_string()),
+                    path: None,
+                    handler: None,
                 },
             ],
             active_tab: "tab-1".to_string(),

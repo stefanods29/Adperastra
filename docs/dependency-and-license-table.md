@@ -17,6 +17,7 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | Clipboard image stream (03b) | windows-core 0.61.2 (MIT OR Apache-2.0), direct dependency added in Step 03b; already a transitive dependency of windows 0.61.3 | unbounded system stream | Implements the size-limited COM stream used when encoding clipboard images; crate requires Rust 1.74 |
 | FS walk/watch (02) | notify 8.2.1 (CC0-1.0, adopted in Step 02 for `watch(path)`); walkdir/rayon/tokio not adopted - `std::fs` listing is enough so far | std only | Behind FS-service trait |
 | Recycle Bin (03b) | trash 5.2.9 (MIT, adopted in Step 03b for delete-to-Recycle-Bin and restore; verified on crates.io/docs.rs 2026-10-28, maintained, Windows backend uses the `windows` crate) | Hand-written `IFileOperation` + Recycle Bin enumeration via the windows crate | Restore-by-original-path powers Undo of Delete |
+| File types and tokens (04a) | infer 0.22 (MIT), uuid 1 (Apache-2.0 OR MIT), both already in the lock file through Tauri, adopted in Step 04a | | |
 | Virtual lists (02/05) | TanStack Virtual/Table (MIT) | custom | 100k items at 16 ms/frame |
 | Docking (05) | dockview (MIT) | FlexLayout (MIT); custom | Layout stays our JSON |
 | Text editor (04b/06a) | CodeMirror 6 (MIT) | Monaco (MIT) | Streamed large-file mode is ours |

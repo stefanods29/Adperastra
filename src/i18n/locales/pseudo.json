@@ -1,6 +1,7 @@
 {
   "tabs": {
     "explorer": "[Ëxplørër ~~~~]",
+    "file": "[Fïlë ~~]",
     "newTab": "[Ñëw täb ~~~]",
     "close": "[Çløsë täb ~~~~]"
   },
@@ -254,6 +255,7 @@
     "delete": "[Dëlëtë ~~~]",
     "rename": "[Rëñämë ~~~]",
     "share": "[Shärë ~~]",
+    "openInWindowsApp": "[Øpëñ ïñ Wïñdøws äpp ~~~~~~~]",
     "openWith": "[Øpëñ wïth… ~~~~]",
     "copyPath": "[Çøpÿ äs päth ~~~~]",
     "addFavorite": "[Ädd tø fävørïtës ~~~~~~]",
@@ -339,6 +341,15 @@
     },
     "copyPath": {
       "other": "[Thë päth çøüldñ't bë çøpïëd. ~~~~~~~~~]"
+    },
+    "files": {
+      "not_found": "[Thïs fïlë ñø løñgër ëxïsts. ~~~~~~~~~]",
+      "not_a_file": "[Thïs ïs ä føldër, ñøt ä fïlë. ~~~~~~~~~]",
+      "access_denied": "[Ÿøü døñ't hävë përmïssïøñ tø øpëñ thïs fïlë. ~~~~~~~~~~~~~~]",
+      "read_failed": "[Thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~]",
+      "too_many_open": "[Tøø mäñÿ fïlës ärë øpëñ. Çløsë sømë täbs äñd trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~]",
+      "invalid_request": "[Thïs fïlë çøüldñ't bë øpëñëd. ~~~~~~~~~~]",
+      "other": "[Thïs fïlë çøüldñ't bë øpëñëd. ~~~~~~~~~~]"
     },
     "ops": {
       "exists": "[Thërë's älrëädÿ äñ ïtëm wïth thïs ñämë hërë. ~~~~~~~~~~~~~~]",
@@ -427,5 +438,23 @@
     "copyTo": "[Çøpÿ tø {name} ~~~]",
     "moveTo": "[Møvë tø {name} ~~~]",
     "shortcutTo": "[Çrëätë shørtçüt ïñ {name} ~~~~~~~]"
+  },
+  "handlers": {
+    "image": "[Ïmägë ~~]"
+  },
+  "fileTab": {
+    "showInFolder": "[Shøw ïñ føldër ~~~~~]",
+    "reload": "[Rëløäd ~~~]",
+    "notFoundTitle": "[Thïs fïlë wäs møvëd ør dëlëtëd. ~~~~~~~~~~]",
+    "notFoundBody": "[Ït wäs ïñ {folder} ~~~]",
+    "openFolder": "[Øpëñ føldër ~~~~]",
+    "openInWindowsApp": "[Øpëñ ïñ Wïñdøws äpp ~~~~~~~]"
+  },
+  "viewer": {
+    "loadingImage": "[Løädïñg ïmägë… ~~~~~]",
+    "imageError": "[Thïs ïmägë çøüldñ't bë shøwñ. Ït mäÿ bë dämägëd, ør ïñ ä førmät thë vïëwër døësñ't süppørt. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "dimensions": "[{width} × {height} px ~~]",
+    "zoom": "[Zøøm ~~]",
+    "fit": "[Fït ~~]"
   }
 }

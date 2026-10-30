@@ -1,6 +1,7 @@
 {
   "tabs": {
     "explorer": "Explorador",
+    "file": "Archivo",
     "newTab": "Nueva pestaña",
     "close": "Cerrar pestaña"
   },
@@ -254,6 +255,7 @@
     "delete": "Eliminar",
     "rename": "Cambiar nombre",
     "share": "Compartir",
+    "openInWindowsApp": "Abrir en la aplicación de Windows",
     "openWith": "Abrir con…",
     "copyPath": "Copiar como ruta",
     "addFavorite": "Agregar a favoritos",
@@ -339,6 +341,15 @@
     },
     "copyPath": {
       "other": "No se pudo copiar la ruta."
+    },
+    "files": {
+      "not_found": "Este archivo ya no existe.",
+      "not_a_file": "Esto es una carpeta, no un archivo.",
+      "access_denied": "No tienes permiso para abrir este archivo.",
+      "read_failed": "No se pudo leer este archivo.",
+      "too_many_open": "Hay demasiados archivos abiertos. Cierra algunas pestañas e inténtalo de nuevo.",
+      "invalid_request": "No se pudo abrir este archivo.",
+      "other": "No se pudo abrir este archivo."
     },
     "ops": {
       "exists": "Ya hay un elemento con este nombre aquí.",
@@ -427,5 +438,23 @@
     "copyTo": "Copiar en {name}",
     "moveTo": "Mover a {name}",
     "shortcutTo": "Crear acceso directo en {name}"
+  },
+  "handlers": {
+    "image": "Imagen"
+  },
+  "fileTab": {
+    "showInFolder": "Mostrar en la carpeta",
+    "reload": "Volver a cargar",
+    "notFoundTitle": "Este archivo se movió o se eliminó.",
+    "notFoundBody": "Estaba en {folder}",
+    "openFolder": "Abrir carpeta",
+    "openInWindowsApp": "Abrir en la aplicación de Windows"
+  },
+  "viewer": {
+    "loadingImage": "Cargando imagen…",
+    "imageError": "No se pudo mostrar esta imagen. Puede estar dañada o en un formato que el visor no admite.",
+    "dimensions": "{width} × {height} px",
+    "zoom": "Zoom",
+    "fit": "Ajustar"
   }
 }

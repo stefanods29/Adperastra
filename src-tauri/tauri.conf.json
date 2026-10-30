@@ -23,7 +23,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; form-action 'none'",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://adpfile.localhost; media-src 'self' blob: http://adpfile.localhost; font-src 'self' data: http://adpfile.localhost; connect-src 'self' ipc: http://ipc.localhost http://adpfile.localhost; object-src 'none'; base-uri 'none'; form-action 'none'",
       "pattern": {
         "use": "isolation",
         "options": {

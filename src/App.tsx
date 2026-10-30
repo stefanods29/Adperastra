@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { CircleHelp, Copy, Home, LayoutGrid, Minus, Plus, Settings as SettingsIcon, Square, X } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { tabKeyTarget } from "./services/tabKeys";
 import DropdownMenu from "./components/DropdownMenu";
@@ -16,54 +16,37 @@ import {
   type AppSettings,
 } from "./services/settings";
 import { formatSize } from "./services/format";
-import ExplorerHome, { type ExplorerStats } from "./views/ExplorerHome";
+import { handlers } from "./handlers";
+import { planOpen } from "./handlers/openPipeline";
+import { openItem, parentPathOf } from "./services/explorer";
+import {
+  activateTab,
+  closeTab as closeTabIn,
+  initialTabs,
+  mountedFileTabs,
+  openFileTab,
+  openSingleTab,
+  sessionFromTabs,
+  setTabView,
+  tabsFromSession,
+  type TabKind,
+  type TabState,
+  type TabsState,
+} from "./services/tabs";
+import ExplorerHome, { type ExplorerNavigateRequest, type ExplorerStats } from "./views/ExplorerHome";
+import FileTabView from "./views/FileTabView";
 const GalleryView = lazy(() => import("./views/GalleryView"));
 const HelpCenter = lazy(() => import("./views/HelpCenter"));
 const SettingsView = lazy(() => import("./views/SettingsView"));
 
-type TabKind = "explorer" | "help" | "settings" | "gallery";
-interface TabState {
-  id: string;
-  kind: TabKind;
-  title?: string;
-}
-interface SessionData {
-  tabs: TabState[];
-  active_tab: string;
-  saved_unix: number;
-}
-
-const EXPLORER_TAB: TabState = { id: "explorer", kind: "explorer" };
 const SESSION_KEY = "adperastra-session";
-const TAB_KINDS: TabKind[] = ["explorer", "help", "settings", "gallery"];
 const HELP_SLUGS: Record<TabKind, string> = {
   explorer: "browsing-folders",
   settings: "changing-language-and-theme",
   help: "using-help",
   gallery: "using-help",
+  file: "opening-files",
 };
-
-function normalizeTabs(input: unknown): TabState[] {
-  const raw =
-    input !== null && typeof input === "object" && Array.isArray((input as SessionData).tabs)
-      ? ((input as SessionData).tabs as unknown[])
-      : [];
-  const seen = new Set<string>();
-  const tabs: TabState[] = [];
-  for (const entry of raw) {
-    if (entry === null || typeof entry !== "object") continue;
-    const candidate = entry as TabState;
-    if (!TAB_KINDS.includes(candidate.kind) || typeof candidate.id !== "string") continue;
-    if (candidate.kind === "explorer" || seen.has(candidate.id)) continue;
-    seen.add(candidate.id);
-    tabs.push({
-      id: candidate.id,
-      kind: candidate.kind,
-      title: typeof candidate.title === "string" ? candidate.title : undefined,
-    });
-  }
-  return [EXPLORER_TAB, ...tabs];
-}
 
 // Dev/screenshot aid: ?view=gallery|settings|help opens that tab at startup.
 function requestedView(): TabState | null {
@@ -91,18 +74,17 @@ export default function App() {
     frame.setAttribute("tabindex", "-1");
   }, [t, i18n.language]);
   const [settings, setSettings] = useState<AppSettings>(() => defaultSettings());
-  const [tabs, setTabs] = useState([EXPLORER_TAB]);
-  const [activeId, setActiveId] = useState("explorer");
+  const [tabsState, setTabsState] = useState<TabsState>(() => initialTabs());
+  const { tabs, activeId } = tabsState;
+  const [navigateRequest, setNavigateRequest] = useState<ExplorerNavigateRequest | null>(null);
   const [helpSlug, setHelpSlug] = useState("getting-started");
   const [showKeyTips, setShowKeyTips] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const maximizeRef = useRef<HTMLButtonElement | null>(null);
   const [explorerStats, setExplorerStats] = useState<ExplorerStats>({ total: 0, selected: 0, selectedBytes: 0, selectedFiles: 0 });
   const readyRef = useRef(false);
-  const tabsRef = useRef(tabs);
-  const activeRef = useRef(activeId);
-  tabsRef.current = tabs;
-  activeRef.current = activeId;
+  const tabsRef = useRef(tabsState);
+  tabsRef.current = tabsState;
 
   const applyVisual = useCallback(async (next: AppSettings) => {
     const resolved =
@@ -164,11 +146,7 @@ export default function App() {
 
   const persistSession = useCallback(async () => {
     if (!readyRef.current) return;
-    const data: SessionData = {
-      tabs: tabsRef.current.map((tab) => ({ id: tab.id, kind: tab.kind, title: tab.title })),
-      active_tab: activeRef.current,
-      saved_unix: Math.floor(Date.now() / 1000),
-    };
+    const data = sessionFromTabs(tabsRef.current, Math.floor(Date.now() / 1000));
     if (isTauriRuntime()) {
       try {
         await invoke("save_session", { session: data });
@@ -207,17 +185,7 @@ export default function App() {
         }
       }
       if (cancelled) return;
-      const restored = normalizeTabs(session);
-      const storedActive =
-        session !== null && typeof session === "object"
-          ? (session as SessionData).active_tab
-          : undefined;
-      setTabs(restored);
-      setActiveId(
-        typeof storedActive === "string" && restored.some((tab) => tab.id === storedActive)
-          ? storedActive
-          : "explorer",
-      );
+      setTabsState(tabsFromSession(session, handlers.list().map((handler) => handler.id)));
       readyRef.current = true;
     })();
     return () => {
@@ -243,38 +211,37 @@ export default function App() {
     return () => media.removeEventListener("change", onChange);
   }, [settings, applyVisual]);
 
-  const openTab = useCallback(
-    (kind: TabKind, slug?: string) => {
-      if (kind === "help" && slug) setHelpSlug(slug);
-      if (kind === "explorer") {
-        setActiveId("explorer");
-        return;
-      }
-      const existing = tabsRef.current.find((tab) => tab.kind === kind);
-      if (existing) {
-        setActiveId(existing.id);
-        return;
-      }
-      const id = `${kind}-${Date.now()}`;
-      setTabs((current) => [...current, { id, kind }]);
-      setActiveId(id);
-    },
-    [],
-  );
+  const openTab = useCallback((kind: "explorer" | "help" | "settings" | "gallery", slug?: string) => {
+    if (kind === "help" && slug) setHelpSlug(slug);
+    setTabsState((current) => (kind === "explorer" ? activateTab(current, "explorer") : openSingleTab(current, kind)));
+  }, []);
 
   const closeTab = useCallback((id: string) => {
-    if (id === "explorer") return;
-    setTabs((current) => {
-      const index = current.findIndex((tab) => tab.id === id);
-      if (index === -1) return current;
-      const next = current.filter((tab) => tab.id !== id);
-      if (activeRef.current === id) {
-        const fallback = next[Math.max(0, index - 1)] ?? EXPLORER_TAB;
-        setActiveId(fallback.id);
-      }
-      return next;
-    });
+    setTabsState((current) => closeTabIn(current, id));
   }, []);
+
+  /** The open pipeline (contract 13): a built-in handler opens the file in
+   * a tab; anything else opens in the Windows default app. Rejects with a
+   * `files.*` code; the Explorer shows the message. */
+  const openFile = useCallback(async (path: string, background: boolean) => {
+    const decision = await planOpen(path, handlers);
+    if (decision.kind === "tab") {
+      setTabsState((current) =>
+        openFileTab(current, { path, handler: decision.handler.id, title: decision.info.name }, background),
+      );
+      return;
+    }
+    await openItem(path);
+  }, []);
+
+  /** Switch to the Explorer tab and open a folder there, optionally
+   * selecting one item in it. */
+  const showInExplorer = useCallback((folder: string, select: string | null) => {
+    setNavigateRequest((previous) => ({ folder, select, nonce: (previous?.nonce ?? 0) + 1 }));
+    setTabsState((current) => activateTab(current, "explorer"));
+  }, []);
+
+  const mounted = useMemo(() => mountedFileTabs(tabsState), [tabsState]);
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
@@ -298,13 +265,15 @@ export default function App() {
       }
       if (event.key === "F1") {
         event.preventDefault();
-        const kind = tabsRef.current.find((tab) => tab.id === activeRef.current)?.kind ?? "explorer";
-        openTab("help", HELP_SLUGS[kind]);
+        const state = tabsRef.current;
+        const tab = state.tabs.find((entry) => entry.id === state.activeId);
+        const handler = tab?.kind === "file" && tab.handler ? handlers.get(tab.handler) : undefined;
+        openTab("help", handler?.helpSlug ?? HELP_SLUGS[tab?.kind ?? "explorer"]);
         return;
       }
       if ((event.ctrlKey || event.metaKey) && (event.key === "w" || event.key === "W")) {
         event.preventDefault();
-        if (activeRef.current !== "explorer") closeTab(activeRef.current);
+        if (tabsRef.current.activeId !== "explorer") closeTab(tabsRef.current.activeId);
       }
     };
     const onKeyUp = (event: KeyboardEvent) => {
@@ -375,11 +344,13 @@ export default function App() {
     }
   };
 
-  const activeTab = tabs.find((tab) => tab.id === activeId) ?? EXPLORER_TAB;
+  const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
+  const hasFileTabs = tabs.some((tab) => tab.kind === "file");
   const tabLabel = (tab: TabState): string => {
     if (tab.kind === "explorer") return t("tabs.explorer");
     if (tab.kind === "help") return t("help.title");
     if (tab.kind === "settings") return t("settings.title");
+    if (tab.kind === "file") return tab.title ?? t("tabs.file");
     return t("gallery.title");
   };
   const TabIcon =
@@ -389,7 +360,9 @@ export default function App() {
         ? SettingsIcon
         : activeTab.kind === "gallery"
           ? LayoutGrid
-          : Home;
+          : activeTab.kind === "file" && activeTab.handler
+            ? (handlers.get(activeTab.handler)?.icon ?? LayoutGrid)
+            : Home;
 
   return (
     <div className="adp-shell">
@@ -397,6 +370,7 @@ export default function App() {
         <div className="adp-tabbar">
           <div className="adp-tablist" role="tablist">
           {tabs.map((tab, tabIndex) => {
+            const handler = tab.kind === "file" && tab.handler ? handlers.get(tab.handler) : undefined;
             const Icon =
               tab.kind === "explorer"
                 ? Home
@@ -404,30 +378,43 @@ export default function App() {
                   ? CircleHelp
                   : tab.kind === "settings"
                     ? SettingsIcon
-                    : LayoutGrid;
+                    : tab.kind === "file"
+                      ? (handler?.icon ?? LayoutGrid)
+                      : LayoutGrid;
+            const iconOnly = tab.kind === "explorer" && hasFileTabs;
+            const classes = ["adp-tab", tab.id === activeId ? "adp-tab--active" : "", iconOnly ? "adp-tab--icon-only" : ""]
+              .filter(Boolean)
+              .join(" ");
             return (
               <div
                 key={tab.id}
                 role="tab"
                 aria-selected={tab.id === activeId}
+                aria-label={tabLabel(tab)}
+                title={tab.kind === "file" ? tab.path : undefined}
                 tabIndex={tab.id === activeId ? 0 : -1}
                 onKeyDown={(event) => {
                   if (event.target !== event.currentTarget) return;
                   const target = tabKeyTarget(event.key, tabIndex, tabs.length);
                   if (target === null) return;
                   event.preventDefault();
-                  setActiveId(tabs[target].id);
+                  const nextId = tabs[target].id;
+                  setTabsState((current) => activateTab(current, nextId));
                   (event.currentTarget.parentElement?.children[target] as HTMLElement | undefined)?.focus();
                 }}
-                className={tab.id === activeId ? "adp-tab adp-tab--active" : "adp-tab"}
+                className={classes}
                 draggable={false}
-                onClick={() => setActiveId(tab.id)}
+                onClick={() => setTabsState((current) => activateTab(current, tab.id))}
                 onAuxClick={(event) => {
                   if (event.button === 1) closeTab(tab.id);
                 }}
               >
-                <Icon size={14} aria-hidden="true" />
-                <span className="adp-tab-label">{tab.title ?? tabLabel(tab)}</span>
+                <Icon
+                  size={14}
+                  aria-hidden="true"
+                  style={handler ? { color: `var(--adp-accent-${handler.accent})` } : undefined}
+                />
+                {iconOnly ? null : <span className="adp-tab-label">{tabLabel(tab)}</span>}
                 {tab.kind !== "explorer" ? (
                   // A mouse target only: a tab may not contain another control.
                   // The keyboard closes the current tab with Ctrl+W.
@@ -455,7 +442,7 @@ export default function App() {
               { id: "settings", label: t("settings.title") },
               { id: "gallery", label: t("gallery.title") },
             ]}
-            onSelect={(id) => openTab(id as TabKind)}
+            onSelect={(id) => openTab(id as "help" | "settings" | "gallery")}
           />
         </div>
         <div className="adp-button-row">
@@ -464,7 +451,10 @@ export default function App() {
             labelKey="help.title"
             keyTip="H"
             showKeyTip={showKeyTips}
-            onClick={() => openTab("help", HELP_SLUGS[activeTab.kind])}
+            onClick={() => {
+              const handler = activeTab.kind === "file" && activeTab.handler ? handlers.get(activeTab.handler) : undefined;
+              openTab("help", handler?.helpSlug ?? HELP_SLUGS[activeTab.kind]);
+            }}
           />
           <IconButton
             icon={SettingsIcon}
@@ -510,15 +500,34 @@ export default function App() {
       </header>
 
       <main className="adp-main">
-        {activeTab.kind === "explorer" ? (
+        {/* The Explorer stays mounted so it keeps its folder, selection and
+            scroll position; it ignores shortcuts and drops while hidden. */}
+        <div className="adp-tabpane" hidden={activeTab.kind !== "explorer"}>
           <ExplorerHome
+            active={activeTab.kind === "explorer"}
             onStatsChange={setExplorerStats}
             onOpenHelp={(slug) => openTab("help", slug ?? "browsing-folders")}
+            onOpenFile={openFile}
+            navigateRequest={navigateRequest}
             view={settings.explorer}
             onViewChange={onViewChange}
             pasteImageFormat={settings.files?.paste_image_format ?? "png"}
           />
-        ) : null}
+        </div>
+        {tabs
+          .filter((tab) => tab.kind === "file" && mounted.has(tab.id))
+          .map((tab) => (
+            <FileTabView
+              key={tab.id}
+              tab={tab}
+              active={tab.id === activeId}
+              onShowInFolder={(path) => showInExplorer(parentPathOf(path) ?? path, path)}
+              onOpenFolder={(folder) => showInExplorer(folder, null)}
+              onClose={() => closeTab(tab.id)}
+              onViewState={(view) => setTabsState((current) => setTabView(current, tab.id, view))}
+              onOpenHelp={(slug) => openTab("help", slug)}
+            />
+          ))}
         {activeTab.kind === "help" ? (
           <Suspense fallback={null}><HelpCenter
             lang={settings.language}
@@ -538,7 +547,7 @@ export default function App() {
         ) : null}
       </main>
 
-      <footer className="adp-statusbar">
+      <footer className="adp-statusbar" hidden={activeTab.kind === "file"}>
         {activeTab.kind === "explorer" ? (
           <>
             <span>{t("explorer.statusItems", { count: explorerStats.total })}</span>

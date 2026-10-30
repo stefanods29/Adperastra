@@ -70,6 +70,7 @@ export const ITEM_MENU: MenuEntry[] = [
   { type: "iconRow", ids: ["explorer.cut", "explorer.copy", "explorer.rename", "explorer.share", "explorer.delete"] },
   separator,
   cmd("explorer.open"),
+  cmd("explorer.openInWindowsApp"),
   cmd("explorer.openWith"),
   cmd("explorer.toggleFavorite"),
   cmd("explorer.showInFolder"),
