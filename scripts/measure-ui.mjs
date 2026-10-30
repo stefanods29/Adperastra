@@ -5,7 +5,7 @@
 //
 // node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme> [step]
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 import { join } from "node:path";
 
@@ -155,6 +155,10 @@ await page(`window.__m = {
   closeMenus() { for (const m of document.querySelectorAll(".adp-ctxmenu")) m.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); },
   // Text buttons in the command bar, in order: New, Sort, View, Details.
   menuButton(index) { return document.querySelectorAll(".adp-commandbar .adp-cmd-text")[index]; },
+  // Step 05c: Settings > Layout fields, and the Settings and Explorer tabs.
+  layoutField(field, value) { const select = document.querySelector('select[data-layout-field="' + field + '"]'); if (!select) return false; Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set.call(select, value); select.dispatchEvent(new Event("change", { bubbles: true })); return true; },
+  openSettings() { document.querySelectorAll(".adp-button-row button")[1]?.click(); },
+  openExplorer() { document.querySelector("[role='tab']")?.click(); },
 }; true`);
 await page(`window.__m.waitFor(() => document.querySelector(".adp-explorer"))`);
 
@@ -682,6 +686,66 @@ if (shotDir) {
   await shot("21-view-menu");
   await step(`window.__m.closeMenus()`);
   await step(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true })`);
+
+  // Step 05c: the toolbar, the tabs and the panes in every place.
+  // "settings" = open Settings, set the layout fields, come back.
+  const settings = async (fields) => {
+    await step(`window.__m.openSettings()`);
+    await sleep(300);
+    for (const [field, value] of fields) {
+      await step(`window.__m.layoutField(${JSON.stringify(field)}, ${JSON.stringify(value)})`);
+    }
+    await step(`window.__m.openExplorer()`);
+    await sleep(400);
+  };
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  const rememberedDetails = await page(`document.querySelector('select[data-layout-field="details_pane"]')?.value ?? "hidden"`);
+  await step(`window.__m.openExplorer()`);
+  await sleep(400);
+  await settings([["toolbar_position", "left"]]);
+  await shot("24-toolbar-left");
+  await settings([
+    ["toolbar_position", "bottom"],
+    ["toolbar_mode", "iconsOnly"],
+  ]);
+  await shot("25-toolbar-bottom-icons");
+  await settings([
+    ["toolbar_position", "top"],
+    ["toolbar_mode", "full"],
+    ["tab_bar_position", "left"],
+  ]);
+  await shot("26-tabs-left");
+  await settings([
+    ["tab_bar_position", "top"],
+    ["nav_pane_position", "right"],
+    ["details_pane", "bottom"],
+  ]);
+  await step(`window.__m.click(window.__m.rows()[2])`);
+  await sleep(200);
+  await shot("27-panes-moved");
+  // The file operations screens deleted the demo's notes.txt for good.
+  if (!existsSync(join(demo, "notes.txt"))) writeFileSync(join(demo, "notes.txt"), "notes");
+  await openFolder(demo);
+  await settings([
+    ["nav_pane_position", "left"],
+    ["details_pane", rememberedDetails],
+    ["toolbar_position", "right"],
+    ["toolbar_mode", "iconsOnly"],
+  ]);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await sleep(800);
+  await step(`document.querySelector(".adp-flyout-btn")?.click()`);
+  await shot("28-ribbon-right-icons");
+  await step(`window.__m.key(window, { key: "Escape" })`);
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await settings([["preset", "builtin:classic"]]);
+  await shot("29-classic");
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await shot("30-layout-settings");
+  await step(`window.__m.layoutField("preset", "builtin:standard")`);
+  await step(`window.__m.openExplorer()`);
 }
 
 cdp.close();
