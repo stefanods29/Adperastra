@@ -33,7 +33,7 @@ mod shell;
 mod transfer_history;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 8;
+pub const CURRENT_SCHEMA: u32 = 9;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -123,6 +123,14 @@ fn default_accent_custom() -> String {
     "#0067C0".to_string()
 }
 
+fn default_light_theme() -> String {
+    "light".to_string()
+}
+
+fn default_dark_theme() -> String {
+    "dark".to_string()
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ThemeSettings {
     #[serde(default = "default_mode")]
@@ -131,6 +139,12 @@ pub struct ThemeSettings {
     pub accent_source: String,
     #[serde(default = "default_accent_custom")]
     pub accent_custom: String,
+    /// The theme light mode uses (schema 9, Step 05d).
+    #[serde(default = "default_light_theme")]
+    pub light_theme: String,
+    /// The theme dark mode uses (schema 9, Step 05d).
+    #[serde(default = "default_dark_theme")]
+    pub dark_theme: String,
 }
 
 impl Default for ThemeSettings {
@@ -139,6 +153,8 @@ impl Default for ThemeSettings {
             mode: default_mode(),
             accent_source: default_accent_source(),
             accent_custom: default_accent_custom(),
+            light_theme: default_light_theme(),
+            dark_theme: default_dark_theme(),
         }
     }
 }
@@ -321,6 +337,53 @@ impl Default for LayoutSettings {
     }
 }
 
+/// Every UI scale, in percent (schema 9, Step 05d).
+pub const UI_SCALES: [u32; 8] = [75, 90, 100, 110, 125, 150, 175, 200];
+
+fn default_ui_scale() -> u32 {
+    100
+}
+
+fn default_density() -> String {
+    "comfortable".to_string()
+}
+
+fn default_corner_radius() -> String {
+    "standard".to_string()
+}
+
+fn default_animations() -> String {
+    "full".to_string()
+}
+
+/// UI scale, density, corner radius and animations (schema 9, Step 05d).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AppearanceSettings {
+    /// The webview's page zoom in percent, one of `UI_SCALES`.
+    #[serde(default = "default_ui_scale")]
+    pub ui_scale: u32,
+    /// "compact", "comfortable" or "spacious".
+    #[serde(default = "default_density")]
+    pub density: String,
+    /// "square", "standard" or "round".
+    #[serde(default = "default_corner_radius")]
+    pub corner_radius: String,
+    /// "full", "reduced" or "off".
+    #[serde(default = "default_animations")]
+    pub animations: String,
+}
+
+impl Default for AppearanceSettings {
+    fn default() -> Self {
+        Self {
+            ui_scale: default_ui_scale(),
+            density: default_density(),
+            corner_radius: default_corner_radius(),
+            animations: default_animations(),
+        }
+    }
+}
+
 fn default_paste_image_format() -> String {
     "png".to_string()
 }
@@ -392,6 +455,8 @@ pub struct Settings {
     pub open: OpenSettings,
     #[serde(default)]
     pub layout: LayoutSettings,
+    #[serde(default)]
+    pub appearance: AppearanceSettings,
 }
 
 impl Default for Settings {
@@ -404,6 +469,7 @@ impl Default for Settings {
             files: FileSettings::default(),
             open: OpenSettings::default(),
             layout: LayoutSettings::default(),
+            appearance: AppearanceSettings::default(),
         }
     }
 }
@@ -502,6 +568,57 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
         return Err(AppError::Validation(format!(
             "accent_custom {:?} is not a #RRGGBB colour",
             settings.theme.accent_custom
+        )));
+    }
+    if !matches!(
+        settings.theme.light_theme.as_str(),
+        "light" | "bright" | "paper"
+    ) {
+        return Err(AppError::Validation(format!(
+            "unsupported light_theme {:?} (expected light, bright or paper)",
+            settings.theme.light_theme
+        )));
+    }
+    if !matches!(
+        settings.theme.dark_theme.as_str(),
+        "dark" | "amoled" | "highContrast"
+    ) {
+        return Err(AppError::Validation(format!(
+            "unsupported dark_theme {:?} (expected dark, amoled or highContrast)",
+            settings.theme.dark_theme
+        )));
+    }
+    if !UI_SCALES.contains(&settings.appearance.ui_scale) {
+        return Err(AppError::Validation(format!(
+            "unsupported ui_scale {} (expected one of {UI_SCALES:?})",
+            settings.appearance.ui_scale
+        )));
+    }
+    if !matches!(
+        settings.appearance.density.as_str(),
+        "compact" | "comfortable" | "spacious"
+    ) {
+        return Err(AppError::Validation(format!(
+            "unsupported density {:?} (expected compact, comfortable or spacious)",
+            settings.appearance.density
+        )));
+    }
+    if !matches!(
+        settings.appearance.corner_radius.as_str(),
+        "square" | "standard" | "round"
+    ) {
+        return Err(AppError::Validation(format!(
+            "unsupported corner_radius {:?} (expected square, standard or round)",
+            settings.appearance.corner_radius
+        )));
+    }
+    if !matches!(
+        settings.appearance.animations.as_str(),
+        "full" | "reduced" | "off"
+    ) {
+        return Err(AppError::Validation(format!(
+            "unsupported animations {:?} (expected full, reduced or off)",
+            settings.appearance.animations
         )));
     }
     if !matches!(settings.files.paste_image_format.as_str(), "png" | "jpg") {
@@ -656,6 +773,7 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         files: FileSettings::default(),
         open: OpenSettings::default(),
         layout: LayoutSettings::default(),
+        appearance: AppearanceSettings::default(),
     }
 }
 
@@ -726,7 +844,9 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
-            Some(4) | Some(5) | Some(6) | Some(7) => Ok(migrate_keep_known(value.clone())),
+            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) => {
+                Ok(migrate_keep_known(value.clone()))
+            }
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -2833,7 +2953,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 8);
+        assert_eq!(settings.schema_version, 9);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -2918,6 +3038,7 @@ mod tests {
                 mode: "light".to_string(),
                 accent_source: "custom".to_string(),
                 accent_custom: "#FF00AA".to_string(),
+                ..ThemeSettings::default()
             },
             explorer: ExplorerViewSettings {
                 show_hidden: true,
@@ -3068,6 +3189,94 @@ mod tests {
         assert_eq!(settings.files.paste_image_format, "jpg");
         assert!(!settings.open.protected_view);
         assert_eq!(settings.layout, LayoutSettings::default());
+    }
+
+    #[test]
+    fn settings_v8_migrates_to_v9_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 8,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#FF00AA" },
+            "explorer": {
+                "show_hidden": true,
+                "show_extensions": true,
+                "item_checkboxes": false,
+                "details_pane": true,
+                "group_by": "type",
+                "view_mode": "tiles",
+                "remember_view_per_folder": false,
+                "view_mode_order": [
+                    "extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons",
+                    "list", "details", "tiles", "content", "columns"
+                ],
+                "hidden_view_modes": ["list"],
+                "column_width": 300,
+                "column_preview": false
+            },
+            "files": { "paste_image_format": "jpg" },
+            "open": { "protected_view": false, "open_with": { "txt": "windows" } },
+            "layout": {
+                "toolbar_position": "left",
+                "toolbar_mode": "compact",
+                "tab_bar_position": "top",
+                "tab_bar_collapsed": false,
+                "nav_pane_position": "left",
+                "details_pane_position": "right",
+                "saved_presets": []
+            }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.theme.accent_custom, "#FF00AA");
+        assert_eq!(settings.layout.toolbar_position, "left");
+        assert_eq!(settings.explorer.view_mode, "tiles");
+        assert_eq!(settings.theme.light_theme, "light");
+        assert_eq!(settings.theme.dark_theme, "dark");
+        assert_eq!(settings.appearance, AppearanceSettings::default());
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_appearance() {
+        let mut light_theme = Settings::default();
+        light_theme.theme.light_theme = "dark".to_string();
+        assert!(validate(&light_theme).is_err());
+
+        let mut dark_theme = Settings::default();
+        dark_theme.theme.dark_theme = "paper".to_string();
+        assert!(validate(&dark_theme).is_err());
+
+        let mut small_scale = Settings::default();
+        small_scale.appearance.ui_scale = 80;
+        assert!(validate(&small_scale).is_err());
+
+        let mut zero_scale = Settings::default();
+        zero_scale.appearance.ui_scale = 0;
+        assert!(validate(&zero_scale).is_err());
+
+        let mut density = Settings::default();
+        density.appearance.density = "tiny".to_string();
+        assert!(validate(&density).is_err());
+
+        let mut corner_radius = Settings::default();
+        corner_radius.appearance.corner_radius = "oval".to_string();
+        assert!(validate(&corner_radius).is_err());
+
+        let mut animations = Settings::default();
+        animations.appearance.animations = "some".to_string();
+        assert!(validate(&animations).is_err());
+
+        let mut good = Settings::default();
+        good.theme.light_theme = "paper".to_string();
+        good.theme.dark_theme = "highContrast".to_string();
+        good.appearance.ui_scale = 75;
+        good.appearance.density = "spacious".to_string();
+        good.appearance.corner_radius = "square".to_string();
+        good.appearance.animations = "off".to_string();
+        assert!(validate(&good).is_ok());
+        good.appearance.ui_scale = 200;
+        assert!(validate(&good).is_ok());
     }
 
     #[test]

@@ -19,11 +19,18 @@ describe("normalizeSettings", () => {
     ).toEqual({
       schema_version: 1,
       language: "es",
-      theme: { mode: "dark", accent_source: "custom", accent_custom: "#0067C0" },
+      theme: {
+        mode: "dark",
+        accent_source: "custom",
+        accent_custom: "#0067C0",
+        light_theme: "light",
+        dark_theme: "dark",
+      },
       explorer: defaultSettings().explorer,
       files: defaultSettings().files,
       open: defaultSettings().open,
       layout: defaultSettings().layout,
+      appearance: defaultSettings().appearance,
     });
   });
 
@@ -45,7 +52,7 @@ describe("normalizeSettings", () => {
       column_preview: true,
     });
     expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
-    expect(defaultSettings().schema_version).toBe(8);
+    expect(defaultSettings().schema_version).toBe(9);
     expect(defaultSettings().files.paste_image_format).toBe("png");
     expect(normalizeSettings({ files: { paste_image_format: "jpg" } }).files.paste_image_format).toBe("jpg");
     expect(normalizeSettings({ files: { paste_image_format: "gif" } }).files.paste_image_format).toBe("png");
@@ -168,6 +175,34 @@ describe("normalizeSettings", () => {
       Array.from({ length: 20 }, (_, index) => `p${index}`),
     );
     expect(layout({ saved_presets: "nope" }).saved_presets).toEqual([]);
+  });
+
+  it("normalizes the theme choice and appearance (schema 9)", () => {
+    const theme = (input: Record<string, unknown>) => normalizeSettings({ theme: input }).theme;
+    const appearance = (input: Record<string, unknown>) => normalizeSettings({ appearance: input }).appearance;
+    expect(theme({})).toMatchObject({ light_theme: "light", dark_theme: "dark" });
+    expect(theme({ light_theme: "paper", dark_theme: "amoled" })).toMatchObject({
+      light_theme: "paper",
+      dark_theme: "amoled",
+    });
+    expect(theme({ light_theme: "dark", dark_theme: "bright" })).toMatchObject({
+      light_theme: "light",
+      dark_theme: "dark",
+    });
+    expect(appearance({})).toEqual({
+      ui_scale: 100,
+      density: "comfortable",
+      corner_radius: "standard",
+      animations: "full",
+    });
+    expect(appearance({ ui_scale: 125 }).ui_scale).toBe(125);
+    expect(appearance({ ui_scale: 80 }).ui_scale).toBe(100);
+    expect(appearance({ ui_scale: "100" }).ui_scale).toBe(100);
+    expect(appearance({ density: "spacious" }).density).toBe("spacious");
+    expect(appearance({ density: "huge" }).density).toBe("comfortable");
+    expect(appearance({ corner_radius: "round" }).corner_radius).toBe("round");
+    expect(appearance({ animations: "off" }).animations).toBe("off");
+    expect(appearance({ animations: "none" }).animations).toBe("full");
   });
 
   it("clampColumnWidth rounds and keeps the limits", () => {

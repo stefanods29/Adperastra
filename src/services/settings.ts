@@ -1,17 +1,30 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 8;
+export const SETTINGS_SCHEMA_VERSION = 9;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
 export type ThemeMode = "light" | "dark" | "system";
 export type AccentSource = "design" | "windows" | "custom";
 
+/** The built-in themes of light mode (schema 9, Step 05d). */
+export type LightThemeId = "light" | "bright" | "paper";
+/** The built-in themes of dark mode (schema 9, Step 05d). */
+export type DarkThemeId = "dark" | "amoled" | "highContrast";
+export type ThemeId = LightThemeId | DarkThemeId;
+
+export const LIGHT_THEME_IDS: readonly LightThemeId[] = ["light", "bright", "paper"];
+export const DARK_THEME_IDS: readonly DarkThemeId[] = ["dark", "amoled", "highContrast"];
+
 export interface ThemeSettings {
   mode: ThemeMode;
   accent_source: AccentSource;
   accent_custom: string | null;
+  /** The theme light mode uses (schema 9). */
+  light_theme: LightThemeId;
+  /** The theme dark mode uses (schema 9). */
+  dark_theme: DarkThemeId;
 }
 
 /** How a folder shows its items (Step 05a D1), in Windows' View-menu order.
@@ -183,6 +196,31 @@ const LAYOUT_DEFAULTS: LayoutValues = {
   details_pane_position: "right",
 };
 
+/** The webview's page zoom, in percent (schema 9, Step 05d). */
+export type UiScale = number;
+/** Every UI scale, in the order the settings select shows them. */
+export const UI_SCALES: readonly UiScale[] = [75, 90, 100, 110, 125, 150, 175, 200];
+
+/** How much space the app leaves around things (schema 9, Step 05d). */
+export type Density = "compact" | "comfortable" | "spacious";
+export const DENSITIES: readonly Density[] = ["compact", "comfortable", "spacious"];
+
+/** How round the corners are (schema 9, Step 05d). */
+export type CornerRadius = "square" | "standard" | "round";
+export const CORNER_RADII: readonly CornerRadius[] = ["square", "standard", "round"];
+
+/** How much motion the app shows (schema 9, Step 05d). */
+export type AnimationLevel = "full" | "reduced" | "off";
+export const ANIMATION_LEVELS: readonly AnimationLevel[] = ["full", "reduced", "off"];
+
+/** UI scale, density, corner radius and animations (schema 9, Step 05d). */
+export interface AppearanceSettings {
+  ui_scale: UiScale;
+  density: Density;
+  corner_radius: CornerRadius;
+  animations: AnimationLevel;
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
@@ -191,6 +229,7 @@ export interface AppSettings {
   files: FileSettings;
   open: OpenSettings;
   layout: LayoutSettings;
+  appearance: AppearanceSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -207,6 +246,8 @@ export function defaultSettings(): AppSettings {
       mode: "system",
       accent_source: "design",
       accent_custom: null,
+      light_theme: "light",
+      dark_theme: "dark",
     },
     explorer: {
       show_hidden: false,
@@ -231,6 +272,12 @@ export function defaultSettings(): AppSettings {
     layout: {
       ...LAYOUT_DEFAULTS,
       saved_presets: [],
+    },
+    appearance: {
+      ui_scale: 100,
+      density: "comfortable",
+      corner_radius: "standard",
+      animations: "full",
     },
   };
 }
@@ -322,6 +369,7 @@ export function normalizeSettings(input: unknown): AppSettings {
   const explorerInput = isRecord(input.explorer) ? input.explorer : {};
   const filesInput = isRecord(input.files) ? input.files : {};
   const openInput = isRecord(input.open) ? input.open : {};
+  const appearanceInput = isRecord(input.appearance) ? input.appearance : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
@@ -340,6 +388,8 @@ export function normalizeSettings(input: unknown): AppSettings {
       mode: pick(themeInput.mode, THEME_MODES, defaults.theme.mode),
       accent_source: pick(themeInput.accent_source, ACCENT_SOURCES, defaults.theme.accent_source),
       accent_custom: accentCustom,
+      light_theme: pick(themeInput.light_theme, LIGHT_THEME_IDS, defaults.theme.light_theme),
+      dark_theme: pick(themeInput.dark_theme, DARK_THEME_IDS, defaults.theme.dark_theme),
     },
     explorer: {
       show_hidden: flag(explorerInput.show_hidden, defaults.explorer.show_hidden),
@@ -362,6 +412,16 @@ export function normalizeSettings(input: unknown): AppSettings {
       open_with: normalizeOpenWith(openInput.open_with),
     },
     layout: normalizeLayout(input.layout),
+    appearance: {
+      ui_scale:
+        typeof appearanceInput.ui_scale === "number" &&
+        (UI_SCALES as readonly number[]).includes(appearanceInput.ui_scale)
+          ? appearanceInput.ui_scale
+          : defaults.appearance.ui_scale,
+      density: pick(appearanceInput.density, DENSITIES, defaults.appearance.density),
+      corner_radius: pick(appearanceInput.corner_radius, CORNER_RADII, defaults.appearance.corner_radius),
+      animations: pick(appearanceInput.animations, ANIMATION_LEVELS, defaults.appearance.animations),
+    },
   };
 }
 
