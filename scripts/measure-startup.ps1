@@ -2,11 +2,14 @@
 # docs\benchmarks\. Run it right after a reboot for the true cold numbers:
 #   .\scripts\measure-startup.ps1
 #   .\scripts\measure-startup.ps1 -Exe <path to Adperastra.exe> -Step 03a -Runs 5
+#   .\scripts\measure-startup.ps1 -Step 04a -SessionFile <session.json>
 # It uses a separate WebView2 profile and stops only the test job's processes,
 # then times: window handle, first paint (PrintWindow pixel), session save
 # (content ready). Your other apps are not touched. -Step names the output
 # file, so measuring a new step never overwrites an earlier baseline.
-param([string]$Exe = "", [string]$Step = "01b", [int]$Runs = 2)
+# -SessionFile seeds a session (for example one restored file tab) before each
+# run; content ready then waits until the app writes the session again.
+param([string]$Exe = "", [string]$Step = "01b", [int]$Runs = 2, [string]$SessionFile = "")
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot 'test-process-job.ps1')
 $root = Split-Path -Parent $PSScriptRoot
@@ -42,6 +45,13 @@ $results = @()
 foreach ($run in 1..$Runs) {
   Start-Sleep -Seconds 1
   Remove-Item "$data\session.json" -ErrorAction SilentlyContinue
+  $sessionSeedTime = $null
+  if ($SessionFile) {
+    if (-not (Test-Path -LiteralPath $SessionFile)) { throw "Session file not found: $SessionFile" }
+    New-Item -ItemType Directory -Path $data -Force | Out-Null
+    Copy-Item -LiteralPath $SessionFile -Destination "$data\session.json" -Force
+    $sessionSeedTime = (Get-Item -LiteralPath "$data\session.json").LastWriteTimeUtc
+  }
   $env:ADPERASTRA_DATA_DIR = $data
   $job = $null
   try {
@@ -55,7 +65,10 @@ foreach ($run in 1..$Runs) {
       if ($null -eq $paint -and $p.MainWindowHandle -ne 0) {
         try { $px = [PM]::Pixel($p.MainWindowHandle, 120, 20); if ($px[0] -gt 200 -and $px[1] -gt 200) { $paint = $sw.ElapsedMilliseconds } } catch {}
       }
-      if (Test-Path "$data\session.json") { $session = $sw.ElapsedMilliseconds }
+      if (Test-Path -LiteralPath "$data\session.json") {
+        $stamp = (Get-Item -LiteralPath "$data\session.json").LastWriteTimeUtc
+        if ($null -eq $sessionSeedTime -or $stamp -gt $sessionSeedTime) { $session = $sw.ElapsedMilliseconds }
+      }
       Start-Sleep -Milliseconds 40
     }
     $sw.Stop()

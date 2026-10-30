@@ -59,12 +59,12 @@ Use a folder with a few pictures (PNG, JPG, an animated GIF, an SVG) and a ZIP f
 
 | Interaction | Tier | Measured (median) | Result |
 |---|---|---|---|
-| Open a 1920x1080 PNG in a tab (first view) | Fast 1 s | <pending> | <pending> |
-| Switch from a file tab to the Explorer | Instant 0.1 s | <pending> | <pending> |
-| App start with one restored image tab | Fast 1 s | <pending> | <pending> |
-| Earlier rows | as before | <pending> | not more than 20 % slower than Step 03b |
+| Open a 1920x1080 PNG in a tab (first view) | Fast 1 s | 42 ms | pass |
+| Switch from a file tab to the Explorer | Instant 0.1 s | 7.7 ms | pass |
+| App start with one restored image tab | Fast 1 s | first paint 82 ms, content ready 920 ms (5 runs; the first run, 1953 ms, was the only one over 1 s) | pass |
+| Earlier rows | as before | see the JSON | not compared row by row with Step 03b |
 
-Raw numbers: `docs/benchmarks/2026-10-30-ui-step04a.json` (pending).
+Raw numbers: `docs/benchmarks/2026-10-30-ui-step04a.json` and `docs/benchmarks/2026-10-30-startup-step04a.json`.
 
 ## Checks by hand
 
@@ -80,7 +80,7 @@ Raw numbers: `docs/benchmarks/2026-10-30-ui-step04a.json` (pending).
 
 ## Screenshots
 
-`docs/screenshots/step-04a/`: all earlier screens plus `12-image-tab`, in English light, Spanish dark and the pseudo-locale (pending at the end of the batch).
+`docs/screenshots/step-04a/`: all earlier screens plus `12-image-tab`, in English light, Spanish dark and the pseudo-locale.
 
 ## Known issues
 

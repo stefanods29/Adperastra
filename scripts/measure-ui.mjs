@@ -343,6 +343,7 @@ if (mode === "full") {
   // Step 04a: open a real image in a file tab, and switch tabs.
   try {
     await openFolder(demo);
+    await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("photo-1920.png")))`);
     const openValues = [];
     for (let run = 0; run < 5; run += 1) {
       openValues.push(
@@ -368,13 +369,19 @@ if (mode === "full") {
       ),
     );
     await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+    // Closing the last file tab must leave the Explorer active before the
+    // classic-menu measurement opens a folder again.
+    await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tablist [role=tab]").length === 1)`);
+    await page(`document.querySelector(".adp-tablist [role=tab]").click(); true`);
+    await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
   } catch (error) {
     console.log(`step 04a measurements failed: ${error.message ?? error}`);
   }
 
   // Classic menu: time until the helper's menu is on screen. The runner
-  // closes it afterwards.
-  await openFolder(demo);
+  // closes it afterwards. Closing the image tab returns to the Explorer in
+  // the demo folder, so do not re-enter the path in the address bar here.
+  await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
   const classic = await page(`(async () => {
     const path = ${JSON.stringify(join(demo, "notes.txt"))};
     const t0 = performance.now();
@@ -530,8 +537,11 @@ if (shotDir) {
   try { rmSync(folderSource, { recursive: true, force: true }); } catch { /* best effort */ }
   try { rmSync(join(demo, "Archive 2025", "folder-100k"), { recursive: true, force: true }); } catch { /* best effort */ }
   try { rmSync(join(demo, "Invoices", "notes.txt"), { force: true }); } catch { /* best effort */ }
-  // Step 04a: an image open in a file tab.
-  await openFolder(demo);
+  // Step 04a: an image open in a file tab. The Explorer is still in demo
+  // after the folder-conflict dialog; wait for it to close instead of
+  // typing the path into an address bar that a file tab may own.
+  await page(`window.__m.waitFor(() => document.querySelector("[role=dialog]") === null)`);
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("photo-1920.png")))`);
   await step(`[...window.__m.rows()].find((r) => r.textContent.includes("photo-1920.png"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
   await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-image-stage[style]") !== null, 15000)`);
   await sleep(300);
