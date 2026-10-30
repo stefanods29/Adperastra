@@ -430,6 +430,24 @@ if (shotDir) {
   await shot("11-jobs-panel");
   await step(`document.querySelector(".adp-jobs-panel .adp-job-row .adp-btn")?.click()`);
   await sleep(800);
+  // Folder conflict: Merge is the primary action. The source folder is
+  // outside the demo folder so this is a real name clash, not a paste here.
+  const folderSource = join(demo, "..", "adperastra-demo-folder-source");
+  try { rmSync(folderSource, { recursive: true, force: true }); } catch { /* best effort */ }
+  mkdirSync(join(folderSource, "Invoices"), { recursive: true });
+  writeFileSync(join(folderSource, "Invoices", "new.txt"), "new");
+  await openFolder(folderSource);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("Invoices")))`);
+  await step(`window.__m.key(window, { key: "c", ctrlKey: true })`);
+  await sleep(300);
+  await openFolder(demo);
+  await sleep(300);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(600);
+  await shot("12-conflict-folder");
+  await step(`document.querySelector(".adp-dialog-actions .adp-btn")?.click()`);
+  await sleep(300);
+  try { rmSync(folderSource, { recursive: true, force: true }); } catch { /* best effort */ }
   try { rmSync(join(demo, "Archive 2025", "folder-100k"), { recursive: true, force: true }); } catch { /* best effort */ }
   try { rmSync(join(demo, "Invoices", "notes.txt"), { force: true }); } catch { /* best effort */ }
 }
