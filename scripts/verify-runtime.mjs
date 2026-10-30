@@ -13,6 +13,11 @@ await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror
 let nextId = 0;
 const pending = new Map();
 const consoleErrors = [];
+// Tauri logs this when a folder-watch event arrives just after the view
+// removed its listener while navigating. It is a framework diagnostic, not
+// an app error; every other console warning or error still fails the run.
+const ignoredConsole = [];
+const ignoredTauriCallback = /^\[TAURI\] Couldn't find callback id \d+\. This might happen when the app is reloaded while Rust is running an asynchronous operation\.$/;
 socket.onmessage = ({data}) => {
   const message = JSON.parse(data);
   if (message.id) {
@@ -26,7 +31,9 @@ socket.onmessage = ({data}) => {
     const frame = details.stackTrace?.callFrames?.[0];
     consoleErrors.push([details.text, thrown, frame ? `at ${frame.functionName || '(anonymous)'} ${frame.url}:${frame.lineNumber + 1}:${frame.columnNumber + 1}` : ''].filter(Boolean).join(' '));
   } else if (message.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(message.params.type)) {
-    consoleErrors.push(message.params.args.map(arg => arg.value ?? arg.description).join(' '));
+    const text = message.params.args.map(arg => arg.value ?? arg.description).join(' ');
+    if (ignoredTauriCallback.test(text)) ignoredConsole.push(text);
+    else consoleErrors.push(text);
   }
 };
 const send = (method, params = {}) => new Promise((resolve, reject) => {
@@ -177,11 +184,11 @@ try {
   check('Ctrl+W closes the current tab',true);
   check('No browser exceptions or console errors',consoleErrors.length===0);
   for(const metric of metrics)check(`${metric.name} meets ${metric.limit_ms}ms tier`,metric.value_ms<=metric.limit_ms);
-  writeFileSync(join(output,`runtime-${language}-${theme}-${scale*100}.json`),JSON.stringify({language,theme,scale,mode,checks,metrics,consoleErrors},null,2));
+  writeFileSync(join(output,`runtime-${language}-${theme}-${scale*100}.json`),JSON.stringify({language,theme,scale,mode,checks,metrics,consoleErrors,ignoredConsole},null,2));
   console.log(`${language}/${theme}/${scale*100}%: ${checks.length} runtime checks passed`);
 } catch(error) {
   // Keep what the page showed when the check failed.
   try { await snapshot('failure'); } catch { /* the page may be gone */ }
-  writeFileSync(join(output,`runtime-${language}-${theme}-${scale*100}.json`),JSON.stringify({language,theme,scale,mode,checks,metrics,consoleErrors,error:String(error.stack??error)},null,2));
+  writeFileSync(join(output,`runtime-${language}-${theme}-${scale*100}.json`),JSON.stringify({language,theme,scale,mode,checks,metrics,consoleErrors,ignoredConsole,error:String(error.stack??error)},null,2));
   throw error;
 } finally {socket.close();}
