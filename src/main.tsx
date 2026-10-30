@@ -5,6 +5,7 @@ import "./i18n";
 import "./styles/tokens.css";
 import "./styles/global.css";
 import "./styles/components.css";
+import "./styles/filetabs.css";
 
 const container = document.getElementById("root");
 if (!container) {

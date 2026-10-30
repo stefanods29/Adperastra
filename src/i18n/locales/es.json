@@ -436,5 +436,15 @@
     "copyTo": "Copiar en {name}",
     "moveTo": "Mover a {name}",
     "shortcutTo": "Crear acceso directo en {name}"
+  },
+  "handlers": {
+    "image": "Imagen"
+  },
+  "viewer": {
+    "loadingImage": "Cargando imagen…",
+    "imageError": "No se pudo mostrar esta imagen. Puede estar dañada o en un formato que el visor no admite.",
+    "dimensions": "{width} × {height} px",
+    "zoom": "Zoom",
+    "fit": "Ajustar"
   }
 }

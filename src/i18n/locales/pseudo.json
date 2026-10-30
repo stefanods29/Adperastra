@@ -436,5 +436,15 @@
     "copyTo": "[Çøpÿ tø {name} ~~~]",
     "moveTo": "[Møvë tø {name} ~~~]",
     "shortcutTo": "[Çrëätë shørtçüt ïñ {name} ~~~~~~~]"
+  },
+  "handlers": {
+    "image": "[Ïmägë ~~]"
+  },
+  "viewer": {
+    "loadingImage": "[Løädïñg ïmägë… ~~~~~]",
+    "imageError": "[Thïs ïmägë çøüldñ't bë shøwñ. Ït mäÿ bë dämägëd, ør ïñ ä førmät thë vïëwër døësñ't süppørt. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "dimensions": "[{width} × {height} px ~~]",
+    "zoom": "[Zøøm ~~]",
+    "fit": "[Fït ~~]"
   }
 }

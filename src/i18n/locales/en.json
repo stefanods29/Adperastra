@@ -436,5 +436,15 @@
     "copyTo": "Copy to {name}",
     "moveTo": "Move to {name}",
     "shortcutTo": "Create shortcut in {name}"
+  },
+  "handlers": {
+    "image": "Image"
+  },
+  "viewer": {
+    "loadingImage": "Loading image…",
+    "imageError": "This image couldn't be shown. It may be damaged, or in a format the viewer doesn't support.",
+    "dimensions": "{width} × {height} px",
+    "zoom": "Zoom",
+    "fit": "Fit"
   }
 }
