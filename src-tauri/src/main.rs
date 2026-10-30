@@ -1171,6 +1171,17 @@ pub fn drain_job(job: &mut ListJob) -> ListPoll {
     }
 }
 
+/// Cancel a listing and forget it at once: nobody polls a cancelled listing
+/// again, so leaving it in the table would keep its items in memory.
+pub fn cancel_list_job(jobs: &mut HashMap<String, ListJob>, request_id: &str) -> bool {
+    let Some(job) = jobs.get(request_id) else {
+        return false;
+    };
+    job.token.store(true, Ordering::Relaxed);
+    jobs.remove(request_id);
+    true
+}
+
 // NOTE (transport ruling, Step 02): Tauri Channel messages never reached
 // the frontend under this app's isolation pattern (probe: Rust listed 57
 // items, channel sends reported no error, JS received 0). Lists therefore
@@ -1286,10 +1297,8 @@ fn list_dir_cancel(
 ) -> Result<(), String> {
     ensure_main(window.label())?;
     valid_request_id(&request_id)?;
-    if let Ok(jobs) = state.list_jobs.lock() {
-        if let Some(job) = jobs.get(&request_id) {
-            job.token.store(true, Ordering::Relaxed);
-        }
+    if let Ok(mut jobs) = state.list_jobs.lock() {
+        cancel_list_job(&mut jobs, &request_id);
     }
     Ok(())
 }
@@ -2957,6 +2966,23 @@ mod tests {
         let second = drain_job(&mut big);
         assert_eq!(second.batches.len(), 2);
         assert!(second.done);
+    }
+    #[test]
+    fn cancelling_a_listing_drops_its_job() {
+        let job = ListJob {
+            batches: std::collections::VecDeque::from(vec![vec![]]),
+            done: false,
+            outcome: None,
+            error: None,
+            token: fs_service::new_cancellation_token(),
+        };
+        let token = job.token.clone();
+        let mut jobs = HashMap::new();
+        jobs.insert("list-a".to_string(), job);
+        assert!(cancel_list_job(&mut jobs, "list-a"));
+        assert!(jobs.is_empty());
+        assert!(token.load(Ordering::Relaxed));
+        assert!(!cancel_list_job(&mut jobs, "list-a"));
     }
     #[test]
     fn explorer_command_validation() {
