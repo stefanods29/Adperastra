@@ -40,3 +40,8 @@
 .adp-flowlist-inner { position:relative; height:100%; }
 .adp-flowlist-column { position:absolute; top:8px; left:0; display:flex; flex-direction:column; box-sizing:border-box; padding-right:8px; }
 .adp-flowlist-item { height:24px; }
+
+/* Status bar view buttons (Step 05a) */
+.adp-status-views { display:inline-flex; align-items:center; margin-left:auto; gap:2px; }
+.adp-status-view-btn { width:24px; height:20px; }
+.adp-status-view-btn[aria-pressed='true'] { background:var(--adp-color-surface-selected-row); }

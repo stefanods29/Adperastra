@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { CircleHelp, Copy, Home, LayoutGrid, Minus, Plus, Settings as SettingsIcon, Square, X } from "lucide-react";
+import { CircleHelp, Copy, Home, LayoutGrid, List, Minus, Plus, Settings as SettingsIcon, Square, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { tabKeyTarget } from "./services/tabKeys";
@@ -34,7 +34,12 @@ import {
   type TabState,
   type TabsState,
 } from "./services/tabs";
-import ExplorerHome, { type ExplorerNavigateRequest, type ExplorerStats } from "./views/ExplorerHome";
+import { viewModeShortcut } from "./commands/explorerCommands";
+import ExplorerHome, {
+  type ExplorerNavigateRequest,
+  type ExplorerStats,
+  type ExplorerViewModeRequest,
+} from "./views/ExplorerHome";
 import FileTabView from "./views/FileTabView";
 const GalleryView = lazy(() => import("./views/GalleryView"));
 const HelpCenter = lazy(() => import("./views/HelpCenter"));
@@ -78,11 +83,12 @@ export default function App() {
   const [tabsState, setTabsState] = useState<TabsState>(() => initialTabs());
   const { tabs, activeId } = tabsState;
   const [navigateRequest, setNavigateRequest] = useState<ExplorerNavigateRequest | null>(null);
+  const [viewModeRequest, setViewModeRequest] = useState<ExplorerViewModeRequest | null>(null);
   const [helpSlug, setHelpSlug] = useState("getting-started");
   const [showKeyTips, setShowKeyTips] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const maximizeRef = useRef<HTMLButtonElement | null>(null);
-  const [explorerStats, setExplorerStats] = useState<ExplorerStats>({ total: 0, selected: 0, selectedBytes: 0, selectedFiles: 0 });
+  const [explorerStats, setExplorerStats] = useState<ExplorerStats>({ total: 0, selected: 0, selectedBytes: 0, selectedFiles: 0, viewMode: null });
   const readyRef = useRef(false);
   const tabsRef = useRef(tabsState);
   tabsRef.current = tabsState;
@@ -519,6 +525,7 @@ export default function App() {
             onOpenFile={openFile}
             onOpenFileWith={openFileWith}
             navigateRequest={navigateRequest}
+            viewModeRequest={viewModeRequest}
             view={settings.explorer}
             onViewChange={onViewChange}
             pasteImageFormat={settings.files?.paste_image_format ?? "png"}
@@ -572,6 +579,28 @@ export default function App() {
                   {explorerStats.selectedFiles > 0 ? <span className="adp-status-size">{formatSize(explorerStats.selectedBytes, i18n.language)}</span> : null}
                 </span>
               </>
+            ) : null}
+            {explorerStats.viewMode !== null ? (
+              <span className="adp-status-views">
+                <IconButton
+                  icon={List}
+                  labelKey="commands.viewDetails"
+                  className="adp-status-view-btn"
+                  pressed={explorerStats.viewMode === "details"}
+                  shortcut={viewModeShortcut("details")}
+                  onClick={() => setViewModeRequest({ mode: "details", nonce: (viewModeRequest?.nonce ?? 0) + 1 })}
+                />
+                {settings.explorer.hidden_view_modes.includes("largeIcons") ? null : (
+                  <IconButton
+                    icon={LayoutGrid}
+                    labelKey="commands.viewLargeIcons"
+                    className="adp-status-view-btn"
+                    pressed={explorerStats.viewMode === "largeIcons"}
+                    shortcut={viewModeShortcut("largeIcons")}
+                    onClick={() => setViewModeRequest({ mode: "largeIcons", nonce: (viewModeRequest?.nonce ?? 0) + 1 })}
+                  />
+                )}
+              </span>
             ) : null}
           </>
         ) : (

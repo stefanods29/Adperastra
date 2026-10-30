@@ -4,7 +4,12 @@ import { supportedLanguages } from "../i18n";
 import Menu, { type MenuAnchor } from "../components/Menu";
 import Skeleton from "../components/Skeleton";
 import ToastStack, { type ToastData } from "../components/Toast";
-import { createExplorerCommands, type ExplorerActions, type ViewToggle } from "../commands/explorerCommands";
+import {
+  VIEW_MODE_COMMANDS,
+  createExplorerCommands,
+  type ExplorerActions,
+  type ViewToggle,
+} from "../commands/explorerCommands";
 import { ITEM_MENU, backgroundMenuFor, commandBarFor, resolveMenu } from "../commands/menus";
 import { CommandRegistry, isCommandEnabled, type Command, type CommandContext } from "../commands/registry";
 import {
@@ -104,7 +109,9 @@ import FileList from "./explorer/FileList";
 import { fileExtension } from "./explorer/fileTile";
 import HomePage, { type HomeTab } from "./explorer/HomePage";
 import NavPane from "./explorer/NavPane";
+import ItemView from "./explorer/views/ItemView";
 import { useViewMode } from "./explorer/views/useViewMode";
+import { skeletonVariant, viewModeFromKey } from "./explorer/views/viewModes";
 
 /** What the status bar shows for the Explorer tab. */
 export interface ExplorerStats {
@@ -112,6 +119,8 @@ export interface ExplorerStats {
   selected: number;
   selectedBytes: number;
   selectedFiles: number;
+  /** The open folder's view; null when no folder is open. */
+  viewMode: ViewModeId | null;
 }
 
 /** Ask the Explorer to open a folder (and select one item in it). A new
@@ -119,6 +128,12 @@ export interface ExplorerStats {
 export interface ExplorerNavigateRequest {
   folder: string;
   select: string | null;
+  nonce: number;
+}
+
+/** Status bar view buttons (Step 05a); a new `nonce` runs it again. */
+export interface ExplorerViewModeRequest {
+  mode: ViewModeId;
   nonce: number;
 }
 
@@ -133,6 +148,8 @@ export interface ExplorerHomeProps {
   /** "Open as text" and "Open as hex" (Step 04c): show a file in a chosen viewer. */
   onOpenFileWith?: (path: string, handlerId: string) => void;
   navigateRequest?: ExplorerNavigateRequest | null;
+  /** Status bar view buttons (Step 05a); a new `nonce` runs it again. */
+  viewModeRequest?: ExplorerViewModeRequest | null;
   /** View options from settings (schema 3); defaults when absent. */
   view?: ExplorerViewSettings;
   onViewChange?: (patch: Partial<ExplorerViewSettings>) => void;
@@ -218,6 +235,7 @@ export default function ExplorerHome({
   onOpenFile,
   onOpenFileWith,
   navigateRequest = null,
+  viewModeRequest = null,
   view: viewProp,
   onViewChange,
   pasteImageFormat = "png",
@@ -1075,6 +1093,13 @@ export default function ExplorerHome({
       if (document.querySelector("[role='dialog']")) return;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
       const ctrl = event.ctrlKey || event.metaKey;
+      // Ctrl+Shift+1 to 8 pick a view (Step 05a D6), by key position.
+      const requestedMode = viewModeFromKey(event);
+      if (requestedMode) {
+        event.preventDefault();
+        runById(VIEW_MODE_COMMANDS[requestedMode]);
+        return;
+      }
       if (ctrl && !event.altKey && (event.key === "z" || event.key === "Z") && !event.shiftKey) {
         event.preventDefault();
         runById("explorer.undo");
@@ -1126,6 +1151,14 @@ export default function ExplorerHome({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [runById]);
+
+  // Status bar view buttons (Step 05a).
+  useEffect(() => {
+    if (!viewModeRequest) return;
+    runById(VIEW_MODE_COMMANDS[viewModeRequest.mode]);
+    // Only a new request (new nonce) runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewModeRequest?.nonce]);
 
   // Initial shell data: known folders, explorer state, drive roots.
   useEffect(() => {
@@ -1339,8 +1372,14 @@ export default function ExplorerHome({
           : location.type === "drives"
             ? drives.length
             : 0;
-    onStatsChange?.({ total, selected: summary.count, selectedBytes: summary.bytes, selectedFiles: summary.files });
-  }, [onStatsChange, visibleItems.length, homeItems.length, drives.length, location.type, summary]);
+    onStatsChange?.({
+      total,
+      selected: summary.count,
+      selectedBytes: summary.bytes,
+      selectedFiles: summary.files,
+      viewMode: location.type === "folder" ? viewModeState.mode : null,
+    });
+  }, [onStatsChange, visibleItems.length, homeItems.length, drives.length, location.type, summary, viewModeState.mode]);
 
   const onFirstPaint = useCallback(() => {
     const bench = benchRef.current;
@@ -1699,20 +1738,22 @@ export default function ExplorerHome({
       const showNoResults = !loading && items.length > 0 && visibleItems.length === 0 && Boolean(search);
       folderContent = (
         <>
-          {showSkeleton ? <Skeleton variant="rows" count={10} /> : null}
+          {showSkeleton ? <Skeleton variant={skeletonVariant(viewModeState.mode)} count={10} /> : null}
           {showSlow ? <p className="adp-note">{t("explorer.stillLoading")}</p> : null}
           {showTimedOut ? <p className="adp-note">{t("explorer.notAvailable")}</p> : null}
           {partialCount > 0 ? <p className="adp-note" role="status">{t("explorer.someItemsUnreadable")}</p> : null}
           {showEmpty ? <p className="adp-empty-note">{t("explorer.emptyFolder")}</p> : null}
           {showNoResults ? <p className="adp-empty-note">{t("explorer.noSearchResults")}</p> : null}
           {visibleItems.length > 0 ? (
-            <FileList
+            <ItemView
               {...listProps}
               items={visibleItems}
               groups={groups}
               onSort={onSort}
               onFirstPaint={onFirstPaint}
               label={t("explorer.fileListLabel")}
+              mode={viewModeState.mode}
+              onZoomStep={viewModeState.zoomStep}
             />
           ) : null}
         </>
