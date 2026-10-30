@@ -10,13 +10,13 @@ Use Conventional Commits with the step, for example:
 feat(explorer): add breadcrumb path editing [step-02]
 ```
 
-Run the tests before you push:
+Run every check before you push (formatting, lints, Rust and UI tests, translations, Tauri commands, build):
 
 ```powershell
-cargo test --workspace
-npm test
-npm run lint:i18n
+.\scripts\gate.ps1
 ```
+
+After changing `src/i18n/locales/en.json`, run `npm run i18n:pseudo`.
 
 ## Developer Certificate of Origin
 
