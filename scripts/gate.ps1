@@ -28,8 +28,21 @@ function Invoke-Check {
     Write-Host ''
     Write-Host "==> $Name" -ForegroundColor Cyan
     $started = Get-Date
-    & $Command
-    $code = $LASTEXITCODE
+    $code = 0
+    $previousPreference = $ErrorActionPreference
+    try {
+        # Native tools write progress to stderr. Windows PowerShell 5.1
+        # turns that into an error record, so do not let
+        # $ErrorActionPreference stop the gate before $LASTEXITCODE is read.
+        $ErrorActionPreference = 'Continue'
+        & $Command
+        $code = $LASTEXITCODE
+    } catch {
+        Write-Host $_ -ForegroundColor Red
+        $code = 1
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
     $seconds = [int]((Get-Date) - $started).TotalSeconds
     if ($code -ne 0) {
         Write-Host ''
