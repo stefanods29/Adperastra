@@ -540,7 +540,8 @@
     "show": "[Shøw ~~]",
     "rotate": "[Røtätë ~~~]",
     "play": "[Pläÿ ~~]",
-    "playback": "[Pläÿbäçk ~~~~]"
+    "playback": "[Pläÿbäçk ~~~~]",
+    "tabs": "[Rïbbøñ täbs ~~~~]"
   },
   "text": {
     "position": "[Lñ {line}, Çøl {column} ~~]",

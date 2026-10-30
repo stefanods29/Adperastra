@@ -540,7 +540,8 @@
     "show": "Mostrar",
     "rotate": "Girar",
     "play": "Reproducir",
-    "playback": "Reproducción"
+    "playback": "Reproducción",
+    "tabs": "Pestañas de la cinta"
   },
   "text": {
     "position": "Lín. {line}, col. {column}",

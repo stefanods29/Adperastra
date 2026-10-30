@@ -540,7 +540,8 @@
     "show": "Show",
     "rotate": "Rotate",
     "play": "Play",
-    "playback": "Playback"
+    "playback": "Playback",
+    "tabs": "Ribbon tabs"
   },
   "text": {
     "position": "Ln {line}, Col {column}",

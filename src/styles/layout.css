@@ -35,3 +35,20 @@
 .adp-commandbar--vertical .adp-cmd-sep { width:100%; height:1px; margin:var(--adp-space-1) 0; }
 .adp-commandbar--vertical.adp-commandbar--icons .adp-cmd-sep { width:24px; align-self:center; }
 .adp-commandbar--vertical .adp-cmd-spacer { flex:1; }
+
+/* The ribbon in every style and on every side (Step 05c). */
+.adp-ribbon--compact .adp-ribbon-body { height:40px; }
+.adp-ribbon--compact .adp-ribbon-btn { height:28px; }
+.adp-ribbon--vertical { display:flex; flex-direction:column; width:200px; }
+.adp-ribbon--vertical.adp-ribbon--compact { width:168px; }
+.adp-ribbon--vertical.adp-ribbon--icons { width:48px; }
+.adp-ribbon--vertical .adp-ribbon-body { flex-direction:column; align-items:stretch; flex:1; height:auto; overflow-y:auto; overflow-x:hidden; padding:var(--adp-space-3) 6px; gap:2px; }
+.adp-ribbon--vertical .adp-ribbon-group { flex-direction:column; align-items:stretch; gap:2px; }
+.adp-ribbon--vertical .adp-ribbon-sep { width:100%; height:1px; margin:var(--adp-space-1) 0; }
+.adp-ribbon--vertical .adp-ribbon-btn { justify-content:flex-start; width:100%; }
+.adp-ribbon--vertical.adp-ribbon--compact .adp-ribbon-btn { height:28px; }
+.adp-ribbon--vertical.adp-ribbon--icons .adp-ribbon-btn { justify-content:center; width:36px; padding:0; }
+.adp-ribbon--vertical .adp-ribbon-custom { display:flex; flex-direction:column; align-items:stretch; gap:var(--adp-space-1); }
+.adp-ribbon-tabpick { padding:var(--adp-space-2); }
+.adp-flyout { position:fixed; display:flex; flex-direction:column; min-width:200px; padding:var(--adp-space-4); gap:var(--adp-space-3); overflow-y:auto; z-index:70; background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-lg); box-shadow:var(--adp-shadow-card); }
+.adp-flyout .adp-ribbon-custom { display:flex; flex-direction:column; align-items:stretch; gap:var(--adp-space-1); }
