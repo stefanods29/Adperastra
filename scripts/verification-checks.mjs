@@ -118,13 +118,25 @@ function repositoryProblems() {
   return problems;
 }
 
-function npmLicenseProblems() {
-  const lock = JSON.parse(readFileSync(path.join(root, "package-lock.json"), "utf8"));
-  const entries = Object.entries(lock.packages).filter(([name]) => name);
-  const problems = entries.filter(([, item]) => !licenseAllowed(item.license))
+// R-LIC-1 governs what ships. Development-only packages (tests, build tools)
+// never reach the app; a runtime package listed in npm_not_bundled must give
+// the reason it never enters the bundle. Every other package must be allowed.
+export function npmLicenseProblems(packages, notBundled = {}) {
+  const entries = Object.entries(packages).filter(([name]) => name);
+  const shipped = entries.filter(([name, item]) => !item.dev && !(name in notBundled));
+  for (const [name, reason] of Object.entries(notBundled)) {
+    if (typeof reason !== "string" || reason.trim().length < 20) throw new Error(`${name}: npm_not_bundled needs a reason`);
+  }
+  const problems = shipped.filter(([, item]) => !licenseAllowed(item.license))
     .map(([name, item]) => `${name}@${item.version}: license needs approval: ${item.license ?? "missing"}`);
-  console.log(`Checked licenses of ${entries.length} npm packages, including development and optional dependencies.`);
-  return problems;
+  return { problems, checked: shipped.length, skipped: entries.length - shipped.length };
+}
+
+function npmLockLicenseProblems() {
+  const lock = JSON.parse(readFileSync(path.join(root, "package-lock.json"), "utf8"));
+  const result = npmLicenseProblems(lock.packages, policy.npm_not_bundled ?? {});
+  console.log(`Checked licenses of ${result.checked} npm packages that can ship; skipped ${result.skipped} development-only or documented not-bundled packages.`);
+  return result.problems;
 }
 
 function allHelpProblems() {
@@ -140,7 +152,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const mode = process.argv[2];
   let problems = [];
   if (mode === "repo") problems = repositoryProblems();
-  else if (mode === "licenses") problems = npmLicenseProblems();
+  else if (mode === "licenses") problems = npmLockLicenseProblems();
   else if (mode === "help") problems = allHelpProblems();
   else if (mode === "cargo-config") {
     if (!process.argv[3]) throw new Error("cargo-config needs an output path");

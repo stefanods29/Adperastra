@@ -15,7 +15,8 @@ if (-not $NoBuild -and (-not (Test-Path -LiteralPath $Exe) -or (Get-Item -Litera
     npx -y @tauri-apps/cli@2 build --no-bundle
     if ($LASTEXITCODE -ne 0) { throw 'Runtime app build failed' }
 }
-$OutputDirectory = [IO.Path]::GetFullPath((Join-Path $repo $OutputDirectory))
+if (-not [IO.Path]::IsPathRooted($OutputDirectory)) { $OutputDirectory = Join-Path $repo $OutputDirectory }
+$OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $variants = @(@{ language='en'; theme='light'; scale=1 })
 if ($Mode -eq 'full') {

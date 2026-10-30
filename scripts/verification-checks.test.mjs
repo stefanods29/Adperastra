@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { licenseAllowed, repositoryFileProblems, helpProblems } from "./verification-checks.mjs";
+import { licenseAllowed, repositoryFileProblems, helpProblems, npmLicenseProblems } from "./verification-checks.mjs";
 
 test("a disjunction needs one allowed license and a conjunction needs every license", () => {
   assert.equal(licenseAllowed("MIT OR GPL-3.0-only"), true);
@@ -38,4 +38,20 @@ test("help parity and local links fail on missing pages and traversal", () => {
   assert.match(helpProblems(files).join(), /missing es\/next.md/i);
   files.set("en/start.md", "[Unsafe](../../private.md)");
   assert.match(helpProblems(files).join(), /outside help/i);
+});
+
+test("npm licenses: shipped packages must be allowed; dev and documented not-bundled packages are skipped", () => {
+  const packages = {
+    "": { name: "app" },
+    "node_modules/ok": { version: "1.0.0", license: "MIT" },
+    "node_modules/bad": { version: "1.0.0", license: "GPL-3.0-only" },
+    "node_modules/devtool": { version: "1.0.0", license: "BlueOak-1.0.0", dev: true },
+    "node_modules/cli-only": { version: "1.0.0", license: "PSF-2.0" },
+  };
+  const reason = "Used only by a command-line program that the app never imports.";
+  const result = npmLicenseProblems(packages, { "node_modules/cli-only": reason });
+  assert.deepEqual(result.problems, ["node_modules/bad@1.0.0: license needs approval: GPL-3.0-only"]);
+  assert.equal(result.checked, 2);
+  assert.match(npmLicenseProblems(packages).problems.join(), /cli-only/);
+  assert.throws(() => npmLicenseProblems(packages, { "node_modules/cli-only": "" }), /reason/);
 });
