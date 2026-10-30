@@ -408,6 +408,12 @@
       "invalid": "This link can't be opened from here.",
       "failed": "The link couldn't be opened.",
       "other": "The link couldn't be opened."
+    },
+    "folderViews": {
+      "bad_path": "That folder path isn't valid.",
+      "bad_mode": "That view isn't available.",
+      "path_too_long": "This folder's path is too long to remember its view.",
+      "other": "Couldn't change the remembered folder views. Try again."
     }
   },
   "keys": {

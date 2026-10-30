@@ -25,6 +25,7 @@ mod clipboard_image_helper;
 mod drag;
 mod explorer;
 mod files;
+mod folder_views;
 mod links;
 mod media;
 mod operation_safety;
@@ -2462,6 +2463,7 @@ fn main() {
             watch_next_id: AtomicU64::new(0),
         })
         .manage(files::FileGrants::default())
+        .manage(folder_views::FolderViewsLock::default())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -2540,6 +2542,9 @@ fn main() {
             files::file_detect,
             files::file_grant,
             files::file_revoke,
+            folder_views::folder_views_get,
+            folder_views::folder_view_set,
+            folder_views::folder_views_clear,
             links::open_external_url,
             zone::file_unblock,
             media::media_sidecars,

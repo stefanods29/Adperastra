@@ -408,6 +408,12 @@
       "invalid": "Este vínculo no se puede abrir desde aquí.",
       "failed": "No se pudo abrir el vínculo.",
       "other": "No se pudo abrir el vínculo."
+    },
+    "folderViews": {
+      "bad_path": "La ruta de esa carpeta no es válida.",
+      "bad_mode": "Esa vista no está disponible.",
+      "path_too_long": "La ruta de esta carpeta es demasiado larga para recordar su vista.",
+      "other": "No se pudieron cambiar las vistas de carpetas recordadas. Vuelve a intentarlo."
     }
   },
   "keys": {

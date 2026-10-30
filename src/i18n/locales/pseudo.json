@@ -408,6 +408,12 @@
       "invalid": "[Thïs lïñk çäñ't bë øpëñëd frøm hërë. ~~~~~~~~~~~~]",
       "failed": "[Thë lïñk çøüldñ't bë øpëñëd. ~~~~~~~~~]",
       "other": "[Thë lïñk çøüldñ't bë øpëñëd. ~~~~~~~~~]"
+    },
+    "folderViews": {
+      "bad_path": "[Thät føldër päth ïsñ't välïd. ~~~~~~~~~~]",
+      "bad_mode": "[Thät vïëw ïsñ't äväïläblë. ~~~~~~~~~]",
+      "path_too_long": "[Thïs føldër's päth ïs tøø løñg tø rëmëmbër ïts vïëw. ~~~~~~~~~~~~~~~~~]",
+      "other": "[Çøüldñ't çhäñgë thë rëmëmbërëd føldër vïëws. Trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~]"
     }
   },
   "keys": {
