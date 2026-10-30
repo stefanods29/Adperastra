@@ -1,6 +1,7 @@
 {
   "tabs": {
     "explorer": "Explorer",
+    "file": "File",
     "newTab": "New tab",
     "close": "Close tab"
   },
@@ -439,6 +440,14 @@
   },
   "handlers": {
     "image": "Image"
+  },
+  "fileTab": {
+    "showInFolder": "Show in folder",
+    "reload": "Reload",
+    "notFoundTitle": "This file was moved or deleted.",
+    "notFoundBody": "It was in {folder}",
+    "openFolder": "Open folder",
+    "openInWindowsApp": "Open in Windows app"
   },
   "viewer": {
     "loadingImage": "Loading image…",

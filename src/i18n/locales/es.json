@@ -1,6 +1,7 @@
 {
   "tabs": {
     "explorer": "Explorador",
+    "file": "Archivo",
     "newTab": "Nueva pestaña",
     "close": "Cerrar pestaña"
   },
@@ -439,6 +440,14 @@
   },
   "handlers": {
     "image": "Imagen"
+  },
+  "fileTab": {
+    "showInFolder": "Mostrar en la carpeta",
+    "reload": "Volver a cargar",
+    "notFoundTitle": "Este archivo se movió o se eliminó.",
+    "notFoundBody": "Estaba en {folder}",
+    "openFolder": "Abrir carpeta",
+    "openInWindowsApp": "Abrir en la aplicación de Windows"
   },
   "viewer": {
     "loadingImage": "Cargando imagen…",

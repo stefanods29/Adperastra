@@ -1,6 +1,7 @@
 {
   "tabs": {
     "explorer": "[Ëxplørër ~~~~]",
+    "file": "[Fïlë ~~]",
     "newTab": "[Ñëw täb ~~~]",
     "close": "[Çløsë täb ~~~~]"
   },
@@ -439,6 +440,14 @@
   },
   "handlers": {
     "image": "[Ïmägë ~~]"
+  },
+  "fileTab": {
+    "showInFolder": "[Shøw ïñ føldër ~~~~~]",
+    "reload": "[Rëløäd ~~~]",
+    "notFoundTitle": "[Thïs fïlë wäs møvëd ør dëlëtëd. ~~~~~~~~~~]",
+    "notFoundBody": "[Ït wäs ïñ {folder} ~~~]",
+    "openFolder": "[Øpëñ føldër ~~~~]",
+    "openInWindowsApp": "[Øpëñ ïñ Wïñdøws äpp ~~~~~~~]"
   },
   "viewer": {
     "loadingImage": "[Løädïñg ïmägë… ~~~~~]",
