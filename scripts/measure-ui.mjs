@@ -269,6 +269,11 @@ if (mode === "full") {
   results.push(await measure("100k folder: select all (Ctrl+A)", `window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "a", ctrlKey: true })`));
   results.push(await measure("100k folder: right-click with all selected", `window.__m.list().focus(); window.__m.key(window.__m.list(), { key: "a", ctrlKey: true }); true`, `window.__m.context(window.__m.rows()[2])`, `window.__m.closeMenus(); true`));
   results.push(await measure("100k folder: Shift+click range", `window.__m.click(window.__m.rows()[0]); true`, `window.__m.click(window.__m.rows()[20], { shiftKey: true })`));
+  // Step 05a: the views. Shortcuts read the key's position, so `code` is
+  // what matters; the typed character is the one Shift produces.
+  results.push(await measure("100k folder: switch to Large icons (Ctrl+Shift+2)", `true`, `window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  results.push(await measure("100k folder: arrow key move in Large icons", `window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true }); window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "ArrowRight" })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  results.push(await measure("100k folder: switch to List (Ctrl+Shift+5)", `true`, `window.__m.key(window, { key: "%", code: "Digit5", ctrlKey: true, shiftKey: true })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
   // Smooth tier: scroll the 100k list one wheel-step per frame for 2 s and
   // record every frame interval. The display's own frame time is the median
   // interval; a frame slower than 1.5x of it is a dropped frame.
@@ -660,6 +665,23 @@ if (shotDir) {
   await sleep(300);
   await shot("16-protected-view");
   await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  // Step 05a: the views, and the View menu in the chosen order.
+  await step(`window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true })`);
+  await step(`window.__m.click(window.__m.rows()[2])`);
+  await step(`document.activeElement?.blur()`);
+  await sleep(300);
+  await shot("17-large-icons");
+  await step(`window.__m.key(window, { key: "&", code: "Digit7", ctrlKey: true, shiftKey: true })`);
+  await shot("18-tiles");
+  await step(`window.__m.key(window, { key: "*", code: "Digit8", ctrlKey: true, shiftKey: true })`);
+  await shot("19-content");
+  await step(`window.__m.key(window, { key: "%", code: "Digit5", ctrlKey: true, shiftKey: true })`);
+  await shot("20-list");
+  await step(`window.__m.menuButton(2).click()`);
+  await sleep(200);
+  await shot("21-view-menu");
+  await step(`window.__m.closeMenus()`);
+  await step(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true })`);
 }
 
 cdp.close();
