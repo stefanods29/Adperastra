@@ -367,7 +367,7 @@ export default function FileList(props: FileListProps) {
   const header = (key: SortKey, labelKey: string, className: string) => {
     if (!props.onSort) {
       return (
-        <span role="columnheader" className={`adp-filelist-header-cell adp-filelist-header-cell--static ${className}`}>
+        <span className={`adp-filelist-header-cell adp-filelist-header-cell--static ${className}`}>
           {t(labelKey)}
         </span>
       );
@@ -375,10 +375,12 @@ export default function FileList(props: FileListProps) {
     return (
       <button
         type="button"
-        role="columnheader"
         className={`adp-filelist-header-cell ${className}`}
-        aria-label={t("explorer.sortBy", { name: t(labelKey) })}
-        aria-sort={props.sortKey === key ? (props.sortDirection === "ascending" ? "ascending" : "descending") : undefined}
+        aria-label={
+          props.sortKey === key
+            ? t(props.sortDirection === "ascending" ? "explorer.sortedAscending" : "explorer.sortedDescending", { name: t(labelKey) })
+            : t("explorer.sortBy", { name: t(labelKey) })
+        }
         onClick={() => props.onSort?.(key)}
       >
         <span>{t(labelKey)}</span>
@@ -392,7 +394,7 @@ export default function FileList(props: FileListProps) {
 
   return (
     <div className={virtual ? "adp-filelist" : "adp-filelist adp-filelist--static"}>
-      <div className="adp-filelist-header" role="row">
+      <div className="adp-filelist-header" role="group" aria-label={t("explorer.columnsLabel")}>
         {props.checkboxes ? (
           <span
             className={`adp-row-check adp-row-check--header${allSelected ? " adp-row-check--on" : ""}`}

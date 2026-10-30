@@ -79,6 +79,16 @@ function requestedView(): TabState | null {
 
 export default function App() {
   const { t, i18n } = useTranslation();
+
+  // Tauri's isolation frame (R-SEC) is invisible: hide it from assistive
+  // technology and give it a name, as every frame needs one.
+  useEffect(() => {
+    const frame = document.getElementById("__tauri_isolation__");
+    if (!frame) return;
+    frame.setAttribute("title", t("window.securityFrame"));
+    frame.setAttribute("aria-hidden", "true");
+    frame.setAttribute("tabindex", "-1");
+  }, [t, i18n.language]);
   const [settings, setSettings] = useState<AppSettings>(() => defaultSettings());
   const [tabs, setTabs] = useState([EXPLORER_TAB]);
   const [activeId, setActiveId] = useState("explorer");
@@ -101,7 +111,6 @@ export default function App() {
           : "light"
         : next.theme.mode;
     document.documentElement.dataset.theme = resolved;
-    document.documentElement.lang = next.language;
     await applyLanguage(next.language);
     let accent = "var(--adp-accent-explorer)";
     if (next.theme.accent_source === "custom") {
@@ -384,7 +393,8 @@ export default function App() {
   return (
     <div className="adp-shell">
       <header className="adp-titlebar" data-tauri-drag-region="">
-        <div className="adp-tabbar" role="tablist">
+        <div className="adp-tabbar">
+          <div className="adp-tablist" role="tablist">
           {tabs.map((tab) => {
             const Icon =
               tab.kind === "explorer"
@@ -425,6 +435,7 @@ export default function App() {
               </div>
             );
           })}
+          </div>
           <DropdownMenu
             ariaLabel={t("tabs.newTab")}
             icon={Plus}

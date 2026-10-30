@@ -8,7 +8,8 @@
     "minimize": "Minimizar",
     "maximize": "Maximizar",
     "restore": "Restaurar",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "securityFrame": "Capa de seguridad"
   },
   "explorer": {
     "quickAccess": "Acceso rápido",
@@ -129,7 +130,10 @@
     },
     "shareTitle": "{count, plural, one {# archivo} other {# archivos}}",
     "loadingMoreOptions": "Cargando más opciones…",
-    "openedFirst": "Se abrieron los primeros {count} archivos. Abre el resto de a pocos."
+    "openedFirst": "Se abrieron los primeros {count} archivos. Abre el resto de a pocos.",
+    "sortedAscending": "{name}, en orden ascendente. Selecciona para ordenar en forma descendente.",
+    "sortedDescending": "{name}, en orden descendente. Selecciona para ordenar en forma ascendente.",
+    "columnsLabel": "Columnas"
   },
   "help": {
     "title": "Ayuda",

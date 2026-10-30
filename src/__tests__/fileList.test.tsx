@@ -96,6 +96,17 @@ async function renderList(overrides: Partial<FileListProps> = {}, initial: Selec
 const selected = (state: SelectionState) => [...state.selected].map((p) => p.split("\\").pop()).sort();
 
 describe("FileList", () => {
+  it("column headers are buttons in a named group, without grid roles a list cannot hold", async () => {
+    await renderList({ onSort: () => undefined, sortKey: "name", sortDirection: "descending" });
+    const header = container!.querySelector(".adp-filelist-header")!;
+    expect(header.getAttribute("role")).toBe("group");
+    expect(header.getAttribute("aria-label")).toBe("Columns");
+    expect(container!.querySelector("[role='row'], [role='columnheader']")).toBeNull();
+    const labels = [...header.querySelectorAll("button")].map((button) => button.getAttribute("aria-label"));
+    expect(labels[0]).toBe("Name, sorted descending. Select to sort ascending.");
+    expect(labels[1]).toBe("Sort by Date modified");
+  });
+
   it("arrow keys move the selection and Shift extends it", async () => {
     const list = await renderList({}, selectOnly(items[0].path));
     await list.key({ key: "ArrowDown" });

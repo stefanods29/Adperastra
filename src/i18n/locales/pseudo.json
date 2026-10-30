@@ -8,7 +8,8 @@
     "minimize": "[Mïïñïmïïzëë Mïïñïï]",
     "maximize": "[Määxïmïïzëë Määxïï]",
     "restore": "[Rëëstøørëë Rëëstøø]",
-    "close": "[Çløøsëë Çløøsëë]"
+    "close": "[Çløøsëë Çløøsëë]",
+    "securityFrame": "[Sëçürïtÿ läÿër ~~~~~~]"
   },
   "explorer": {
     "quickAccess": "[Qüïïçk ääççëëss Qüïïçk]",
@@ -129,7 +130,10 @@
     },
     "shareTitle": "{count, plural, one {[# fïïlëë]} other {[# fïïlëës]}}",
     "loadingMoreOptions": "[Löädïng mörë öptïöns… ëxträ]",
-    "openedFirst": "[Øpënëd thë fïrst {count} fïlës. Øpën thë rëst ä fëw ät ä tïmë. ëxträ]"
+    "openedFirst": "[Øpënëd thë fïrst {count} fïlës. Øpën thë rëst ä fëw ät ä tïmë. ëxträ]",
+    "sortedAscending": "[{name}, sørtëd äsçëñdïñg. Sëlëçt tø sørt dësçëñdïñg. ~~~~~~~~~~~~~~~]",
+    "sortedDescending": "[{name}, sørtëd dësçëñdïñg. Sëlëçt tø sørt äsçëñdïñg. ~~~~~~~~~~~~~~~]",
+    "columnsLabel": "[Çølümñs ~~~]"
   },
   "help": {
     "title": "[Hëëlp Hëëlp]",

@@ -8,7 +8,8 @@
     "minimize": "Minimize",
     "maximize": "Maximize",
     "restore": "Restore",
-    "close": "Close"
+    "close": "Close",
+    "securityFrame": "Security layer"
   },
   "explorer": {
     "quickAccess": "Quick access",
@@ -129,7 +130,10 @@
     },
     "shareTitle": "{count, plural, one {# file} other {# files}}",
     "loadingMoreOptions": "Loading more options…",
-    "openedFirst": "Opened the first {count} files. Open the rest a few at a time."
+    "openedFirst": "Opened the first {count} files. Open the rest a few at a time.",
+    "sortedAscending": "{name}, sorted ascending. Select to sort descending.",
+    "sortedDescending": "{name}, sorted descending. Select to sort ascending.",
+    "columnsLabel": "Columns"
   },
   "help": {
     "title": "Help",

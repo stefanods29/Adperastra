@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import i18n from "../i18n";
+import i18n, { applyLanguage, htmlLang } from "../i18n";
 import en from "../i18n/locales/en.json";
 import es from "../i18n/locales/es.json";
 import pseudo from "../i18n/locales/pseudo.json";
@@ -52,5 +52,17 @@ describe("locale parity", () => {
     expect(i18n.t("explorer.statusItems", { count: 1 })).toBe("1 elemento");
     expect(i18n.t("explorer.statusItems", { count: 5 })).toBe("5 elementos");
     await i18n.changeLanguage("en");
+  });
+});
+describe("page language", () => {
+  it("uses a valid language tag for every app language", async () => {
+    expect(htmlLang("en")).toBe("en");
+    expect(htmlLang("es")).toBe("es");
+    expect(htmlLang("pseudo")).toBe("en-XA");
+    for (const lang of ["en", "es", "pseudo"]) {
+      await applyLanguage(lang);
+      expect(() => new Intl.Locale(document.documentElement.lang)).not.toThrow();
+    }
+    await applyLanguage("en");
   });
 });

@@ -25,10 +25,17 @@ void i18n
     },
   });
 
+/** The page's `lang` attribute: a valid BCP 47 tag, so screen readers and
+ * accessibility checks accept it. The pseudo-locale is English text in
+ * disguise and uses the standard pseudo-locale tag en-XA. */
+export function htmlLang(lang: SupportedLanguage): string {
+  return lang === "pseudo" ? "en-XA" : lang;
+}
+
 export function applyLanguage(lang: string): Promise<unknown> {
-  const next = (supportedLanguages as readonly string[]).includes(lang) ? lang : "en";
+  const next = (supportedLanguages as readonly string[]).includes(lang) ? (lang as SupportedLanguage) : "en";
   if (typeof document !== "undefined") {
-    document.documentElement.lang = next;
+    document.documentElement.lang = htmlLang(next);
   }
   return i18n.changeLanguage(next);
 }
