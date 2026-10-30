@@ -385,6 +385,11 @@
     "shortcut": {
       "failed": "The shortcut couldn't be created.",
       "other": "The shortcut couldn't be created."
+    },
+    "links": {
+      "invalid": "This link can't be opened from here.",
+      "failed": "The link couldn't be opened.",
+      "other": "The link couldn't be opened."
     }
   },
   "keys": {

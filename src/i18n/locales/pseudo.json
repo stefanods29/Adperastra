@@ -385,6 +385,11 @@
     "shortcut": {
       "failed": "[Thë shørtçüt çøüldñ't bë çrëätëd. ~~~~~~~~~~~]",
       "other": "[Thë shørtçüt çøüldñ't bë çrëätëd. ~~~~~~~~~~~]"
+    },
+    "links": {
+      "invalid": "[Thïs lïñk çäñ't bë øpëñëd frøm hërë. ~~~~~~~~~~~~]",
+      "failed": "[Thë lïñk çøüldñ't bë øpëñëd. ~~~~~~~~~]",
+      "other": "[Thë lïñk çøüldñ't bë øpëñëd. ~~~~~~~~~]"
     }
   },
   "keys": {

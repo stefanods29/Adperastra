@@ -385,6 +385,11 @@
     "shortcut": {
       "failed": "No se pudo crear el acceso directo.",
       "other": "No se pudo crear el acceso directo."
+    },
+    "links": {
+      "invalid": "Este vínculo no se puede abrir desde aquí.",
+      "failed": "No se pudo abrir el vínculo.",
+      "other": "No se pudo abrir el vínculo."
     }
   },
   "keys": {
