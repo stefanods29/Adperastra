@@ -3,7 +3,9 @@
     "explorer": "[Ëxplørër ~~~~]",
     "file": "[Fïlë ~~]",
     "newTab": "[Ñëw täb ~~~]",
-    "close": "[Çløsë täb ~~~~]"
+    "close": "[Çløsë täb ~~~~]",
+    "collapse": "[Shøw øñlÿ ïçøñs ~~~~~~]",
+    "expand": "[Shøw ñämës ~~~~]"
   },
   "window": {
     "minimize": "[Mïñïmïzë ~~~~]",
@@ -38,6 +40,9 @@
     "genericFile": "[Fïlë ~~]",
     "onlineOnly": "[Øñlïñë øñlÿ ~~~~]",
     "isLink": "[Lïñk ~~]",
+    "columnPreview": "[Prëvïëw ~~~]",
+    "contentModified": "[Dätë mødïfïëd: {date} ~~~~~]",
+    "contentSize": "[Sïzë: {size} ~~]",
     "loadingFolder": "[Løädïñg føldër... ~~~~~~]",
     "stillLoading": "[Stïll løädïñg... ~~~~~]",
     "loadError": "[Thïs føldër çøüld ñøt bë øpëñëd. ~~~~~~~~~~~]",
@@ -162,7 +167,53 @@
     "persistNote": "[Sëttïñgs ärë sävëd äütømätïçällÿ äñd äpplÿ rïght äwäÿ. ~~~~~~~~~~~~~~~~~~~]",
     "pastedImages": "[Pästëd ïmägës ~~~~~]",
     "formatPng": "[PÑG (shärpër, lärgër fïlës) ~~~~~~~~~]",
-    "formatJpg": "[JPG (smällër fïlës) ~~~~~~]"
+    "formatJpg": "[JPG (smällër fïlës) ~~~~~~]",
+    "views": "[Vïëws ~~]",
+    "viewsDefault": "[Dëfäült vïëw ~~~~~]",
+    "viewsRemember": "[Rëmëmbër ëäçh føldër's vïëw ~~~~~~~~~~]",
+    "viewsRememberNote": "[Whëñ thïs ïs øff, çhøøsïñg ä vïëw çhäñgës ït før äll føldërs. ~~~~~~~~~~~~~~~~~~~~]",
+    "viewsForget": "[Førgët føldër vïëws ~~~~~~~]",
+    "viewsForgotten": "[Føldër vïëws førgøttëñ. Äll føldërs ñøw üsë thë dëfäült vïëw. ~~~~~~~~~~~~~~~~~~~~]",
+    "viewsMenu": "[Vïëws ïñ thë Vïëw mëñü ~~~~~~~~]",
+    "viewsMenuNote": "[Türñ ä vïëw øff tø hïdë ït frøm thë Vïëw mëñü. Dëtäïls ïs älwäÿs shøwñ. ~~~~~~~~~~~~~~~~~~~~~~]",
+    "viewsColumns": "[Çølümñ vïëw ~~~~]",
+    "columnWidth": "[Çølümñ wïdth ~~~~~]",
+    "columnWidthNote": "[Ÿøü çäñ älsø dräg thë ëdgë øf ä çølümñ. Døüblë-çlïçk thë ëdgë tø gø bäçk tø thë stäñdärd wïdth. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "columnPreview": "[Shøw ä prëvïëw øf thë sëlëçtëd fïlë ~~~~~~~~~~~~]",
+    "viewsMoveUp": "[Møvë {name} üp ~~~]",
+    "viewsMoveDown": "[Møvë {name} døwñ ~~~~]",
+    "openingFiles": "[Øpëñïñg fïlës ~~~~~]",
+    "protectedView": "[Prøtëçtëd vïëw før fïlës frøm thë ïñtërñët ~~~~~~~~~~~~~~~]",
+    "protectedViewNote": "[Fïlës døwñløädëd frøm thë ïñtërñët øpëñ wïth ä ÿëlløw bär, äñd thëïr lïñks stäÿ øff üñtïl ÿøü üñbløçk thëm. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "defaultApps": "[Dëfäült äpps ~~~~~]",
+    "defaultAppsNote": "[Çhøøsë whërë ëäçh tÿpë øf fïlë øpëñs whëñ ÿøü døüblë-çlïçk ït: ïñ Ädpërästrä ør ïñ ïts Wïñdøws äpp. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "findFileType": "[Fïñd ä fïlë tÿpë (før ëxämplë txt) ~~~~~~~~~~~]",
+    "noFileTypes": "[Ñø fïlë tÿpë mätçhës. ~~~~~~~]",
+    "fileTypeCount": "[{count, plural, one {# fïlë tÿpë} other {# fïlë tÿpës}} ~~~~]",
+    "openGroupWith": "[Øpëñ {name} fïlës wïth ~~~~~~]",
+    "openTypeWith": "[Øpëñ .{ext} fïlës wïth ~~~~~~]",
+    "openInAdperastra": "[Ädpërästrä ~~~~]",
+    "openInWindowsApp": "[Wïñdøws äpp ~~~~]",
+    "openMixed": "[Mïxëd ~~]",
+    "layout": "[Läÿøüt ~~~]",
+    "layoutCustom": "[Çüstøm ~~~]",
+    "layoutSave": "[Sävë äs prësët… ~~~~~]",
+    "layoutSaveTitle": "[Sävë läÿøüt prësët ~~~~~~~]",
+    "layoutPresetName": "[Prësët ñämë ~~~~]",
+    "layoutNameTooLong": "[Üsë ät møst {max} çhäräçtërs. ~~~~~~~~]",
+    "layoutNameDuplicate": "[Ä prësët wïth thïs ñämë älrëädÿ ëxïsts. ~~~~~~~~~~~~~]",
+    "layoutFull": "[Ÿøü çäñ sävë üp tø {max} prësëts. Dëlëtë øñë tø sävë äñøthër. ~~~~~~~~~~~~~~~~~~]",
+    "layoutSaved": "[Ÿøür prësëts ~~~~~]",
+    "layoutDelete": "[Dëlëtë {name} ~~~]",
+    "tabBarPosition": "[Täb bär pøsïtïøñ ~~~~~~]",
+    "tabBarCollapsed": "[Shøw øñlÿ ïçøñs ïñ ä sïdë täb bär ~~~~~~~~~~~]",
+    "navPane": "[Ñävïgätïøñ päñë ~~~~~~]",
+    "detailsPanePlace": "[Dëtäïls päñë ~~~~~]",
+    "placeTop": "[Tøp ~~]",
+    "placeBottom": "[Bøttøm ~~~]",
+    "placeLeft": "[Lëft ~~]",
+    "placeRight": "[Rïght ~~]",
+    "placeHidden": "[Hïddëñ ~~~]"
   },
   "gallery": {
     "title": "[Gällërÿ ~~~]",
@@ -257,6 +308,9 @@
     "share": "[Shärë ~~]",
     "openInWindowsApp": "[Øpëñ ïñ Wïñdøws äpp ~~~~~~~]",
     "openWith": "[Øpëñ wïth… ~~~~]",
+    "openAs": "[Øpëñ äs ~~~]",
+    "openAsText": "[Øpëñ äs tëxt ~~~~]",
+    "openAsHex": "[Øpëñ äs hëx ~~~~]",
     "copyPath": "[Çøpÿ äs päth ~~~~]",
     "addFavorite": "[Ädd tø fävørïtës ~~~~~~]",
     "removeFavorite": "[Rëmøvë frøm fävørïtës ~~~~~~~~]",
@@ -283,6 +337,10 @@
     "viewSmallIcons": "[Smäll ïçøñs ~~~~]",
     "viewMediumIcons": "[Mëdïüm ïçøñs ~~~~~]",
     "viewLargeIcons": "[Lärgë ïçøñs ~~~~]",
+    "viewExtraLargeIcons": "[Ëxträ lärgë ïçøñs ~~~~~~]",
+    "viewTiles": "[Tïlës ~~]",
+    "viewContent": "[Çøñtëñt ~~~]",
+    "viewColumns": "[Çølümñs ~~~]",
     "detailsPane": "[Dëtäïls päñë ~~~~~]",
     "hiddenItems": "[Hïddëñ ïtëms ~~~~~]",
     "fileExtensions": "[Fïlë ñämë ëxtëñsïøñs ~~~~~~~~]",
@@ -295,7 +353,18 @@
     "deletePermanently": "[Dëlëtë përmäñëñtlÿ ~~~~~~~]",
     "undo": "[Üñdø ~~]",
     "redo": "[Rëdø ~~]",
-    "recentActions": "[Rëçëñt äçtïøñs ~~~~~~]"
+    "recentActions": "[Rëçëñt äçtïøñs ~~~~~~]",
+    "toolbarTop": "[Tøp ~~]",
+    "toolbarBottom": "[Bøttøm ~~~]",
+    "toolbarLeft": "[Lëft ~~]",
+    "toolbarRight": "[Rïght ~~]",
+    "toolbarFull": "[Ïçøñs äñd läbëls ~~~~~~]",
+    "toolbarCompact": "[Çømpäçt ~~~]",
+    "toolbarIconsOnly": "[Ïçøñs øñlÿ ~~~~]",
+    "toolbarAutoHide": "[Hïdë üñtïl pøïñtëd ät ~~~~~~~~]",
+    "presetStandard": "[Stäñdärd ~~~~]",
+    "presetMinimal": "[Mïñïmäl ~~~]",
+    "presetClassic": "[Çlässïç ~~~]"
   },
   "errors": {
     "rename": {
@@ -349,6 +418,8 @@
       "read_failed": "[Thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~]",
       "too_many_open": "[Tøø mäñÿ fïlës ärë øpëñ. Çløsë sømë täbs äñd trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~]",
       "invalid_request": "[Thïs fïlë çøüldñ't bë øpëñëd. ~~~~~~~~~~]",
+      "unblock_denied": "[Wïñdøws dïdñ't älløw rëmøvïñg thë märk. Thë fïlë mäÿ bë rëäd-øñlÿ ør ïñ üsë. ~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "unblock_failed": "[Thë märk çøüldñ't bë rëmøvëd. ~~~~~~~~~~]",
       "other": "[Thïs fïlë çøüldñ't bë øpëñëd. ~~~~~~~~~~]"
     },
     "ops": {
@@ -390,6 +461,12 @@
       "invalid": "[Thïs lïñk çäñ't bë øpëñëd frøm hërë. ~~~~~~~~~~~~]",
       "failed": "[Thë lïñk çøüldñ't bë øpëñëd. ~~~~~~~~~]",
       "other": "[Thë lïñk çøüldñ't bë øpëñëd. ~~~~~~~~~]"
+    },
+    "folderViews": {
+      "bad_path": "[Thät føldër päth ïsñ't välïd. ~~~~~~~~~~]",
+      "bad_mode": "[Thät vïëw ïsñ't äväïläblë. ~~~~~~~~~]",
+      "path_too_long": "[Thïs føldër's päth ïs tøø løñg tø rëmëmbër ïts vïëw. ~~~~~~~~~~~~~~~~~]",
+      "other": "[Çøüldñ't çhäñgë thë rëmëmbërëd føldër vïëws. Trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~]"
     }
   },
   "keys": {
@@ -402,7 +479,9 @@
     "right": "[Rïght ~~]",
     "up": "[Üp ~~]",
     "down": "[Døwñ ~~]",
-    "space": "[Späçë ~~]"
+    "space": "[Späçë ~~]",
+    "pageUp": "[Pägë Üp ~~~]",
+    "pageDown": "[Pägë Døwñ ~~~~]"
   },
   "files": {
     "newFolderName": "[Ñëw føldër ~~~~]",
@@ -447,7 +526,15 @@
   "handlers": {
     "image": "[Ïmägë ~~]",
     "text": "[Tëxt ~~]",
-    "markdown": "[Märkdøwñ ~~~~]"
+    "markdown": "[Märkdøwñ ~~~~]",
+    "media": "[Äüdïø äñd vïdëø ~~~~~~]",
+    "hex": "[Hëx ~~]"
+  },
+  "protected": {
+    "message": "[Thïs fïlë çämë frøm thë ïñtërñët, sø ït øpëñëd ïñ prøtëçtëd vïëw. ~~~~~~~~~~~~~~~~~~~~~]",
+    "unblock": "[Üñbløçk ~~~]",
+    "unblockTitle": "[Üñbløçk thïs fïlë? ~~~~~~]",
+    "unblockBody": "[Øñlÿ üñbløçk fïlës frøm pëøplë äñd wëbsïtës ÿøü trüst. Wïñdøws wïll støp trëätïñg “{name}” äs ä fïlë frøm thë ïñtërñët. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
   },
   "fileTab": {
     "showInFolder": "[Shøw ïñ føldër ~~~~~]",
@@ -477,7 +564,10 @@
     "view": "[Vïëw ~~]",
     "zoom": "[Zøøm ~~]",
     "show": "[Shøw ~~]",
-    "rotate": "[Røtätë ~~~]"
+    "rotate": "[Røtätë ~~~]",
+    "play": "[Pläÿ ~~]",
+    "playback": "[Pläÿbäçk ~~~~]",
+    "tabs": "[Rïbbøñ täbs ~~~~]"
   },
   "text": {
     "position": "[Lñ {line}, Çøl {column} ~~]",
@@ -506,9 +596,34 @@
     "renderedMode": "[Rëädïñg vïëw ~~~~~]",
     "sourceMode": "[Søürçë ~~~]"
   },
+  "media": {
+    "play": "[Pläÿ ~~]",
+    "pause": "[Päüsë ~~]",
+    "loop": "[Løøp ~~]",
+    "speed": "[Spëëd ~~]",
+    "speedValue": "[{speed, number}× ~~]",
+    "subtitles": "[Sübtïtlës ~~~~]",
+    "subtitlesOff": "[Øff ~~]",
+    "noSubtitles": "[Ñøñë føüñd ~~~~]",
+    "subtitlesFailed": "[Thë sübtïtlë fïlë çøüldñ't bë rëäd. ~~~~~~~~~~~~]",
+    "video": "[Vïdëø ~~]",
+    "audio": "[Äüdïø ~~]",
+    "cantPlay": "[Thïs fïlë çäñ't bë pläÿëd hërë: thë büïlt-ïñ pläÿër døësñ't süppørt ïts førmät. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "noPicture": "[Thërë ïs ñø pïçtürë tø shøw. Ïf thïs vïdëø shøüld hävë øñë, ïts førmät ïsñ't süppørtëd hërë. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
+  },
+  "hex": {
+    "label": "[Bÿtës øf {name} ~~~]",
+    "loadError": "[Thë bÿtës øf thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~~~~~]"
+  },
   "links": {
     "openTitle": "[Øpëñ thïs lïñk? ~~~~~]",
     "openBody": "[Ït øpëñs ïñ ÿøür wëb brøwsër ør mäïl äpp: ~~~~~~~~~~~~~]",
     "open": "[Øpëñ lïñk ~~~~]"
+  },
+  "layout": {
+    "toolbarPosition": "[Tøølbär pøsïtïøñ ~~~~~~]",
+    "toolbarStyle": "[Tøølbär stÿlë ~~~~~]",
+    "preset": "[Läÿøüt prësët ~~~~~]",
+    "menuLabel": "[Tøølbär øptïøñs ~~~~~~]"
   }
 }

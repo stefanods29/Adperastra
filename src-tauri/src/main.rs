@@ -8,7 +8,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -25,12 +25,15 @@ mod clipboard_image_helper;
 mod drag;
 mod explorer;
 mod files;
+mod folder_views;
 mod links;
+mod media;
 mod operation_safety;
 mod shell;
 mod transfer_history;
+mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 4;
+pub const CURRENT_SCHEMA: u32 = 8;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -148,10 +151,34 @@ fn default_group_by() -> String {
     "none".to_string()
 }
 
+fn default_view_mode() -> String {
+    "details".to_string()
+}
+
+/// Column view's narrowest column, in pixels (Step 05b D13).
+pub const COLUMN_WIDTH_MIN: u32 = 160;
+/// Column view's widest column, in pixels (Step 05b D13).
+pub const COLUMN_WIDTH_MAX: u32 = 480;
+
+fn default_column_width() -> u32 {
+    240
+}
+
+/// Every view id in Windows' View-menu order (Step 05a D1).
+fn default_view_mode_order() -> Vec<String> {
+    fs_service::VIEW_MODES
+        .iter()
+        .map(|mode| mode.to_string())
+        .collect()
+}
+
 /// Explorer view options (schema 3, Step 03a): the View menu's toggles and
 /// the Sort menu's grouping. Defaults follow the Figma frame (extensions
 /// shown) and Windows (hidden items hidden, no check boxes, no Details
 /// pane).
+/// Schema 6 (Step 05a) adds the view mode, per-folder memory, and the View
+/// menu's order and hidden views.
+/// Schema 7 (Step 05b) adds the Column view's column width and preview column.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExplorerViewSettings {
     #[serde(default)]
@@ -164,6 +191,24 @@ pub struct ExplorerViewSettings {
     pub details_pane: bool,
     #[serde(default = "default_group_by")]
     pub group_by: String,
+    /// The view folders without their own use, and the default view.
+    #[serde(default = "default_view_mode")]
+    pub view_mode: String,
+    /// Remember a view per folder when this is on (Step 05a D7).
+    #[serde(default = "default_true")]
+    pub remember_view_per_folder: bool,
+    /// The View menu's order: all eight view ids, each once.
+    #[serde(default = "default_view_mode_order")]
+    pub view_mode_order: Vec<String>,
+    /// Views left out of the View menu; never `"details"`.
+    #[serde(default)]
+    pub hidden_view_modes: Vec<String>,
+    /// Column view's column width in pixels (schema 7).
+    #[serde(default = "default_column_width")]
+    pub column_width: u32,
+    /// Column view shows a preview of the selected file (schema 7).
+    #[serde(default = "default_true")]
+    pub column_preview: bool,
 }
 
 impl Default for ExplorerViewSettings {
@@ -174,6 +219,104 @@ impl Default for ExplorerViewSettings {
             item_checkboxes: false,
             details_pane: false,
             group_by: default_group_by(),
+            view_mode: default_view_mode(),
+            remember_view_per_folder: true,
+            view_mode_order: default_view_mode_order(),
+            hidden_view_modes: Vec::new(),
+            column_width: default_column_width(),
+            column_preview: true,
+        }
+    }
+}
+
+/// Most saved layout presets (Step 05c).
+pub const MAX_SAVED_LAYOUTS: usize = 20;
+/// Longest saved layout preset name, in characters (Step 05c).
+pub const MAX_LAYOUT_NAME: usize = 60;
+
+fn default_toolbar_position() -> String {
+    "top".to_string()
+}
+
+fn default_toolbar_mode() -> String {
+    "full".to_string()
+}
+
+fn default_tab_bar_position() -> String {
+    "top".to_string()
+}
+
+fn default_nav_pane_position() -> String {
+    "left".to_string()
+}
+
+fn default_details_pane_position() -> String {
+    "right".to_string()
+}
+
+/// One saved layout preset (schema 8, Step 05c).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SavedLayout {
+    #[serde(default)]
+    pub name: String,
+    #[serde(default = "default_toolbar_position")]
+    pub toolbar_position: String,
+    #[serde(default = "default_toolbar_mode")]
+    pub toolbar_mode: String,
+    #[serde(default = "default_tab_bar_position")]
+    pub tab_bar_position: String,
+    #[serde(default)]
+    pub tab_bar_collapsed: bool,
+    #[serde(default = "default_nav_pane_position")]
+    pub nav_pane_position: String,
+    #[serde(default = "default_details_pane_position")]
+    pub details_pane_position: String,
+}
+
+impl Default for SavedLayout {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            toolbar_position: default_toolbar_position(),
+            toolbar_mode: default_toolbar_mode(),
+            tab_bar_position: default_tab_bar_position(),
+            tab_bar_collapsed: false,
+            nav_pane_position: default_nav_pane_position(),
+            details_pane_position: default_details_pane_position(),
+        }
+    }
+}
+
+/// Where the toolbar, tabs and panes go (schema 8, Step 05c). The Details
+/// pane's visibility stays `explorer.details_pane`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LayoutSettings {
+    #[serde(default = "default_toolbar_position")]
+    pub toolbar_position: String,
+    #[serde(default = "default_toolbar_mode")]
+    pub toolbar_mode: String,
+    #[serde(default = "default_tab_bar_position")]
+    pub tab_bar_position: String,
+    #[serde(default)]
+    pub tab_bar_collapsed: bool,
+    #[serde(default = "default_nav_pane_position")]
+    pub nav_pane_position: String,
+    #[serde(default = "default_details_pane_position")]
+    pub details_pane_position: String,
+    #[serde(default)]
+    pub saved_presets: Vec<SavedLayout>,
+}
+
+impl Default for LayoutSettings {
+    fn default() -> Self {
+        Self {
+            toolbar_position: default_toolbar_position(),
+            toolbar_mode: default_toolbar_mode(),
+            tab_bar_position: default_tab_bar_position(),
+            tab_bar_collapsed: false,
+            nav_pane_position: default_nav_pane_position(),
+            details_pane_position: default_details_pane_position(),
+            saved_presets: Vec::new(),
         }
     }
 }
@@ -198,6 +341,41 @@ impl Default for FileSettings {
     }
 }
 
+/// Most entries in `open_with`.
+pub const MAX_OPEN_WITH: usize = 500;
+
+/// How files open (schema 5, Step 04c): Settings > Opening files.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OpenSettings {
+    /// Files from the internet open in protected view.
+    #[serde(default = "default_true")]
+    pub protected_view: bool,
+    /// Extension (lower case, no dot) to "builtin" or "windows". An
+    /// extension that is not listed opens in the built-in viewer when
+    /// there is one.
+    #[serde(default)]
+    pub open_with: BTreeMap<String, String>,
+}
+
+impl Default for OpenSettings {
+    fn default() -> Self {
+        Self {
+            protected_view: true,
+            open_with: BTreeMap::new(),
+        }
+    }
+}
+
+/// An extension as `open_with` stores it: 1 to 16 characters from a-z,
+/// 0-9, `_`, `+` and `-`.
+fn is_valid_extension_key(ext: &str) -> bool {
+    !ext.is_empty()
+        && ext.len() <= 16
+        && ext
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '_' | '+' | '-'))
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default = "default_schema_version")]
@@ -210,6 +388,10 @@ pub struct Settings {
     pub explorer: ExplorerViewSettings,
     #[serde(default)]
     pub files: FileSettings,
+    #[serde(default)]
+    pub open: OpenSettings,
+    #[serde(default)]
+    pub layout: LayoutSettings,
 }
 
 impl Default for Settings {
@@ -220,12 +402,72 @@ impl Default for Settings {
             theme: ThemeSettings::default(),
             explorer: ExplorerViewSettings::default(),
             files: FileSettings::default(),
+            open: OpenSettings::default(),
+            layout: LayoutSettings::default(),
         }
     }
 }
 
 fn is_valid_hex_color(value: &str) -> bool {
     value.len() == 7 && value.starts_with('#') && value[1..].chars().all(|c| c.is_ascii_hexdigit())
+}
+
+/// One layout choice must be one of its allowed values.
+fn check_layout_choice(
+    what: &str,
+    field: &str,
+    value: &str,
+    allowed: &[&str],
+) -> Result<(), AppError> {
+    if !allowed.contains(&value) {
+        return Err(AppError::Validation(format!(
+            "{what}: unsupported {field} {value:?} (expected {})",
+            allowed.join(", ")
+        )));
+    }
+    Ok(())
+}
+
+/// The five layout choices of one layout (a section or a saved preset).
+fn check_layout_values(
+    toolbar_position: &str,
+    toolbar_mode: &str,
+    tab_bar_position: &str,
+    nav_pane_position: &str,
+    details_pane_position: &str,
+    what: &str,
+) -> Result<(), AppError> {
+    check_layout_choice(
+        what,
+        "toolbar_position",
+        toolbar_position,
+        &["top", "bottom", "left", "right"],
+    )?;
+    check_layout_choice(
+        what,
+        "toolbar_mode",
+        toolbar_mode,
+        &["full", "compact", "iconsOnly", "autoHide"],
+    )?;
+    check_layout_choice(
+        what,
+        "tab_bar_position",
+        tab_bar_position,
+        &["top", "bottom", "left", "right"],
+    )?;
+    check_layout_choice(
+        what,
+        "nav_pane_position",
+        nav_pane_position,
+        &["left", "right", "hidden"],
+    )?;
+    check_layout_choice(
+        what,
+        "details_pane_position",
+        details_pane_position,
+        &["right", "bottom"],
+    )?;
+    Ok(())
 }
 
 pub fn validate(settings: &Settings) -> Result<(), AppError> {
@@ -277,6 +519,116 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             settings.explorer.group_by
         )));
     }
+    if !fs_service::is_view_mode(&settings.explorer.view_mode) {
+        return Err(AppError::Validation(format!(
+            "unsupported view_mode {:?} (expected one of {})",
+            settings.explorer.view_mode,
+            fs_service::VIEW_MODES.join(", ")
+        )));
+    }
+    if settings.explorer.view_mode_order.len() > 16 {
+        return Err(AppError::Validation(format!(
+            "view_mode_order has {} entries (at most 16)",
+            settings.explorer.view_mode_order.len()
+        )));
+    }
+    let mut seen_order: Vec<&str> = Vec::new();
+    for mode in &settings.explorer.view_mode_order {
+        if !fs_service::is_view_mode(mode) {
+            return Err(AppError::Validation(format!(
+                "unsupported view_mode_order entry {mode:?}"
+            )));
+        }
+        if seen_order.contains(&mode.as_str()) {
+            return Err(AppError::Validation(format!(
+                "view_mode_order lists {mode:?} twice"
+            )));
+        }
+        seen_order.push(mode.as_str());
+    }
+    let mut seen_hidden: Vec<&str> = Vec::new();
+    for mode in &settings.explorer.hidden_view_modes {
+        if !fs_service::is_view_mode(mode) || mode == "details" {
+            return Err(AppError::Validation(format!(
+                "unsupported hidden_view_modes entry {mode:?}"
+            )));
+        }
+        if seen_hidden.contains(&mode.as_str()) {
+            return Err(AppError::Validation(format!(
+                "hidden_view_modes lists {mode:?} twice"
+            )));
+        }
+        seen_hidden.push(mode.as_str());
+    }
+    if !(COLUMN_WIDTH_MIN..=COLUMN_WIDTH_MAX).contains(&settings.explorer.column_width) {
+        return Err(AppError::Validation(format!(
+            "column_width {} is outside {COLUMN_WIDTH_MIN}..={COLUMN_WIDTH_MAX}",
+            settings.explorer.column_width
+        )));
+    }
+    if settings.open.open_with.len() > MAX_OPEN_WITH {
+        return Err(AppError::Validation(format!(
+            "open_with has {} entries (at most {MAX_OPEN_WITH})",
+            settings.open.open_with.len()
+        )));
+    }
+    for (ext, choice) in &settings.open.open_with {
+        if !is_valid_extension_key(ext) || !matches!(choice.as_str(), "builtin" | "windows") {
+            return Err(AppError::Validation(format!(
+                "unsupported open_with entry {ext:?}: {choice:?} (expected builtin or windows)"
+            )));
+        }
+    }
+    check_layout_values(
+        &settings.layout.toolbar_position,
+        &settings.layout.toolbar_mode,
+        &settings.layout.tab_bar_position,
+        &settings.layout.nav_pane_position,
+        &settings.layout.details_pane_position,
+        "layout",
+    )?;
+    if settings.layout.saved_presets.len() > MAX_SAVED_LAYOUTS {
+        return Err(AppError::Validation(format!(
+            "layout.saved_presets has {} entries (at most {MAX_SAVED_LAYOUTS})",
+            settings.layout.saved_presets.len()
+        )));
+    }
+    let mut seen_layout_names: Vec<String> = Vec::new();
+    for preset in &settings.layout.saved_presets {
+        if preset.name.is_empty() {
+            return Err(AppError::Validation(
+                "layout: a saved preset has no name".to_string(),
+            ));
+        }
+        if preset.name != preset.name.trim() {
+            return Err(AppError::Validation(format!(
+                "layout: saved preset name {:?} has spaces at its ends",
+                preset.name
+            )));
+        }
+        if preset.name.chars().count() > MAX_LAYOUT_NAME {
+            return Err(AppError::Validation(format!(
+                "layout: saved preset name {:?} is longer than {MAX_LAYOUT_NAME} characters",
+                preset.name
+            )));
+        }
+        let lower_name = preset.name.to_lowercase();
+        if seen_layout_names.contains(&lower_name) {
+            return Err(AppError::Validation(format!(
+                "layout: saved preset name {:?} is used twice",
+                preset.name
+            )));
+        }
+        seen_layout_names.push(lower_name);
+        check_layout_values(
+            &preset.toolbar_position,
+            &preset.toolbar_mode,
+            &preset.tab_bar_position,
+            &preset.nav_pane_position,
+            &preset.details_pane_position,
+            "saved preset",
+        )?;
+    }
     Ok(())
 }
 
@@ -302,6 +654,8 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         },
         explorer: ExplorerViewSettings::default(),
         files: FileSettings::default(),
+        open: OpenSettings::default(),
+        layout: LayoutSettings::default(),
     }
 }
 
@@ -339,6 +693,22 @@ fn migrate_v2(value: serde_json::Value) -> Settings {
     }
 }
 
+/// Older files keep everything they have; fields added since then
+/// come from their serde defaults. Invalid files fall back to defaults.
+fn migrate_keep_known(value: serde_json::Value) -> Settings {
+    match serde_json::from_value::<Settings>(value) {
+        Ok(mut settings) => {
+            settings.schema_version = CURRENT_SCHEMA;
+            if validate(&settings).is_ok() {
+                settings
+            } else {
+                Settings::default()
+            }
+        }
+        Err(_) => Settings::default(),
+    }
+}
+
 /// Upgrade any on-disk settings value to the current schema.
 /// Unknown or invalid shapes fall back to defaults rather than failing,
 /// so a corrupt settings file can never stop the app from starting.
@@ -356,6 +726,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
+            Some(4) | Some(5) | Some(6) | Some(7) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -1028,6 +1399,17 @@ pub fn drain_job(job: &mut ListJob) -> ListPoll {
     }
 }
 
+/// Cancel a listing and forget it at once: nobody polls a cancelled listing
+/// again, so leaving it in the table would keep its items in memory.
+pub fn cancel_list_job(jobs: &mut HashMap<String, ListJob>, request_id: &str) -> bool {
+    let Some(job) = jobs.get(request_id) else {
+        return false;
+    };
+    job.token.store(true, Ordering::Relaxed);
+    jobs.remove(request_id);
+    true
+}
+
 // NOTE (transport ruling, Step 02): Tauri Channel messages never reached
 // the frontend under this app's isolation pattern (probe: Rust listed 57
 // items, channel sends reported no error, JS received 0). Lists therefore
@@ -1143,10 +1525,8 @@ fn list_dir_cancel(
 ) -> Result<(), String> {
     ensure_main(window.label())?;
     valid_request_id(&request_id)?;
-    if let Ok(jobs) = state.list_jobs.lock() {
-        if let Some(job) = jobs.get(&request_id) {
-            job.token.store(true, Ordering::Relaxed);
-        }
+    if let Ok(mut jobs) = state.list_jobs.lock() {
+        cancel_list_job(&mut jobs, &request_id);
     }
     Ok(())
 }
@@ -2320,6 +2700,7 @@ fn main() {
             watch_next_id: AtomicU64::new(0),
         })
         .manage(files::FileGrants::default())
+        .manage(folder_views::FolderViewsLock::default())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -2398,7 +2779,12 @@ fn main() {
             files::file_detect,
             files::file_grant,
             files::file_revoke,
+            folder_views::folder_views_get,
+            folder_views::folder_view_set,
+            folder_views::folder_views_clear,
             links::open_external_url,
+            zone::file_unblock,
+            media::media_sidecars,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
@@ -2447,7 +2833,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.schema_version, 8);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -2459,7 +2845,7 @@ mod tests {
     fn migrate_v1_flat_json() {
         let value = serde_json::json!({ "language": "es", "theme": "dark" });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_source, "design");
@@ -2482,7 +2868,7 @@ mod tests {
             "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#112233" }
         });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_custom, "#112233");
@@ -2511,7 +2897,7 @@ mod tests {
             "explorer": { "show_hidden": true, "show_extensions": false, "item_checkboxes": true, "details_pane": true, "group_by": "type" }
         });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert!(settings.explorer.show_hidden);
@@ -2539,11 +2925,337 @@ mod tests {
                 item_checkboxes: true,
                 details_pane: true,
                 group_by: "type".to_string(),
+                ..ExplorerViewSettings::default()
             },
             ..Settings::default()
         };
         let value = serde_json::to_value(&original).unwrap();
         assert_eq!(migrate(value).unwrap(), original);
+    }
+
+    #[test]
+    fn settings_v4_migrates_to_v5_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 4,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "explorer": { "show_hidden": true, "show_extensions": true, "item_checkboxes": false, "details_pane": true, "group_by": "none" },
+            "files": { "paste_image_format": "jpg" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(settings.explorer.show_hidden);
+        assert_eq!(settings.files.paste_image_format, "jpg");
+        assert_eq!(settings.open, OpenSettings::default());
+        assert!(settings.open.protected_view);
+    }
+
+    #[test]
+    fn settings_v5_migrates_to_v6_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 5,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "explorer": { "show_hidden": true, "show_extensions": true, "item_checkboxes": false, "details_pane": true, "group_by": "type" },
+            "files": { "paste_image_format": "jpg" },
+            "open": { "protected_view": false, "open_with": { "txt": "windows" } }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(settings.explorer.show_hidden);
+        assert_eq!(settings.explorer.group_by, "type");
+        assert_eq!(settings.explorer.view_mode, "details");
+        assert!(settings.explorer.remember_view_per_folder);
+        assert_eq!(settings.explorer.view_mode_order, default_view_mode_order());
+        assert!(settings.explorer.hidden_view_modes.is_empty());
+        assert!(!settings.open.protected_view);
+        assert_eq!(
+            settings.open.open_with.get("txt").map(String::as_str),
+            Some("windows")
+        );
+    }
+
+    #[test]
+    fn settings_v6_migrates_to_v7_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 6,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "explorer": {
+                "show_hidden": true,
+                "show_extensions": true,
+                "item_checkboxes": false,
+                "details_pane": true,
+                "group_by": "type",
+                "view_mode": "tiles",
+                "remember_view_per_folder": false,
+                "view_mode_order": [
+                    "extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons",
+                    "list", "details", "tiles", "content"
+                ],
+                "hidden_view_modes": ["list"]
+            },
+            "files": { "paste_image_format": "jpg" },
+            "open": { "protected_view": false, "open_with": { "txt": "windows" } }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(settings.explorer.show_hidden);
+        assert_eq!(settings.explorer.group_by, "type");
+        assert_eq!(settings.explorer.view_mode, "tiles");
+        assert!(!settings.explorer.remember_view_per_folder);
+        assert_eq!(
+            settings.explorer.view_mode_order,
+            vec![
+                "extraLargeIcons",
+                "largeIcons",
+                "mediumIcons",
+                "smallIcons",
+                "list",
+                "details",
+                "tiles",
+                "content"
+            ]
+        );
+        assert_eq!(settings.explorer.hidden_view_modes, vec!["list"]);
+        assert_eq!(settings.explorer.column_width, 240);
+        assert!(settings.explorer.column_preview);
+        assert!(!settings.open.protected_view);
+        assert_eq!(
+            settings.open.open_with.get("txt").map(String::as_str),
+            Some("windows")
+        );
+    }
+
+    #[test]
+    fn settings_v7_migrates_to_v8_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 7,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "explorer": {
+                "show_hidden": true,
+                "show_extensions": true,
+                "item_checkboxes": false,
+                "details_pane": true,
+                "group_by": "type",
+                "view_mode": "columns",
+                "remember_view_per_folder": false,
+                "view_mode_order": [
+                    "extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons",
+                    "list", "details", "tiles", "content", "columns"
+                ],
+                "hidden_view_modes": ["list"],
+                "column_width": 300,
+                "column_preview": false
+            },
+            "files": { "paste_image_format": "jpg" },
+            "open": { "protected_view": false, "open_with": { "txt": "windows" } }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.explorer.view_mode, "columns");
+        assert_eq!(settings.explorer.column_width, 300);
+        assert!(settings.explorer.details_pane);
+        assert_eq!(settings.files.paste_image_format, "jpg");
+        assert!(!settings.open.protected_view);
+        assert_eq!(settings.layout, LayoutSettings::default());
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_layout() {
+        let mut toolbar_position = Settings::default();
+        toolbar_position.layout.toolbar_position = "middle".to_string();
+        assert!(validate(&toolbar_position).is_err());
+
+        let mut toolbar_mode = Settings::default();
+        toolbar_mode.layout.toolbar_mode = "tiny".to_string();
+        assert!(validate(&toolbar_mode).is_err());
+
+        let mut tab_bar_position = Settings::default();
+        tab_bar_position.layout.tab_bar_position = "center".to_string();
+        assert!(validate(&tab_bar_position).is_err());
+
+        let mut nav_pane_position = Settings::default();
+        nav_pane_position.layout.nav_pane_position = "top".to_string();
+        assert!(validate(&nav_pane_position).is_err());
+
+        let mut details_pane_position = Settings::default();
+        details_pane_position.layout.details_pane_position = "left".to_string();
+        assert!(validate(&details_pane_position).is_err());
+
+        let mut no_name = Settings::default();
+        no_name.layout.saved_presets = vec![SavedLayout::default()];
+        assert!(validate(&no_name).is_err());
+
+        let mut padded_name = Settings::default();
+        padded_name.layout.saved_presets = vec![SavedLayout {
+            name: " Work".to_string(),
+            ..SavedLayout::default()
+        }];
+        assert!(validate(&padded_name).is_err());
+
+        let mut long_name = Settings::default();
+        long_name.layout.saved_presets = vec![SavedLayout {
+            name: "a".repeat(61),
+            ..SavedLayout::default()
+        }];
+        assert!(validate(&long_name).is_err());
+
+        let mut same_name = Settings::default();
+        same_name.layout.saved_presets = vec![
+            SavedLayout {
+                name: "Work".to_string(),
+                ..SavedLayout::default()
+            },
+            SavedLayout {
+                name: "work".to_string(),
+                ..SavedLayout::default()
+            },
+        ];
+        assert!(validate(&same_name).is_err());
+
+        let mut too_many = Settings::default();
+        too_many.layout.saved_presets = (0..=MAX_SAVED_LAYOUTS)
+            .map(|n| SavedLayout {
+                name: format!("p{n}"),
+                ..SavedLayout::default()
+            })
+            .collect();
+        assert!(validate(&too_many).is_err());
+
+        let mut bad_preset_value = Settings::default();
+        bad_preset_value.layout.saved_presets = vec![SavedLayout {
+            name: "Work".to_string(),
+            toolbar_mode: "tiny".to_string(),
+            ..SavedLayout::default()
+        }];
+        assert!(validate(&bad_preset_value).is_err());
+
+        let mut side_preset = Settings::default();
+        side_preset.layout.saved_presets = vec![SavedLayout {
+            name: "Work".to_string(),
+            toolbar_position: "left".to_string(),
+            ..SavedLayout::default()
+        }];
+        assert!(validate(&side_preset).is_ok());
+
+        let mut twenty = Settings::default();
+        twenty.layout.saved_presets = (0..MAX_SAVED_LAYOUTS)
+            .map(|n| SavedLayout {
+                name: format!("p{n}"),
+                ..SavedLayout::default()
+            })
+            .collect();
+        assert!(validate(&twenty).is_ok());
+
+        let mut longest_ok = Settings::default();
+        longest_ok.layout.saved_presets = vec![SavedLayout {
+            name: "a".repeat(MAX_LAYOUT_NAME),
+            ..SavedLayout::default()
+        }];
+        assert!(validate(&longest_ok).is_ok());
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_column_width() {
+        for bad in [159, 481, 0] {
+            let mut settings = Settings::default();
+            settings.explorer.column_width = bad;
+            assert!(validate(&settings).is_err(), "{bad}");
+        }
+        for ok in [160, 480] {
+            let mut settings = Settings::default();
+            settings.explorer.column_width = ok;
+            assert!(validate(&settings).is_ok(), "{ok}");
+        }
+        let mut columns = Settings::default();
+        columns.explorer.view_mode = "columns".to_string();
+        assert!(validate(&columns).is_ok());
+        let mut hidden = Settings::default();
+        hidden.explorer.hidden_view_modes = vec!["columns".to_string()];
+        assert!(validate(&hidden).is_ok());
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_view_settings() {
+        let mut bad_mode = Settings::default();
+        bad_mode.explorer.view_mode = "huge".to_string();
+        assert!(validate(&bad_mode).is_err());
+
+        let mut twice = Settings::default();
+        twice.explorer.view_mode_order = vec!["list".to_string(), "list".to_string()];
+        assert!(validate(&twice).is_err());
+
+        let mut unknown = Settings::default();
+        unknown.explorer.view_mode_order = vec!["giant".to_string()];
+        assert!(validate(&unknown).is_err());
+
+        let mut too_long = Settings::default();
+        too_long.explorer.view_mode_order = (0..17).map(|_| "list".to_string()).collect();
+        assert!(validate(&too_long).is_err());
+
+        let mut hide_details = Settings::default();
+        hide_details.explorer.hidden_view_modes = vec!["details".to_string()];
+        assert!(validate(&hide_details).is_err());
+
+        let mut hidden_twice = Settings::default();
+        hidden_twice.explorer.hidden_view_modes = vec!["tiles".to_string(), "tiles".to_string()];
+        assert!(validate(&hidden_twice).is_err());
+
+        let mut hidden_tiles = Settings::default();
+        hidden_tiles.explorer.hidden_view_modes = vec!["tiles".to_string()];
+        assert!(validate(&hidden_tiles).is_ok());
+
+        let mut content = Settings::default();
+        content.explorer.view_mode = "content".to_string();
+        assert!(validate(&content).is_ok());
+
+        let mut details_only = Settings::default();
+        details_only.explorer.view_mode_order = vec!["details".to_string()];
+        assert!(validate(&details_only).is_ok());
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_open_with() {
+        let mut settings = Settings::default();
+        settings
+            .open
+            .open_with
+            .insert("txt".to_string(), "windows".to_string());
+        settings
+            .open
+            .open_with
+            .insert("c++".to_string(), "builtin".to_string());
+        assert!(validate(&settings).is_ok());
+        for (ext, choice) in [
+            ("txt", "notepad"),
+            ("TXT", "windows"),
+            ("", "windows"),
+            ("a.b", "windows"),
+            ("abcdefghijklmnopq", "windows"),
+        ] {
+            let mut bad = Settings::default();
+            bad.open
+                .open_with
+                .insert(ext.to_string(), choice.to_string());
+            assert!(validate(&bad).is_err(), "{ext:?} {choice:?}");
+        }
+        let mut many = Settings::default();
+        for n in 0..=MAX_OPEN_WITH {
+            many.open
+                .open_with
+                .insert(format!("x{n}"), "windows".to_string());
+        }
+        assert!(validate(&many).is_err());
     }
 
     #[test]
@@ -2688,6 +3400,23 @@ mod tests {
         let second = drain_job(&mut big);
         assert_eq!(second.batches.len(), 2);
         assert!(second.done);
+    }
+    #[test]
+    fn cancelling_a_listing_drops_its_job() {
+        let job = ListJob {
+            batches: std::collections::VecDeque::from(vec![vec![]]),
+            done: false,
+            outcome: None,
+            error: None,
+            token: fs_service::new_cancellation_token(),
+        };
+        let token = job.token.clone();
+        let mut jobs = HashMap::new();
+        jobs.insert("list-a".to_string(), job);
+        assert!(cancel_list_job(&mut jobs, "list-a"));
+        assert!(jobs.is_empty());
+        assert!(token.load(Ordering::Relaxed));
+        assert!(!cancel_list_job(&mut jobs, "list-a"));
     }
     #[test]
     fn explorer_command_validation() {

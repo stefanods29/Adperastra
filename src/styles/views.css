@@ -1,0 +1,51 @@
+/* View modes (Step 05a). Colors only through tokens. */
+
+.adp-itemview { display:flex; flex-direction:column; flex:1; min-height:0; }
+
+.adp-itemgrid-inner { position:relative; width:100%; }
+.adp-itemgrid-header { position:absolute; top:0; left:0; width:100%; }
+.adp-itemgrid-row { position:absolute; top:0; left:0; right:0; display:flex; padding:0 8px; }
+.adp-itemgrid-row:has(.adp-rename) { z-index:5; }
+
+.adp-itemgrid-cell { position:relative; display:flex; flex:none; overflow:hidden; border-radius:var(--adp-radius-sm); color:var(--adp-color-text-primary); font-size:var(--adp-font-body); cursor:pointer; user-select:none; }
+.adp-itemgrid-cell:hover { background:var(--adp-color-surface-selected); }
+.adp-itemgrid-cell--selected, .adp-itemgrid-cell--selected:hover { background:var(--adp-color-surface-selected-row); }
+.adp-itemgrid-cell--hidden { opacity:.55; }
+.adp-filelist-scroll:focus-visible .adp-itemgrid-cell--focused { box-shadow:inset 0 0 0 1px var(--adp-accent-current); }
+.adp-itemgrid-cell:has(.adp-rename) { overflow:visible; z-index:5; }
+
+.adp-itemgrid-cell--stacked { flex-direction:column; align-items:center; gap:8px; padding:8px 4px; }
+.adp-itemgrid-cell--inline { flex-direction:row; align-items:center; gap:var(--adp-space-2); padding:0 var(--adp-space-2); }
+.adp-itemgrid-cell--tile { flex-direction:row; align-items:center; gap:var(--adp-space-3); padding:0 var(--adp-space-3); }
+.adp-itemgrid-cell--content { flex-direction:row; align-items:center; flex:1; gap:var(--adp-space-4); padding:0 var(--adp-space-3); border-radius:0; border-bottom:1px solid var(--adp-color-border-subtle); }
+
+.adp-itemgrid-tile { border-radius:var(--adp-radius-sm); }
+.adp-itemgrid-cell--stacked .adp-itemgrid-tile { border-radius:var(--adp-radius-md); }
+.adp-itemgrid-cell--stacked .adp-itemgrid-name { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; width:100%; line-height:16px; text-align:center; white-space:normal; overflow-wrap:anywhere; }
+.adp-itemgrid-cell--inline .adp-itemgrid-name,
+.adp-itemgrid-cell--tile .adp-itemgrid-name,
+.adp-itemgrid-cell--content .adp-itemgrid-name { min-width:0; }
+.adp-itemgrid-cell--stacked .adp-rename { flex:none; width:100%; }
+.adp-itemgrid-cell--stacked .adp-row-check { position:absolute; top:4px; left:4px; }
+
+.adp-itemgrid-badges { display:inline-flex; flex:none; gap:2px; }
+.adp-itemgrid-cell--stacked .adp-itemgrid-badges { position:absolute; top:4px; right:4px; }
+
+.adp-itemgrid-text { display:flex; flex-direction:column; flex:1; min-width:0; gap:2px; }
+.adp-itemgrid-detail { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); }
+.adp-itemgrid-meta { display:flex; flex-direction:column; flex:none; width:220px; gap:2px; }
+
+/* List view (Step 05a) */
+.adp-flowlist-scroll { overflow-x:auto; overflow-y:hidden; }
+.adp-flowlist-inner { position:relative; height:100%; }
+.adp-flowlist-column { position:absolute; top:8px; left:0; display:flex; flex-direction:column; box-sizing:border-box; padding-right:8px; }
+.adp-flowlist-item { height:24px; }
+
+/* Status bar view buttons (Step 05a) */
+.adp-status-views { display:inline-flex; align-items:center; margin-left:auto; gap:2px; }
+.adp-status-view-btn { width:24px; height:20px; }
+.adp-status-view-btn[aria-pressed='true'] { background:var(--adp-color-surface-selected-row); }
+
+/* Settings > Views (Step 05a) */
+.adp-views-list { display:flex; flex-direction:column; list-style:none; margin:0; padding:0; gap:var(--adp-space-2); }
+.adp-views-item { display:flex; align-items:center; gap:var(--adp-space-3); }

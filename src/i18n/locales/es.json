@@ -3,7 +3,9 @@
     "explorer": "Explorador",
     "file": "Archivo",
     "newTab": "Nueva pestaña",
-    "close": "Cerrar pestaña"
+    "close": "Cerrar pestaña",
+    "collapse": "Mostrar solo iconos",
+    "expand": "Mostrar nombres"
   },
   "window": {
     "minimize": "Minimizar",
@@ -38,6 +40,9 @@
     "genericFile": "Archivo",
     "onlineOnly": "Solo en línea",
     "isLink": "Acceso directo",
+    "columnPreview": "Vista previa",
+    "contentModified": "Fecha de modificación: {date}",
+    "contentSize": "Tamaño: {size}",
     "loadingFolder": "Cargando carpeta...",
     "stillLoading": "Sigue cargando...",
     "loadError": "No se pudo abrir esta carpeta.",
@@ -162,7 +167,53 @@
     "persistNote": "Los ajustes se guardan automáticamente y se aplican al instante.",
     "pastedImages": "Imágenes pegadas",
     "formatPng": "PNG (más nítidas, archivos más grandes)",
-    "formatJpg": "JPG (archivos más pequeños)"
+    "formatJpg": "JPG (archivos más pequeños)",
+    "views": "Vistas",
+    "viewsDefault": "Vista predeterminada",
+    "viewsRemember": "Recordar la vista de cada carpeta",
+    "viewsRememberNote": "Si está desactivado, elegir una vista la cambia en todas las carpetas.",
+    "viewsForget": "Olvidar las vistas de carpetas",
+    "viewsForgotten": "Se olvidaron las vistas de carpetas. Ahora todas las carpetas usan la vista predeterminada.",
+    "viewsMenu": "Vistas del menú Ver",
+    "viewsMenuNote": "Desactiva una vista para ocultarla del menú Ver. Detalles siempre se muestra.",
+    "viewsColumns": "Vista de columnas",
+    "columnWidth": "Ancho de las columnas",
+    "columnWidthNote": "También puedes arrastrar el borde de una columna. Haz doble clic en el borde para volver al ancho estándar.",
+    "columnPreview": "Mostrar una vista previa del archivo seleccionado",
+    "viewsMoveUp": "Subir {name}",
+    "viewsMoveDown": "Bajar {name}",
+    "openingFiles": "Abrir archivos",
+    "protectedView": "Vista protegida para archivos de Internet",
+    "protectedViewNote": "Los archivos descargados de Internet se abren con una barra amarilla, y sus vínculos quedan desactivados hasta que los desbloquees.",
+    "defaultApps": "Aplicaciones predeterminadas",
+    "defaultAppsNote": "Elige dónde se abre cada tipo de archivo al hacer doble clic: en Adperastra o en su aplicación de Windows.",
+    "findFileType": "Buscar un tipo de archivo (por ejemplo, txt)",
+    "noFileTypes": "Ningún tipo de archivo coincide.",
+    "fileTypeCount": "{count, plural, one {# tipo de archivo} other {# tipos de archivo}}",
+    "openGroupWith": "Abrir los archivos de {name} con",
+    "openTypeWith": "Abrir los archivos .{ext} con",
+    "openInAdperastra": "Adperastra",
+    "openInWindowsApp": "Aplicación de Windows",
+    "openMixed": "Mixto",
+    "layout": "Diseño",
+    "layoutCustom": "Personalizado",
+    "layoutSave": "Guardar como diseño…",
+    "layoutSaveTitle": "Guardar el diseño",
+    "layoutPresetName": "Nombre del diseño",
+    "layoutNameTooLong": "Usa como máximo {max} caracteres.",
+    "layoutNameDuplicate": "Ya existe un diseño con este nombre.",
+    "layoutFull": "Puedes guardar hasta {max} diseños. Elimina uno para guardar otro.",
+    "layoutSaved": "Tus diseños",
+    "layoutDelete": "Eliminar {name}",
+    "tabBarPosition": "Posición de la barra de pestañas",
+    "tabBarCollapsed": "Mostrar solo iconos en una barra de pestañas lateral",
+    "navPane": "Panel de navegación",
+    "detailsPanePlace": "Panel de detalles",
+    "placeTop": "Arriba",
+    "placeBottom": "Abajo",
+    "placeLeft": "Izquierda",
+    "placeRight": "Derecha",
+    "placeHidden": "Oculto"
   },
   "gallery": {
     "title": "Galería",
@@ -257,6 +308,9 @@
     "share": "Compartir",
     "openInWindowsApp": "Abrir en la aplicación de Windows",
     "openWith": "Abrir con…",
+    "openAs": "Abrir como",
+    "openAsText": "Abrir como texto",
+    "openAsHex": "Abrir como hexadecimal",
     "copyPath": "Copiar como ruta",
     "addFavorite": "Agregar a favoritos",
     "removeFavorite": "Quitar de favoritos",
@@ -283,6 +337,10 @@
     "viewSmallIcons": "Iconos pequeños",
     "viewMediumIcons": "Iconos medianos",
     "viewLargeIcons": "Iconos grandes",
+    "viewExtraLargeIcons": "Iconos muy grandes",
+    "viewTiles": "Mosaicos",
+    "viewContent": "Contenido",
+    "viewColumns": "Columnas",
     "detailsPane": "Panel de detalles",
     "hiddenItems": "Elementos ocultos",
     "fileExtensions": "Extensiones de nombre de archivo",
@@ -295,7 +353,18 @@
     "deletePermanently": "Eliminar permanentemente",
     "undo": "Deshacer",
     "redo": "Rehacer",
-    "recentActions": "Acciones recientes"
+    "recentActions": "Acciones recientes",
+    "toolbarTop": "Arriba",
+    "toolbarBottom": "Abajo",
+    "toolbarLeft": "Izquierda",
+    "toolbarRight": "Derecha",
+    "toolbarFull": "Iconos y etiquetas",
+    "toolbarCompact": "Compacta",
+    "toolbarIconsOnly": "Solo iconos",
+    "toolbarAutoHide": "Ocultar hasta señalarla",
+    "presetStandard": "Estándar",
+    "presetMinimal": "Mínimo",
+    "presetClassic": "Clásico"
   },
   "errors": {
     "rename": {
@@ -349,6 +418,8 @@
       "read_failed": "No se pudo leer este archivo.",
       "too_many_open": "Hay demasiados archivos abiertos. Cierra algunas pestañas e inténtalo de nuevo.",
       "invalid_request": "No se pudo abrir este archivo.",
+      "unblock_denied": "Windows no permitió quitar la marca. Es posible que el archivo sea de solo lectura o esté en uso.",
+      "unblock_failed": "No se pudo quitar la marca.",
       "other": "No se pudo abrir este archivo."
     },
     "ops": {
@@ -390,6 +461,12 @@
       "invalid": "Este vínculo no se puede abrir desde aquí.",
       "failed": "No se pudo abrir el vínculo.",
       "other": "No se pudo abrir el vínculo."
+    },
+    "folderViews": {
+      "bad_path": "La ruta de esa carpeta no es válida.",
+      "bad_mode": "Esa vista no está disponible.",
+      "path_too_long": "La ruta de esta carpeta es demasiado larga para recordar su vista.",
+      "other": "No se pudieron cambiar las vistas de carpetas recordadas. Vuelve a intentarlo."
     }
   },
   "keys": {
@@ -402,7 +479,9 @@
     "right": "Flecha derecha",
     "up": "Flecha arriba",
     "down": "Flecha abajo",
-    "space": "Espacio"
+    "space": "Espacio",
+    "pageUp": "Re Pág",
+    "pageDown": "Av Pág"
   },
   "files": {
     "newFolderName": "Nueva carpeta",
@@ -447,7 +526,15 @@
   "handlers": {
     "image": "Imagen",
     "text": "Texto",
-    "markdown": "Markdown"
+    "markdown": "Markdown",
+    "media": "Audio y video",
+    "hex": "Hexadecimal"
+  },
+  "protected": {
+    "message": "Este archivo proviene de Internet, así que se abrió en vista protegida.",
+    "unblock": "Desbloquear",
+    "unblockTitle": "¿Desbloquear este archivo?",
+    "unblockBody": "Desbloquea solo archivos de personas y sitios web en los que confíes. Windows dejará de tratar «{name}» como un archivo de Internet."
   },
   "fileTab": {
     "showInFolder": "Mostrar en la carpeta",
@@ -477,7 +564,10 @@
     "view": "Vista",
     "zoom": "Zoom",
     "show": "Mostrar",
-    "rotate": "Girar"
+    "rotate": "Girar",
+    "play": "Reproducir",
+    "playback": "Reproducción",
+    "tabs": "Pestañas de la cinta"
   },
   "text": {
     "position": "Lín. {line}, col. {column}",
@@ -506,9 +596,34 @@
     "renderedMode": "Vista de lectura",
     "sourceMode": "Código fuente"
   },
+  "media": {
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "loop": "Repetir",
+    "speed": "Velocidad",
+    "speedValue": "{speed, number}×",
+    "subtitles": "Subtítulos",
+    "subtitlesOff": "Desactivados",
+    "noSubtitles": "No se encontraron",
+    "subtitlesFailed": "No se pudo leer el archivo de subtítulos.",
+    "video": "Video",
+    "audio": "Audio",
+    "cantPlay": "Este archivo no se puede reproducir aquí: el reproductor integrado no admite su formato.",
+    "noPicture": "No hay imagen para mostrar. Si este video debería tener una, su formato no se admite aquí."
+  },
+  "hex": {
+    "label": "Bytes de {name}",
+    "loadError": "No se pudieron leer los bytes de este archivo."
+  },
   "links": {
     "openTitle": "¿Abrir este vínculo?",
     "openBody": "Se abrirá en tu navegador web o en tu aplicación de correo:",
     "open": "Abrir vínculo"
+  },
+  "layout": {
+    "toolbarPosition": "Posición de la barra de herramientas",
+    "toolbarStyle": "Estilo de la barra de herramientas",
+    "preset": "Diseño predefinido",
+    "menuLabel": "Opciones de la barra de herramientas"
   }
 }

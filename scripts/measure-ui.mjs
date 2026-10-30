@@ -5,7 +5,7 @@
 //
 // node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme> [step]
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 import { join } from "node:path";
 
@@ -28,6 +28,35 @@ function writeTextSamples(folder) {
     join(folder, "guide.md"),
     ["# Project guide", "", "Some **bold** text and a [link](https://example.com).", "", "## Steps", "", "1. One", "2. Two", "", "| Name | Size |", "|---|---|", "| a | 1 |", "", "```js", "const x = 1;", "```"].join("\n"),
   );
+}
+
+/** Step 04c samples: a 10 s tone as WAV, and a Markdown file marked as
+ * downloaded from the internet (its Zone.Identifier stream). */
+function writeMediaSamples(folder) {
+  const rate = 44100;
+  const samples = rate * 10;
+  const data = Buffer.alloc(samples * 2);
+  for (let i = 0; i < samples; i += 1) data.writeInt16LE(Math.round(Math.sin((2 * Math.PI * 440 * i) / rate) * 8000), i * 2);
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0, "ascii");
+  header.writeUInt32LE(36 + data.length, 4);
+  header.write("WAVEfmt ", 8, "ascii");
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20); // PCM
+  header.writeUInt16LE(1, 22); // mono
+  header.writeUInt32LE(rate, 24);
+  header.writeUInt32LE(rate * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write("data", 36, "ascii");
+  header.writeUInt32LE(data.length, 40);
+  writeFileSync(join(folder, "tone-10s.wav"), Buffer.concat([header, data]));
+  writeFileSync(join(folder, "downloaded.md"), "# Downloaded notes\n\nA [web link](https://example.com).\n");
+  try {
+    writeFileSync(join(folder, "downloaded.md:Zone.Identifier"), "[ZoneTransfer]\r\nZoneId=3\r\n");
+  } catch {
+    // Not NTFS: the protected view screenshot shows no bar.
+  }
 }
 
 /** A real PNG (a color gradient), so "open image" measures a real decode. */
@@ -126,6 +155,10 @@ await page(`window.__m = {
   closeMenus() { for (const m of document.querySelectorAll(".adp-ctxmenu")) m.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); },
   // Text buttons in the command bar, in order: New, Sort, View, Details.
   menuButton(index) { return document.querySelectorAll(".adp-commandbar .adp-cmd-text")[index]; },
+  // Step 05c: Settings > Layout fields, and the Settings and Explorer tabs.
+  layoutField(field, value) { const select = document.querySelector('select[data-layout-field="' + field + '"]'); if (!select) return false; Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set.call(select, value); select.dispatchEvent(new Event("change", { bubbles: true })); return true; },
+  openSettings() { document.querySelectorAll(".adp-button-row button")[1]?.click(); },
+  openExplorer() { document.querySelector("[role='tab']")?.click(); },
 }; true`);
 await page(`window.__m.waitFor(() => document.querySelector(".adp-explorer"))`);
 
@@ -198,6 +231,7 @@ async function shot(name) {
 
 writeGradientPng(join(demo, "photo-1920.png"), 1920, 1080);
 writeTextSamples(demo);
+writeMediaSamples(demo);
 await openFolder(demo);
 const results = [];
 
@@ -239,6 +273,52 @@ if (mode === "full") {
   results.push(await measure("100k folder: select all (Ctrl+A)", `window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "a", ctrlKey: true })`));
   results.push(await measure("100k folder: right-click with all selected", `window.__m.list().focus(); window.__m.key(window.__m.list(), { key: "a", ctrlKey: true }); true`, `window.__m.context(window.__m.rows()[2])`, `window.__m.closeMenus(); true`));
   results.push(await measure("100k folder: Shift+click range", `window.__m.click(window.__m.rows()[0]); true`, `window.__m.click(window.__m.rows()[20], { shiftKey: true })`));
+  // Step 05a: the views. Shortcuts read the key's position, so `code` is
+  // what matters; the typed character is the one Shift produces.
+  results.push(await measure("100k folder: switch to Large icons (Ctrl+Shift+2)", `true`, `window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  results.push(await measure("100k folder: arrow key move in Large icons", `window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true }); window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "ArrowRight" })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  results.push(await measure("100k folder: switch to List (Ctrl+Shift+5)", `true`, `window.__m.key(window, { key: "%", code: "Digit5", ctrlKey: true, shiftKey: true })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  // Step 05b: Column view. The Columns entry is the ninth view in the
+  // default View menu; Ctrl+Shift+6 (back to Details) closes every run.
+  const columnsEntry = `document.querySelectorAll(".adp-ctxmenu [role=menuitemradio]")[8]`;
+  results.push(
+    await measure(
+      "100k folder: switch to Column view (View menu)",
+      `window.__m.menuButton(2).click(); true`,
+      `window.__m.click(${columnsEntry})`,
+      `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`,
+    ),
+  );
+  results.push(
+    await measure(
+      "100k folder: arrow key move in Column view",
+      `(async () => { window.__m.menuButton(2).click(); await window.__m.frame(); ${columnsEntry}.click(); await window.__m.waitFor(() => window.__m.rows().length > 0); window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); return true; })()`,
+      `window.__m.key(window.__m.list(), { key: "ArrowDown" })`,
+      `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`,
+    ),
+  );
+  {
+    // Switch to Column view once, then open each of the first subfolders.
+    await page(`(async () => {
+      window.__m.menuButton(2).click();
+      await window.__m.frame();
+      ${columnsEntry}.click();
+      await window.__m.waitFor(() => window.__m.rows().length > 0);
+      return true;
+    })()`);
+    const values = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      values.push(
+        await page(
+          `window.__m.timeUntil(() => window.__m.click(window.__m.rows()[${run}]), () => document.querySelector(".adp-colview-column--child")?.querySelector("[role='option'], .adp-empty-note") != null)`,
+        ),
+      );
+    }
+    await page(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`);
+    const result = { name: "100k folder: show a subfolder's column", median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+    console.log(`${result.name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+    results.push(result);
+  }
   // Smooth tier: scroll the 100k list one wheel-step per frame for 2 s and
   // record every frame interval. The display's own frame time is the median
   // interval; a frame slower than 1.5x of it is a dropped frame.
@@ -427,6 +507,27 @@ if (mode === "full") {
     console.log(`step 04b measurements failed: ${error.message ?? error}`);
   }
 
+  // Step 04c: open a WAV file in the player (until its length is known).
+  try {
+    await openFolder(demo);
+    const values = [];
+    for (let run = 0; run < 5; run += 1) {
+      values.push(
+        await page(`window.__m.timeUntil(
+          () => [...window.__m.rows()].find((r) => r.textContent.includes("tone-10s.wav")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+          () => (document.querySelector(".adp-filetab:not([hidden]) audio")?.readyState ?? 0) >= 1)`),
+      );
+      await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+      await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+      await sleep(200);
+    }
+    const result = { name: "open a WAV file in the player (first view)", median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+    console.log(`${result.name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+    results.push(result);
+  } catch (error) {
+    console.log(`step 04c measurements failed: ${error.message ?? error}`);
+  }
+
   // Classic menu: time until the helper's menu is on screen. The runner
   // closes it afterwards. Closing the image tab returns to the Explorer in
   // the demo folder, so do not re-enter the path in the address bar here.
@@ -448,6 +549,31 @@ if (mode === "full") {
   ]);
   await sleep(500);
 
+  // Step 05c: the toolbar's right-click menu, from the command bar.
+  // Item 0 of the main menu is Toolbar position, item 2 is Layout preset;
+  // radio 2 of the position list is Left, radio 2 of the preset list is
+  // Classic (0 is Standard).
+  const openToolbarMenu = `document.querySelector(".adp-commandbar").dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 300, clientY: 110 }))`;
+  const mainMenuItem = (index) => `document.querySelectorAll(".adp-ctxmenu")[0].querySelectorAll("[role=menuitem]")[${index}].click()`;
+  const submenuRadio = (index) => `document.querySelectorAll(".adp-ctxmenu")[1].querySelectorAll("[role=menuitemradio]")[${index}].click()`;
+  const openSubmenu = (item) => `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(item)}; await window.__m.frame(); })()`;
+
+  results.push(
+    await measure(
+      "move the toolbar to the left (toolbar menu)",
+      openSubmenu(0),
+      submenuRadio(2),
+      `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(0)}; await window.__m.frame(); ${submenuRadio(0)}; })()`,
+    ),
+  );
+  results.push(
+    await measure(
+      "apply the Classic preset (toolbar menu)",
+      openSubmenu(2),
+      submenuRadio(2),
+      `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(2)}; await window.__m.frame(); ${submenuRadio(0)}; })()`,
+    ),
+  );
 }
 
 if (outFile && results.length > 0) {
@@ -608,6 +734,106 @@ if (shotDir) {
   await sleep(300);
   await shot("14-markdown-tab");
   await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  // Step 04c: the audio player, and a downloaded file in protected view.
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("tone-10s.wav"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => (document.querySelector(".adp-filetab:not([hidden]) audio")?.readyState ?? 0) >= 1, 15000)`);
+  await sleep(300);
+  await shot("15-audio-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("downloaded.md"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-markdown-frame")?.contentDocument?.querySelector("main h1") != null, 15000)`);
+  await sleep(300);
+  await shot("16-protected-view");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  // Step 05a: the views, and the View menu in the chosen order.
+  await step(`window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true })`);
+  await step(`window.__m.click(window.__m.rows()[2])`);
+  await step(`document.activeElement?.blur()`);
+  await sleep(300);
+  await shot("17-large-icons");
+  await step(`window.__m.key(window, { key: "&", code: "Digit7", ctrlKey: true, shiftKey: true })`);
+  await shot("18-tiles");
+  await step(`window.__m.key(window, { key: "*", code: "Digit8", ctrlKey: true, shiftKey: true })`);
+  await shot("19-content");
+  await step(`window.__m.key(window, { key: "%", code: "Digit5", ctrlKey: true, shiftKey: true })`);
+  await shot("20-list");
+  await step(`window.__m.menuButton(2).click()`);
+  await sleep(200);
+  await shot("21-view-menu");
+  await step(`window.__m.closeMenus()`);
+  await step(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true })`);
+  // Step 05b: Column view, and the preview of the selected file.
+  await step(`window.__m.menuButton(2).click()`);
+  await step(`document.querySelectorAll(".adp-ctxmenu [role=menuitemradio]")[8].click()`);
+  await sleep(300);
+  await step(`[...document.querySelectorAll(".adp-colview-row")].find((r) => r.textContent.includes("Invoices"))?.click()`);
+  await sleep(600);
+  await step(`document.activeElement?.blur()`);
+  await shot("22-column-view");
+  await step(`[...document.querySelectorAll(".adp-colview-row")].find((r) => r.textContent.includes("Q4 Budget 2026.xlsx"))?.click()`);
+  await sleep(300);
+  await shot("23-column-preview");
+  await step(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true })`);
+
+  // Step 05c: the toolbar, the tabs and the panes in every place.
+  // "settings" = open Settings, set the layout fields, come back.
+  const settings = async (fields) => {
+    await step(`window.__m.openSettings()`);
+    await sleep(300);
+    for (const [field, value] of fields) {
+      await step(`window.__m.layoutField(${JSON.stringify(field)}, ${JSON.stringify(value)})`);
+    }
+    await step(`window.__m.openExplorer()`);
+    await sleep(400);
+  };
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  const rememberedDetails = await page(`document.querySelector('select[data-layout-field="details_pane"]')?.value ?? "hidden"`);
+  await step(`window.__m.openExplorer()`);
+  await sleep(400);
+  await settings([["toolbar_position", "left"]]);
+  await shot("24-toolbar-left");
+  await settings([
+    ["toolbar_position", "bottom"],
+    ["toolbar_mode", "iconsOnly"],
+  ]);
+  await shot("25-toolbar-bottom-icons");
+  await settings([
+    ["toolbar_position", "top"],
+    ["toolbar_mode", "full"],
+    ["tab_bar_position", "left"],
+  ]);
+  await shot("26-tabs-left");
+  await settings([
+    ["tab_bar_position", "top"],
+    ["nav_pane_position", "right"],
+    ["details_pane", "bottom"],
+  ]);
+  await step(`window.__m.click(window.__m.rows()[2])`);
+  await sleep(200);
+  await shot("27-panes-moved");
+  // The file operations screens deleted the demo's notes.txt for good.
+  if (!existsSync(join(demo, "notes.txt"))) writeFileSync(join(demo, "notes.txt"), "notes");
+  await openFolder(demo);
+  await settings([
+    ["nav_pane_position", "left"],
+    ["details_pane", rememberedDetails],
+    ["toolbar_position", "right"],
+    ["toolbar_mode", "iconsOnly"],
+  ]);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await sleep(800);
+  await step(`document.querySelector(".adp-flyout-btn")?.click()`);
+  await shot("28-ribbon-right-icons");
+  await step(`window.__m.key(window, { key: "Escape" })`);
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await settings([["preset", "builtin:classic"]]);
+  await shot("29-classic");
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await shot("30-layout-settings");
+  await step(`window.__m.layoutField("preset", "builtin:standard")`);
+  await step(`window.__m.openExplorer()`);
 }
 
 cdp.close();

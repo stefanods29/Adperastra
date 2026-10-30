@@ -4,8 +4,13 @@ import { supportedLanguages } from "../i18n";
 import Menu, { type MenuAnchor } from "../components/Menu";
 import Skeleton from "../components/Skeleton";
 import ToastStack, { type ToastData } from "../components/Toast";
-import { createExplorerCommands, type ExplorerActions, type ViewToggle } from "../commands/explorerCommands";
-import { BACKGROUND_MENU, COMMAND_BAR, ITEM_MENU, resolveMenu } from "../commands/menus";
+import {
+  VIEW_MODE_COMMANDS,
+  createExplorerCommands,
+  type ExplorerActions,
+  type ViewToggle,
+} from "../commands/explorerCommands";
+import { ITEM_MENU, backgroundMenuFor, commandBarFor, resolveMenu } from "../commands/menus";
 import { CommandRegistry, isCommandEnabled, type Command, type CommandContext } from "../commands/registry";
 import {
   addFavorite,
@@ -87,7 +92,9 @@ import {
   summarizeSelection,
   type SelectionState,
 } from "../services/selection";
-import { isTauriRuntime, type ExplorerViewSettings } from "../services/settings";
+import { defaultSettings, isTauriRuntime, type ExplorerViewSettings, type ViewModeId } from "../services/settings";
+import { useLayout } from "../layout/LayoutContext";
+import ToolbarDock from "../layout/ToolbarDock";
 import AddressBar from "./explorer/AddressBar";
 import CommandBar from "./explorer/CommandBar";
 import {
@@ -104,6 +111,11 @@ import FileList from "./explorer/FileList";
 import { fileExtension } from "./explorer/fileTile";
 import HomePage, { type HomeTab } from "./explorer/HomePage";
 import NavPane from "./explorer/NavPane";
+import ItemView from "./explorer/views/ItemView";
+import type { ColumnViewOptions } from "./explorer/views/columnTrail";
+import { useColumnNavigation } from "./explorer/views/useColumnNavigation";
+import { useViewMode } from "./explorer/views/useViewMode";
+import { skeletonVariant, viewModeFromKey } from "./explorer/views/viewModes";
 
 /** What the status bar shows for the Explorer tab. */
 export interface ExplorerStats {
@@ -111,6 +123,8 @@ export interface ExplorerStats {
   selected: number;
   selectedBytes: number;
   selectedFiles: number;
+  /** The open folder's view; null when no folder is open. */
+  viewMode: ViewModeId | null;
 }
 
 /** Ask the Explorer to open a folder (and select one item in it). A new
@@ -118,6 +132,12 @@ export interface ExplorerStats {
 export interface ExplorerNavigateRequest {
   folder: string;
   select: string | null;
+  nonce: number;
+}
+
+/** Status bar view buttons (Step 05a); a new `nonce` runs it again. */
+export interface ExplorerViewModeRequest {
+  mode: ViewModeId;
   nonce: number;
 }
 
@@ -129,7 +149,11 @@ export interface ExplorerHomeProps {
   /** Open a file through the app's open pipeline (Step 04a). Rejects with
    * a `files.*` error code. Without it, files open in their Windows app. */
   onOpenFile?: (path: string, background: boolean) => Promise<void>;
+  /** "Open as text" and "Open as hex" (Step 04c): show a file in a chosen viewer. */
+  onOpenFileWith?: (path: string, handlerId: string) => void;
   navigateRequest?: ExplorerNavigateRequest | null;
+  /** Status bar view buttons (Step 05a); a new `nonce` runs it again. */
+  viewModeRequest?: ExplorerViewModeRequest | null;
   /** View options from settings (schema 3); defaults when absent. */
   view?: ExplorerViewSettings;
   onViewChange?: (patch: Partial<ExplorerViewSettings>) => void;
@@ -137,15 +161,10 @@ export interface ExplorerHomeProps {
   pasteImageFormat?: "png" | "jpg";
 }
 
-const DEFAULT_VIEW: ExplorerViewSettings = {
-  show_hidden: false,
-  show_extensions: true,
-  item_checkboxes: false,
-  details_pane: false,
-  group_by: "none",
-};
+const DEFAULT_VIEW: ExplorerViewSettings = defaultSettings().explorer;
 
-const VIEW_SETTING: Record<ViewToggle, keyof Omit<ExplorerViewSettings, "group_by">> = {
+/** The toggles behind the View menu that patch one boolean field. */
+const VIEW_SETTING: Record<ViewToggle, "details_pane" | "show_hidden" | "show_extensions" | "item_checkboxes"> = {
   detailsPane: "details_pane",
   showHidden: "show_hidden",
   showExtensions: "show_extensions",
@@ -218,17 +237,28 @@ export default function ExplorerHome({
   onStatsChange,
   onOpenHelp,
   onOpenFile,
+  onOpenFileWith,
   navigateRequest = null,
+  viewModeRequest = null,
   view: viewProp,
   onViewChange,
   pasteImageFormat = "png",
 }: ExplorerHomeProps) {
   const { t, i18n } = useTranslation();
+  const { layout } = useLayout();
   const activeRef = useRef(active);
   activeRef.current = active;
   const view = viewProp ?? DEFAULT_VIEW;
   const [history, setHistory] = useState<NavHistory>(() => createHistory({ type: "home" }));
   const location = history.current;
+  // The folder's own view when it has one, else the default view (Step 05a).
+  const viewModeState = useViewMode({
+    view,
+    onViewChange,
+    folderPath: location.type === "folder" ? location.path : null,
+  });
+  const viewModeRef = useRef(viewModeState);
+  viewModeRef.current = viewModeState;
   const [knownFolders, setKnownFolders] = useState<KnownFolder[]>([]);
   const [stateData, setStateData] = useState<ExplorerStateData>({ schema_version: 2, pinned_folders: [], recent_folders: [], favorites: [] });
   const [recent, setRecent] = useState<RecentItem[]>([]);
@@ -278,6 +308,7 @@ export default function ExplorerHome({
   const [dragBadge, setDragBadge] = useState<{ x: number; y: number; key: string; name: string } | null>(null);
   const loadModeRef = useRef<"hard" | "soft">("hard");
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [columnsNonce, setColumnsNonce] = useState(0);
   const [homeNonce, setHomeNonce] = useState(0);
   const generationRef = useRef(0);
   type CancelFn = Awaited<ReturnType<typeof startListDir>>["cancel"];
@@ -351,6 +382,8 @@ export default function ExplorerHome({
     if (location.type === "folder") {
       loadModeRef.current = "soft";
       setRefreshNonce((value) => value + 1);
+      // F5 and every file operation reload the side columns too (Step 05b D7).
+      setColumnsNonce((value) => value + 1);
     } else if (location.type === "home") setHomeNonce((value) => value + 1);
     else if (location.type === "drives") setRefreshNonce((value) => value + 1);
   }, [location.type]);
@@ -447,6 +480,8 @@ export default function ExplorerHome({
       groupBy: view.group_by,
       sortKey,
       sortDirection,
+      viewMode: viewModeState.mode,
+      hiddenViewModes: view.hidden_view_modes,
     },
     allFavorites,
     selectionInCurrentFolder: location.type === "folder",
@@ -887,6 +922,18 @@ export default function ExplorerHome({
         for (const path of files.slice(0, OPEN_LIMIT)) void openItem(path).catch((error: unknown) => notifyError(error, "open"));
         if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
       },
+      openAsText: () => {
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        const files = paths.filter((path) => byPath.get(path)?.kind === "file");
+        for (const path of files.slice(0, OPEN_LIMIT)) onOpenFileWith?.(path, "text");
+        if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
+      },
+      openAsHex: () => {
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        const files = paths.filter((path) => byPath.get(path)?.kind === "file");
+        for (const path of files.slice(0, OPEN_LIMIT)) onOpenFileWith?.(path, "hex");
+        if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
+      },
       openWith: () => {
         const paths = live.current.selectedPaths;
         if (paths.length === 1 && isTauriRuntime()) void openWithDialog(paths[0]).catch((error: unknown) => notifyError(error, "openWith"));
@@ -950,6 +997,8 @@ export default function ExplorerHome({
         const key = VIEW_SETTING[option];
         onViewChange?.({ [key]: !live.current.view[key] });
       },
+      // Step 05a: runs the view the user chose (or Ctrl+wheel stepped to).
+      setViewMode: (mode: ViewModeId) => viewModeRef.current.setMode(mode),
       newFolder: () => void createNew("folder"),
       newTextFile: () => void createNew("file"),
       cut: () => {
@@ -1020,7 +1069,7 @@ export default function ExplorerHome({
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [goToFolder, goToLocation, i18n, notify, notifyError, onViewChange, openOne, refresh, t, pasteImageFormat],
+    [goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);
@@ -1052,6 +1101,13 @@ export default function ExplorerHome({
       if (document.querySelector("[role='dialog']")) return;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
       const ctrl = event.ctrlKey || event.metaKey;
+      // Ctrl+Shift+1 to 8 pick a view (Step 05a D6), by key position.
+      const requestedMode = viewModeFromKey(event);
+      if (requestedMode) {
+        event.preventDefault();
+        runById(VIEW_MODE_COMMANDS[requestedMode]);
+        return;
+      }
       if (ctrl && !event.altKey && (event.key === "z" || event.key === "Z") && !event.shiftKey) {
         event.preventDefault();
         runById("explorer.undo");
@@ -1103,6 +1159,14 @@ export default function ExplorerHome({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [runById]);
+
+  // Status bar view buttons (Step 05a).
+  useEffect(() => {
+    if (!viewModeRequest) return;
+    runById(VIEW_MODE_COMMANDS[viewModeRequest.mode]);
+    // Only a new request (new nonce) runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewModeRequest?.nonce]);
 
   // Initial shell data: known folders, explorer state, drive roots.
   useEffect(() => {
@@ -1316,8 +1380,14 @@ export default function ExplorerHome({
           : location.type === "drives"
             ? drives.length
             : 0;
-    onStatsChange?.({ total, selected: summary.count, selectedBytes: summary.bytes, selectedFiles: summary.files });
-  }, [onStatsChange, visibleItems.length, homeItems.length, drives.length, location.type, summary]);
+    onStatsChange?.({
+      total,
+      selected: summary.count,
+      selectedBytes: summary.bytes,
+      selectedFiles: summary.files,
+      viewMode: location.type === "folder" ? viewModeState.mode : null,
+    });
+  }, [onStatsChange, visibleItems.length, homeItems.length, drives.length, location.type, summary, viewModeState.mode]);
 
   const onFirstPaint = useCallback(() => {
     const bench = benchRef.current;
@@ -1344,6 +1414,18 @@ export default function ExplorerHome({
     setMenu({ kind: item ? "item" : "background", anchor: { kind: "point", x: point.x, y: point.y }, startedAt: performance.now(), focusFirst: false });
   }, []);
   const closeMenu = useCallback(() => setMenu(null), []);
+  // Opening a folder from Column view (Step 05b): select an item in it,
+  // then open its menu once it is selected.
+  const navigateColumns = useColumnNavigation({
+    location,
+    orderPaths,
+    selection,
+    itemByPath,
+    goToFolder,
+    setSelection,
+    pendingSelectRef,
+    openContextMenu,
+  });
   const onMenuShown = useCallback(() => {
     const opened = live.current.menu;
     if (!opened) return;
@@ -1622,6 +1704,10 @@ export default function ExplorerHome({
     return cards;
   }, [knownFolders, stateData.pinned_folders]);
 
+  // Step 05a: the View menu and command bar follow the chosen order.
+  const commandBar = useMemo(() => commandBarFor(view.view_mode_order), [view.view_mode_order]);
+  const backgroundMenu = useMemo(() => backgroundMenuFor(view.view_mode_order), [view.view_mode_order]);
+
   const listProps = {
     selection,
     onSelectionChange: setSelection,
@@ -1670,22 +1756,44 @@ export default function ExplorerHome({
       const showTimedOut = loadTimedOut && loading;
       const showEmpty = !loading && visibleItems.length === 0 && !search;
       const showNoResults = !loading && items.length > 0 && visibleItems.length === 0 && Boolean(search);
+      const columnsMode = viewModeState.mode === "columns";
+      const showList = visibleItems.length > 0 || columnsMode;
+      const columnOptions: ColumnViewOptions = {
+        folder: location.path,
+        root: viewModeState.columnRoot ?? location.path,
+        note: showSkeleton ? "loading" : showEmpty ? "empty" : showNoResults ? "noResults" : null,
+        loading,
+        showHidden: view.show_hidden,
+        groupBy: view.group_by,
+        refreshKey: columnsNonce,
+        width: view.column_width,
+        showPreview: view.column_preview,
+        onWidthChange: (width) => onViewChange?.({ column_width: width }),
+        onNavigate: navigateColumns,
+        onDragItem: (event, item) => {
+          if (event.button !== 0) return;
+          dragSession.current = { mode: "pending", paths: [item.path], x: event.clientX, y: event.clientY };
+        },
+      };
       folderContent = (
         <>
-          {showSkeleton ? <Skeleton variant="rows" count={10} /> : null}
+          {!columnsMode && showSkeleton ? <Skeleton variant={skeletonVariant(viewModeState.mode)} count={10} /> : null}
           {showSlow ? <p className="adp-note">{t("explorer.stillLoading")}</p> : null}
           {showTimedOut ? <p className="adp-note">{t("explorer.notAvailable")}</p> : null}
           {partialCount > 0 ? <p className="adp-note" role="status">{t("explorer.someItemsUnreadable")}</p> : null}
-          {showEmpty ? <p className="adp-empty-note">{t("explorer.emptyFolder")}</p> : null}
-          {showNoResults ? <p className="adp-empty-note">{t("explorer.noSearchResults")}</p> : null}
-          {visibleItems.length > 0 ? (
-            <FileList
+          {!columnsMode && showEmpty ? <p className="adp-empty-note">{t("explorer.emptyFolder")}</p> : null}
+          {!columnsMode && showNoResults ? <p className="adp-empty-note">{t("explorer.noSearchResults")}</p> : null}
+          {showList ? (
+            <ItemView
               {...listProps}
               items={visibleItems}
               groups={groups}
               onSort={onSort}
               onFirstPaint={onFirstPaint}
               label={t("explorer.fileListLabel")}
+              mode={viewModeState.mode}
+              onZoomStep={viewModeState.zoomStep}
+              columnOptions={columnsMode ? columnOptions : undefined}
             />
           ) : null}
         </>
@@ -1715,6 +1823,25 @@ export default function ExplorerHome({
       ? { path: location.path, name: placeLabel, itemCount: visibleItems.length }
       : null;
 
+  // The Details pane goes on the right or under the files (Step 05c).
+  const detailsPane = (placement: "right" | "bottom") =>
+    view.details_pane ? (
+      <DetailsPane
+        selected={selectedItems}
+        summary={summary}
+        folder={detailsFolder}
+        showExtensions={view.show_extensions}
+        typeLabel={typeLabel}
+        onCopyPath={(path) => {
+          writeClipboard(pathsForClipboard([path]))
+            .then(() => notify(t("toast.pathsCopied", { count: 1 })))
+            .catch(() => notify(t("errors.copyPath.other")));
+        }}
+        onOpenHelp={() => onOpenHelp("details-pane")}
+        placement={placement}
+      />
+    ) : null;
+
   return (
     <div className="adp-explorer">
       <AddressBar
@@ -1741,75 +1868,72 @@ export default function ExplorerHome({
         search={search}
         onSearch={setSearch}
       />
-      <CommandBar entries={COMMAND_BAR} ctx={commandCtx} lookup={lookup} onRun={runCommand} onOpenHelp={() => onOpenHelp("command-bar")} />
-      <div className="adp-explorer-body">
-        <NavPane
-          knownFolders={knownFolders}
-          pinnedFolders={stateData.pinned_folders}
-          drives={drives}
-          location={location}
-          onHome={() => goToLocation({ type: "home" })}
-          onGallery={() => goToLocation({ type: "gallery" })}
-          onDrives={() => goToLocation({ type: "drives" })}
-          onNetwork={() => goToLocation({ type: "network" })}
-          onOpenFolder={goToFolder}
-          onUnpin={(path) => {
-            void unpinFolder(path).then((next) => setStateData(normalizeState(next))).catch(() => undefined);
-          }}
-        />
-        <section
-          className="adp-explorer-content"
-          onContextMenu={(event) => {
-            // The file list handles its own right-clicks; this covers empty
-            // folders, loading states, and messages.
-            if (event.defaultPrevented) return;
-            event.preventDefault();
-            if (live.current.location.type !== "folder") return;
-            setSelection((current) => clearSelection(current));
-            openContextMenu({ x: event.clientX, y: event.clientY }, null);
-          }}
-        >
-          {location.type === "home" ? (
-            <HomePage
+      <ToolbarDock
+        toolbar={
+          <CommandBar entries={commandBar} ctx={commandCtx} lookup={lookup} onRun={runCommand} onOpenHelp={() => onOpenHelp("command-bar")} />
+        }
+        contentClassName="adp-explorer-main"
+      >
+        <div className={`adp-explorer-body${layout.nav_pane_position === "right" ? " adp-explorer-body--nav-right" : ""}`}>
+          {layout.nav_pane_position === "hidden" ? null : (
+            <NavPane
               knownFolders={knownFolders}
-              pinnedCards={pinnedCards}
+              pinnedFolders={stateData.pinned_folders}
+              drives={drives}
+              location={location}
+              onHome={() => goToLocation({ type: "home" })}
+              onGallery={() => goToLocation({ type: "gallery" })}
+              onDrives={() => goToLocation({ type: "drives" })}
+              onNetwork={() => goToLocation({ type: "network" })}
               onOpenFolder={goToFolder}
-              onOpenHelp={() => onOpenHelp("home-page")}
-              tab={homeTab}
-              onTabChange={(tab) => {
-                setSelection(EMPTY_SELECTION);
-                setRenamingPath(null);
-                setHomeTab(tab);
+              onUnpin={(path) => {
+                void unpinFolder(path).then((next) => setStateData(normalizeState(next))).catch(() => undefined);
+              }}
+            />
+          )}
+          <div className="adp-explorer-center">
+            <section
+              className="adp-explorer-content"
+              onContextMenu={(event) => {
+                // The file list handles its own right-clicks; this covers empty
+                // folders, loading states, and messages.
+                if (event.defaultPrevented) return;
+                event.preventDefault();
+                if (live.current.location.type !== "folder") return;
+                setSelection((current) => clearSelection(current));
+                openContextMenu({ x: event.clientX, y: event.clientY }, null);
               }}
             >
-              {homeList}
-            </HomePage>
-          ) : null}
+              {location.type === "home" ? (
+                <HomePage
+                  knownFolders={knownFolders}
+                  pinnedCards={pinnedCards}
+                  onOpenFolder={goToFolder}
+                  onOpenHelp={() => onOpenHelp("home-page")}
+                  tab={homeTab}
+                  onTabChange={(tab) => {
+                    setSelection(EMPTY_SELECTION);
+                    setRenamingPath(null);
+                    setHomeTab(tab);
+                  }}
+                >
+                  {homeList}
+                </HomePage>
+              ) : null}
 
-          {location.type === "drives" ? (
-            <DriveList drives={drives} states={driveStates} onOpenDrive={goToFolder} />
-          ) : null}
+              {location.type === "drives" ? (
+                <DriveList drives={drives} states={driveStates} onOpenDrive={goToFolder} />
+              ) : null}
 
-          {location.type === "gallery" ? <p className="adp-empty-note">{t("explorer.galleryPlaceholder")}</p> : null}
-          {location.type === "network" ? <p className="adp-empty-note">{t("explorer.networkPlaceholder")}</p> : null}
-          {folderContent}
-        </section>
-        {view.details_pane ? (
-          <DetailsPane
-            selected={selectedItems}
-            summary={summary}
-            folder={detailsFolder}
-            showExtensions={view.show_extensions}
-            typeLabel={typeLabel}
-            onCopyPath={(path) => {
-              writeClipboard(pathsForClipboard([path]))
-                .then(() => notify(t("toast.pathsCopied", { count: 1 })))
-                .catch(() => notify(t("errors.copyPath.other")));
-            }}
-            onOpenHelp={() => onOpenHelp("details-pane")}
-          />
-        ) : null}
-      </div>
+              {location.type === "gallery" ? <p className="adp-empty-note">{t("explorer.galleryPlaceholder")}</p> : null}
+              {location.type === "network" ? <p className="adp-empty-note">{t("explorer.networkPlaceholder")}</p> : null}
+              {folderContent}
+            </section>
+            {layout.details_pane_position === "bottom" ? detailsPane("bottom") : null}
+          </div>
+          {layout.details_pane_position === "right" ? detailsPane("right") : null}
+        </div>
+      </ToolbarDock>
       {conflictAsk ? (
         <ConflictDialog
           name={conflictAsk.name}
@@ -1856,7 +1980,7 @@ export default function ExplorerHome({
       ) : null}
       {menu ? (
         <Menu
-          entries={resolveMenu(menu.kind === "item" ? ITEM_MENU : BACKGROUND_MENU, commandCtx, lookup)}
+          entries={resolveMenu(menu.kind === "item" ? ITEM_MENU : backgroundMenu, commandCtx, lookup)}
           ctx={commandCtx}
           lookup={lookup}
           anchor={menu.anchor}

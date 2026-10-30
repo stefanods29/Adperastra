@@ -14,6 +14,8 @@ export interface FileTypeInfo {
   modified_unix: number;
   online_only: boolean;
   read_only: boolean;
+  /** Windows marked the file as downloaded from the internet (Step 04c). */
+  from_internet: boolean;
 }
 
 export async function fileDetect(path: string): Promise<FileTypeInfo> {
@@ -27,6 +29,12 @@ export async function fileGrant(path: string): Promise<string> {
 
 export async function fileRevoke(token: string): Promise<void> {
   await invoke("file_revoke", { token });
+}
+
+/** Remove the "downloaded from the internet" mark (Step 04c). Rejects with
+ * `files.unblock_denied` or `files.unblock_failed`. */
+export async function fileUnblock(path: string): Promise<void> {
+  await invoke("file_unblock", { path });
 }
 
 /** URL of a granted file. On Windows, Tauri serves custom schemes at

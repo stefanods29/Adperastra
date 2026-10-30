@@ -44,6 +44,9 @@ pub struct FileTypeInfo {
     pub modified_unix: u64,
     pub online_only: bool,
     pub read_only: bool,
+    /// Windows marked the file as downloaded from the internet (Step 04c,
+    /// `crate::zone`): file tabs show it in protected view.
+    pub from_internet: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -121,6 +124,7 @@ pub fn mime_from_ext(ext: &str) -> &'static str {
         "avif" => "image/avif",
         "mp4" | "m4v" => "video/mp4",
         "webm" => "video/webm",
+        "weba" => "audio/webm",
         "mkv" => "video/x-matroska",
         "mov" => "video/quicktime",
         "mp3" => "audio/mpeg",
@@ -190,6 +194,7 @@ pub fn detect(path: &Path) -> Result<FileTypeInfo, String> {
         modified_unix: unix_seconds(meta.modified()),
         online_only: item.attrs.online_only,
         read_only: meta.permissions().readonly(),
+        from_internet: crate::zone::is_from_internet(path),
     })
 }
 

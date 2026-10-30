@@ -48,7 +48,7 @@ impl Default for ExplorerState {
 /// command stores `fs::canonicalize` output (`\\?\C:\...` or
 /// `\\?\UNC\server\...`), while the UI sends the display form. Both must
 /// match, case-insensitively.
-fn normalize_for_compare(path: &str) -> String {
+pub(crate) fn normalize_for_compare(path: &str) -> String {
     let trimmed = path.trim();
     let stripped = if let Some(unc) = trimmed.strip_prefix(r"\\?\UNC\") {
         format!(r"\\{unc}")
@@ -61,7 +61,7 @@ fn normalize_for_compare(path: &str) -> String {
 }
 
 /// The display form of a stored path (no `\\?\` prefix), original case.
-fn without_verbatim_prefix(path: &str) -> String {
+pub(crate) fn without_verbatim_prefix(path: &str) -> String {
     let trimmed = path.trim();
     if let Some(unc) = trimmed.strip_prefix(r"\\?\UNC\") {
         format!(r"\\{unc}")

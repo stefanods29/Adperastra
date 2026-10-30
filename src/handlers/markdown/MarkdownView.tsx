@@ -55,7 +55,7 @@ function themeColors(): DocColors {
 /** Markdown viewer (Step 04b): the rendered page in a frame that cannot
  * run scripts, or the source in CodeMirror. Links ask before opening in
  * the browser. */
-export default function MarkdownView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, find }: HandlerViewProps) {
+export default function MarkdownView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, find, protectedView }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState<SavedMarkdownState>(() => readSaved(savedState));
   const [source, setSource] = useState<string | null>(null);
@@ -70,6 +70,9 @@ export default function MarkdownView({ info, url, active, savedState, onStateCha
   const matchIndex = useRef(0);
   /** Reading position (0 to 1), kept when the page is rebuilt (zoom, theme). */
   const scrollRatio = useRef(0);
+  /** Protected view (Step 04c): links do nothing. */
+  const protectedRef = useRef(protectedView);
+  protectedRef.current = protectedView;
 
   const update = useCallback(
     (patch: Partial<SavedMarkdownState>) => {
@@ -142,7 +145,7 @@ export default function MarkdownView({ info, url, active, savedState, onStateCha
       if (!anchor) return;
       event.preventDefault();
       const href = anchor.getAttribute("href") ?? "";
-      if (isExternalUrl(href)) setPendingLink(href);
+      if (isExternalUrl(href) && !protectedRef.current) setPendingLink(href);
     });
     // A new page is ready: run the search again on it.
     setFrameLoads((count) => count + 1);

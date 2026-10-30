@@ -1,12 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
-import { createExplorerCommands, type ExplorerActions } from "../commands/explorerCommands";
-import { BACKGROUND_MENU, COMMAND_BAR, ITEM_MENU, resolveMenu, type MenuEntry } from "../commands/menus";
+import { VIEW_MODE_COMMANDS, createExplorerCommands, type ExplorerActions } from "../commands/explorerCommands";
+import {
+  BACKGROUND_MENU,
+  COMMAND_BAR,
+  ITEM_MENU,
+  VIEW_MENU,
+  backgroundMenuFor,
+  commandBarFor,
+  resolveMenu,
+  viewMenuFor,
+  type MenuEntry,
+} from "../commands/menus";
 import {
   CommandRegistry,
   commandLabelKey,
   isCommandEnabled,
+  isCommandVisible,
   type CommandContext,
 } from "../commands/registry";
+import { VIEW_MODE_IDS } from "../services/settings";
 import {
   canGoBack,
   canGoForward,
@@ -93,6 +105,8 @@ const baseCtx: CommandContext = {
     groupBy: "none",
     sortKey: "name",
     sortDirection: "ascending",
+    viewMode: "details",
+    hiddenViewModes: [],
   },
   allFavorites: false,
   selectionInCurrentFolder: true,
@@ -135,14 +149,37 @@ describe("explorer commands", () => {
     expect(isCommandEnabled(byId["explorer.goToPath"], { ...baseCtx, location: "home", currentPath: null })).toBe(true);
   });
 
-  it("keeps not-yet-built commands disabled even with a selection", () => {
+  it("view mode commands are live and follow the settings", () => {
     const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
-    // Only the Step 05 view modes are still placeholders after Step 03b.
-    for (const id of ["explorer.viewList", "explorer.viewSmallIcons", "explorer.viewMediumIcons", "explorer.viewLargeIcons"]) {
-      expect(byId[id].pending).toBe(true);
-      expect(isCommandEnabled(byId[id], { ...baseCtx, selection: oneFile })).toBe(false);
+    for (const mode of VIEW_MODE_IDS) {
+      const command = byId[VIEW_MODE_COMMANDS[mode]];
+      expect(command, mode).toBeDefined();
+      expect(command.pending, mode).toBeFalsy();
+      expect(command.checkKind, mode).toBe("radio");
+      expect(command.helpSlug, mode).toBe("view-modes");
     }
-    expect(isCommandEnabled(byId["explorer.viewDetails"], baseCtx)).toBe(true);
+    expect(isCommandEnabled(byId["explorer.viewList"], baseCtx)).toBe(true);
+    expect(isCommandEnabled(byId["explorer.viewList"], { ...baseCtx, location: "home", currentPath: null })).toBe(false);
+    const tiles = { ...baseCtx, view: { ...baseCtx.view, viewMode: "tiles" as const } };
+    expect(byId["explorer.viewTiles"].checkedWhen?.(tiles)).toBe(true);
+    expect(byId["explorer.viewDetails"].checkedWhen?.(tiles)).toBe(false);
+    expect(
+      isCommandVisible(byId["explorer.viewList"], { ...baseCtx, view: { ...baseCtx.view, hiddenViewModes: ["list"] } }),
+    ).toBe(false);
+    expect(byId["explorer.viewExtraLargeIcons"].shortcut).toBe("Ctrl+Shift+1");
+    expect(byId["explorer.viewDetails"].shortcut).toBe("Ctrl+Shift+6");
+    expect(byId["explorer.viewContent"].shortcut).toBe("Ctrl+Shift+8");
+    const actions = makeActions();
+    createExplorerCommands(actions)
+      .find((c) => c.id === "explorer.viewContent")
+      ?.run(baseCtx);
+    expect(actions.setViewMode).toHaveBeenCalledWith("content");
+    expect(byId["explorer.viewColumns"].shortcut).toBeUndefined();
+    const columnActions = makeActions();
+    createExplorerCommands(columnActions)
+      .find((c) => c.id === "explorer.viewColumns")
+      ?.run(baseCtx);
+    expect(columnActions.setViewMode).toHaveBeenCalledWith("columns");
   });
 
   it("file operations are live and follow their rules (Step 03b)", () => {
@@ -230,5 +267,19 @@ describe("menus from commands", () => {
       lookup,
     );
     expect(ids(resolved)).toEqual(["explorer.refresh"]);
+  });
+
+  it("the View menu follows the chosen order", () => {
+    const order = ["details", "list", "extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "tiles", "content"] as const;
+    const menu = viewMenuFor(order);
+    expect(menu.slice(0, 2)).toEqual([
+      { type: "command", id: "explorer.viewDetails" },
+      { type: "command", id: "explorer.viewList" },
+    ]);
+    expect(VIEW_MENU[0]).toEqual({ type: "command", id: "explorer.viewExtraLargeIcons" });
+    const barView = commandBarFor(order).find((entry) => entry.type === "menu" && entry.id === "view");
+    expect(barView && barView.type === "menu" ? barView.entries : null).toEqual(viewMenuFor(order));
+    const backgroundView = backgroundMenuFor(order).find((entry) => entry.type === "submenu" && entry.id === "view");
+    expect(backgroundView && backgroundView.type === "submenu" ? backgroundView.entries : null).toEqual(viewMenuFor(order));
   });
 });

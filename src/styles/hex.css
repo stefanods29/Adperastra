@@ -1,0 +1,8 @@
+/* Hex viewer (Step 04c). Colors only through tokens. */
+.adp-hex { flex: 1; min-width: 0; overflow: auto; background: var(--adp-color-surface-window); font-family: "Cascadia Mono", Consolas, "Courier New", monospace; font-size: calc(13px * var(--adp-hex-zoom, 1)); }
+.adp-hex:focus-visible { outline: 2px solid var(--adp-accent-explorer); outline-offset: -2px; }
+.adp-hex-rows { position: relative; min-width: 100%; }
+.adp-hex-row { position: absolute; top: 0; left: 0; display: flex; align-items: center; gap: 3ch; padding: 0 var(--adp-space-7); white-space: pre; user-select: text; }
+.adp-hex-offset { color: var(--adp-color-text-tertiary); }
+.adp-hex-bytes { width: 48ch; color: var(--adp-color-text-primary); }
+.adp-hex-text { color: var(--adp-color-text-secondary); }

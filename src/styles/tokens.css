@@ -19,6 +19,8 @@
   --adp-color-border-input: #C8C8C8;
   --adp-color-border-panel: #ECECEC;
   --adp-color-border-subtle: #E0E0E0;
+  --adp-color-status-caution-background: #FFF4CE;
+  --adp-color-status-caution: #9D5D00;
   --adp-color-surface-canvas-doc: #EFEFEF;
   --adp-color-surface-canvas-media: #ECECEC;
   --adp-color-surface-chrome: #F3F3F3;
@@ -99,6 +101,8 @@
   --adp-color-border-input: #4A4A4A;
   --adp-color-border-panel: #333333;
   --adp-color-border-subtle: #383838;
+  --adp-color-status-caution-background: #433519;
+  --adp-color-status-caution: #FCE100;
   --adp-color-surface-canvas-doc: #1B1B1B;
   --adp-color-surface-canvas-media: #1E1E1E;
   --adp-color-surface-chrome: #2B2B2B;

@@ -12,6 +12,7 @@ const info = (name: string, mime: string, size = 1000): FileTypeInfo => ({
   modified_unix: 0,
   online_only: false,
   read_only: false,
+  from_internet: false,
 });
 
 describe("open pipeline (Step 04b)", () => {
@@ -26,6 +27,14 @@ describe("open pipeline (Step 04b)", () => {
 
   it("sends big Markdown files to the text viewer", () => {
     expect(decideOpen(info("huge.md", "text/markdown", 6 * 1024 * 1024), registry)).toMatchObject({ kind: "tab", handler: { id: "text" } });
+  });
+
+  it("plays audio and video in the app, other video types in Windows (Step 04c)", () => {
+    expect(decideOpen(info("clip.mp4", "video/mp4"), registry)).toMatchObject({ kind: "tab", handler: { id: "media" } });
+    expect(decideOpen(info("song.mp3", "audio/mpeg"), registry)).toMatchObject({ kind: "tab", handler: { id: "media" } });
+    expect(decideOpen(info("voice.wav", "audio/x-wav"), registry)).toMatchObject({ kind: "tab", handler: { id: "media" } });
+    expect(decideOpen(info("film.mkv", "video/x-matroska"), registry).kind).toBe("windows");
+    expect(decideOpen(info("old.avi", "video/x-msvideo"), registry).kind).toBe("windows");
   });
 
   it("always opens programs, shortcuts and web pages in Windows", () => {

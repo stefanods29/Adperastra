@@ -50,10 +50,12 @@ if (-not (Test-Path $demo)) {
 $dataDir = Join-Path $env:TEMP ("adperastra-ui-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force $dataDir | Out-Null
 $settings = @{
-  schema_version = 4; language = $Language
+  schema_version = 8; language = $Language
   files = @{ paste_image_format = "png" }
+  open = @{ protected_view = $true; open_with = @{} }
   theme = @{ mode = $Theme; accent_source = "design"; accent_custom = "#0067C0" }
-  explorer = @{ show_hidden = $false; show_extensions = $true; item_checkboxes = $false; details_pane = $true; group_by = "none" }
+  explorer = @{ show_hidden = $false; show_extensions = $true; item_checkboxes = $false; details_pane = $true; group_by = "none"; view_mode = "details"; remember_view_per_folder = $true; view_mode_order = @("extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content", "columns"); hidden_view_modes = @(); column_width = 240; column_preview = $true }
+  layout = @{ toolbar_position = "top"; toolbar_mode = "full"; tab_bar_position = "top"; tab_bar_collapsed = $false; nav_pane_position = "left"; details_pane_position = "right"; saved_presets = @() }
 }
 [IO.File]::WriteAllText((Join-Path $dataDir "settings.json"), ($settings | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding($false)))
 

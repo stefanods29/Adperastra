@@ -3,7 +3,9 @@
     "explorer": "Explorer",
     "file": "File",
     "newTab": "New tab",
-    "close": "Close tab"
+    "close": "Close tab",
+    "collapse": "Show only icons",
+    "expand": "Show names"
   },
   "window": {
     "minimize": "Minimize",
@@ -38,6 +40,9 @@
     "genericFile": "File",
     "onlineOnly": "Online only",
     "isLink": "Link",
+    "columnPreview": "Preview",
+    "contentModified": "Date modified: {date}",
+    "contentSize": "Size: {size}",
     "loadingFolder": "Loading folder...",
     "stillLoading": "Still loading...",
     "loadError": "This folder could not be opened.",
@@ -162,7 +167,53 @@
     "persistNote": "Settings are saved automatically and apply right away.",
     "pastedImages": "Pasted images",
     "formatPng": "PNG (sharper, larger files)",
-    "formatJpg": "JPG (smaller files)"
+    "formatJpg": "JPG (smaller files)",
+    "views": "Views",
+    "viewsDefault": "Default view",
+    "viewsRemember": "Remember each folder's view",
+    "viewsRememberNote": "When this is off, choosing a view changes it for all folders.",
+    "viewsForget": "Forget folder views",
+    "viewsForgotten": "Folder views forgotten. All folders now use the default view.",
+    "viewsMenu": "Views in the View menu",
+    "viewsMenuNote": "Turn a view off to hide it from the View menu. Details is always shown.",
+    "viewsColumns": "Column view",
+    "columnWidth": "Column width",
+    "columnWidthNote": "You can also drag the edge of a column. Double-click the edge to go back to the standard width.",
+    "columnPreview": "Show a preview of the selected file",
+    "viewsMoveUp": "Move {name} up",
+    "viewsMoveDown": "Move {name} down",
+    "openingFiles": "Opening files",
+    "protectedView": "Protected view for files from the internet",
+    "protectedViewNote": "Files downloaded from the internet open with a yellow bar, and their links stay off until you unblock them.",
+    "defaultApps": "Default apps",
+    "defaultAppsNote": "Choose where each type of file opens when you double-click it: in Adperastra or in its Windows app.",
+    "findFileType": "Find a file type (for example txt)",
+    "noFileTypes": "No file type matches.",
+    "fileTypeCount": "{count, plural, one {# file type} other {# file types}}",
+    "openGroupWith": "Open {name} files with",
+    "openTypeWith": "Open .{ext} files with",
+    "openInAdperastra": "Adperastra",
+    "openInWindowsApp": "Windows app",
+    "openMixed": "Mixed",
+    "layout": "Layout",
+    "layoutCustom": "Custom",
+    "layoutSave": "Save as preset…",
+    "layoutSaveTitle": "Save layout preset",
+    "layoutPresetName": "Preset name",
+    "layoutNameTooLong": "Use at most {max} characters.",
+    "layoutNameDuplicate": "A preset with this name already exists.",
+    "layoutFull": "You can save up to {max} presets. Delete one to save another.",
+    "layoutSaved": "Your presets",
+    "layoutDelete": "Delete {name}",
+    "tabBarPosition": "Tab bar position",
+    "tabBarCollapsed": "Show only icons in a side tab bar",
+    "navPane": "Navigation pane",
+    "detailsPanePlace": "Details pane",
+    "placeTop": "Top",
+    "placeBottom": "Bottom",
+    "placeLeft": "Left",
+    "placeRight": "Right",
+    "placeHidden": "Hidden"
   },
   "gallery": {
     "title": "Gallery",
@@ -257,6 +308,9 @@
     "share": "Share",
     "openInWindowsApp": "Open in Windows app",
     "openWith": "Open with…",
+    "openAs": "Open as",
+    "openAsText": "Open as text",
+    "openAsHex": "Open as hex",
     "copyPath": "Copy as path",
     "addFavorite": "Add to favorites",
     "removeFavorite": "Remove from favorites",
@@ -283,6 +337,10 @@
     "viewSmallIcons": "Small icons",
     "viewMediumIcons": "Medium icons",
     "viewLargeIcons": "Large icons",
+    "viewExtraLargeIcons": "Extra large icons",
+    "viewTiles": "Tiles",
+    "viewContent": "Content",
+    "viewColumns": "Columns",
     "detailsPane": "Details pane",
     "hiddenItems": "Hidden items",
     "fileExtensions": "File name extensions",
@@ -295,7 +353,18 @@
     "deletePermanently": "Delete permanently",
     "undo": "Undo",
     "redo": "Redo",
-    "recentActions": "Recent actions"
+    "recentActions": "Recent actions",
+    "toolbarTop": "Top",
+    "toolbarBottom": "Bottom",
+    "toolbarLeft": "Left",
+    "toolbarRight": "Right",
+    "toolbarFull": "Icons and labels",
+    "toolbarCompact": "Compact",
+    "toolbarIconsOnly": "Icons only",
+    "toolbarAutoHide": "Hide until pointed at",
+    "presetStandard": "Standard",
+    "presetMinimal": "Minimal",
+    "presetClassic": "Classic"
   },
   "errors": {
     "rename": {
@@ -349,6 +418,8 @@
       "read_failed": "This file couldn't be read.",
       "too_many_open": "Too many files are open. Close some tabs and try again.",
       "invalid_request": "This file couldn't be opened.",
+      "unblock_denied": "Windows didn't allow removing the mark. The file may be read-only or in use.",
+      "unblock_failed": "The mark couldn't be removed.",
       "other": "This file couldn't be opened."
     },
     "ops": {
@@ -390,6 +461,12 @@
       "invalid": "This link can't be opened from here.",
       "failed": "The link couldn't be opened.",
       "other": "The link couldn't be opened."
+    },
+    "folderViews": {
+      "bad_path": "That folder path isn't valid.",
+      "bad_mode": "That view isn't available.",
+      "path_too_long": "This folder's path is too long to remember its view.",
+      "other": "Couldn't change the remembered folder views. Try again."
     }
   },
   "keys": {
@@ -402,7 +479,9 @@
     "right": "Right",
     "up": "Up",
     "down": "Down",
-    "space": "Space"
+    "space": "Space",
+    "pageUp": "Page Up",
+    "pageDown": "Page Down"
   },
   "files": {
     "newFolderName": "New folder",
@@ -447,7 +526,15 @@
   "handlers": {
     "image": "Image",
     "text": "Text",
-    "markdown": "Markdown"
+    "markdown": "Markdown",
+    "media": "Audio and video",
+    "hex": "Hex"
+  },
+  "protected": {
+    "message": "This file came from the internet, so it opened in protected view.",
+    "unblock": "Unblock",
+    "unblockTitle": "Unblock this file?",
+    "unblockBody": "Only unblock files from people and websites you trust. Windows will stop treating “{name}” as a file from the internet."
   },
   "fileTab": {
     "showInFolder": "Show in folder",
@@ -477,7 +564,10 @@
     "view": "View",
     "zoom": "Zoom",
     "show": "Show",
-    "rotate": "Rotate"
+    "rotate": "Rotate",
+    "play": "Play",
+    "playback": "Playback",
+    "tabs": "Ribbon tabs"
   },
   "text": {
     "position": "Ln {line}, Col {column}",
@@ -506,9 +596,34 @@
     "renderedMode": "Reading view",
     "sourceMode": "Source"
   },
+  "media": {
+    "play": "Play",
+    "pause": "Pause",
+    "loop": "Loop",
+    "speed": "Speed",
+    "speedValue": "{speed, number}×",
+    "subtitles": "Subtitles",
+    "subtitlesOff": "Off",
+    "noSubtitles": "None found",
+    "subtitlesFailed": "The subtitle file couldn't be read.",
+    "video": "Video",
+    "audio": "Audio",
+    "cantPlay": "This file can't be played here: the built-in player doesn't support its format.",
+    "noPicture": "There is no picture to show. If this video should have one, its format isn't supported here."
+  },
+  "hex": {
+    "label": "Bytes of {name}",
+    "loadError": "The bytes of this file couldn't be read."
+  },
   "links": {
     "openTitle": "Open this link?",
     "openBody": "It opens in your web browser or mail app:",
     "open": "Open link"
+  },
+  "layout": {
+    "toolbarPosition": "Toolbar position",
+    "toolbarStyle": "Toolbar style",
+    "preset": "Layout preset",
+    "menuLabel": "Toolbar options"
   }
 }

@@ -47,6 +47,11 @@
       "word": "#EAF1FB",
       "image": "#DEF3F4",
       "group": "rgba(127,86,217,0.16)"
+    },
+    "status": {
+      "_note": "Message bars (Step 04c), from the Windows 11 caution colors.",
+      "caution": "#9D5D00",
+      "cautionBackground": "#FFF4CE"
     }
   },
   "font": {

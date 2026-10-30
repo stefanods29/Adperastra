@@ -29,9 +29,15 @@ export function decideOpen(
   return handler ? { kind: "tab", handler, info } : { kind: "windows", info };
 }
 
-/** Detect a file and decide. Rejects with a `files.*` code when the file
+/** Detect a file and decide, following the user's Default apps choices
+ * (`open_with`, Step 04c). Rejects with a `files.*` code when the file
  * cannot be read (for example `files.not_found`). */
-export async function planOpen(path: string, registry: HandlerRegistry): Promise<OpenDecision> {
+export async function planOpen(
+  path: string,
+  registry: HandlerRegistry,
+  openWith: Readonly<Record<string, "builtin" | "windows">> = {},
+): Promise<OpenDecision> {
   const info = await fileDetect(path);
-  return decideOpen(info, registry);
+  const preference = Object.hasOwn(openWith, info.ext) ? openWith[info.ext] : undefined;
+  return decideOpen(info, registry, preference);
 }

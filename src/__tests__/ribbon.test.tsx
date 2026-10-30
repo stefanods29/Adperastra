@@ -69,6 +69,35 @@ describe("ribbon", () => {
   });
 });
 
+describe("ribbon groups", () => {
+  it("leaves out a group whose controls are all hidden", async () => {
+    const twoGroups: RibbonDef = {
+      tabs: [
+        {
+          id: "view",
+          labelKey: "ribbon.view",
+          keyTip: "V",
+          groups: [
+            { id: "a", labelKey: "ribbon.zoom", controls: [{ type: "button", command: "t.shown" }] },
+            { id: "b", labelKey: "ribbon.show", controls: [{ type: "button", command: "t.hidden" }] },
+          ],
+        },
+      ],
+    };
+    const commands: Command<Ctx>[] = [
+      { id: "t.shown", labelKey: "viewer.zoomIn", icon: Bold, risk: "read-only", helpSlug: "viewing-images", enabledWhen: () => true, run: () => undefined },
+      { id: "t.hidden", labelKey: "viewer.zoomOut", icon: Italic, risk: "read-only", helpSlug: "viewing-images", visibleWhen: () => false, enabledWhen: () => true, run: () => undefined },
+    ];
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => root.render(<Ribbon def={twoGroups} ctx={{ bold: false, canItalic: true }} commands={commands} accent="explorer" active={true} />));
+    expect(container.querySelectorAll(".adp-ribbon-group")).toHaveLength(1);
+    expect(container.querySelectorAll(".adp-ribbon-sep")).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
+});
+
 describe("shortcut matching", () => {
   const key = (init: KeyboardEventInit) => new KeyboardEvent("keydown", init);
 

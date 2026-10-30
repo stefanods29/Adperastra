@@ -44,6 +44,9 @@ export interface HandlerViewProps {
   onOpenInWindowsApp: () => void;
   /** What the search box asks for; views with `supportsFind` follow it. */
   find: FindRequest;
+  /** The file came from the internet and protected view is on (Step 04c):
+   * views keep links off (and, from Step 06a, start without editing). */
+  protectedView: boolean;
 }
 
 export interface Handler {
