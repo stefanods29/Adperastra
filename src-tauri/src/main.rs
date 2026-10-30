@@ -26,6 +26,7 @@ mod drag;
 mod explorer;
 mod files;
 mod links;
+mod media;
 mod operation_safety;
 mod shell;
 mod transfer_history;
@@ -2470,6 +2471,7 @@ fn main() {
             files::file_revoke,
             links::open_external_url,
             zone::file_unblock,
+            media::media_sidecars,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

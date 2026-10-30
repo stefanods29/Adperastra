@@ -124,6 +124,7 @@ pub fn mime_from_ext(ext: &str) -> &'static str {
         "avif" => "image/avif",
         "mp4" | "m4v" => "video/mp4",
         "webm" => "video/webm",
+        "weba" => "audio/webm",
         "mkv" => "video/x-matroska",
         "mov" => "video/quicktime",
         "mp3" => "audio/mpeg",
