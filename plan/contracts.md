@@ -1,42 +1,60 @@
 # Integration contracts
 
-These are the plug-in points every feature builds on. Design all of them in Step 00 (in `ARCHITECTURE.md`, with interface sketches), build each one in the step shown, and extend them instead of replacing them. If a feature needs something no contract offers, stop and propose a contract change first.
+Contracts are the plug-in points every feature builds on. They were designed in Step 00 (`ARCHITECTURE.md` section 3 has the original sketches). Each row says where the contract lives in the code today, or which step builds it. Extend contracts; never replace them. A feature that needs something no contract offers stops and asks the owner (AGENTS.md section 5).
 
-| Contract | What it does | Built in |
-|---|---|---|
-| Setup window + dependency manifest | A tiny native launcher reads a signed manifest of required components (pinned versions, sources, sizes, checksums), checks them in milliseconds, installs or repairs only what's missing, then starts the main app; hosts the first-run choices, including the optional-pack checklist | 01a (pack downloads wired in 12a) |
-| Design tokens + theme engine | Tokens measured from Figma become CSS variables; themes are token overrides; per-file-type accent tokens; theme adapters restyle third-party parts | 01b |
-| Settings + i18n | One JSON settings file with a schema and migrations; translation files with ICU messages; runtime language switch; locale-aware formatting | 01b |
-| Help system | Offline help center opened in a tab; one page per feature per language (`help/<lang>/<feature>.md`), searchable; F1 opens the page for the current context; "?" buttons in panels and dialogs link to their page; a "What's new" page per release | 01b (every step adds pages) |
-| Security base | Tauri capabilities per webview, strict Content Security Policy, isolation pattern, validated commands, sandboxed frames for untrusted content, low-privilege helper processes (see `rules.md`) | 01b (helper processes from 04a) |
-| Crash capture | Local panic and crash handler with logs and minidumps (never uploaded), session file saved every few seconds | 01b (recovery UI in 09c) |
-| Command registry | Every action is a command (id, label key, icon, shortcut, enabled-when rule, risk level, help page, run). Command bar, menus, ribbons, shortcuts, drag and drop, the command palette, and the AI assistant are all just callers of it | 02 |
-| File-system service (Rust) | List, stat, watch, and read ranges; all disk access; streamed and cancellable; handles the edge cases in `rules.md` (long paths, links, placeholders, permissions) | 02 |
-| Menus from commands | Right-click menus, command bar, and ribbons are built from command lists, so they can later be edited by the user | 03a (editor in 10b) |
-| Job runner + background scheduler | Background jobs with progress, cancel, pause, retry, logs, and priority (foreground, normal, background); runs external engines in helper processes; powers file operations, conversions, indexing, scans, and pack installs; one queue UI; background tasks obey the Background work settings | 03b (settings v1 in 07a, full page in 12a) |
-| Undo stack | One app-wide undo/redo history for file and tab operations, shared by Ctrl+Z, undo toasts, "Recent actions", and the assistant's action log | 03b |
-| Drag-and-drop service | One system for every drag: files, tabs, and content (text, cells, images) between Explorer tabs, file tabs, tab groups, the shelf, and other apps, resolved to commands | 03b (tabs in 09a) |
-| Handler registry + open pipeline | File types register a handler: type detection, thumbnail, metadata, viewer (lazy), editor (lazy), ribbon, conversions, help page, speed tier. The pipeline is: detect, fast preview, mount, upgrade to editor, with cancel, priorities, and prefetch | 04a |
-| Default apps | For file types without a handler, opens the app the user chose (remembered per type); manages "Open with" and Settings > Default apps | 04a |
-| Cache store | SQLite metadata plus a disk cache (oldest removed first) for thumbnails, first-page renders, metadata, and OCR text, keyed by path, size, modified time, and handler version; sizes reported to App storage | 04a (filled from 07a) |
-| Ribbon framework | Data-driven ribbons and toolbars (tabs, groups, controls bound to commands or engine state); themed, translated, keyboard accessible, key tips; dockable on any side | 04b (docking in 05) |
-| Layout engine | Layout as JSON data; docking of bars and panels; presets; default preset follows the Figma layout | 05 |
-| View modes | Details, List, Icons, Tiles, Content, Column view, and later views (Timeline, Calendar...) as pluggable views over the same item source | 05 (more in 11b) |
-| Version store | Automatic local snapshots of files before the app, the converter, or AI features change them; browse, compare, restore; space limits | 06b (used by every editor) |
-| Archive service | Browse, preview, extract, and create archives (with passwords) as if they were folders | 06c |
-| Metadata service | Type-specific information (EXIF, media info, document properties) for the Details pane, columns, search, and tags | 07a |
-| OCR service | Text recognition for images and scanned PDFs, cached, used by viewers, search, and AI | 07b |
-| Converter registry | Converters declare inputs, outputs, and options; the UI is generated from them; they run through the job runner | 08a |
-| Privacy cleaner (optional, off unless asked) | Per-format "remove hidden information" operations, usable from Share, Convert, Properties, batch presets, and the assistant | 08b (Office and media in 12b) |
-| Release pipeline | GitHub Actions build of the installer and portable zip, SHA-256 checksums, release notes from the changelog, draft release for my approval | 08c (polished in 16) |
-| Tab sessions | Tabs, groups, split views, and their state saved and restored; saved groups | 09a |
-| Encrypted containers | Locked folders using reviewed encryption | 09e |
-| Setup files | Export and import of themes, layouts, menus, and other customizations as one file | 10b |
-| Index service | File-name index, content index, and metadata index, updated by the file watcher; used by search, views, tags, storage tools, and AI | 11a |
-| Search modes | Pluggable search modes (Name, Content, Filters, Regex, and AI modes) sharing one result list and saved searches | 11a (AI modes in 17c) |
-| Tag store | Tags and colors for files and folders, kept when files are renamed or moved, usable in search, views, Home, and the assistant | 11b |
-| Pack manager + App storage manager | Optional packs: manifest, sizes, checksum and signature checks, install, update, remove, offline installer; App storage page listing packs, caches, indexes, and history with sizes and clear buttons | 12a |
-| Engine adapters | Wrappers mapping our commands and ribbon state to an engine (FFmpeg, the LibreOffice-based Office engine) | 12b (Office editing in 20a) |
-| Local AI runtime | Runs local models in a helper process with GPU or CPU, memory limits, idle unload, and cancel; models install as packs | 14c |
-| AI evaluation harness | Test sets and automatic scoring for every AI feature, in English and Spanish, run by the test suite | 17a |
-| Assistant tools | The typed tool list the assistant may call, generated from the command registry with risk levels and permissions | 17a |
+| # | Contract | Lives in (code) | Built in | Notes |
+|---|---|---|---|---|
+| 1 | Setup window + dependency manifest | `crates/setup`, `crates/setup-core`, `dependencies.json` | 01a | Packs wired in 12a |
+| 2 | Design tokens + themes | `themes/*.tokens.json` -> `npm run tokens` -> `src/styles/tokens.css` | 01b | 05d: one file per theme (`light`, `bright`, `paper`, `dark`, `amoled`, `highContrast`), same keys in every file (test), selectors `:root[data-theme=<id>]` and `[data-theme-preview=<id>]`; catalog `src/appearance/themes.ts`; appearance overrides in `src/styles/appearance.css` (`data-scheme`, `data-density`, `data-radius`, `data-motion`). Editor 10a |
+| 3 | Settings + i18n | Rust `Settings` in `src-tauri/src/main.rs`, TS `src/services/settings.ts`, `src/i18n/` | 01b | Schema changes: `plan/recipes/add-settings-field.md` |
+| 4 | Help system | `help/<lang>/<slug>.md`, `src/services/help.ts`, `src/views/HelpCenter.tsx` | 01b | Every step adds pages |
+| 5 | Security base | CSP in `tauri.conf.json`, `src-tauri/isolation/index.html`, `ensure_main`, `validate_absolute_path` | 01b | 06d: first risky-parser helper (`src-tauri/src/helper.rs`: `HelperProcess` in a job object with a memory limit, JSON lines, `drive` with idle and cancel timeouts; `archive_helper.rs` = `--archive-helper`). Step 07a builds the general helper framework on it |
+| 6 | Crash capture + session | `install_panic_hook`, `session.json` (`SessionState`) | 01b | File tabs in the session 04a; recovery UI 09h |
+| 7 | Command registry | `src/commands/registry.ts`, `src/commands/explorerCommands.ts` | 02 | `Command<C>` becomes generic over its context in 04b |
+| 8 | File-system service | `crates/fs-service` (`list`, `stat_path`, `read_range`, `watch`, `ops`) | 02 | 06d: `move_without_replacing` is public (every "put a new file in place" uses it). Archive entries use their own `ArchiveItem` type in the archive tab, so `BackingKind::Archive` stays reserved |
+| 9 | Menus from commands | `src/commands/menus.ts` (`MenuEntry`, `BarEntry`), `src/components/Menu.tsx` | 03a | Menu editor 10e |
+| 10 | Jobs | `file_op_start/poll/cancel` (03b); shared `src-tauri/src/jobs.rs` + `job_poll/job_cancel` + `src/services/jobs.ts` from 06d | 03b | `jobs.rs` has `Jobs`, `JobContext`, `spawn_job`; `jobs.ts` has `runJob`, `newRequestId`; job progress is `OpProgress`. The Explorer's jobs panel takes any job through `trackJob` (`TrackJobOptions`, `JobView.reasonArea`, 06d). Pause/verify/queue 09f |
+| 11 | Undo stack | `src/services/undo.ts` (`UndoStack`, `FileAction`), executed by `executeFileAction` in `src/services/fileops.ts` | 03b | New action kinds are added to `FileAction` and `executeFileAction` together (06b: `restoreVersion`) |
+| 12 | Drag and drop | Internal: mouse events + `data-drop-folder` (`ExplorerHome.tsx`); from other apps: `onDragDropEvent`; out: `start_external_drag` | 03b | Tabs and content 09c |
+| 13 | Handler registry + open pipeline | `src/handlers/` (`types.ts`, `registry.ts`, `openPipeline.ts`, `index.ts`), `src-tauri/src/files.rs` (`file_detect`, `file_grant`, `adpfile` protocol) | 04a | `supportsFind` and the `find` prop 04b; `protectedView` prop and `FileTypeInfo.from_internet` 04c; 06a: `Handler.editable`, `Handler.supportsReplace`, view props `onDirtyChange`, `registerSave` (`SaveHandle` with `save` and `discard`), `onPathChange`, `FindRequest.options` and `.replace` (all optional); 06b: `onOpenFile`; 06d: `onExtractArchive` (optional); thumbnails 07a |
+| 14 | Default apps | Settings `open.open_with` (extension to `"builtin"` or `"windows"`, schema 5), read by `planOpen(path, registry, openWith)`; page section `src/views/settings/OpeningFilesSettings.tsx` | 04c | Mark of the Web: `src-tauri/src/zone.rs`, `open.protected_view` |
+| 15 | Cache store | `crates/cache-store` (SQLite index + blob files, size cap) | 07a | |
+| 16 | Ribbon framework | `src/ribbon/` (`types.ts`, `Ribbon.tsx`, `ViewerFrame.tsx`, `shortcuts.ts`, `keyTips.ts`) | 04b | Hidden groups and key tips skipped 04c; docking 05c: `ViewerFrame` places the ribbon with `ToolbarDock`, and `Ribbon` reads `ToolbarLayoutContext` (side, orientation, style) |
+| 17 | Layout engine | Settings `layout` section (schema 8) + `src/layout/` (`presets.ts`, `LayoutContext.tsx`, `toolbarLayout.ts`, `ToolbarDock.tsx`, `TabStrip.tsx`, `Flyout.tsx`); toolbar menu commands in `src/commands/layoutCommands.ts` | 05c | The layout is six values plus saved presets; every toolbar is drawn through `ToolbarDock`, every tab through `TabStrip`. Free docking stays in the backlog |
+| 18 | View modes + item sources | `src/views/explorer/views/` | 05a, 05b | A view takes `ItemViewProps` and uses `useItemInteractions`; `ItemView.tsx` switches by mode. Column view (05b): `ColumnView`, `ColumnPane`, side-column listings in `useColumnListings` (service `src/services/columnListing.ts`), the trail rule `columnTrailStep` used by `useViewMode`. Timeline etc. 11b |
+| 19 | Version store | `crates/version-store`; Rust `before_modify(path, reason)` hook in `src-tauri/src/versions.rs` (`ModifyReason`: `Save`, `SaveAs` in 06a) | hook 06a, store 06b | Every editor saves through it. Text saves go through `text_save.rs` (`fs_service::replace_contents`: partial file then `ReplaceFileW`). 06b: `before_modify(app, path, reason)` copies the file to `<data>/versions/pending/`; the `VersionWorker` thread stores it (BLAKE3 dedup, zstd) in `crates/version-store` and trims to `settings.versions`; reasons `save`, `saveAs`, `restore` (converter, cleaner and AI add theirs); history UI `src/versions/VersionHistoryDialog.tsx`; undo action `restoreVersion` |
+| 20 | Archive service | `crates/archive` (detect, list, `ArchiveTree`, `plan_extract`, `extract`, `write_entry`), `src-tauri/src/archive.rs` (sessions, `archive_*` commands), `src/services/archive.ts`, handler `src/handlers/archive/` | 06d, 06e | Archives open in a file tab; every byte is parsed in the archive helper. Extraction runs in the Explorer's jobs panel (`useArchiveExtract`; archive tabs hand requests over through `HandlerViewProps.onExtractArchive` and App's `extractRequest`). 06e adds creating, passwords and RAR |
+| 21 | Metadata service | `src-tauri/src/metadata.rs` (Windows property system, in the helper process) | 07b | |
+| 22 | OCR service | `src-tauri/src/ocr.rs` (Windows.Media.Ocr) | 07e | |
+| 23 | Converter registry | `src/convert/` (TS registry, options schema) + `crates/convert` | 08a | |
+| 24 | Privacy cleaner | `crates/privacy` | 08c | |
+| 25 | Release pipeline | `.github/workflows/release.yml` | 08d | |
+| 26 | Tab sessions | `src/services/tabs.ts` (`TabsState`, `tabsFromSession`, `sessionFromTabs`) | 04a (file tabs), 09a (groups, view state) | |
+| 27 | Encrypted containers | (outline) | 09k | |
+| 28 | Setup files | (outline) | 10e | |
+| 29-36 | Index, search modes, tags, packs, engine adapters, AI runtime, AI evaluation, assistant tools | (outline) | 11a-17a | See `ARCHITECTURE.md` section 3 for the original sketches |
+| 37 | Home and navigation-pane sections | (outline) | 09b, 10e, 11b | |
+
+## Rules for every contract
+
+1. A feature registers itself (a handler in `src/handlers/index.ts`, a command in its commands factory, a converter in the converter registry). It does not edit the code of other features.
+2. Data that crosses from Rust to TypeScript keeps snake_case field names on both sides.
+3. A contract's types live in one file (listed above). Copying a type into another file is not allowed; import it.
+4. Changing an existing field's meaning is not allowed. Add a new optional field instead.
+
+
+## File-operation safety (contract 10, Step 03b)
+
+`FileOpRequest.allow_system` defaults to `false`. A job checks fresh metadata before making any change, including system items nested inside moved/deleted folders and existing Replace targets. If confirmation is needed, the job returns `ops.system_confirmation_required` with no changes; the UI shows a translated warning with Cancel focused and can retry that same operation once with `allow_system: true` after Continue. Ordinary jobs never show this warning. Cancellation during the check returns a cancelled report without changing files. The check reads metadata only, reports progress through the existing job transport, and never reads file contents.
+
+Drive/share roots and the actual Windows/Program Files folders are always refused; confirmation cannot override this. Destructive operations do not follow directory links or junctions: a top-level item containing one is skipped with `link_not_supported`, leaving its source untouched. Copy keeps its existing source loop guard; Replace target checks also refuse directory reparse points. Metadata failures are skipped and reported. Undo/Redo transfer jobs check their existing source and destination paths under the same rules; missing counterpart paths are expected and are left for the operation engine to validate.
+
+## Step 03b: exact transfer effects for Undo (contracts 10 and 11)
+
+A move report retains an exact transfer plan even when cancelled or only partly successful. Each TransferEffect records from, to, kind (file, directory scaffold, or atomic tree rename), source_removed, and destination_created. Directory scaffolds are never mistaken for an atomic renamed tree. File targets are the actual names written, including Keep both names. Effects are recorded as disk changes succeed; completed remains a user-facing top-level summary, never the source of truth for Undo.
+
+Undo first recreates source directory scaffolds that the operation removed, moves back only items whose sources were actually removed, recycles copies whose sources remain, and removes only empty directory scaffolds it created. Pre-existing merged destination contents are untouched. The exact replaced Recycle Bin entries are restored afterward. Redo repeats only recorded effects, including retained copies, and removes only empty source scaffolds that were originally removed; it never retries skipped source files.
+
+Undo and redo never overwrite a new item at an expected target, and nonempty scaffolds changed by another program are preserved. A skipped, failed, or cancelled history operation raises its translated error and leaves the history cursor unchanged. The existing file_op_start transport executes transfer history as a job with cancel/progress and the same absolute-path, root, reparse-point and system-item checks as other operations. Transfer plans stay in Rust behind opaque identifiers so a large folder does not turn into a large UI response; identifiers are local, bounded with the 100-entry undo history, and never commands or paths supplied without validation.
+
+Transfer history reserves at most 32 MiB per forward operation before any mutation and keeps at most 100 referenced plans within 128 MiB total. Capacity exhaustion returns FsError::UndoLimit / ops.undo_limit, not a filename error; no effects are clipped or silently evicted. The user can select fewer items or restart to begin a fresh local history. Plans already referenced by Undo/Redo, including pending groups and in-flight jobs, remain retained.

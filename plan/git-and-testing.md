@@ -1,36 +1,57 @@
-# Git workflow and testing
+# Git and testing
 
-## Version control, so every change can be traced and undone
+## Branches and tags
 
-- Create the Git repository in Step 00, before any code, connected to my GitHub repository. Set up `.gitignore`, `.gitattributes` (line endings), and branch protection on `main` (no direct pushes once Step 01b is merged).
-- **Branches:** `main` (always releasable), `testing` (where finished work is checked before reaching `main`), and one branch per step (for example `step-03b-file-operations`) created from the latest `testing`. When a step is done, merge it into `testing`, run the full local test suite there, fix anything it finds on the step branch, and only after everything passes and I approve, merge `testing` into `main` through a pull request and tag `main` (for example `v0.0.12-step03b`; milestone releases get `v0.1.0`, `v0.2.0`...). Push the step branch to GitHub at least every few commits, so nothing lives only on my PC.
-- **Commit small and often:** one logical change per commit (a new command, a component, a fix, a test), committed as soon as it builds and its tests pass. Never one giant commit per step, never mix unrelated changes. Each commit must build, so problems can be found with `git bisect`.
-- **Commit messages** follow Conventional Commits with the step: `feat(explorer): add breadcrumb path editing [step-02]`, `fix(pdf): stop first-page flicker [step-07b]`, and the types `perf`, `test`, `docs`, `refactor`, `chore`, `deps`. The first line says what changed; the body says why and how it was tested, and references any GitHub issue.
-- **Dependencies** get their own commits (`deps: add pdfium-render 0.8.x (Apache-2.0)`), with the license noted, so every library can be traced to when and why it was added.
-- **Before every commit:** formatter, linter, hardcoded-text check, and fast tests (a pre-commit hook). **Before every push:** the `--quick` test suite.
-- **Never rewrite history on `main`** (no force-push). To undo something, use `git revert`, so the undo itself is recorded.
-- Keep `CHANGELOG.md` (Keep a Changelog format) updated in each step's pull request, and record important decisions (stack, engines, models) as short decision records in `docs/decisions/`, so I can see why something was done, not just what.
-- Never commit secrets, personal files, test files with private data, or files over 50 MB (see `rules.md`).
-- If I ask "what changed?" or "when did this break?", answer from the Git history (`git log`, `git diff`, `git bisect`), not from memory.
+- `main`: always releasable, protected (pull request + passing `build-windows` CI check). Never push to it directly, never force-push.
+- `testing`: finished steps are merged here and checked before reaching `main`.
+- One branch per step, created from `testing`, named in the step file (for example `step-04a-file-tabs`).
+- Tags on `main` after the owner approves a step: the tag in the step file (`v0.0.7-step04a`). Milestones get `v0.1.0`, `v0.2.0`...
+- The exact commands for starting, finishing and merging a step are in `AGENTS.md` section 4. Use them as written.
 
-## Testing and safety (local, developer-only)
+## Commits
 
-- All tests live in their own folders (`tests/`, `fuzz/`, `e2e/`, `bench/`, `test-files/`) and are **never included in the version users download**: release builds exclude them, and a CI check verifies the installer and the portable zip contain no test code or test files.
-- One command runs everything locally and produces a readable report (HTML plus a terminal summary): for example `scripts/test-all.ps1` or `cargo xtask test-all`, with `--quick` (a few minutes, before every push) and `--full` (on the `testing` branch before anything reaches `main`). Explain in plain language how to run it and read the report.
-- What `--full` runs:
-  - **Unit and integration tests** for the Rust core and the UI logic.
-  - **End-to-end UI tests** that click through the real app (open folders, copy, rename, undo, open each file type, convert, tabs and groups, split view, settings) with Playwright or WebdriverIO, in English, Spanish, and the pseudo-locale.
-  - **Screenshot comparisons** against the Figma frames and the previous approved screenshots, in every built-in theme.
-  - **Speed checks** from `speed.md` on the test corpus; fail on slowdowns over 20% compared to the previous step.
-  - **Fuzz testing** of everything that reads files (type detection, metadata, archives, the privacy cleaner, converters' input handling, and the boundaries where we pass data to PDFium, FFmpeg, LibreOffice, and image libraries) with `cargo-fuzz`, for a time I choose (default 10 minutes per target; longer overnight runs optional). Every crash found is saved in `test-files/regressions/` and becomes a permanent test. It uses the CPU fully while running, so it only runs when I start it.
-  - **Malicious and broken file set:** zip bombs, files with wrong extensions, decompression-bomb images, corrupted PDFs and Office files, files with macros or embedded scripts, very long and Unicode-tricky names, reserved names, link loops, and downloaded files (Mark of the Web), checking that the app never crashes, freezes, runs embedded code, or uses unbounded memory.
-  - **Sandbox checks:** each webview can only call its allowed commands; untrusted content can't reach the app's commands or the network; helper processes have no network access.
-  - **File-safety tests:** copy, move, rename, bulk rename, convert, privacy clean, and locked folders never lose or corrupt data; deletes go to the Recycle Bin; undo works; version history restores; a forced crash in the middle of each operation leaves files intact; online-only placeholder files are never downloaded by background work.
-  - **Help pages:** every feature has a help page in every app language, and links from the app to help pages work.
-  - **Office round-trip tests** (open, save, reopen, compare) once Office editing exists.
-  - **AI tests** (when packs are installed): the evaluation sets in `ai.md`, including prompt-injection files that try to make the assistant delete or move things.
-  - **Security checks:** `cargo-audit` and `npm audit`, `cargo-deny` and a JS license checker, a secrets scan, and the 50 MB file check.
-  - **Accessibility checks** (axe-core) and a keyboard-only run of the main flows; from Step 10c, also Narrator and NVDA checklists.
-  - **Install, update, and uninstall test** of the installer in Windows Sandbox (built into Windows 11 Pro) or a virtual machine, including the setup window repairing a missing component and the uninstaller's keep-or-remove-data choice.
-- The `--quick` suite runs automatically on GitHub for every push, and `--full` (with shorter fuzzing) runs weekly on GitHub's free build servers.
-- A step is not done until `--full` passes on the `testing` branch. Report results in the step report, and never disable or skip a failing test to make it pass; fix the cause or ask me.
+- One commit per task, made only after `.\scripts\gate.ps1` prints `GATE PASSED`.
+- Message: `<type>(<area>): <what changed> [step-<id>/T<n>]`, as given in the task. Types: `feat`, `fix`, `perf`, `test`, `docs`, `refactor`, `chore`, `deps`.
+- A new library is its own commit before the task's commit: `deps: add <name> <version> (<license>) [step-<id>/T<n>]` (`plan/recipes/add-dependency.md`).
+- Never commit: build output (`dist/`, `target/`, `build/`), `node_modules/`, files over 50 MB, secrets, `BLOCKED.md` after it is answered.
+- To undo a commit that is already pushed: `git revert <hash>` (never `reset` on a pushed branch).
+
+## The gate (`scripts/gate.ps1`)
+
+Runs, in this order, stopping at the first failure:
+
+1. No tracked file over 50 MB.
+2. `cargo fmt --all -- --check` (fix with `cargo fmt --all`).
+3. `cargo clippy --workspace --all-targets -- -D warnings`.
+4. `cargo test --workspace`.
+5. `npm run lint:i18n`: en/es keys match, ICU is valid, arguments match, `pseudo.json` is current (fix with `npm run i18n:pseudo`), help pages exist in both languages, no hardcoded text in `.tsx`.
+6. `npm run lint:ipc`: commands registered, allowlisted, and called with the right argument names.
+7. `npm test` (Vitest).
+8. `npm run build` (TypeScript check + Vite build).
+9. With `-Package`: `scripts\package-app.ps1` (release build into `build\Adperastra\`).
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the same checks on every push.
+
+## What tests each task needs
+
+The task lists them. As a rule:
+
+| Kind of code | Tests |
+|---|---|
+| Pure Rust logic (parsers, validation, file operations) | Unit or integration tests with `tempfile` folders, including the failure cases the recipe names |
+| Tauri command | A test of its pure function plus a validation test (bad path, too long, wrong value) |
+| Pure TypeScript (reducers, registries, parsers, formatters) | Vitest unit tests |
+| React view | A render test: it shows the right parts for a given input, and the main keyboard action works |
+| Anything that writes files | Tests that prove R-SAFE: cancel/failure leaves no partial file; existing files are never overwritten without the decision; undo data is right |
+
+## Checks by hand (end of every step)
+
+The step file lists them. Run them in the packaged app (`.\scripts\gate.ps1 -Package`, then `build\Adperastra\Adperastra.exe`), in English and Spanish, light and dark. Write the result of each one in the step report.
+
+## Screenshots
+
+`scripts\measure-ui.ps1 -ScreenshotsOnly -Language <en|es|pseudo> -Theme <light|dark> -Shots docs\screenshots\step-<id>` takes the screenshots that `scripts\measure-ui.mjs` defines. Each step's recipe says which new screenshots to add to `measure-ui.mjs` (function `shot(name)`).
+
+## Release builds
+
+From Step 08d, releases are built by GitHub Actions from a tag on `main`. Release builds never contain tests, test files, or developer tools.

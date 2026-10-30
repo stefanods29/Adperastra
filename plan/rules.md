@@ -1,104 +1,99 @@
-# Rules for every step
+# Rules (always apply)
 
-These apply to all work, in every step. If a step file seems to contradict them, these rules win; tell me about the conflict.
+These rules apply to every task in every step. A recipe never overrides them. Rule IDs (for example R-SAFE-3) are used in recipes and reviews.
 
-## 1. Everything is settings-driven
+## R-SAFE: never lose user data
 
-Nothing about layout, look, or language is hardcoded. Use a settings schema, design tokens, and translation files. Every toolbar and ribbon is our own data-driven component: movable to any side, themeable, translatable, keyboard accessible, and built from commands in the command registry.
+1. Deleting goes to the Recycle Bin. Permanent delete exists only as the explicit "Delete permanently" command (Shift+Delete), after a warning that says it cannot be undone.
+2. Never overwrite an existing file or folder unless the user chose "Replace" for it before the operation started. A replaced item goes to the Recycle Bin first (ADR 0007), never deleted.
+3. Write new content to a temporary file next to the target (`~<name>.partial`), flush it, then rename it into place. A cancelled or failed write deletes only the temporary file.
+4. A move between drives removes a source only after its copy is complete and the copy's size matches (same-drive moves are renames).
+5. Every change to an existing file's content (save, convert over, clean, AI edit) first calls the version hook (`before_modify`, contract 19; a no-op until Step 06b).
+6. Every action that changes files or tabs pushes an undo entry (contract 11) and shows an undo toast; actions that cannot be undone say so before they run.
+7. Never modify a file the user did not ask to modify. Background work only reads.
+8. Drive roots, the Windows folder, and Program Files are never moved, recycled, or deleted by the app.
+9. Settings, sessions and app state are written with `fs_service::atomic_write` (crash-safe replace).
 
-## 2. Language: everything in the user's chosen language
+## R-SEC: security
 
-- Every word the user sees comes from translation files: menus, ribbons, buttons, tooltips, messages, errors, toasts, dialogs, help pages, templates, default file and folder names the app creates (for example "Pasted image 2026-10-27 13-15.png"), the setup window, and AI answers by default.
-- The Figma file's text is example content in Spanish. Don't copy it as the source of truth: write proper strings for every supported language, using the clearest wording for each.
-- In this plan, UI names are written in English (Home, Insert, Review...). They are labels to translate, not fixed text.
-- Locale-aware formatting everywhere: dates, times, numbers, file sizes, sorting (natural sort), and plural forms (ICU message format).
-- A lint check fails the build if any user-visible text is hardcoded. A pseudo-locale (stretched, accented text) is used in tests to catch truncation and missing translations.
+1. Every Tauri command starts with `ensure_main(window.label())?` and validates every argument in Rust (types, lengths, `validate_absolute_path` for paths). Never trust a path, size, or ID from the UI.
+2. Every command is listed in `generate_handler!` and in the isolation allowlist `src-tauri/isolation/index.html`. `npm run lint:ipc` checks both.
+3. Content Security Policy stays strict: no remote scripts, no `eval`, no `'unsafe-eval'`, no `'unsafe-inline'` scripts. A recipe that needs a CSP change gives the exact new value.
+4. Untrusted markup (HTML, SVG, email bodies, notebook outputs, EPUB pages) is shown only inside `<iframe sandbox="" srcdoc=...>` (no `allow-scripts`, no `allow-same-origin`) after DOMPurify, or as an `<img>` (SVG). One exception: the Markdown viewer's page (Step 04b) is built by our own code (`markdown-it` with `html: false`, then DOMPurify) and uses `sandbox="allow-same-origin"`, so the app can search it and catch link clicks. No frame ever gets `allow-scripts`. Untrusted markup never goes into the app's own DOM with `dangerouslySetInnerHTML`, except help pages, which are our own files sanitized with DOMPurify.
+5. File bytes reach the UI only through the `adpfile` protocol with a per-file token (Step 04a), never through arbitrary paths in URLs.
+6. Never run macros, scripts, or code from files. Never execute a file except through Windows' own "open" (`ShellExecuteExW`) when the user asks to open it in another app.
+7. Never build a command line from a path or user text. Start programs with `std::process::Command::new(exe).arg(path)`; never `cmd /c`, never a shell.
+8. Parsers get size and memory limits: archive entries and total size, decompression ratio, image dimensions, text lengths (numbers in each recipe).
+9. Risky parsers run in a helper process (`Adperastra.exe --<helper-flag>`, pattern from `src-tauri/src/classic_menu.rs`) with a timeout, so a crash or hang never takes the app down.
+10. No network access except: downloads the user starts (packs, update check when enabled) and views that say they use the internet (map view). No telemetry, no analytics, no crash upload.
 
-## 3. Feedback and discoverability
+## R-FS: file-system edge cases (everywhere)
 
-- **Skeleton loaders:** anything that isn't ready within 0.1 s shows a skeleton shaped like the real content (gray file rows and thumbnail tiles, a page outline for PDFs and documents, a grid for sheets, a toolbar outline for ribbons still loading, text lines for AI answers), with a subtle shimmer that respects reduced motion. Skeletons are replaced in place without layout jumps. Spinners only for small inline actions, and only after 0.15 s. Anything over 1 s also says what it's doing; anything that can take over 10 s runs as a background job with progress and Cancel (see `speed.md`).
-- **Shortcut hints:** every tooltip shows the command's shortcut (for example "Copy  Ctrl+C"), and so do menus and the command palette. Pressing and releasing Alt shows Office-style key tips over ribbon tabs and buttons. A "Keyboard shortcuts" sheet (Ctrl+/) lists all shortcuts for the current tab, searchable. Hints always reflect remapped shortcuts and the keyboard layout, and can be turned off.
-- **Undo toasts:** after any action that changes files or tabs (recycle, move, copy over, rename, bulk rename, convert over an existing file, privacy clean, closing a group, tagging, AI actions), show a small toast: what happened, an "Undo" button, and the shortcut ("Moved 12 items to the Recycle Bin. Undo (Ctrl+Z)"). It stays about 8 s, pauses while hovered or focused, stacks without covering content, and is announced to screen readers. Undo from the toast and Ctrl+Z use the same undo stack. If an action can't be undone (for example a permanent delete), say so before it runs. A "Recent actions" list keeps the last actions so I can undo after the toast is gone.
-- **Help pages:** every user-visible feature has a help page (see the help system in `contracts.md`), written in plain language in every app language, reachable with F1 or the "?" button in that feature's panel or dialog. A step is not done until its help pages exist.
+1. **Online-only files** (attributes `RECALL_ON_DATA_ACCESS`, `RECALL_ON_OPEN`, `OFFLINE`; `Item.online_only` in our listings): background work (thumbnails, metadata, OCR, indexing, hashing, folder sizes, previews on hover) must skip them and show the cloud icon. Opening such a file because the user asked to is fine.
+2. **Long paths:** paths over 260 characters work. Rust receives `\\?\` paths from `fs::canonicalize`; compare paths with `samePath()` in TypeScript, never with `===`, and show them with `displayPath()`.
+3. **Names:** reserved names (CON, NUL, COM1...), trailing dots/spaces and invalid characters are refused with a translated message (`fs_service::validate_new_name`).
+4. **Links and loops:** recursive work (copy, size, search, scan, archive) detects loops with a visited-folder set and never follows them endlessly.
+5. **Slow, sleeping, removable, network drives:** never block the UI; time out (3 s for drive details, 15 s for listings) and show "still loading" / "not available". A drive that disappears ends the job with a report.
+6. **Permissions:** access-denied items are skipped and listed at the end; the job continues. Never run the whole app as administrator.
+7. **Hidden and system files:** follow the View settings. Changing a system item shows a warning first.
+8. **Files in use:** report "in use" with a translated message (Step 09g adds "What's using this file?").
 
-## 4. Safety and quality
+## R-LANG: everything in the user's language
 
-- Never lose data: autosave and recovery, unsaved-changes prompts, conversions create new files by default, deletes go to the Recycle Bin, file operations are undoable, and any change the app makes to an existing file goes through the version store first.
-- Treat every file as untrusted: no macro execution, no scripts, no remote content by default, detect when an extension doesn't match the real file type, stream or memory-map big files, set size and memory limits on every parser (protection against zip bombs and decompression bombs).
-- File tabs are isolated (separate webview or process where possible) so a crash or freeze in one never takes down the Explorer tab. Core browsing never requires admin rights.
-- Accessibility basics from day one (screen-reader labels, full keyboard navigation, visible focus, high contrast); the full accessibility settings come in Step 10c.
-- Clean modular code, strict typing, unit tests for core logic, a short README per module. Logs stay local.
+1. Every word the user sees comes from `src/i18n/locales/en.json` and `es.json`: labels, tooltips, messages, errors, toasts, dialogs, default file names the app creates, help pages.
+2. `pseudo.json` is generated: after editing `en.json`, run `npm run i18n:pseudo`. Never edit `pseudo.json` by hand.
+3. Plurals and arguments use ICU: `"{count, plural, one {# file} other {# files}}"`. Never build sentences by joining strings.
+4. Spanish is Latin American Spanish (es-419) using the words in `plan/glossary.md`.
+5. Dates, numbers and sizes are formatted with `src/services/format.ts` (locale-aware). Shortcut text uses `formatShortcut()`.
+6. `npm run lint:i18n` must pass (part of the gate).
+7. Rust never returns display text. Errors are codes like `archive.bad_password` that the UI translates under `errors.archive.bad_password`.
 
-## 5. Sandboxing and security (how "sandboxed webviews" works)
+## R-UI: feedback and design
 
-- **Tauri permissions:** use Tauri 2's capabilities system so each window and webview can call only the commands it needs (for example, a PDF viewer can request pages of its own file, but can't list folders or delete files). No broad shell or file-system plugins exposed to the UI; all disk access goes through our own Rust commands.
-- **Validate every message:** every command from the UI to Rust has typed, validated input (serde types, length limits), resolves paths to their real location (canonicalize, follow junctions and links safely), and checks them against what that tab is allowed to touch. Never trust a path, size, or ID just because the UI sent it.
-- **Strict Content Security Policy:** only our own bundled code runs (`default-src 'self'`, no remote scripts, no `eval`, `object-src 'none'`, no inline scripts except hashed ones). No navigation to external sites inside the app; links open in the default browser after confirmation.
-- **Untrusted content in an isolated frame:** HTML files, SVG, Markdown with embedded HTML, email bodies, notebooks, and anything else that can contain markup is rendered in a sandboxed frame or separate webview with scripts disabled, a unique origin, no access to the app's commands, and no network. File bytes are served through a custom protocol with the correct content type, never injected into the app's own page.
-- **Isolation pattern:** use Tauri's isolation pattern so every message from a webview to Rust passes a check that can reject unexpected calls.
-- **Risky parsers in separate low-privilege processes:** image decoding of unusual formats, archives, PDF rendering, Office conversion, media tools, and AI models run in helper processes started with restricted rights (Windows job objects with memory and CPU limits; AppContainer or a restricted token where it works), no network access, and only the files they need. If one crashes or misbehaves, it's killed and restarted without affecting the app.
-- **Release builds:** developer tools disabled, debug commands removed, dependency audit clean.
-- **Mark of the Web:** files downloaded from the internet open in protected view (Step 04a).
+1. Use the components in `src/components/` (see `plan/ui-kit.md`) and the CSS variables in `src/styles/tokens.css`. No hard-coded colors in components; sizes come from `plan/design-spec.md` or the recipe.
+2. Anything not ready within 0.1 s shows a skeleton (`<Skeleton>`) shaped like the content; over 1 s also shows words saying what is happening; work that can take over 10 s runs as a job with progress and Cancel.
+3. Every tooltip and menu shows the command's shortcut (`formatShortcut`).
+4. Every user-visible feature has a help page in `help/en/` and `help/es/` (recipe `plan/recipes/add-help-page.md`), reachable with F1 or the "?" button of its panel.
+5. Keyboard: everything is reachable by keyboard, focus is visible (`:focus-visible` outline in the accent color), and every icon-only button has an `aria-label` from the translation files.
+6. Dark theme: every new surface is checked in the dark theme (screenshots in the report).
+7. New screens follow the layout given in the recipe. If a value is missing, use the nearest value from `plan/design-spec.md` and list it under "Design deviations" in the report.
 
-## 6. File-system edge cases (handle them everywhere)
+## R-SPEED: speed
 
-- **Online-only files from sync apps:** some folders may contain placeholders for files stored only in the cloud (from any sync app). Opening such a file normally is fine, but background work (thumbnails, OCR, indexing, hashing, folder sizes, AI indexing, previews on hover) must detect these placeholders (Windows "recall on data access" attributes) and skip them, so the app never triggers large downloads on its own. Show a small cloud icon for them.
-- **Long paths:** support paths longer than 260 characters everywhere (Windows long-path APIs).
-- **Reserved and tricky names:** handle names like CON, NUL, COM1, trailing dots and spaces, and unusual Unicode; refuse to create invalid names with a clear message.
-- **Links and loops:** symbolic links, junctions, and mount points are shown as such; recursive operations (copy, search, size, scan) detect loops and never follow them endlessly.
-- **Slow and removable drives:** network drives and USB drives never block the UI; timeouts and "still loading" states; drives that disappear mid-operation end the job cleanly with a report.
-- **Permissions:** when an operation needs admin rights (for example writing into Program Files), ask through the normal Windows permission prompt for that single operation; never run the whole app as admin. Access-denied errors skip the item and continue, listing problems at the end instead of failing the whole job.
-- **Hidden and system files:** respected according to the user's settings; system files are never modified without a clear warning.
-- **Files in use:** handled with "What's using this file?" (Step 09c).
+Follow `plan/speed.md`. Measure what the recipe lists; a slower result than its tier is logged in `KNOWN_ISSUES.md` (R-KI), never hidden.
 
-## 7. Opening files the app doesn't handle
+## R-BG: background work and storage
 
-- Any file type without a built-in handler (including types whose handler comes in a later step) opens with an app the user chooses: the first time, show the Windows "Open with" choice; remember the choice per file type (changeable in Settings > Default apps).
-- The text/hex viewer is available only as an explicit command ("Open as text" / "Open as hex"), never as the automatic fallback.
+1. Background work (thumbnails, metadata, OCR, indexing, sizes, version cleanup) runs at `background` job priority and obeys Settings > Background work (from Step 07a): on/off per task, only when idle, only on AC power, pause all.
+2. Everything the app stores (caches, versions, indexes, logs) lives under the data folder (`%LOCALAPPDATA%\Adperastra` or `ADPERASTRA_DATA_DIR`), has a size limit, and reports its size (App storage page, Step 12a).
 
-## 8. Background work and app storage
+## R-OPEN: files the app does not handle
 
-- All background work (thumbnails, indexing, OCR, AI indexing, folder sizes, scans, version cleanup) runs at low priority through the job runner and respects the Background work settings: on/off per task, only when idle, only on AC power, pause while a full-screen app runs, CPU limit, and a global "Pause all background work" button.
-- Everything the app stores (caches, indexes, version history, packs, models, logs) is listed with its size in Settings > App storage, where it can be cleared or removed. No hidden storage.
-- Optional packs are chosen once in the setup window's first-run checklist and afterwards only in App storage. When a feature needs a pack that isn't installed, show a short message explaining what's needed and its size, with a button that opens App storage.
+1. A file type without a built-in handler opens in the user's Windows default app (`open_item`). If Windows has no default app, Windows itself asks which app to use.
+2. "Open as text" and "Open as hex" exist only as explicit commands, never as the automatic fallback.
 
-## 9. Where large files live (never in the Git repository)
+## R-LIC: licenses (the app is MIT)
 
-- Never commit model weights, installers, packs, or any file over about 50 MB, and don't use Git LFS for them (GitHub rejects files over 100 MB, and the free LFS quota is only 10 GiB of storage and 10 GiB of downloads per month).
-- Base AI models are downloaded by the pack manager from their official Hugging Face repositories, pinned to an exact commit and verified by SHA-256. We never re-host them.
-- Our own fine-tuned LoRA adapters (if any) and converted files go on our free Hugging Face organization page, or as GitHub Release assets (each under 2 GiB), with the base model's license and notices.
-- The repository holds only code, scripts, small test files, evaluation and training data (small text files), help pages, and the signed manifests (`dependencies.json`, pack manifests) with URLs, versions, sizes, and checksums.
-- A CI check fails if any committed file is over 50 MB; `.gitignore` covers model formats (`*.gguf`, `*.onnx`, `*.safetensors`, `*.bin`, `*.pt`).
+1. Allowed to bundle: MIT, MIT-0, BSD-2/3-Clause, ISC, Apache-2.0, Zlib, 0BSD, Unlicense, CC0-1.0, SIL OFL (fonts), MPL-2.0 (changes to MPL files stay open), Unicode-3.0, BSL-1.0, bzip2-1.0.6 (the bzip2 library's own permissive license; allowed by the owner on 2026-10-29).
+2. LGPL: only as a separate program or DLL the user can replace, with notices and source links (Office engine pack, FFmpeg pack; later steps).
+3. Never bundle or link: GPL, AGPL, SSPL, "source-available", non-commercial, or paid-tier code (examples: Pandoc, MuPDF, Ghostscript, Poppler, ONLYOFFICE, x264/x265, UnRAR code, exiftool, BRIA RMBG). A GPL tool the user installed themselves may be started as a separate program with a "not included" note (example: 7-Zip for RAR in Step 06e).
+4. Every new library is added in its own `deps:` commit, listed in `THIRD_PARTY_LICENSES.md` and `docs/dependency-and-license-table.md` (recipe `plan/recipes/add-dependency.md`). Only libraries named in the recipe or `plan/libraries.md`.
+5. No Microsoft fonts, icons, or logos; no Microsoft trademarks in the UI ("Word-style" only as a description).
 
-## 10. Licensing gate (the app is MIT)
+## R-REPO: what goes into Git
 
-- OK to bundle: MIT, BSD, ISC, Apache-2.0, Zlib, Unlicense/CC0, open font licenses (SIL OFL), and MPL-2.0 (changes to MPL-licensed files must stay open).
-- LGPL: only as separate, user-replaceable DLLs or programs, with notices and source links.
-- Never bundle or link: GPL, AGPL, "source-available", "royalty-free with conditions", "free with limits", non-commercial, or paid-tier components (examples: Pandoc, MuPDF, Ghostscript, Poppler, ONLYOFFICE, SuperDoc, x264/x265, Univer Pro, Slint's royalty-free license, Piper TTS since its 2025 GPL relicense). If a great GPL tool exists (for example Pandoc), detect a copy the user installed themselves and call it as a separate program, with a clear "not included" note.
-- AI model weights follow the same rule: only MIT, BSD, Apache-2.0, or similarly permissive licenses; never non-commercial ones.
-- Re-verify each license and the project's maintenance status before using a component. Keep `THIRD_PARTY_LICENSES` (name, version, license, how used). Flag anything borderline (I'm not a lawyer).
-- Don't ship Microsoft fonts, icons, or logos, and don't use Microsoft trademarks in the app; "Word-style" is fine only as a description. For patent-encumbered codecs (H.264, HEVC, AAC) prefer the OS's or the GPU's encoders and decoders over bundled ones.
+1. Never commit: files over 50 MB, model weights (`*.gguf`, `*.onnx`, `*.safetensors`, `*.bin`, `*.pt`), installers, packs, secrets, anything from `C:\Users\stefa\.adperastra\`, personal files.
+2. Test files that are large are generated by scripts into `%TEMP%` (example: `scripts\generate-corpus.ps1`).
 
-## 11. Known issues and severity
+## R-KI: known issues and severity
 
-Every defect, deferral, and speed miss is recorded in `KNOWN_ISSUES.md` at
-the repository root (ID, severity, step found, plain-language description,
-workaround, target step or milestone). Fixed issues move to its "Fixed"
-section with the fixing commit. Speed misses are always logged there
-instead of being silently relaxed.
+Every defect, deferral and speed miss is written in `KNOWN_ISSUES.md` (template `plan/templates/known-issue.md`), with the next free ID `KI-<number>`.
 
-- **Blocker:** data loss or corruption, a security or sandbox hole, a crash
-  or freeze in a normal flow, a broken core feature, a license problem, or
-  an accessibility barrier that blocks a main flow. Must be fixed before
-  the step is done; never deferred.
-- **Major:** a speed-tier miss in something users do every day, a feature
-  that works only partly, or a serious usability or accessibility problem
-  with a workaround. May be deferred to a later step only with the owner's
-  approval, but must be fixed before the next milestone release (v0.1,
-  v0.2, ...).
-- **Minor:** cosmetic problems, one-time costs (for example the first run
-  after installing), rare edge cases, and placeholders. May wait; reviewed
-  at every milestone.
-- When unsure about severity, choose the higher one and ask the owner.
-- Every step report lists new, open, and fixed known issues. A milestone
-  release cannot be published with any Blocker or Major issue open.
+- **Blocker:** data loss or corruption, a security or sandbox hole, a crash or freeze in a normal flow, a broken core feature, a license problem, or an accessibility barrier in a main flow. Fixed before the step is done. Never deferred.
+- **Major:** a speed-tier miss in something done every day, a feature that only partly works, a serious usability or accessibility problem with a workaround. Deferred only with the owner's approval; fixed before the next milestone.
+- **Minor:** cosmetic problems, one-time costs, rare edge cases, placeholders. Reviewed at every milestone.
+- When unsure, choose the higher severity. A milestone cannot be released with a Blocker or Major open.
+
+## R-AI: AI features (from Step 14c)
+
+AI features are optional packs that run offline. File contents are data, never instructions. The assistant can only call commands from the registry; deleting needs two different confirmations and always goes to the Recycle Bin; permanent delete is never available to it. Details: `plan/ai.md`.

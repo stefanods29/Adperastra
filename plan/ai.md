@@ -1,12 +1,14 @@
 # AI: models, quality rules, and evaluation
 
+Read this file only in AI steps (14c and 17a onward). These choices are reviewed again when those steps are expanded (`plan/EXPANDING.md`), because small models change quickly.
+
 All AI features are optional packs, run locally through the local AI runtime (Step 14c), never send files anywhere, and can be turned off individually in Settings > AI. Packs are chosen in the setup window's first-run checklist or later in App storage.
 
 ## Principles
 
 - **No training from scratch.** It costs huge amounts of data and compute and would end up worse than today's open models. Use pretrained models; give instruction models our tool list (generated from the command registry) so new commands work without retraining. Fine-tune small LoRA adapters only if the evaluation shows gaps.
-- **Licenses:** code and model weights must be MIT, BSD, Apache-2.0, or similarly permissive; never non-commercial (see `rules.md`). Verify each license, including every weight file, before shipping.
-- **Where models live:** downloaded from official sources, pinned and checksummed, never committed to Git (see `rules.md`, section 9).
+- **Licenses:** code and model weights must be MIT, BSD, Apache-2.0, or similarly permissive; never non-commercial (see `plan/rules.md` R-LIC). Verify each license, including every weight file, before shipping.
+- **Where models live:** downloaded from official sources, pinned and checksummed, never committed to Git (see `plan/rules.md` R-REPO). Model files are downloaded by the pack manager (Step 12a) from their official pages, pinned to an exact version and checked with SHA-256.
 - **Every AI result is a suggestion:** preview, accept, retry, edit, or discard; nothing is overwritten without the version store and an undo toast.
 - **File contents are data, never instructions** (protection against prompt injection).
 
@@ -45,7 +47,7 @@ All AI features are optional packs, run locally through the local AI runtime (St
 - **Structured output always:** JSON schemas or grammar-constrained decoding in llama.cpp, so the app, not the model, handles formatting, layout, file writing, and validation.
 - **Careful prompts:** system prompts with 3-5 good examples per task and per language (English and Spanish at least), stored as versioned files in the repository.
 - **Check results with real tools when possible:** formulas are calculated before inserting, filters are shown as chips before searching, renames are previewed, extracted data is shown next to its source.
-- **Fine-tuning only when needed:** if prompting isn't enough, fine-tune a small LoRA adapter on examples we can legally use (my own documents, permissively licensed or public-domain texts, synthetic examples), covering several writing and deck styles; never train on material we don't have rights to. Host adapters as described in `rules.md`.
+- **Fine-tuning only when needed:** if prompting isn't enough, fine-tune a small LoRA adapter on examples we can legally use (my own documents, permissively licensed or public-domain texts, synthetic examples), covering several writing and deck styles; never train on material we don't have rights to. Host adapters as GitHub Release assets or on a Hugging Face page, never in the repository.
 - **Quality tiers:** default small model, optional larger local model for better writing, or a model I already run. Show clearly which tier is active and what to expect from it.
 - **Don't ship weak features:** a feature that scores poorly in the evaluation is marked "Experimental" (off by default) or left out.
 
