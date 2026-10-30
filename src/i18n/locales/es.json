@@ -38,6 +38,8 @@
     "genericFile": "Archivo",
     "onlineOnly": "Solo en línea",
     "isLink": "Acceso directo",
+    "contentModified": "Fecha de modificación: {date}",
+    "contentSize": "Tamaño: {size}",
     "loadingFolder": "Cargando carpeta...",
     "stillLoading": "Sigue cargando...",
     "loadError": "No se pudo abrir esta carpeta.",

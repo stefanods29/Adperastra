@@ -38,6 +38,8 @@
     "genericFile": "File",
     "onlineOnly": "Online only",
     "isLink": "Link",
+    "contentModified": "Date modified: {date}",
+    "contentSize": "Size: {size}",
     "loadingFolder": "Loading folder...",
     "stillLoading": "Still loading...",
     "loadError": "This folder could not be opened.",

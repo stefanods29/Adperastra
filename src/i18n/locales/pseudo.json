@@ -38,6 +38,8 @@
     "genericFile": "[Fïlë ~~]",
     "onlineOnly": "[Øñlïñë øñlÿ ~~~~]",
     "isLink": "[Lïñk ~~]",
+    "contentModified": "[Dätë mødïfïëd: {date} ~~~~~]",
+    "contentSize": "[Sïzë: {size} ~~]",
     "loadingFolder": "[Løädïñg føldër... ~~~~~~]",
     "stillLoading": "[Stïll løädïñg... ~~~~~]",
     "loadError": "[Thïs føldër çøüld ñøt bë øpëñëd. ~~~~~~~~~~~]",

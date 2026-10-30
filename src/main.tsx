@@ -5,6 +5,7 @@ import "./i18n";
 import "./styles/tokens.css";
 import "./styles/global.css";
 import "./styles/components.css";
+import "./styles/views.css";
 import "./styles/filetabs.css";
 import "./styles/ribbon.css";
 import "./styles/viewers.css";
