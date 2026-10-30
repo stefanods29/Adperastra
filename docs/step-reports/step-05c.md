@@ -107,7 +107,7 @@ The owner fills this table (or tells you the results in chat and you copy them).
 
 - New: none.
 - Fixed: none.
-- Still open: none caused by this step. Existing entries (KI-001 to KI-031) are unchanged.
+- Still open: none caused by this step. Existing entries (KI-001 to KI-032) are unchanged.
 
 ## Design deviations, dependencies, licenses
 

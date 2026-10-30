@@ -100,9 +100,9 @@ Per the local-only batch rules, the full gate and the test suites were not run a
 
 ## Known issues
 
-- New: KI-031 (Minor) the hex viewer has no search or Go to offset until Step 06f.
+- New: KI-032 (Minor) the hex viewer has no search or Go to offset until Step 06f.
 - Fixed: none.
-- Still open: KI-001, KI-002, KI-003, KI-004, KI-005, KI-009, KI-015, KI-016, KI-023, KI-024, KI-030, KI-031. Each was reviewed for this step: none touches the new code.
+- Still open: KI-001, KI-002, KI-003, KI-004, KI-005, KI-009, KI-015, KI-016, KI-023, KI-024, KI-030, KI-032. Each was reviewed for this step: none touches the new code.
 
 ## Design deviations, dependencies, licenses
 

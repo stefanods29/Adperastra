@@ -11,7 +11,7 @@ that fixed it.
 
 ## Open
 
-### KI-031 - The hex viewer has no search or Go to offset yet (Minor, deferral)
+### KI-032 - The hex viewer has no search or Go to offset yet (Minor, deferral)
 - **Found in:** Step 04c, 2026-10-30. **Severity:** Minor (deliberate deferral named in the step file; the viewer scrolls the whole 1 MB part, and larger files use the part buttons).
 - **What:** The hex viewer shows offsets, hex and text, with zoom and 1 MB parts, but a byte sequence cannot be searched and there is no Go to offset box. Both are scheduled with the other hex tools.
 - **Workaround:** use the part buttons to move through a large file, and Ctrl+F is not offered in this viewer.

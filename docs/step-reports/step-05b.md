@@ -177,7 +177,7 @@ pending (this batch takes no screenshots).
 - Fixed: none recorded as an issue; the cancelled-listing leak (D19) was
   fixed inside this step as T1 before it reached a release.
 - Still open: KI-003 (Major, cold start after a reboot not measured), KI-015
-  (Minor placeholder text now out of date), KI-024, KI-030, KI-031, KI-001,
+  (Minor placeholder text now out of date), KI-024, KI-030, KI-032, KI-001,
   KI-002, KI-004, KI-005, KI-009, KI-016; none touched by this step.
 
 ## Design deviations, dependencies, licenses

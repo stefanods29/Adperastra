@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `04a` (file tabs and open pipeline), then `04b` (needs 04a), then `04c`.
+**Current step:** `05c` is waiting for the owner's design approval (T10), then `05d`. Steps 04a to 05c are merged into local `testing`; their local tags wait for the speed runs, screenshots and hand checks listed in their reports.
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
@@ -21,12 +21,12 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 03a | Selection, Details pane, command bar, right-click menu | done | v0.0.5-step03a |
 | 03b | File operations, jobs, undo, drag and drop, paste as file | done | v0.0.6-step03b |
 | P2 | Adopt plan v2 (tools and plan files, no app changes) | done | (none) |
-| 04a | File tabs, file access, file-type handlers, image viewer | in progress | v0.0.7-step04a |
-| 04b | Ribbon framework, text and code viewer, Markdown viewer | ready | v0.0.8-step04b |
-| 04c | Audio and video player, protected view, Open as text/hex, Default apps | ready | v0.0.9-step04c |
-| 05a | View modes: List, Icons, Tiles, Content | guide | v0.0.10-step05a |
-| 05b | Column view | guide | v0.0.11-step05b |
-| 05c | Movable toolbars and panels, layout presets | guide | v0.0.12-step05c |
+| 04a | File tabs, file access, file-type handlers, image viewer | in progress (hand checks left) | v0.0.7-step04a |
+| 04b | Ribbon framework, text and code viewer, Markdown viewer | in progress (speed, screenshots, hand checks left) | v0.0.8-step04b |
+| 04c | Audio and video player, protected view, Open as text/hex, Default apps | in progress (speed, screenshots, hand checks left) | v0.0.9-step04c |
+| 05a | View modes: List, Icons, Tiles, Content | in progress (speed, screenshots, hand checks left) | v0.0.10-step05a |
+| 05b | Column view | in progress (speed, screenshots, hand checks left) | v0.0.11-step05b |
+| 05c | Movable toolbars and panels, layout presets | waiting for owner (T10 design approval) | v0.0.12-step05c |
 | 05d | Appearance, built-in themes, Settings page | guide | v0.0.13-step05d |
 | 06a | Text editing | guide | v0.0.14-step06a |
 | 06b | Version history | guide | v0.0.15-step06b |
