@@ -349,6 +349,8 @@
       "read_failed": "No se pudo leer este archivo.",
       "too_many_open": "Hay demasiados archivos abiertos. Cierra algunas pestañas e inténtalo de nuevo.",
       "invalid_request": "No se pudo abrir este archivo.",
+      "unblock_denied": "Windows no permitió quitar la marca. Es posible que el archivo sea de solo lectura o esté en uso.",
+      "unblock_failed": "No se pudo quitar la marca.",
       "other": "No se pudo abrir este archivo."
     },
     "ops": {

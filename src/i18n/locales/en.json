@@ -349,6 +349,8 @@
       "read_failed": "This file couldn't be read.",
       "too_many_open": "Too many files are open. Close some tabs and try again.",
       "invalid_request": "This file couldn't be opened.",
+      "unblock_denied": "Windows didn't allow removing the mark. The file may be read-only or in use.",
+      "unblock_failed": "The mark couldn't be removed.",
       "other": "This file couldn't be opened."
     },
     "ops": {

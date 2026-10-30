@@ -12,6 +12,7 @@ const info = (name: string, mime: string, size = 1000): FileTypeInfo => ({
   modified_unix: 0,
   online_only: false,
   read_only: false,
+  from_internet: false,
 });
 
 describe("open pipeline (Step 04b)", () => {

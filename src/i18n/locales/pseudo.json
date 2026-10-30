@@ -349,6 +349,8 @@
       "read_failed": "[Thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~]",
       "too_many_open": "[Tøø mäñÿ fïlës ärë øpëñ. Çløsë sømë täbs äñd trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~]",
       "invalid_request": "[Thïs fïlë çøüldñ't bë øpëñëd. ~~~~~~~~~~]",
+      "unblock_denied": "[Wïñdøws dïdñ't älløw rëmøvïñg thë märk. Thë fïlë mäÿ bë rëäd-øñlÿ ør ïñ üsë. ~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "unblock_failed": "[Thë märk çøüldñ't bë rëmøvëd. ~~~~~~~~~~]",
       "other": "[Thïs fïlë çøüldñ't bë øpëñëd. ~~~~~~~~~~]"
     },
     "ops": {

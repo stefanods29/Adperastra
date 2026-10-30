@@ -29,6 +29,7 @@ mod links;
 mod operation_safety;
 mod shell;
 mod transfer_history;
+mod zone;
 
 pub const CURRENT_SCHEMA: u32 = 5;
 
@@ -2468,6 +2469,7 @@ fn main() {
             files::file_grant,
             files::file_revoke,
             links::open_external_url,
+            zone::file_unblock,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
