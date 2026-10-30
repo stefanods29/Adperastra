@@ -98,6 +98,12 @@ that fixed it.
 
 ## Fixed
 
+### KI-031 - Markdown page search could fail on engines without the CSS Custom Highlight API (fixed in Step 04b)
+- **Found in:** Step 04b, 2026-10-30. **Severity:** Minor (only web engines without the CSS Custom Highlight API; the text viewer and the Markdown source view are not affected).
+- **What:** The search box of the Markdown reading view read `CSS.highlights` without first checking that the engine has a `CSS` object. On an older engine without it, typing in the search box threw an error instead of showing results.
+- **Workaround:** use View > Source, whose search uses CodeMirror.
+- **Fix:** `findInPage` checks for `win.CSS` first and reports no matches when the API is missing, so the page keeps working; the source view remains the place to search on such engines. Fixed in commit `f421c67`; test "finds nothing when the engine has no Custom Highlight API" (`src/__tests__/markdownRender.test.ts`).
+
 ### KI-025, KI-026, KI-028, KI-029 - Unsafe image paste, an unapproved Replace, a broken Redo, and in-process image decoding (fixed in Step 03b)
 Replace is refused at the command boundary (`ops.replace_unavailable`), so a file that appears after the conflict prompt can never be recycled without a new decision; the dialog offers Merge / Skip / Keep both. A stored replacement history now fails safely with `ops.exists` and leaves the restored item in place. Clipboard images are encoded in a separate `--clipboard-image-helper` process with a 1.5 GiB job limit and a 15 s timeout; the parent owns an exclusive staging handle, publishes without replacing, and deletes only its own file on failure. The PNG input buffer lives through decoding. Fixed in commit `96dedb4`; tests `image_output_never_overwrites_a_destination_created_during_encoding`, `partial_creation_never_replaces_an_existing_file`, `staging_handle_denies_replacement_and_publishes_without_overwriting`, the helper frame/timeout/crash tests, `redo never recycles or overwrites a destination restored by undo`, and "does not offer Replace or Merge for a file conflict".
 

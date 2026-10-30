@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Text, code and Markdown viewers (Step 04b): text files, logs, settings files and source code open in a read-only tab with colors for about 30 languages, search, word wrap, line numbers, zoom and a choice of 12 encodings; files over 10 MB open at once, read-only, in parts of 1 MB. Markdown opens as a formatted page or as its source, and its web and email links ask before opening in the browser or mail app.
+- Ribbons in file tabs: one row of grouped buttons with Alt key tips; the picture viewer's controls moved there and gained Rotate left, Rotate right and Actual size.
+- A search box on file tabs for viewers that can search: Ctrl+F, Enter or F3 for the next match, Shift+Enter or Shift+F3 for the previous one, Esc to clear.
+- Files with no known extension (README, LICENSE) open as text when their content looks like text; programs, shortcuts and web pages still open in Windows, and scripts (.bat, .ps1, .js) open as text so they never run by accident.
+- Help pages for the ribbon, viewing text and code, and viewing Markdown, in English and Spanish.
+- Files open in tabs (Step 04a): double-click a picture and it opens next to the Explorer tab, fitted to the window; the Explorer keeps its folder, selection and scroll. Middle-click opens a background tab, closing returns to the Explorer, and open tabs come back after a restart. Files without a viewer still open in their Windows app.
+- Picture viewer: fit, zoom from 5 % to 1600 %, Ctrl+wheel toward the pointer, drag to pan, rotate left/right and actual size, with a checkerboard behind transparency. File bytes reach the page only through per-file access tokens (`adpfile`), never through a path in a URL.
+- Help pages for opening files in tabs and viewing images, in English and Spanish.
 - File operations (Step 03b): New folder and text file, Cut, Copy, Paste, and Delete through the command bar, menus, and keyboard; big copies and moves run as background jobs with progress and Cancel; name conflicts ask first (Merge for two folders, Skip, or Keep both). Merge never touches an existing file; a file and a folder with the same name cannot be combined, and a whole drive can never be moved or deleted. Replace is not offered yet: it returns with the full conflict window, once recycling can be bound to the exact item you approved.
 - Undo for almost everything: Ctrl+Z / Ctrl+Y, an Undo button on the toast after each action, and a Recent actions list. Deleting goes to the Recycle Bin and restores from it; Shift+Delete deletes permanently after a warning that it cannot be undone.
 - Drag and drop: drag items onto folders in the list, navigation pane, address bar, or drives (Ctrl copies, Shift moves, Alt creates a shortcut), drag files in from Windows Explorer or the desktop, and drag files out to them.
@@ -17,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Finding text in a Markdown page no longer fails on engines without the CSS Custom Highlight API (KI-031).
 - Choosing each conflict separately now works; a cancelled or partly finished move can be undone exactly; moving, recycling or deleting system items asks first.
 - A copy or move can no longer recycle a file that appeared after the conflict prompt: Replace is unavailable until recycling can be bound to the exact approved item.
 - A move deletes a source only after its identity and bytes match the finished copy; a source changed or replaced during the job stays where it is.
@@ -29,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- File tab viewers share a ribbon: the picture viewer's zoom, fit, actual size and rotate controls moved there, and the new text and Markdown viewers use the same frame.
 - The setup window no longer bundles fonts with a license outside the allowed list, and its downloads trust the certificates in the Windows certificate store.
 
 ## [v0.0.5-step03a] - 2026-10-28
