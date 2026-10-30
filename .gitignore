@@ -57,3 +57,6 @@ test-files/corpus/
 *.key
 *.minisig*
 .adperastra/
+
+# Agent stop notes (AGENTS.md rule 4), never committed
+/BLOCKED.md
