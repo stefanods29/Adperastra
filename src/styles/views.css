@@ -45,3 +45,7 @@
 .adp-status-views { display:inline-flex; align-items:center; margin-left:auto; gap:2px; }
 .adp-status-view-btn { width:24px; height:20px; }
 .adp-status-view-btn[aria-pressed='true'] { background:var(--adp-color-surface-selected-row); }
+
+/* Settings > Views (Step 05a) */
+.adp-views-list { display:flex; flex-direction:column; list-style:none; margin:0; padding:0; gap:var(--adp-space-2); }
+.adp-views-item { display:flex; align-items:center; gap:var(--adp-space-3); }

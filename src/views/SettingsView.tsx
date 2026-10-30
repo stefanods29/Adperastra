@@ -3,6 +3,7 @@ import Button from "../components/Button";
 import HelpButton from "../components/HelpButton";
 import type { AppSettings, LanguageSetting } from "../services/settings";
 import OpeningFilesSettings from "./settings/OpeningFilesSettings";
+import ViewsSettings from "./settings/ViewsSettings";
 
 export interface SettingsViewProps {
   settings: AppSettings;
@@ -112,6 +113,7 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
           ))}
         </div>
       </div>
+      <ViewsSettings explorer={settings.explorer} onChange={(explorer) => onApply({ ...settings, explorer })} onOpenHelp={onOpenHelpPage} />
       <OpeningFilesSettings open={settings.open} onChange={(open) => onApply({ ...settings, open })} onOpenHelp={onOpenHelpPage} />
       <p className="adp-note">{t("settings.persistNote")}</p>
     </div>
