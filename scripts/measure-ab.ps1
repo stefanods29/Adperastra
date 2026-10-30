@@ -20,7 +20,7 @@ $work = Join-Path $env:TEMP 'adperastra-ab'
 New-Item -ItemType Directory -Force $work | Out-Null
 $releaseExe = Join-Path $env:CARGO_TARGET_DIR 'release\Adperastra.exe'
 $currentExe = Join-Path $work "current-$Step.exe"
-Copy-Item -LiteralPath $releaseExe -Destination $currentExe -Force
+Copy-Item -LiteralPath $releaseExe -Destination $currentExe -Force -ErrorAction Stop
 
 # The baseline build is cached per commit; its own measure-ui script drives
 # it, because older scripts match older screens.
@@ -31,6 +31,7 @@ $baselineExe = Join-Path $work "$baselineCommit.exe"
 $tree = Join-Path $work "tree-$baselineCommit"
 if (-not (Test-Path -LiteralPath $baselineExe) -or -not (Test-Path -LiteralPath $tree)) {
   if (Test-Path -LiteralPath $tree) { git -C $repo worktree remove --force $tree }
+  git -C $repo worktree prune
   git -C $repo worktree add --detach $tree $baselineCommit
   if ($LASTEXITCODE -ne 0) { throw 'Could not check out the baseline' }
   # A separate build folder: building another checkout of the same

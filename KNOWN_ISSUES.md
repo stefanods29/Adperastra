@@ -11,17 +11,17 @@ that fixed it.
 
 ## Open
 
-### KI-022 - Earlier full-suite claims exceed recorded verification (Major)
-- **Found in:** Completion audit of Steps 00-03b, 2026-10-29. **Severity:** Major (required verification is partly implemented).
-- **What:** Earlier steps have real approvals, merged PRs and tags. However, docs/test-and-speed-plan.md promises a combined quick/full runner, automated speed-regression enforcement, screenshot comparisons, license checks, accessibility checks and a weekly full run. The named runner and these checks are absent from the current repository/CI. The Step 03a report's "Full local suite" covers available unit/UI/build checks, not the entire promised suite. Step 02's 16 ms scrolling claim is "by construction", without recorded frame-time measurements. KI-003 separately records missing post-reboot startup measurements.
-- **Workaround:** distinguish available checks from unverified requirements in reports; earlier approvals do not prove missing checks ran.
-- **Target:** reconcile verification requirements and implement or obtain explicit approval for deferrals before claiming the full suite passes. No deferral approved.
-
 ### KI-023 - Builds before this fix left a WebView2 folder outside the data folder (Minor)
 - **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (disk space only, a one-time leftover).
 - **What:** Until commit `4725674` the window's WebView2 profile (cache and browser storage, no user files or settings) was kept in `%LOCALAPPDATA%\<app identifier>\EBWebView` instead of the app's data folder. It now lives in `<data>\webview`, so the old folder is no longer used; the first start after updating creates the new profile once (about the cost in KI-001).
 - **Workaround:** the old folder can be deleted by hand; nothing in it is needed.
 - **Target:** the App storage page (Step 12a) lists and removes leftover app folders.
+
+### KI-024 - Two interactions measured over the 20% rule in one run (Minor)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (well inside the 100 ms tier; owner decision 2026-10-30 that unreliable speed results do not block).
+- **What:** One release run measured rename box (F2) 8.6 ms vs 5.9 ms in Step 03a, and 100k folder Shift+click range 30.6 ms vs 12.9 ms. On this PC, with other apps running, the same build varied up to 2x between runs: Shift+click measured 12.6, 16.1 and 34.8 ms in alternating runs against a mid-step build's 21.1, 27.5 and 52.4 ms. No full comparison with the Step 03a build has completed.
+- **Workaround:** none needed.
+- **Target:** check again at the next step's speed run.
 
 ### KI-001 - First-ever run takes about 2.2 seconds (Minor)
 - **Found in:** Step 01b. **Severity:** Minor (one-time cost).
@@ -91,6 +91,9 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-022 - Earlier full-suite claims exceeded recorded verification (fixed in Step 03b)
+`scripts/test-all.ps1` now holds the promised runner, with license and vulnerability audits, packaged runtime checks with axe-core, scroll frame times and a speed gate; `docs/test-and-speed-plan.md` lists what actually runs and which later step builds the rest. Screenshot comparison stays by hand. Not yet run: full mode on GitHub. Commits `d39f90b`, `0d235b4`.
 
 ### KI-018 - Individual conflict choices were ignored (fixed in Step 03b)
 The destination template now builds the real target path, so with "Do this for all" cleared each conflict asks and gets its own Replace, Keep both or Skip. Fixed in commit `3652e53`; test "applies Replace then Keep both separately when the for-all box is cleared" (`src/__tests__/fileOpConfirmations.test.tsx`).

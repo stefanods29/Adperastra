@@ -101,7 +101,17 @@ try {
   await send('Page.enable');
   await send('Emulation.setFocusEmulationEnabled',{enabled:true});
   await send('Emulation.setDeviceMetricsOverride',{width:1200,height:900,deviceScaleFactor:scale,mobile:false});
-  await wait(`!!window.__TAURI_INTERNALS__ && !!document.querySelector('.adp-explorer')`);
+  // The debugging port can open before the page's first navigation ends, and
+  // that navigation destroys a query already running. Only this startup wait
+  // retries, and only for that error; a real failure still fails.
+  const appDeadline = Date.now() + 60000;
+  for (;;) {
+    try { await wait(`!!window.__TAURI_INTERNALS__ && !!document.querySelector('.adp-explorer')`); break; }
+    catch (error) {
+      if (!/context was destroyed|Cannot find (default execution )?context/i.test(String(error.message)) || Date.now() > appDeadline) throw error;
+      await delay(200);
+    }
+  }
   const firstRows=await openFolder(fixture);
   check('Folder opens with real file rows',await page(`document.querySelector(${JSON.stringify(rows)})?.textContent.length>0`));
   metrics.push({name:'folder first rows',value_ms:Math.round(firstRows),limit_ms:1000});
@@ -151,6 +161,20 @@ try {
   await press('z','KeyZ',90,2);
   await wait(`document.querySelectorAll(${JSON.stringify(rows)}).length===1`);
   await snapshot('undo');
+  // Tab strip by keyboard, with a closable tab open (nested close button).
+  await page(`document.querySelector('.adp-titlebar .adp-button-row button').click();true`);
+  await wait(`document.querySelectorAll('.adp-tablist [role=tab]').length===2`);
+  const tabStrip = await page(`axe.run('.adp-tabbar',{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}}).then(r=>r.violations.map(v=>v.id+' '+v.nodes.map(n=>n.target+': '+n.failureSummary).join('; ')))`);
+  check(`Tab strip with a closable tab has no WCAG violations${tabStrip.length?': '+tabStrip.join(' | '):''}`,tabStrip.length===0);
+  await page(`document.querySelector('.adp-tablist [role=tab][aria-selected=true]').focus();true`);
+  await press('Home','Home',36);
+  await wait(`document.querySelector('.adp-tablist [role=tab]').getAttribute('aria-selected')==='true'`);
+  check('Keyboard moves between tabs and focus follows',await page(`document.activeElement===document.querySelector('.adp-tablist [role=tab]')`));
+  await press('End','End',35);
+  await wait(`document.querySelectorAll('.adp-tablist [role=tab]')[1].getAttribute('aria-selected')==='true'`);
+  await press('w','KeyW',87,2);
+  await wait(`document.querySelectorAll('.adp-tablist [role=tab]').length===1`);
+  check('Ctrl+W closes the current tab',true);
   check('No browser exceptions or console errors',consoleErrors.length===0);
   for(const metric of metrics)check(`${metric.name} meets ${metric.limit_ms}ms tier`,metric.value_ms<=metric.limit_ms);
   writeFileSync(join(output,`runtime-${language}-${theme}-${scale*100}.json`),JSON.stringify({language,theme,scale,mode,checks,metrics,consoleErrors},null,2));

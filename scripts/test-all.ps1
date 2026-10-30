@@ -126,7 +126,7 @@ if ($Mode -eq 'full') {
         $stepId = if ($branch -match '^step-([0-9a-zA-Z]+)-') { $Matches[1] } else { ((Get-Content plan/STATUS.md -Raw) -replace '(?s).*?\*\*Current step:\*\* `([^`]+)`.*','$1') }
         if ($env:GITHUB_ACTIONS -eq 'true') {
             # Hosted runners are other hardware: tiers only, no 20% comparison.
-            & $processShell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'measure-ui.ps1') -Out $speedJson -Step $stepId
+            & $processShell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'measure-ui.ps1') -Out $speedJson -Step $stepId -Port 9444
             if ($LASTEXITCODE -ne 0) { throw 'UI speed measurement failed.' }
             node scripts/compare-benchmarks.mjs $speedJson --tiers-only
         } else {

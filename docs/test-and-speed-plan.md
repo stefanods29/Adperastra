@@ -61,7 +61,7 @@ under `build/verification/`.
 | Licenses of everything that ships (Rust: `cargo-deny`; npm: runtime packages; development-only packages never ship) | x | x | `scripts/license-policy.json` |
 | Vulnerability audits (`cargo audit`, `npm audit`) | x | x | |
 | Packaged app runtime checks in real WebView2 (smoke, file filter, rename, copy/recycle/restore, Ctrl+Z/Ctrl+Y, no console errors, axe-core WCAG A/AA) | English light | English, Spanish dark, pseudo; 100% and 150% | `verify-runtime.ps1` |
-| Speed: every interaction meets its tier; more than 20% slower than the previous step's JSON fails (changes under 2 ms are timer noise); 100k-folder scroll frame time and dropped frames | - | x (tiers only on GitHub's other hardware) | `measure-ui.ps1`, `compare-benchmarks.mjs` |
+| Speed: every interaction meets its tier; more than 20% slower than the previous step's JSON fails (changes under 2 ms are timer noise); 100k-folder scroll frame time and dropped frames (limit 1.5 x the display's frame, at least 25 ms, and at most 5% dropped frames, because a frame cannot beat the display; plan/speed.md's 16 ms stays the goal) | - | x (tiers only on GitHub's other hardware) | `measure-ui.ps1`, `compare-benchmarks.mjs` |
 | Screenshots | - | x (runtime check) | compared with the Figma frames side by side in the step report, by the owner; no automatic pixel comparison, because the Figma text is example content |
 
 Not built yet, and the step that builds it: fuzzing and the malicious file

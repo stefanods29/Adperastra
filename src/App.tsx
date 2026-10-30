@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { CircleHelp, Copy, Home, LayoutGrid, Minus, Plus, Settings as SettingsIcon, Square, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { tabKeyTarget } from "./services/tabKeys";
 import DropdownMenu from "./components/DropdownMenu";
 import IconButton from "./components/IconButton";
 import { applyLanguage } from "./i18n";
@@ -395,7 +396,7 @@ export default function App() {
       <header className="adp-titlebar" data-tauri-drag-region="">
         <div className="adp-tabbar">
           <div className="adp-tablist" role="tablist">
-          {tabs.map((tab) => {
+          {tabs.map((tab, tabIndex) => {
             const Icon =
               tab.kind === "explorer"
                 ? Home
@@ -409,6 +410,15 @@ export default function App() {
                 key={tab.id}
                 role="tab"
                 aria-selected={tab.id === activeId}
+                tabIndex={tab.id === activeId ? 0 : -1}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  const target = tabKeyTarget(event.key, tabIndex, tabs.length);
+                  if (target === null) return;
+                  event.preventDefault();
+                  setActiveId(tabs[target].id);
+                  (event.currentTarget.parentElement?.children[target] as HTMLElement | undefined)?.focus();
+                }}
                 className={tab.id === activeId ? "adp-tab adp-tab--active" : "adp-tab"}
                 draggable={false}
                 onClick={() => setActiveId(tab.id)}
@@ -419,10 +429,11 @@ export default function App() {
                 <Icon size={14} aria-hidden="true" />
                 <span className="adp-tab-label">{tab.title ?? tabLabel(tab)}</span>
                 {tab.kind !== "explorer" ? (
-                  <button
-                    type="button"
+                  // A mouse target only: a tab may not contain another control.
+                  // The keyboard closes the current tab with Ctrl+W.
+                  <span
                     className="adp-tab-close"
-                    aria-label={t("tabs.close")}
+                    aria-hidden="true"
                     title={t("tabs.close")}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -430,7 +441,7 @@ export default function App() {
                     }}
                   >
                     <X size={12} aria-hidden="true" />
-                  </button>
+                  </span>
                 ) : null}
               </div>
             );

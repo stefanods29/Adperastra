@@ -15,11 +15,13 @@ param(
   [ValidateSet("en", "es", "pseudo")][string]$Language = "en",
   [ValidateSet("light", "dark")][string]$Theme = "light",
   [int]$Port = 9333,
-  [Parameter(Mandatory = $true)][string]$Step,
+  [string]$Step = "",
   [switch]$ScreenshotsOnly
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
+# The step names the results: from -Step, else the branch (step-<id>-...).
+if (-not $Step) { $Step = if ((git -C $root branch --show-current) -match '^step-([0-9a-zA-Z]+)-') { $Matches[1] } else { "unknown" } }
 if (-not (Test-Path $Exe)) { throw "Build the app first: $Exe not found" }
 if (-not (Test-Path $BigFolder)) { throw "Run scripts\generate-corpus.ps1 first: $BigFolder not found" }
 
@@ -76,5 +78,7 @@ try {
   Remove-Item Env:\WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS -ErrorAction SilentlyContinue
   Remove-Item Env:\ADPERASTRA_DATA_DIR -ErrorAction SilentlyContinue
   Get-Process Adperastra -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+  # A renamed copy (measure-ab.ps1) has another name; stop it too.
+  Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
   Remove-Item -Recurse -Force $dataDir -ErrorAction SilentlyContinue
 }

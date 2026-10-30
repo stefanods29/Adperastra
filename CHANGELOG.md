@@ -17,7 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Choosing Replace, Skip or Keep both for each conflict separately now works; a cancelled or partly finished move can be undone exactly; moving, recycling or deleting system items asks first.
-- Screen-reader and keyboard fixes: the tab strip, column headers and the language tag of the page follow the accessibility rules, and the small "Folders in" arrows in the address bar are easier to hit.
+- Tabs can be switched with the keyboard (arrow keys, Home, End).
+- Screen-reader fixes: the tab strip, column headers and the language tag of the page follow the accessibility rules, and the small "Folders in" arrows in the address bar are easier to hit.
 - Every app instance keeps its browser data in its own data folder, and the app talks to its core directly instead of through a slower fallback.
 
 ### Changed
