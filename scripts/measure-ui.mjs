@@ -6,6 +6,7 @@
 // node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme> [step]
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { deflateSync } from "node:zlib";
 import { join } from "node:path";
 
 const args = process.argv.slice(2).map((value) => (value === "-" ? "" : value));
@@ -13,6 +14,52 @@ const [port, demo, big, mode, outFile, shotDir, lang, theme, stepId] = args;
 if (mode === "full" && outFile && !stepId) throw new Error("measure-ui.mjs needs the step id (9th argument)");
 const RUNS = 7;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** A real PNG (a color gradient), so "open image" measures a real decode. */
+function writeGradientPng(path, width, height) {
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (buffer) => {
+    let c = 0xffffffff;
+    for (const byte of buffer) c = crcTable[(c ^ byte) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type, data) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+    const sum = Buffer.alloc(4);
+    sum.writeUInt32BE(crc(body));
+    return Buffer.concat([length, body, sum]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8; // bit depth
+  header[9] = 2; // RGB
+  const raw = Buffer.alloc((width * 3 + 1) * height);
+  for (let y = 0; y < height; y += 1) {
+    const row = y * (width * 3 + 1);
+    for (let x = 0; x < width; x += 1) {
+      const offset = row + 1 + x * 3;
+      raw[offset] = Math.round((x / width) * 255);
+      raw[offset + 1] = Math.round((y / height) * 255);
+      raw[offset + 2] = 192;
+    }
+  }
+  writeFileSync(
+    path,
+    Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      chunk("IHDR", header),
+      chunk("IDAT", deflateSync(raw)),
+      chunk("IEND", Buffer.alloc(0)),
+    ]),
+  );
+}
 
 async function connect() {
   const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
@@ -134,6 +181,7 @@ async function shot(name) {
   console.log(`screenshot ${file}`);
 }
 
+writeGradientPng(join(demo, "photo-1920.png"), 1920, 1080);
 await openFolder(demo);
 const results = [];
 
@@ -291,6 +339,38 @@ if (mode === "full") {
   }
 
 
+
+  // Step 04a: open a real image in a file tab, and switch tabs.
+  try {
+    await openFolder(demo);
+    const openValues = [];
+    for (let run = 0; run < 5; run += 1) {
+      openValues.push(
+        await page(`window.__m.timeUntil(
+          () => [...window.__m.rows()].find((r) => r.textContent.includes("photo-1920.png")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+          () => document.querySelector(".adp-filetab:not([hidden]) .adp-image-stage[style]") !== null)`),
+      );
+      await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+      await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+      await sleep(200);
+    }
+    const opened = { name: "open a 1920x1080 PNG in a tab (first view)", median_ms: Math.round(median(openValues) * 10) / 10, max_ms: Math.round(Math.max(...openValues) * 10) / 10, runs: openValues.length };
+    console.log(`${opened.name}: median ${opened.median_ms} ms (max ${opened.max_ms})`);
+    results.push(opened);
+    await page(`[...window.__m.rows()].find((r) => r.textContent.includes("photo-1920.png")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-image-stage[style]") !== null)`);
+    results.push(
+      await measure(
+        "switch tab (image tab to Explorer)",
+        `true`,
+        `document.querySelectorAll(".adp-tab")[0].click()`,
+        `document.querySelectorAll(".adp-tab")[1].click(); true`,
+      ),
+    );
+    await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+  } catch (error) {
+    console.log(`step 04a measurements failed: ${error.message ?? error}`);
+  }
 
   // Classic menu: time until the helper's menu is on screen. The runner
   // closes it afterwards.
@@ -450,6 +530,13 @@ if (shotDir) {
   try { rmSync(folderSource, { recursive: true, force: true }); } catch { /* best effort */ }
   try { rmSync(join(demo, "Archive 2025", "folder-100k"), { recursive: true, force: true }); } catch { /* best effort */ }
   try { rmSync(join(demo, "Invoices", "notes.txt"), { force: true }); } catch { /* best effort */ }
+  // Step 04a: an image open in a file tab.
+  await openFolder(demo);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("photo-1920.png"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-image-stage[style]") !== null, 15000)`);
+  await sleep(300);
+  await shot("12-image-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
 }
 
 cdp.close();

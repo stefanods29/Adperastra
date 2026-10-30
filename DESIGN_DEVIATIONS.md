@@ -3,6 +3,11 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-30 - File tabs and the image viewer (Step 04a)
+
+- **What:** Figma shows file tabs only with Office, PDF and image editors. The Step 04a file tab uses the Figma window chrome: the Explorer tab shrinks to its house icon while files are open; file tabs show the type icon in the type's accent color; the navigation row (56 px) has Show in folder (up arrow), Reload, and the path ending in the file; the image viewer shows the picture on the media canvas color with the image shadow and a checkerboard behind transparency; the file tab has its own status bar with the image size, the file size, and Fit plus a zoom slider at the right.
+- **Closest-option differences:** Back, Forward and the search box are not shown on file tabs yet (search arrives with the text viewer in Step 04b); the zoom slider shows the number without a percent sign (shared Slider component).
+
 ## 2026-10-30 - Conflict dialog: Merge instead of Replace, and numbered Keep both (Step 03b) - approved by the owner on 2026-10-30
 
 - **What:** after the safety review found that a path-based Recycle Bin call can remove a file that appeared after the prompt, the owner approved a revised conflict dialog. Figma has no conflict dialog; this is the 2026-10-28 extension with a smaller button set. For two folders with the same name it offers **Merge** (primary), **Skip** and **Keep both**, with the note "Merge adds the new files and keeps the files that are already there. Files with the same name are skipped." For a file it offers **Keep both** (primary) and **Skip**. **Replace** is not offered until the full conflict window can bind recycling to the exact approved item.
