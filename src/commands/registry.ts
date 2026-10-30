@@ -48,7 +48,9 @@ export interface CommandContext {
   canRedo: boolean;
 }
 
-export interface Command {
+/** A command. `C` is the context its rules read: the Explorer's
+ * `CommandContext` by default, or a viewer's own context (Step 04b). */
+export interface Command<C = CommandContext> {
   id: string;
   /** i18n key, never display text. */
   labelKey: string;
@@ -57,47 +59,47 @@ export interface Command {
   risk: CommandRisk;
   /** Help page slug opened with F1 / "?" for this command. */
   helpSlug: string;
-  enabledWhen: (ctx: CommandContext) => boolean;
-  run: (ctx: CommandContext, arg?: string) => void;
+  enabledWhen: (ctx: C) => boolean;
+  run: (ctx: C, arg?: string) => void;
   /** Toggle and radio entries in menus show a check mark when true. */
-  checkedWhen?: (ctx: CommandContext) => boolean;
+  checkedWhen?: (ctx: C) => boolean;
   checkKind?: "toggle" | "radio";
   /** Hidden commands are left out of menus and bars. */
-  visibleWhen?: (ctx: CommandContext) => boolean;
+  visibleWhen?: (ctx: C) => boolean;
   /** A label that depends on the context (for example add/remove favorite). */
-  labelKeyFor?: (ctx: CommandContext) => string;
+  labelKeyFor?: (ctx: C) => string;
   /** Designed but not working yet: always disabled, and the tooltip says
    * it arrives in a later update. */
   pending?: boolean;
 }
 
-export function isCommandEnabled(command: Command, ctx: CommandContext): boolean {
+export function isCommandEnabled<C>(command: Command<C>, ctx: C): boolean {
   return !command.pending && command.enabledWhen(ctx);
 }
 
-export function isCommandVisible(command: Command, ctx: CommandContext): boolean {
+export function isCommandVisible<C>(command: Command<C>, ctx: C): boolean {
   return command.visibleWhen ? command.visibleWhen(ctx) : true;
 }
 
-export function commandLabelKey(command: Command, ctx: CommandContext): string {
+export function commandLabelKey<C>(command: Command<C>, ctx: C): string {
   return command.labelKeyFor ? command.labelKeyFor(ctx) : command.labelKey;
 }
 
-export class CommandRegistry {
-  private commands = new Map<string, Command>();
+export class CommandRegistry<C = CommandContext> {
+  private commands = new Map<string, Command<C>>();
 
-  register(command: Command): void {
+  register(command: Command<C>): void {
     if (this.commands.has(command.id)) {
       throw new Error(`duplicate command id: ${command.id}`);
     }
     this.commands.set(command.id, command);
   }
 
-  get(id: string): Command | undefined {
+  get(id: string): Command<C> | undefined {
     return this.commands.get(id);
   }
 
-  list(): Command[] {
+  list(): Command<C>[] {
     return [...this.commands.values()];
   }
 }
