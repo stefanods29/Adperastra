@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current steps:** `P2` (plan v2 tools) and `04a` (file tabs and open pipeline) in parallel, then `04b` (needs 04a), then `04c`.
+**Current step:** `04a` (file tabs and open pipeline), then `04b` (needs 04a), then `04c`.
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
@@ -20,7 +20,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 02 | Browse folders, Home page, command registry | done | v0.0.4-step02 |
 | 03a | Selection, Details pane, command bar, right-click menu | done | v0.0.5-step03a |
 | 03b | File operations, jobs, undo, drag and drop, paste as file | done | v0.0.6-step03b |
-| P2 | Adopt plan v2 (tools and plan files, no app changes) | in progress | (none) |
+| P2 | Adopt plan v2 (tools and plan files, no app changes) | done | (none) |
 | 04a | File tabs, file access, file-type handlers, image viewer | in progress | v0.0.7-step04a |
 | 04b | Ribbon framework, text and code viewer, Markdown viewer | ready | v0.0.8-step04b |
 | 04c | Audio and video player, protected view, Open as text/hex, Default apps | ready | v0.0.9-step04c |
