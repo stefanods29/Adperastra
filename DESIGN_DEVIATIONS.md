@@ -3,6 +3,12 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-30 - Accessibility fixes and the setup window's font (Step 03b) - agent decision, for owner review
+
+- **What:** the axe-core check (WCAG 2.2 AA) asks for clickable targets of at least 24 x 24 px. The breadcrumb's small "Folders in ..." chevrons were 15 px; their clickable area is now 24 x 24 px with the same 11 px icon, so the address bar's segments sit a few pixels further apart than in Figma. Column headers keep their look; their sort state is read out in the button label instead of an arrow-only cue.
+- **Setup window font:** egui's bundled fonts are no longer built in (their Ubuntu font license is not allowed, R-LIC-1). The setup window uses Inter as before; only when Inter is missing (the case the setup window exists to repair) it uses the Windows UI font installed on the PC, read at run time and never bundled (R-LIC-5 forbids bundling Microsoft fonts).
+- **Evidence:** `build/verification/<run>/runtime/folder-*.png` from `scripts/test-all.ps1 -Mode full`; accessibility reports in the same folder show no violations in English light, Spanish dark and the pseudo-locale at 100% and 150%.
+
 ## 2026-10-28 - File operations: jobs panel, conflict and delete dialogs, Recent actions (Step 03b) - approved by the owner on 2026-10-28
 
 - **What:** Figma has no copy/progress panel, conflict dialog, permanent-delete warning, or Recent actions list (plan/design.md, "Screens still to design"). The owner approved a design preview in chat before building, made from `plan/design-spec.md` tokens: the jobs panel is a 360 px card at the bottom right (radius from the dialog token, card shadow) with the operation verb, current file, progress bar in the Explorer accent, percent, Cancel, and an expandable skipped-items list; finished jobs stay until dismissed. The conflict dialog offers Replace / Skip / Keep both with a "Do this for all conflicts" checkbox; the permanent-delete dialog states the count and that it cannot be undone, with Cancel focused; Recent actions is a dialog listing the undo history with Undo/Redo buttons and shortcut hints. Paste as file and New items reuse the approved 03a rename box (the new file appears with its name selected), so there is no separate naming dialog.

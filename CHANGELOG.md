@@ -14,6 +14,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Paste as file: pasted text becomes a .txt, .md, or .csv file and a pasted screenshot becomes a .png (or .jpg, chosen in Settings), with the name ready to edit.
 - Help pages for copying and moving, deleting and the Recycle Bin, undo, drag and drop, and paste as file, in English and Spanish.
 
+### Fixed
+
+- Choosing Replace, Skip or Keep both for each conflict separately now works; a cancelled or partly finished move can be undone exactly; moving, recycling or deleting system items asks first.
+- Screen-reader and keyboard fixes: the tab strip, column headers and the language tag of the page follow the accessibility rules, and the small "Folders in" arrows in the address bar are easier to hit.
+- Every app instance keeps its browser data in its own data folder, and the app talks to its core directly instead of through a slower fallback.
+
+### Changed
+
+- The setup window no longer bundles fonts with a license outside the allowed list, and its downloads trust the certificates in the Windows certificate store.
+
 ## [v0.0.5-step03a] - 2026-10-28
 
 ### Added

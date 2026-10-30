@@ -60,6 +60,15 @@ foreach ($round in 1..$Rounds) {
         if ($which -eq 'current') { & (Join-Path $PSScriptRoot 'measure-ui.ps1') -Exe $currentExe -Out $json -Step $Step }
         else { & (Join-Path $tree 'scripts\measure-ui.ps1') -Exe $baselineExe -Out $json }
       } catch { Write-Host "run failed ($which, round $round, try $try): $_" }
+      # measure-ui closes processes named Adperastra; these copies have other
+      # names, so close every instance of both builds (and their WebView2).
+      foreach ($exe in $currentExe, $baselineExe) {
+        $name = [IO.Path]::GetFileNameWithoutExtension($exe)
+        Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue |
+          Where-Object { $_.CommandLine -like "*--webview-exe-name=$name.exe*" } |
+          ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+        Get-Process -Name $name -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+      }
     }
     if (-not (Test-Path -LiteralPath $json)) { throw "No $which measurement in round $round" }
     $runs[$which] += , (Get-Content -LiteralPath $json -Raw)

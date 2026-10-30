@@ -89,7 +89,18 @@ async function openFolder(path, settleMs = 500) {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(path)});
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input.form.requestSubmit();
-    await window.__m.waitFor(() => document.querySelector(".adp-address-box")?.textContent.includes(${JSON.stringify(name)}) && window.__m.rows().length > 0);
+    try {
+      await window.__m.waitFor(() => document.querySelector(".adp-address-box")?.textContent.includes(${JSON.stringify(name)}) && window.__m.rows().length > 0);
+    } catch (error) {
+      // Say what the page showed instead of a bare timeout.
+      throw new Error("opening " + ${JSON.stringify(name)} + " timed out: " + JSON.stringify({
+        address: document.querySelector(".adp-address-box")?.textContent ?? null,
+        editing: !!document.querySelector(".adp-address-input"),
+        rows: window.__m.rows().length,
+        dialog: document.querySelector("[role=dialog]")?.textContent?.slice(0, 120) ?? null,
+        status: document.querySelector(".adp-statusbar")?.textContent ?? null,
+      }));
+    }
     return true;
   })()`);
   await sleep(settleMs);

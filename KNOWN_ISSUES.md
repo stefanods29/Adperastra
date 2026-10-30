@@ -11,35 +11,17 @@ that fixed it.
 
 ## Open
 
-### KI-018 - Individual conflict choices are ignored (Major)
-- **Found in:** Step 03b completion audit, 2026-10-29. **Severity:** Major (a partly-working daily-use feature with a workaround).
-- **What:** In src/views/ExplorerHome.tsx:594, the destination template escapes the file-name interpolation instead of adding a path separator. With "Do this for all" unchecked, conflicting sources are treated as non-conflicting and run with Skip; Replace and Keep both are ignored. Executing the actual expression produced a literal ${baseNameOf(source)} instead of the file name. The existing 63 UI tests pass without covering this branch.
-- **Workaround:** choose "Do this for all" when the same choice fits every conflict, or perform the operation in Windows Explorer.
-- **Target:** fix and add a regression test before Step 03b approval. No deferral approved.
-
-### KI-019 - Some partial moves have no Undo entry (Major)
-- **Found in:** Step 03b completion audit, 2026-10-29. **Severity:** Major (Undo only partly works; no permanent data loss established by this audit).
-- **What:** Code inspection found that src/services/fileops.ts:264 returns no undo entry when report.completed is empty, even if created/replaced records contain destination changes. In crates/fs-service/src/ops.rs:875-909, cancellation or a partly unsuccessful folder move can produce that report after destination files were written or old destinations recycled. Those changes are absent from Recent actions and Ctrl+Z.
-- **Workaround:** inspect source and destination and use Windows Explorer and the Recycle Bin to recover affected items; there is no single-action Undo for this case.
-- **Target:** fix and test cancelled and partly successful moves before Step 03b approval. No deferral approved.
-
-### KI-020 - Move and delete do not warn about system items (Major)
-- **Found in:** Step 03b completion audit, 2026-10-29. **Severity:** Major (a serious safety/usability gap with a workaround).
-- **What:** plan/rules.md section 6 requires a clear warning before modifying a system file. Rename has that warning, but move and recycle in src/views/ExplorerHome.tsx do not check the system attribute before starting. The engine's drive-root guard does not supply this warning. Permanent delete has a general irreversible-action warning, but no system-item warning.
-- **Workaround:** keep hidden/system items hidden and use Windows Explorer for operations involving system items.
-- **Target:** add the required warnings and tests before Step 03b approval. No deferral approved.
-
-### KI-021 - Restore and Replace Undo tests fail on Windows CI (Major)
-- **Found in:** Step 03b completion audit, 2026-10-29. **Severity:** Major (an unresolved correctness/verification failure; the cause is not established).
-- **What:** GitHub run 40781419373 at 11aced2 fails recycle_then_restore_brings_the_item_back, restore_brings_back_same_stem_files_without_swapping_them, and undoing_a_replace_brings_back_the_replaced_file. The hosted Windows runner reports missing Recycle Bin matches, including bin_id: None. All three pass on this Windows 11 PC in the same audit. The difference must be explained and resolved without skipping or weakening tests.
-- **Workaround:** none for the failed verification; local success alone does not make CI pass.
-- **Target:** investigate and resolve before Step 03b approval/merge. No deferral approved.
-
 ### KI-022 - Earlier full-suite claims exceed recorded verification (Major)
 - **Found in:** Completion audit of Steps 00-03b, 2026-10-29. **Severity:** Major (required verification is partly implemented).
 - **What:** Earlier steps have real approvals, merged PRs and tags. However, docs/test-and-speed-plan.md promises a combined quick/full runner, automated speed-regression enforcement, screenshot comparisons, license checks, accessibility checks and a weekly full run. The named runner and these checks are absent from the current repository/CI. The Step 03a report's "Full local suite" covers available unit/UI/build checks, not the entire promised suite. Step 02's 16 ms scrolling claim is "by construction", without recorded frame-time measurements. KI-003 separately records missing post-reboot startup measurements.
 - **Workaround:** distinguish available checks from unverified requirements in reports; earlier approvals do not prove missing checks ran.
 - **Target:** reconcile verification requirements and implement or obtain explicit approval for deferrals before claiming the full suite passes. No deferral approved.
+
+### KI-023 - Builds before this fix left a WebView2 folder outside the data folder (Minor)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (disk space only, a one-time leftover).
+- **What:** Until commit `4725674` the window's WebView2 profile (cache and browser storage, no user files or settings) was kept in `%LOCALAPPDATA%\<app identifier>\EBWebView` instead of the app's data folder. It now lives in `<data>\webview`, so the old folder is no longer used; the first start after updating creates the new profile once (about the cost in KI-001).
+- **Workaround:** the old folder can be deleted by hand; nothing in it is needed.
+- **Target:** the App storage page (Step 12a) lists and removes leftover app folders.
 
 ### KI-001 - First-ever run takes about 2.2 seconds (Minor)
 - **Found in:** Step 01b. **Severity:** Minor (one-time cost).
@@ -109,6 +91,18 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-018 - Individual conflict choices were ignored (fixed in Step 03b)
+The destination template now builds the real target path, so with "Do this for all" cleared each conflict asks and gets its own Replace, Keep both or Skip. Fixed in commit `3652e53`; test "applies Replace then Keep both separately when the for-all box is cleared" (`src/__tests__/fileOpConfirmations.test.tsx`).
+
+### KI-019 - Some partial moves had no Undo entry (fixed in Step 03b)
+Moves keep an exact transfer plan (`crates/fs-service/src/transfer.rs`), and an Undo entry is pushed whenever anything changed on disk, even when the job was cancelled before a single source finished. Fixed in commit `3652e53`; tests `cancelled_move_undoes_retained_copies_and_redoes_only_written_files`, `partial_move_deletion_failure_separates_moved_files_from_retained_copies` and "records destination changes from a cancelled move before any source completed".
+
+### KI-020 - Move and delete did not warn about system items (fixed in Step 03b)
+Move, recycle, permanent delete and Replace check fresh attributes (also inside folders) before changing anything and ask first, with Cancel focused (`src-tauri/src/operation_safety.rs`). Fixed in commit `3652e53`; Rust tests in `operation_safety.rs` and UI tests in `fileOpConfirmations.test.tsx`.
+
+### KI-021 - Restore and Replace Undo tests failed on Windows CI (fixed in Step 03b)
+Cause: GitHub's runner keeps its temporary folder under a short 8.3 name (`C:\Users\RUNNER~1\...`), while the Recycle Bin records the long path, so restore lookups found no match. Paths are now compared in their long form (`winpath::long_path_wide`). Fixed in commit `3652e53` (tests `restore_accepts_a_short_parent_path_without_swapping_extensions`, `replacing_with_a_short_parent_path_keeps_the_exact_undo_entry`); the three tests pass on GitHub run 41001206899.
 
 ### KI-014 - Renaming had no Undo (fixed in Step 03b)
 Rename now pushes an undo entry: the toast after a rename has an Undo button (Ctrl+Z), Ctrl+Y redoes it, and Recent actions lists it. The undo stack (contract 11) is shared by rename, copy, move, delete, create, and paste. Fixed in commit `815731b` (engine and jobs in `4330f4b`/`ec167e4`).
