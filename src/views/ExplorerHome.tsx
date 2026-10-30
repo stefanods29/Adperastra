@@ -93,6 +93,8 @@ import {
   type SelectionState,
 } from "../services/selection";
 import { defaultSettings, isTauriRuntime, type ExplorerViewSettings, type ViewModeId } from "../services/settings";
+import { useLayout } from "../layout/LayoutContext";
+import ToolbarDock from "../layout/ToolbarDock";
 import AddressBar from "./explorer/AddressBar";
 import CommandBar from "./explorer/CommandBar";
 import {
@@ -241,6 +243,7 @@ export default function ExplorerHome({
   pasteImageFormat = "png",
 }: ExplorerHomeProps) {
   const { t, i18n } = useTranslation();
+  const { layout } = useLayout();
   const activeRef = useRef(active);
   activeRef.current = active;
   const view = viewProp ?? DEFAULT_VIEW;
@@ -1783,6 +1786,25 @@ export default function ExplorerHome({
       ? { path: location.path, name: placeLabel, itemCount: visibleItems.length }
       : null;
 
+  // The Details pane goes on the right or under the files (Step 05c).
+  const detailsPane = (placement: "right" | "bottom") =>
+    view.details_pane ? (
+      <DetailsPane
+        selected={selectedItems}
+        summary={summary}
+        folder={detailsFolder}
+        showExtensions={view.show_extensions}
+        typeLabel={typeLabel}
+        onCopyPath={(path) => {
+          writeClipboard(pathsForClipboard([path]))
+            .then(() => notify(t("toast.pathsCopied", { count: 1 })))
+            .catch(() => notify(t("errors.copyPath.other")));
+        }}
+        onOpenHelp={() => onOpenHelp("details-pane")}
+        placement={placement}
+      />
+    ) : null;
+
   return (
     <div className="adp-explorer">
       <AddressBar
@@ -1809,75 +1831,72 @@ export default function ExplorerHome({
         search={search}
         onSearch={setSearch}
       />
-      <CommandBar entries={commandBar} ctx={commandCtx} lookup={lookup} onRun={runCommand} onOpenHelp={() => onOpenHelp("command-bar")} />
-      <div className="adp-explorer-body">
-        <NavPane
-          knownFolders={knownFolders}
-          pinnedFolders={stateData.pinned_folders}
-          drives={drives}
-          location={location}
-          onHome={() => goToLocation({ type: "home" })}
-          onGallery={() => goToLocation({ type: "gallery" })}
-          onDrives={() => goToLocation({ type: "drives" })}
-          onNetwork={() => goToLocation({ type: "network" })}
-          onOpenFolder={goToFolder}
-          onUnpin={(path) => {
-            void unpinFolder(path).then((next) => setStateData(normalizeState(next))).catch(() => undefined);
-          }}
-        />
-        <section
-          className="adp-explorer-content"
-          onContextMenu={(event) => {
-            // The file list handles its own right-clicks; this covers empty
-            // folders, loading states, and messages.
-            if (event.defaultPrevented) return;
-            event.preventDefault();
-            if (live.current.location.type !== "folder") return;
-            setSelection((current) => clearSelection(current));
-            openContextMenu({ x: event.clientX, y: event.clientY }, null);
-          }}
-        >
-          {location.type === "home" ? (
-            <HomePage
+      <ToolbarDock
+        toolbar={
+          <CommandBar entries={commandBar} ctx={commandCtx} lookup={lookup} onRun={runCommand} onOpenHelp={() => onOpenHelp("command-bar")} />
+        }
+        contentClassName="adp-explorer-main"
+      >
+        <div className={`adp-explorer-body${layout.nav_pane_position === "right" ? " adp-explorer-body--nav-right" : ""}`}>
+          {layout.nav_pane_position === "hidden" ? null : (
+            <NavPane
               knownFolders={knownFolders}
-              pinnedCards={pinnedCards}
+              pinnedFolders={stateData.pinned_folders}
+              drives={drives}
+              location={location}
+              onHome={() => goToLocation({ type: "home" })}
+              onGallery={() => goToLocation({ type: "gallery" })}
+              onDrives={() => goToLocation({ type: "drives" })}
+              onNetwork={() => goToLocation({ type: "network" })}
               onOpenFolder={goToFolder}
-              onOpenHelp={() => onOpenHelp("home-page")}
-              tab={homeTab}
-              onTabChange={(tab) => {
-                setSelection(EMPTY_SELECTION);
-                setRenamingPath(null);
-                setHomeTab(tab);
+              onUnpin={(path) => {
+                void unpinFolder(path).then((next) => setStateData(normalizeState(next))).catch(() => undefined);
+              }}
+            />
+          )}
+          <div className="adp-explorer-center">
+            <section
+              className="adp-explorer-content"
+              onContextMenu={(event) => {
+                // The file list handles its own right-clicks; this covers empty
+                // folders, loading states, and messages.
+                if (event.defaultPrevented) return;
+                event.preventDefault();
+                if (live.current.location.type !== "folder") return;
+                setSelection((current) => clearSelection(current));
+                openContextMenu({ x: event.clientX, y: event.clientY }, null);
               }}
             >
-              {homeList}
-            </HomePage>
-          ) : null}
+              {location.type === "home" ? (
+                <HomePage
+                  knownFolders={knownFolders}
+                  pinnedCards={pinnedCards}
+                  onOpenFolder={goToFolder}
+                  onOpenHelp={() => onOpenHelp("home-page")}
+                  tab={homeTab}
+                  onTabChange={(tab) => {
+                    setSelection(EMPTY_SELECTION);
+                    setRenamingPath(null);
+                    setHomeTab(tab);
+                  }}
+                >
+                  {homeList}
+                </HomePage>
+              ) : null}
 
-          {location.type === "drives" ? (
-            <DriveList drives={drives} states={driveStates} onOpenDrive={goToFolder} />
-          ) : null}
+              {location.type === "drives" ? (
+                <DriveList drives={drives} states={driveStates} onOpenDrive={goToFolder} />
+              ) : null}
 
-          {location.type === "gallery" ? <p className="adp-empty-note">{t("explorer.galleryPlaceholder")}</p> : null}
-          {location.type === "network" ? <p className="adp-empty-note">{t("explorer.networkPlaceholder")}</p> : null}
-          {folderContent}
-        </section>
-        {view.details_pane ? (
-          <DetailsPane
-            selected={selectedItems}
-            summary={summary}
-            folder={detailsFolder}
-            showExtensions={view.show_extensions}
-            typeLabel={typeLabel}
-            onCopyPath={(path) => {
-              writeClipboard(pathsForClipboard([path]))
-                .then(() => notify(t("toast.pathsCopied", { count: 1 })))
-                .catch(() => notify(t("errors.copyPath.other")));
-            }}
-            onOpenHelp={() => onOpenHelp("details-pane")}
-          />
-        ) : null}
-      </div>
+              {location.type === "gallery" ? <p className="adp-empty-note">{t("explorer.galleryPlaceholder")}</p> : null}
+              {location.type === "network" ? <p className="adp-empty-note">{t("explorer.networkPlaceholder")}</p> : null}
+              {folderContent}
+            </section>
+            {layout.details_pane_position === "bottom" ? detailsPane("bottom") : null}
+          </div>
+          {layout.details_pane_position === "right" ? detailsPane("right") : null}
+        </div>
+      </ToolbarDock>
       {conflictAsk ? (
         <ConflictDialog
           name={conflictAsk.name}

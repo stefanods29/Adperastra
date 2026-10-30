@@ -19,6 +19,8 @@ export interface DetailsPaneProps {
   typeLabel: (item: ExplorerItem) => string;
   onCopyPath: (path: string) => void;
   onOpenHelp: () => void;
+  /** Where the layout puts the pane (Step 05c). */
+  placement?: "right" | "bottom";
 }
 
 /** What still has to come from `item_details`: shown as a skeleton line
@@ -60,6 +62,7 @@ function useItemDetails(path: string | null): { details: ItemDetails | null; fai
  * listing instantly; created/accessed dates and attributes follow. */
 export default function DetailsPane(props: DetailsPaneProps) {
   const { t, i18n } = useTranslation();
+  const placement = props.placement ?? "right";
   const single = props.selected.length === 1 ? props.selected[0] : null;
   const detailsPath = single ? single.path : props.selected.length === 0 && props.folder ? props.folder.path : null;
   const { details, failed, slow } = useItemDetails(detailsPath);
@@ -162,7 +165,10 @@ export default function DetailsPane(props: DetailsPaneProps) {
   }
 
   return (
-    <aside className="adp-details-pane" aria-label={t("explorer.details.title")}>
+    <aside
+      className={`adp-details-pane${placement === "bottom" ? " adp-details-pane--bottom" : ""}`}
+      aria-label={t("explorer.details.title")}
+    >
       <div className="adp-details-header">
         <span>{t("explorer.details.title")}</span>
         <HelpButton onOpenHelp={props.onOpenHelp} />
