@@ -162,7 +162,20 @@
     "persistNote": "Settings are saved automatically and apply right away.",
     "pastedImages": "Pasted images",
     "formatPng": "PNG (sharper, larger files)",
-    "formatJpg": "JPG (smaller files)"
+    "formatJpg": "JPG (smaller files)",
+    "openingFiles": "Opening files",
+    "protectedView": "Protected view for files from the internet",
+    "protectedViewNote": "Files downloaded from the internet open with a yellow bar, and their links stay off until you unblock them.",
+    "defaultApps": "Default apps",
+    "defaultAppsNote": "Choose where each type of file opens when you double-click it: in Adperastra or in its Windows app.",
+    "findFileType": "Find a file type (for example txt)",
+    "noFileTypes": "No file type matches.",
+    "fileTypeCount": "{count, plural, one {# file type} other {# file types}}",
+    "openGroupWith": "Open {name} files with",
+    "openTypeWith": "Open .{ext} files with",
+    "openInAdperastra": "Adperastra",
+    "openInWindowsApp": "Windows app",
+    "openMixed": "Mixed"
   },
   "gallery": {
     "title": "Gallery",

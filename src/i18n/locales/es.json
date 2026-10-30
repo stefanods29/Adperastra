@@ -162,7 +162,20 @@
     "persistNote": "Los ajustes se guardan automáticamente y se aplican al instante.",
     "pastedImages": "Imágenes pegadas",
     "formatPng": "PNG (más nítidas, archivos más grandes)",
-    "formatJpg": "JPG (archivos más pequeños)"
+    "formatJpg": "JPG (archivos más pequeños)",
+    "openingFiles": "Abrir archivos",
+    "protectedView": "Vista protegida para archivos de Internet",
+    "protectedViewNote": "Los archivos descargados de Internet se abren con una barra amarilla, y sus vínculos quedan desactivados hasta que los desbloquees.",
+    "defaultApps": "Aplicaciones predeterminadas",
+    "defaultAppsNote": "Elige dónde se abre cada tipo de archivo al hacer doble clic: en Adperastra o en su aplicación de Windows.",
+    "findFileType": "Buscar un tipo de archivo (por ejemplo, txt)",
+    "noFileTypes": "Ningún tipo de archivo coincide.",
+    "fileTypeCount": "{count, plural, one {# tipo de archivo} other {# tipos de archivo}}",
+    "openGroupWith": "Abrir los archivos de {name} con",
+    "openTypeWith": "Abrir los archivos .{ext} con",
+    "openInAdperastra": "Adperastra",
+    "openInWindowsApp": "Aplicación de Windows",
+    "openMixed": "Mixto"
   },
   "gallery": {
     "title": "Galería",

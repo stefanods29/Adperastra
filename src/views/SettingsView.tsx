@@ -2,11 +2,14 @@ import { useTranslation } from "react-i18next";
 import Button from "../components/Button";
 import HelpButton from "../components/HelpButton";
 import type { AppSettings, LanguageSetting } from "../services/settings";
+import OpeningFilesSettings from "./settings/OpeningFilesSettings";
 
 export interface SettingsViewProps {
   settings: AppSettings;
   onApply: (settings: AppSettings) => void;
   onOpenHelp: () => void;
+  /** Opens a help page by slug (the sections' own "?" buttons). */
+  onOpenHelpPage: (slug: string) => void;
 }
 
 const LANGUAGES: { id: LanguageSetting; labelKey: string }[] = [
@@ -25,7 +28,7 @@ const ACCENTS = [
   { id: "custom", labelKey: "settings.accentCustom" },
 ] as const;
 
-export default function SettingsView({ settings, onApply, onOpenHelp }: SettingsViewProps) {
+export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelpPage }: SettingsViewProps) {
   const { t } = useTranslation();
   const patch = (partial: Partial<AppSettings>) => onApply({ ...settings, ...partial });
   const patchTheme = (partial: Partial<AppSettings["theme"]>) =>
@@ -109,6 +112,7 @@ export default function SettingsView({ settings, onApply, onOpenHelp }: Settings
           ))}
         </div>
       </div>
+      <OpeningFilesSettings open={settings.open} onChange={(open) => onApply({ ...settings, open })} onOpenHelp={onOpenHelpPage} />
       <p className="adp-note">{t("settings.persistNote")}</p>
     </div>
   );

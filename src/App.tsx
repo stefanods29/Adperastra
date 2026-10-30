@@ -225,7 +225,7 @@ export default function App() {
    * a tab; anything else opens in the Windows default app. Rejects with a
    * `files.*` code; the Explorer shows the message. */
   const openFile = useCallback(async (path: string, background: boolean) => {
-    const decision = await planOpen(path, handlers);
+    const decision = await planOpen(path, handlers, settingsRef.current.open.open_with);
     if (decision.kind === "tab") {
       setTabsState((current) =>
         openFileTab(current, { path, handler: decision.handler.id, title: decision.info.name }, background),
@@ -551,6 +551,7 @@ export default function App() {
             settings={settings}
             onApply={applySettings}
             onOpenHelp={() => openTab("help", "changing-language-and-theme")}
+            onOpenHelpPage={(slug) => openTab("help", slug)}
           /></Suspense>
         ) : null}
         {activeTab.kind === "gallery" ? (

@@ -162,7 +162,20 @@
     "persistNote": "[Sëttïñgs ärë sävëd äütømätïçällÿ äñd äpplÿ rïght äwäÿ. ~~~~~~~~~~~~~~~~~~~]",
     "pastedImages": "[Pästëd ïmägës ~~~~~]",
     "formatPng": "[PÑG (shärpër, lärgër fïlës) ~~~~~~~~~]",
-    "formatJpg": "[JPG (smällër fïlës) ~~~~~~]"
+    "formatJpg": "[JPG (smällër fïlës) ~~~~~~]",
+    "openingFiles": "[Øpëñïñg fïlës ~~~~~]",
+    "protectedView": "[Prøtëçtëd vïëw før fïlës frøm thë ïñtërñët ~~~~~~~~~~~~~~~]",
+    "protectedViewNote": "[Fïlës døwñløädëd frøm thë ïñtërñët øpëñ wïth ä ÿëlløw bär, äñd thëïr lïñks stäÿ øff üñtïl ÿøü üñbløçk thëm. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "defaultApps": "[Dëfäült äpps ~~~~~]",
+    "defaultAppsNote": "[Çhøøsë whërë ëäçh tÿpë øf fïlë øpëñs whëñ ÿøü døüblë-çlïçk ït: ïñ Ädpërästrä ør ïñ ïts Wïñdøws äpp. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "findFileType": "[Fïñd ä fïlë tÿpë (før ëxämplë txt) ~~~~~~~~~~~]",
+    "noFileTypes": "[Ñø fïlë tÿpë mätçhës. ~~~~~~~]",
+    "fileTypeCount": "[{count, plural, one {# fïlë tÿpë} other {# fïlë tÿpës}} ~~~~]",
+    "openGroupWith": "[Øpëñ {name} fïlës wïth ~~~~~~]",
+    "openTypeWith": "[Øpëñ .{ext} fïlës wïth ~~~~~~]",
+    "openInAdperastra": "[Ädpërästrä ~~~~]",
+    "openInWindowsApp": "[Wïñdøws äpp ~~~~]",
+    "openMixed": "[Mïxëd ~~]"
   },
   "gallery": {
     "title": "[Gällërÿ ~~~]",

@@ -10,6 +10,7 @@ import "./styles/ribbon.css";
 import "./styles/viewers.css";
 import "./styles/media.css";
 import "./styles/hex.css";
+import "./styles/settings.css";
 
 const container = document.getElementById("root");
 if (!container) {

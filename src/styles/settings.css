@@ -1,0 +1,16 @@
+/* Settings sections (Step 04c on). Colors only through tokens. */
+.adp-settings-section { display: flex; flex-direction: column; gap: var(--adp-space-5); padding-top: var(--adp-space-6); border-top: 1px solid var(--adp-color-border-panel); }
+.adp-defaultapps-search { width: min(320px, 100%); }
+.adp-defaultapps-search .adp-search { width: 100%; height: 32px; }
+.adp-defaultapps-search .adp-search-input { flex: 1; min-width: 0; }
+.adp-defaultapps-group { border: 1px solid var(--adp-color-border-panel); border-radius: var(--adp-radius-md); }
+.adp-defaultapps-head { display: flex; align-items: center; gap: var(--adp-space-4); padding: var(--adp-space-2) var(--adp-space-4); }
+.adp-defaultapps-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--adp-space-3); height: 32px; padding: 0; border: none; background: transparent; color: var(--adp-color-text-primary); font: inherit; font-size: var(--adp-font-body); text-align: left; cursor: pointer; }
+.adp-defaultapps-toggle:focus-visible, .adp-defaultapps-select:focus-visible { outline: 2px solid var(--adp-accent-explorer); outline-offset: 1px; }
+.adp-defaultapps-chevron { flex: none; transition: transform 120ms ease; }
+.adp-defaultapps-chevron--open { transform: rotate(90deg); }
+.adp-defaultapps-name { font-weight: 600; }
+.adp-defaultapps-select { height: 28px; border: 1px solid var(--adp-color-border-input); border-radius: var(--adp-radius-sm); background: var(--adp-color-surface-window); color: var(--adp-color-text-primary); font: inherit; font-size: var(--adp-font-body); }
+.adp-defaultapps-list { list-style: none; margin: 0; padding: var(--adp-space-2) var(--adp-space-4) var(--adp-space-4); display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--adp-space-2) var(--adp-space-5); border-top: 1px solid var(--adp-color-border-panel); }
+.adp-defaultapps-item { display: flex; align-items: center; justify-content: space-between; gap: var(--adp-space-3); }
+.adp-defaultapps-ext { font-family: "Cascadia Mono", Consolas, monospace; font-size: var(--adp-font-body); color: var(--adp-color-text-primary); }
