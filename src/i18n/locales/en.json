@@ -445,7 +445,8 @@
     "shortcutTo": "Create shortcut in {name}"
   },
   "handlers": {
-    "image": "Image"
+    "image": "Image",
+    "text": "Text"
   },
   "fileTab": {
     "showInFolder": "Show in folder",
@@ -476,5 +477,28 @@
     "zoom": "Zoom",
     "show": "Show",
     "rotate": "Rotate"
+  },
+  "text": {
+    "position": "Ln {line}, Col {column}",
+    "lines": "{count, plural, one {# line} other {# lines}}",
+    "lineEnding": {
+      "crlf": "Windows (CRLF)",
+      "lf": "Unix (LF)",
+      "mixed": "Mixed line endings"
+    },
+    "part": "Part {part} of {parts}",
+    "parts": "Parts",
+    "previousPart": "Previous part",
+    "nextPart": "Next part",
+    "wordWrap": "Word wrap",
+    "lineNumbers": "Line numbers",
+    "encoding": "Encoding",
+    "largeFileNotice": "This file is large, so it opens read-only in parts of {size}. Use Next part to keep reading.",
+    "loadError": "This file couldn't be shown.",
+    "cm": {
+      "currentMatch": "current match",
+      "onLine": "on line",
+      "controlCharacter": "Control character"
+    }
   }
 }

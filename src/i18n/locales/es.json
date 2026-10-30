@@ -445,7 +445,8 @@
     "shortcutTo": "Crear acceso directo en {name}"
   },
   "handlers": {
-    "image": "Imagen"
+    "image": "Imagen",
+    "text": "Texto"
   },
   "fileTab": {
     "showInFolder": "Mostrar en la carpeta",
@@ -476,5 +477,28 @@
     "zoom": "Zoom",
     "show": "Mostrar",
     "rotate": "Girar"
+  },
+  "text": {
+    "position": "Lín. {line}, col. {column}",
+    "lines": "{count, plural, one {# línea} other {# líneas}}",
+    "lineEnding": {
+      "crlf": "Windows (CRLF)",
+      "lf": "Unix (LF)",
+      "mixed": "Finales de línea mixtos"
+    },
+    "part": "Parte {part} de {parts}",
+    "parts": "Partes",
+    "previousPart": "Parte anterior",
+    "nextPart": "Parte siguiente",
+    "wordWrap": "Ajuste de línea",
+    "lineNumbers": "Números de línea",
+    "encoding": "Codificación",
+    "largeFileNotice": "Este archivo es grande, así que se abre en modo de solo lectura, en partes de {size}. Usa Parte siguiente para seguir leyendo.",
+    "loadError": "No se pudo mostrar este archivo.",
+    "cm": {
+      "currentMatch": "coincidencia actual",
+      "onLine": "en la línea",
+      "controlCharacter": "Carácter de control"
+    }
   }
 }

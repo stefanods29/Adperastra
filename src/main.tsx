@@ -7,6 +7,7 @@ import "./styles/global.css";
 import "./styles/components.css";
 import "./styles/filetabs.css";
 import "./styles/ribbon.css";
+import "./styles/viewers.css";
 
 const container = document.getElementById("root");
 if (!container) {

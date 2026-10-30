@@ -445,7 +445,8 @@
     "shortcutTo": "[Çrëätë shørtçüt ïñ {name} ~~~~~~~]"
   },
   "handlers": {
-    "image": "[Ïmägë ~~]"
+    "image": "[Ïmägë ~~]",
+    "text": "[Tëxt ~~]"
   },
   "fileTab": {
     "showInFolder": "[Shøw ïñ føldër ~~~~~]",
@@ -476,5 +477,28 @@
     "zoom": "[Zøøm ~~]",
     "show": "[Shøw ~~]",
     "rotate": "[Røtätë ~~~]"
+  },
+  "text": {
+    "position": "[Lñ {line}, Çøl {column} ~~]",
+    "lines": "[{count, plural, one {# lïñë} other {# lïñës}} ~~]",
+    "lineEnding": {
+      "crlf": "[Wïñdøws (ÇRLF) ~~~~~]",
+      "lf": "[Üñïx (LF) ~~~]",
+      "mixed": "[Mïxëd lïñë ëñdïñgs ~~~~~~~]"
+    },
+    "part": "[Pärt {part} øf {parts} ~~~]",
+    "parts": "[Pärts ~~]",
+    "previousPart": "[Prëvïøüs pärt ~~~~~]",
+    "nextPart": "[Ñëxt pärt ~~~~]",
+    "wordWrap": "[Wørd wräp ~~~~]",
+    "lineNumbers": "[Lïñë ñümbërs ~~~~~]",
+    "encoding": "[Ëñçødïñg ~~~~]",
+    "largeFileNotice": "[Thïs fïlë ïs lärgë, sø ït øpëñs rëäd-øñlÿ ïñ pärts øf {size}. Üsë Ñëxt pärt tø këëp rëädïñg. ~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "loadError": "[Thïs fïlë çøüldñ't bë shøwñ. ~~~~~~~~~]",
+    "cm": {
+      "currentMatch": "[çürrëñt mätçh ~~~~~]",
+      "onLine": "[øñ lïñë ~~~]",
+      "controlCharacter": "[Çøñtrøl çhäräçtër ~~~~~~~]"
+    }
   }
 }

@@ -9,6 +9,14 @@ export type OpenDecision =
   | { kind: "tab"; handler: Handler; info: FileTypeInfo }
   | { kind: "windows"; info: FileTypeInfo };
 
+/** Types that always open in Windows: programs, shortcuts, links, and web
+ * pages (shown with "Open as text" if the user wants their source). */
+export const ALWAYS_WINDOWS: readonly string[] = [
+  "exe", "msi", "msix", "msixbundle", "appx", "appxbundle", "appinstaller", "com", "scr", "cpl", "msc",
+  "lnk", "url", "website", "appref-ms", "library-ms", "search-ms",
+  "html", "htm", "xhtml", "mht", "mhtml",
+];
+
 /** Pure: what to do with a detected file. `preference` is the user's
  * choice for this extension (Settings > Default apps, Step 04c). */
 export function decideOpen(
@@ -16,7 +24,7 @@ export function decideOpen(
   registry: HandlerRegistry,
   preference: "builtin" | "windows" | undefined = undefined,
 ): OpenDecision {
-  if (preference === "windows") return { kind: "windows", info };
+  if (preference === "windows" || ALWAYS_WINDOWS.includes(info.ext)) return { kind: "windows", info };
   const handler = registry.pick(info);
   return handler ? { kind: "tab", handler, info } : { kind: "windows", info };
 }
