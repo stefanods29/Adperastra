@@ -39,6 +39,8 @@ export interface FileListProps {
   onRenameCommit: (item: ExplorerItem, newName: string) => Promise<string | null>;
   onRenameCancel: () => void;
   onOpen: (item: ExplorerItem) => void;
+  /** Middle-click on a file: open it in a background tab (Step 04a). */
+  onOpenInBackground?: (item: ExplorerItem) => void;
   /** Right-click or the Menu key; `item` is null for empty space. */
   onContextMenu: (point: { x: number; y: number }, item: ExplorerItem | null) => void;
   /** Keys that run registry commands (Enter, F2, Alt+Enter, ...); the
@@ -318,6 +320,9 @@ export default function FileList(props: FileListProps) {
           if (!renaming) props.onOpen(item);
         }}
         onContextMenu={(event) => onRowContextMenu(event, item)}
+        onAuxClick={(event) => {
+          if (event.button === 1 && item.kind === "file") props.onOpenInBackground?.(item);
+        }}
       >
         <span className="adp-col-name adp-file-name-cell">
           {props.checkboxes ? (

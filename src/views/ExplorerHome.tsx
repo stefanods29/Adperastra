@@ -113,9 +113,23 @@ export interface ExplorerStats {
   selectedFiles: number;
 }
 
+/** Ask the Explorer to open a folder (and select one item in it). A new
+ * `nonce` makes the same request run again. */
+export interface ExplorerNavigateRequest {
+  folder: string;
+  select: string | null;
+  nonce: number;
+}
+
 export interface ExplorerHomeProps {
+  /** False while another tab is shown: shortcuts and drops are ignored. */
+  active?: boolean;
   onStatsChange?: (stats: ExplorerStats) => void;
   onOpenHelp: (slug?: string) => void;
+  /** Open a file through the app's open pipeline (Step 04a). Rejects with
+   * a `files.*` error code. Without it, files open in their Windows app. */
+  onOpenFile?: (path: string, background: boolean) => Promise<void>;
+  navigateRequest?: ExplorerNavigateRequest | null;
   /** View options from settings (schema 3); defaults when absent. */
   view?: ExplorerViewSettings;
   onViewChange?: (patch: Partial<ExplorerViewSettings>) => void;
@@ -199,8 +213,19 @@ function plainText(text: string): string {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
-export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp, onViewChange, pasteImageFormat = "png" }: ExplorerHomeProps) {
+export default function ExplorerHome({
+  active = true,
+  onStatsChange,
+  onOpenHelp,
+  onOpenFile,
+  navigateRequest = null,
+  view: viewProp,
+  onViewChange,
+  pasteImageFormat = "png",
+}: ExplorerHomeProps) {
   const { t, i18n } = useTranslation();
+  const activeRef = useRef(active);
+  activeRef.current = active;
   const view = viewProp ?? DEFAULT_VIEW;
   const [history, setHistory] = useState<NavHistory>(() => createHistory({ type: "home" }));
   const location = history.current;
@@ -437,20 +462,35 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   live.current = { location, orderPaths, selectedPaths, itemByPath, stateData, sortKey, sortDirection, view, allFavorites, menu };
 
   const openOne = useCallback(
-    (item: ExplorerItem) => {
+    (item: ExplorerItem, background = false) => {
       if (item.kind === "folder" || item.kind === "drive") {
         goToFolder(item.path);
         return;
       }
       if (!isTauriRuntime()) return;
+      // Files open in the app's tabs (Step 04a); shortcuts keep the Windows
+      // path because a shortcut to a folder opens that folder here.
+      if (onOpenFile && !item.name.toLowerCase().endsWith(".lnk")) {
+        onOpenFile(item.path, background).catch((error: unknown) => notifyError(error, "files"));
+        return;
+      }
       openItem(item.path)
         .then((outcome) => {
           if (outcome.navigate_to) goToFolder(outcome.navigate_to);
         })
         .catch((error: unknown) => notifyError(error, "open"));
     },
-    [goToFolder, notifyError],
+    [goToFolder, notifyError, onOpenFile],
   );
+
+  // "Show in folder" and breadcrumbs from file tabs (Step 04a).
+  useEffect(() => {
+    if (!navigateRequest) return;
+    pendingSelectRef.current = navigateRequest.select;
+    goToFolder(navigateRequest.folder);
+    // Only a new request (new nonce) navigates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigateRequest?.nonce]);
 
 
   // -------------------------------------------------------------------
@@ -840,6 +880,13 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         const title = paths.length === 1 ? (byPath.get(paths[0])?.name ?? paths[0]) : t("explorer.shareTitle", { count: paths.length });
         void shareItems(paths, title).catch((error: unknown) => notifyError(error, "share"));
       },
+      openInWindowsApp: () => {
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        const files = paths.filter((path) => byPath.get(path)?.kind === "file");
+        if (!isTauriRuntime()) return;
+        for (const path of files.slice(0, OPEN_LIMIT)) void openItem(path).catch((error: unknown) => notifyError(error, "open"));
+        if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
+      },
       openWith: () => {
         const paths = live.current.selectedPaths;
         if (paths.length === 1 && isTauriRuntime()) void openWithDialog(paths[0]).catch((error: unknown) => notifyError(error, "openWith"));
@@ -999,6 +1046,8 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   // Window-level shortcuts from the registry metadata, unless typing.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      // Hidden behind another tab: never act on the Explorer's selection.
+      if (!activeRef.current) return;
       const target = event.target as HTMLElement | null;
       if (document.querySelector("[role='dialog']")) return;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
@@ -1505,6 +1554,8 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
       .then(({ getCurrentWebview }) =>
         getCurrentWebview().onDragDropEvent((event) => {
           if (event.payload.type !== "drop" || event.payload.paths.length === 0) return;
+          // Hidden behind another tab: a drop must not land in this folder.
+          if (!activeRef.current) return;
           const scale = window.devicePixelRatio || 1;
           const x = event.payload.position.x / scale;
           const y = event.payload.position.y / scale;
@@ -1586,6 +1637,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     onRenameCommit: commitRename,
     onRenameCancel: () => setRenamingPath(null),
     onOpen: openOne,
+    onOpenInBackground: (item: ExplorerItem) => openOne(item, true),
     onContextMenu: openContextMenu,
     onCommandKey: runById,
     onItemMouseDown: (event: ReactMouseEvent, item: ExplorerItem) => {
@@ -1676,6 +1728,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         segments={segments}
         rootSiblings={drives.map((d) => ({ label: d.root, path: d.root }))}
         editablePath={location.type === "folder" ? location.path : null}
+        shortcutsEnabled={active}
         placeLabel={placeLabel}
         historyEntries={historyEntries}
         onHistory={(distance) => {

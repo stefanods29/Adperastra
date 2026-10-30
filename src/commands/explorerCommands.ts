@@ -11,6 +11,7 @@ import {
   ClipboardPaste,
   Copy,
   EllipsisVertical,
+  ExternalLink,
   Eye,
   FilePlus,
   FileType,
@@ -61,6 +62,8 @@ export interface ExplorerActions {
   rename: () => void;
   share: () => void;
   openWith: () => void;
+  /** Open the selected files in their Windows default apps (Step 04a). */
+  openInWindowsApp: () => void;
   copyPath: () => void;
   toggleFavorite: () => void;
   showInFolder: () => void;
@@ -339,6 +342,16 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       // The Windows share sheet shares files, not folders.
       enabledWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
       run: () => actions.share(),
+    },
+    {
+      id: "explorer.openInWindowsApp",
+      labelKey: "commands.openInWindowsApp",
+      icon: ExternalLink,
+      risk: "read-only",
+      helpSlug: "opening-files",
+      visibleWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      run: () => actions.openInWindowsApp(),
     },
     {
       id: "explorer.openWith",

@@ -22,6 +22,8 @@ export interface AddressBarProps {
   /** sibling roots used when the root segment's chevron is opened. */
   rootSiblings: { label: string; path: string }[];
   editablePath: string | null;
+  /** False while the Explorer is hidden behind another tab. */
+  shortcutsEnabled?: boolean;
   placeLabel: string;
   historyEntries: { label: string; distance: number }[];
   onHistory: (distance: number) => void;
@@ -43,7 +45,7 @@ export default function AddressBar(props: AddressBarProps) {
       const isAddressShortcut =
         ((event.ctrlKey || event.metaKey) && (event.key === "l" || event.key === "L")) ||
         (event.altKey && (event.key === "d" || event.key === "D"));
-      if (!isAddressShortcut || props.editablePath === null) return;
+      if (!isAddressShortcut || props.editablePath === null || props.shortcutsEnabled === false) return;
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "TEXTAREA" || (target.tagName === "INPUT" && target !== inputRef.current))) return;
       event.preventDefault();
@@ -52,7 +54,7 @@ export default function AddressBar(props: AddressBarProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [props.editablePath]);
+  }, [props.editablePath, props.shortcutsEnabled]);
   useEffect(() => {
     if (editing) inputRef.current?.select();
   }, [editing]);

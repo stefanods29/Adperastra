@@ -255,6 +255,7 @@
     "delete": "Delete",
     "rename": "Rename",
     "share": "Share",
+    "openInWindowsApp": "Open in Windows app",
     "openWith": "Open with…",
     "copyPath": "Copy as path",
     "addFavorite": "Add to favorites",
