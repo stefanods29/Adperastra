@@ -32,7 +32,7 @@ mod shell;
 mod transfer_history;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 5;
+pub const CURRENT_SCHEMA: u32 = 6;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -150,10 +150,24 @@ fn default_group_by() -> String {
     "none".to_string()
 }
 
+fn default_view_mode() -> String {
+    "details".to_string()
+}
+
+/// Every view id in Windows' View-menu order (Step 05a D1).
+fn default_view_mode_order() -> Vec<String> {
+    fs_service::VIEW_MODES
+        .iter()
+        .map(|mode| mode.to_string())
+        .collect()
+}
+
 /// Explorer view options (schema 3, Step 03a): the View menu's toggles and
 /// the Sort menu's grouping. Defaults follow the Figma frame (extensions
 /// shown) and Windows (hidden items hidden, no check boxes, no Details
 /// pane).
+/// Schema 6 (Step 05a) adds the view mode, per-folder memory, and the View
+/// menu's order and hidden views.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExplorerViewSettings {
     #[serde(default)]
@@ -166,6 +180,18 @@ pub struct ExplorerViewSettings {
     pub details_pane: bool,
     #[serde(default = "default_group_by")]
     pub group_by: String,
+    /// The view folders without their own use, and the default view.
+    #[serde(default = "default_view_mode")]
+    pub view_mode: String,
+    /// Remember a view per folder when this is on (Step 05a D7).
+    #[serde(default = "default_true")]
+    pub remember_view_per_folder: bool,
+    /// The View menu's order: all eight view ids, each once.
+    #[serde(default = "default_view_mode_order")]
+    pub view_mode_order: Vec<String>,
+    /// Views left out of the View menu; never `"details"`.
+    #[serde(default)]
+    pub hidden_view_modes: Vec<String>,
 }
 
 impl Default for ExplorerViewSettings {
@@ -176,6 +202,10 @@ impl Default for ExplorerViewSettings {
             item_checkboxes: false,
             details_pane: false,
             group_by: default_group_by(),
+            view_mode: default_view_mode(),
+            remember_view_per_folder: true,
+            view_mode_order: default_view_mode_order(),
+            hidden_view_modes: Vec::new(),
         }
     }
 }
@@ -317,6 +347,47 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             settings.explorer.group_by
         )));
     }
+    if !fs_service::is_view_mode(&settings.explorer.view_mode) {
+        return Err(AppError::Validation(format!(
+            "unsupported view_mode {:?} (expected one of {})",
+            settings.explorer.view_mode,
+            fs_service::VIEW_MODES.join(", ")
+        )));
+    }
+    if settings.explorer.view_mode_order.len() > 16 {
+        return Err(AppError::Validation(format!(
+            "view_mode_order has {} entries (at most 16)",
+            settings.explorer.view_mode_order.len()
+        )));
+    }
+    let mut seen_order: Vec<&str> = Vec::new();
+    for mode in &settings.explorer.view_mode_order {
+        if !fs_service::is_view_mode(mode) {
+            return Err(AppError::Validation(format!(
+                "unsupported view_mode_order entry {mode:?}"
+            )));
+        }
+        if seen_order.contains(&mode.as_str()) {
+            return Err(AppError::Validation(format!(
+                "view_mode_order lists {mode:?} twice"
+            )));
+        }
+        seen_order.push(mode.as_str());
+    }
+    let mut seen_hidden: Vec<&str> = Vec::new();
+    for mode in &settings.explorer.hidden_view_modes {
+        if !fs_service::is_view_mode(mode) || mode == "details" {
+            return Err(AppError::Validation(format!(
+                "unsupported hidden_view_modes entry {mode:?}"
+            )));
+        }
+        if seen_hidden.contains(&mode.as_str()) {
+            return Err(AppError::Validation(format!(
+                "hidden_view_modes lists {mode:?} twice"
+            )));
+        }
+        seen_hidden.push(mode.as_str());
+    }
     if settings.open.open_with.len() > MAX_OPEN_WITH {
         return Err(AppError::Validation(format!(
             "open_with has {} entries (at most {MAX_OPEN_WITH})",
@@ -426,7 +497,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
-            Some(4) => Ok(migrate_keep_known(value.clone())),
+            Some(4) | Some(5) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -2520,7 +2591,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 5);
+        assert_eq!(settings.schema_version, 6);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -2612,6 +2683,7 @@ mod tests {
                 item_checkboxes: true,
                 details_pane: true,
                 group_by: "type".to_string(),
+                ..ExplorerViewSettings::default()
             },
             ..Settings::default()
         };
@@ -2629,13 +2701,79 @@ mod tests {
             "files": { "paste_image_format": "jpg" }
         });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 5);
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert!(settings.explorer.show_hidden);
         assert_eq!(settings.files.paste_image_format, "jpg");
         assert_eq!(settings.open, OpenSettings::default());
         assert!(settings.open.protected_view);
+    }
+
+    #[test]
+    fn settings_v5_migrates_to_v6_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 5,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "explorer": { "show_hidden": true, "show_extensions": true, "item_checkboxes": false, "details_pane": true, "group_by": "type" },
+            "files": { "paste_image_format": "jpg" },
+            "open": { "protected_view": false, "open_with": { "txt": "windows" } }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 6);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(settings.explorer.show_hidden);
+        assert_eq!(settings.explorer.group_by, "type");
+        assert_eq!(settings.explorer.view_mode, "details");
+        assert!(settings.explorer.remember_view_per_folder);
+        assert_eq!(settings.explorer.view_mode_order, default_view_mode_order());
+        assert!(settings.explorer.hidden_view_modes.is_empty());
+        assert!(!settings.open.protected_view);
+        assert_eq!(
+            settings.open.open_with.get("txt").map(String::as_str),
+            Some("windows")
+        );
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_view_settings() {
+        let mut bad_mode = Settings::default();
+        bad_mode.explorer.view_mode = "huge".to_string();
+        assert!(validate(&bad_mode).is_err());
+
+        let mut twice = Settings::default();
+        twice.explorer.view_mode_order = vec!["list".to_string(), "list".to_string()];
+        assert!(validate(&twice).is_err());
+
+        let mut unknown = Settings::default();
+        unknown.explorer.view_mode_order = vec!["giant".to_string()];
+        assert!(validate(&unknown).is_err());
+
+        let mut too_long = Settings::default();
+        too_long.explorer.view_mode_order = (0..17).map(|_| "list".to_string()).collect();
+        assert!(validate(&too_long).is_err());
+
+        let mut hide_details = Settings::default();
+        hide_details.explorer.hidden_view_modes = vec!["details".to_string()];
+        assert!(validate(&hide_details).is_err());
+
+        let mut hidden_twice = Settings::default();
+        hidden_twice.explorer.hidden_view_modes = vec!["tiles".to_string(), "tiles".to_string()];
+        assert!(validate(&hidden_twice).is_err());
+
+        let mut hidden_tiles = Settings::default();
+        hidden_tiles.explorer.hidden_view_modes = vec!["tiles".to_string()];
+        assert!(validate(&hidden_tiles).is_ok());
+
+        let mut content = Settings::default();
+        content.explorer.view_mode = "content".to_string();
+        assert!(validate(&content).is_ok());
+
+        let mut details_only = Settings::default();
+        details_only.explorer.view_mode_order = vec!["details".to_string()];
+        assert!(validate(&details_only).is_ok());
     }
 
     #[test]

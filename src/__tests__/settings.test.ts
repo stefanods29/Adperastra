@@ -36,9 +36,13 @@ describe("normalizeSettings", () => {
       item_checkboxes: false,
       details_pane: false,
       group_by: "none",
+      view_mode: "details",
+      remember_view_per_folder: true,
+      view_mode_order: ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content"],
+      hidden_view_modes: [],
     });
     expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
-    expect(defaultSettings().schema_version).toBe(5);
+    expect(defaultSettings().schema_version).toBe(6);
     expect(defaultSettings().files.paste_image_format).toBe("png");
     expect(normalizeSettings({ files: { paste_image_format: "jpg" } }).files.paste_image_format).toBe("jpg");
     expect(normalizeSettings({ files: { paste_image_format: "gif" } }).files.paste_image_format).toBe("png");
@@ -54,6 +58,37 @@ describe("normalizeSettings", () => {
     const many: Record<string, string> = {};
     for (let n = 0; n < 600; n += 1) many[`x${n}`] = "windows";
     expect(Object.keys(normalizeSettings({ open: { open_with: many } }).open.open_with)).toHaveLength(500);
+  });
+
+  it("normalizes the view settings (schema 6)", () => {
+    const order = ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content"];
+    const explorer = (input: Record<string, unknown>) => normalizeSettings({ explorer: input }).explorer;
+    expect(explorer({})).toMatchObject({
+      view_mode: "details",
+      remember_view_per_folder: true,
+      view_mode_order: order,
+      hidden_view_modes: [],
+    });
+    expect(explorer({ view_mode: "tiles" }).view_mode).toBe("tiles");
+    expect(explorer({ view_mode: "huge" }).view_mode).toBe("details");
+    expect(explorer({ view_mode: "tiles", hidden_view_modes: ["tiles"] })).toMatchObject({
+      view_mode: "details",
+      hidden_view_modes: ["tiles"],
+    });
+    expect(explorer({ hidden_view_modes: ["details", "list", "list", "x"] }).hidden_view_modes).toEqual(["list"]);
+    expect(explorer({ view_mode_order: ["content", "content", "bogus", "details"] }).view_mode_order).toEqual([
+      "content",
+      "details",
+      "extraLargeIcons",
+      "largeIcons",
+      "mediumIcons",
+      "smallIcons",
+      "list",
+      "tiles",
+    ]);
+    expect(explorer({ view_mode_order: "nope" }).view_mode_order).toEqual(order);
+    expect(explorer({ remember_view_per_folder: false }).remember_view_per_folder).toBe(false);
+    expect(explorer({ remember_view_per_folder: "no" }).remember_view_per_folder).toBe(true);
   });
 
   it("falls back per-field for invalid values", () => {

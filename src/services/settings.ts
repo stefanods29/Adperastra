@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 5;
+export const SETTINGS_SCHEMA_VERSION = 6;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -14,14 +14,73 @@ export interface ThemeSettings {
   accent_custom: string | null;
 }
 
+/** How a folder shows its items (Step 05a D1), in Windows' View-menu order. */
+export type ViewModeId =
+  | "extraLargeIcons"
+  | "largeIcons"
+  | "mediumIcons"
+  | "smallIcons"
+  | "list"
+  | "details"
+  | "tiles"
+  | "content";
+
+/** Same ids and order as Rust `fs_service::VIEW_MODES`. */
+export const VIEW_MODE_IDS: readonly ViewModeId[] = [
+  "extraLargeIcons",
+  "largeIcons",
+  "mediumIcons",
+  "smallIcons",
+  "list",
+  "details",
+  "tiles",
+  "content",
+];
+
+export function isViewModeId(value: unknown): value is ViewModeId {
+  return typeof value === "string" && (VIEW_MODE_IDS as readonly string[]).includes(value);
+}
+
+/** All eight ids: the given order first, then the missing ids in default order. */
+export function normalizeViewModeOrder(value: unknown): ViewModeId[] {
+  if (!Array.isArray(value)) return [...VIEW_MODE_IDS];
+  const result: ViewModeId[] = [];
+  for (const entry of value) {
+    if (isViewModeId(entry) && !result.includes(entry)) result.push(entry);
+  }
+  for (const id of VIEW_MODE_IDS) {
+    if (!result.includes(id)) result.push(id);
+  }
+  return result;
+}
+
+/** Valid hidden views, first occurrence only; `details` can never be hidden. */
+export function normalizeHiddenViewModes(value: unknown): ViewModeId[] {
+  if (!Array.isArray(value)) return [];
+  const result: ViewModeId[] = [];
+  for (const entry of value) {
+    if (isViewModeId(entry) && entry !== "details" && !result.includes(entry)) result.push(entry);
+  }
+  return result;
+}
+
 /** Explorer view options (schema 3): the View menu's toggles and the Sort
- * menu's grouping. */
+ * menu's grouping. Schema 6 (Step 05a) adds the view mode, per-folder
+ * memory, and the View menu's order and hidden views. */
 export interface ExplorerViewSettings {
   show_hidden: boolean;
   show_extensions: boolean;
   item_checkboxes: boolean;
   details_pane: boolean;
   group_by: GroupBy;
+  /** The view folders without their own use, and the default view. */
+  view_mode: ViewModeId;
+  /** Remember a view per folder when this is on. */
+  remember_view_per_folder: boolean;
+  /** The View menu's order: all eight ids, each once. */
+  view_mode_order: ViewModeId[];
+  /** Views left out of the View menu; never "details". */
+  hidden_view_modes: ViewModeId[];
 }
 
 export type PasteImageFormat = "png" | "jpg";
@@ -72,6 +131,10 @@ export function defaultSettings(): AppSettings {
       item_checkboxes: false,
       details_pane: false,
       group_by: "none",
+      view_mode: "details",
+      remember_view_per_folder: true,
+      view_mode_order: [...VIEW_MODE_IDS],
+      hidden_view_modes: [],
     },
     files: {
       paste_image_format: "png",
@@ -134,6 +197,11 @@ export function normalizeSettings(input: unknown): AppSettings {
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
       ? themeInput.accent_custom
       : null;
+  const hiddenViewModes = normalizeHiddenViewModes(explorerInput.hidden_view_modes);
+  const viewModeCandidate = isViewModeId(explorerInput.view_mode)
+    ? explorerInput.view_mode
+    : defaults.explorer.view_mode;
+  const viewMode = hiddenViewModes.includes(viewModeCandidate) ? "details" : viewModeCandidate;
 
   return {
     schema_version: schemaVersion,
@@ -149,6 +217,10 @@ export function normalizeSettings(input: unknown): AppSettings {
       item_checkboxes: flag(explorerInput.item_checkboxes, defaults.explorer.item_checkboxes),
       details_pane: flag(explorerInput.details_pane, defaults.explorer.details_pane),
       group_by: pick(explorerInput.group_by, GROUP_BY, defaults.explorer.group_by),
+      view_mode: viewMode,
+      remember_view_per_folder: flag(explorerInput.remember_view_per_folder, defaults.explorer.remember_view_per_folder),
+      view_mode_order: normalizeViewModeOrder(explorerInput.view_mode_order),
+      hidden_view_modes: hiddenViewModes,
     },
     files: {
       paste_image_format: pick(filesInput.paste_image_format, ["png", "jpg"] as const, defaults.files.paste_image_format),

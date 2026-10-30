@@ -145,6 +145,10 @@ const DEFAULT_VIEW: ExplorerViewSettings = {
   item_checkboxes: false,
   details_pane: false,
   group_by: "none",
+  view_mode: "details",
+  remember_view_per_folder: true,
+  view_mode_order: ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content"],
+  hidden_view_modes: [],
 };
 
 const VIEW_SETTING: Record<ViewToggle, keyof Omit<ExplorerViewSettings, "group_by">> = {
