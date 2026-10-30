@@ -1,0 +1,24 @@
+/* Movable toolbars, panels and tabs (Step 05c). Colors only through tokens. */
+.adp-dock { display:flex; flex:1; min-width:0; min-height:0; position:relative; }
+.adp-dock--top { flex-direction:column; }
+.adp-dock--bottom { flex-direction:column-reverse; }
+.adp-dock--left { flex-direction:row; }
+.adp-dock--right { flex-direction:row-reverse; }
+.adp-dock-bar { flex:none; display:flex; }
+.adp-dock-content { flex:1; min-width:0; min-height:0; display:flex; position:relative; }
+
+/* Hide until pointed at: a thin line on the side, over the content. Never a
+   transform on the bar or its parents: it would trap fixed menus inside. */
+.adp-dock--autohide > .adp-dock-bar { position:absolute; z-index:20; overflow:hidden; background:var(--adp-color-border-default); }
+.adp-dock--autohide.adp-dock--top > .adp-dock-bar { top:0; left:0; right:0; height:6px; }
+.adp-dock--autohide.adp-dock--bottom > .adp-dock-bar { bottom:0; left:0; right:0; height:6px; }
+.adp-dock--autohide.adp-dock--left > .adp-dock-bar { top:0; bottom:0; left:0; width:6px; }
+.adp-dock--autohide.adp-dock--right > .adp-dock-bar { top:0; bottom:0; right:0; width:6px; }
+.adp-dock--autohide > .adp-dock-bar:hover:not(.adp-dock-bar--revealed) { background:var(--adp-accent-current); }
+.adp-dock--autohide > .adp-dock-bar--revealed { overflow:visible; height:auto; width:auto; background:var(--adp-color-surface-window); box-shadow:var(--adp-shadow-card); }
+/* Still in the page while hidden, so Tab can reach the toolbar. */
+.adp-dock--autohide > .adp-dock-bar:not(.adp-dock-bar--revealed) > * { opacity:0; }
+
+.adp-dock--bottom .adp-commandbar, .adp-dock--bottom .adp-ribbon { border-bottom:none; border-top:1px solid var(--adp-color-border-default); }
+.adp-dock--left .adp-commandbar, .adp-dock--left .adp-ribbon { border-bottom:none; border-right:1px solid var(--adp-color-border-default); }
+.adp-dock--right .adp-commandbar, .adp-dock--right .adp-ribbon { border-bottom:none; border-left:1px solid var(--adp-color-border-default); }
