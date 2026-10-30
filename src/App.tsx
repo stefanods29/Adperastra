@@ -5,6 +5,7 @@ import { CircleHelp, Copy, Home, LayoutGrid, List, Minus, Settings as SettingsIc
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { applyAppearanceAttributes, applyThemeAttributes } from "./appearance/applyAppearance";
+import { AppearanceContext } from "./appearance/density";
 import { setUiZoom } from "./services/appearance";
 import { LayoutContext } from "./layout/LayoutContext";
 import TabStrip from "./layout/TabStrip";
@@ -387,6 +388,7 @@ export default function App() {
             : Home;
 
   return (
+    <AppearanceContext.Provider value={settings.appearance.density}>
     <LayoutContext.Provider value={layoutValue}>
     <div className="adp-shell">
       <header className="adp-titlebar" data-tauri-drag-region="">
@@ -580,5 +582,6 @@ export default function App() {
       </footer>
     </div>
     </LayoutContext.Provider>
+    </AppearanceContext.Provider>
   );
 }

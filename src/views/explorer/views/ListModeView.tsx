@@ -2,13 +2,14 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Cloud, Link2 } from "lucide-react";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useRowSizes } from "../../../appearance/density";
 import type { ExplorerItem } from "../../../services/explorer";
 import { displayName } from "../../../services/names";
 import { fileTile } from "../fileTile";
 import RenameInput from "../RenameInput";
 import { flowMove, type GridMove } from "./gridLayout";
 import { useItemInteractions, type ItemViewProps } from "./useItemInteractions";
-import { FALLBACK_HEIGHT, GRID_PADDING, LIST_COLUMN_WIDTH, LIST_ITEM_HEIGHT } from "./viewModes";
+import { FALLBACK_HEIGHT, GRID_PADDING, LIST_COLUMN_WIDTH } from "./viewModes";
 
 const FLOW_KEYS: Record<string, GridMove> = {
   ArrowLeft: "left",
@@ -29,6 +30,7 @@ export default function ListModeView(props: ItemViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const paintedRef = useRef(false);
   const [height, setHeight] = useState(0);
+  const { listItem: itemHeight } = useRowSizes();
 
   const orderItems = useMemo<ExplorerItem[]>(() => {
     if (!props.groups) return props.items;
@@ -51,7 +53,7 @@ export default function ListModeView(props: ItemViewProps) {
 
   const rowsPerColumn = Math.max(
     1,
-    Math.floor(((height || FALLBACK_HEIGHT) - GRID_PADDING * 2) / LIST_ITEM_HEIGHT),
+    Math.floor(((height || FALLBACK_HEIGHT) - GRID_PADDING * 2) / itemHeight),
   );
   const columnCount = Math.ceil(order.length / rowsPerColumn);
 
