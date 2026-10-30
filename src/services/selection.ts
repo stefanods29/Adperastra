@@ -90,17 +90,41 @@ export function moveFocus(
 ): SelectionState {
   if (order.length === 0) return state;
   const current = state.focus !== null ? order.indexOf(state.focus) : -1;
-  const last = order.length - 1;
-  const page = Math.max(1, options.pageSize ?? 10);
-  let target: number;
-  if (move === "first") target = 0;
-  else if (move === "last") target = last;
-  else if (current < 0) target = 0;
-  else if (move === "next") target = Math.min(last, current + 1);
-  else if (move === "previous") target = Math.max(0, current - 1);
-  else if (move === "pageDown") target = Math.min(last, current + page);
-  else target = Math.max(0, current - page);
-  const path = order[target];
+  const target = linearMoveTarget(move, current, order.length, options.pageSize ?? 10);
+  return moveFocusTo(state, order, target, options);
+}
+
+/** The index a linear key move goes to in a one-dimensional list (List
+ * and Details); -1 when there are no items. */
+export function linearMoveTarget(
+  move: FocusMove,
+  current: number,
+  count: number,
+  pageSize: number,
+): number {
+  if (count <= 0) return -1;
+  const last = count - 1;
+  const page = Math.max(1, pageSize);
+  if (move === "first") return 0;
+  if (move === "last") return last;
+  if (current < 0) return 0;
+  if (move === "next") return Math.min(last, current + 1);
+  if (move === "previous") return Math.max(0, current - 1);
+  if (move === "pageDown") return Math.min(last, current + page);
+  return Math.max(0, current - page);
+}
+
+/** Selects (or extends to, or only moves the caret to) the item at
+ * `target`, clamped to the list. Grid views use this with their own moves. */
+export function moveFocusTo(
+  state: SelectionState,
+  order: readonly string[],
+  target: number,
+  options: MoveOptions = {},
+): SelectionState {
+  if (order.length === 0) return state;
+  const index = Math.min(order.length - 1, Math.max(0, target));
+  const path = order[index];
   if (options.shift) return selectRange(state, order, path, options.ctrl === true);
   if (options.ctrl) return { ...state, focus: path };
   return selectOnly(path);
