@@ -11,6 +11,24 @@ that fixed it.
 
 ## Open
 
+### KI-025 - Pasting an image can overwrite a newly created file (Blocker)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (possible data loss and unsafe image-buffer lifetime).
+- **What:** Image paste writes directly to a selected name, which another program may create before the write; failure cleanup can also remove that file. The PNG decoder may outlive its input buffer.
+- **Workaround:** Do not paste images as files until fixed.
+- **Target:** Step 03b, before completion.
+
+### KI-026 - Copy or move can replace a newly arrived destination without consent (Blocker)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (possible data loss).
+- **What:** A destination can appear after the conflict check, and the completed copy can recycle or overwrite it without the user choosing Replace for that item.
+- **Workaround:** Avoid copying or moving into folders that other programs are changing.
+- **Target:** Step 03b, before completion.
+
+### KI-027 - A move can remove a source changed during copying (Blocker)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (possible data loss).
+- **What:** A cross-volume or merged move copies a source and later deletes it by path even if another program changed or replaced it. Directory links introduced after preflight also need protection in the operation engine.
+- **Workaround:** Avoid moving files or folders while other programs are changing them.
+- **Target:** Step 03b, before completion.
+
 ### KI-023 - Builds before this fix left a WebView2 folder outside the data folder (Minor)
 - **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (disk space only, a one-time leftover).
 - **What:** Until commit `4725674` the window's WebView2 profile (cache and browser storage, no user files or settings) was kept in `%LOCALAPPDATA%\<app identifier>\EBWebView` instead of the app's data folder. It now lives in `<data>\webview`, so the old folder is no longer used; the first start after updating creates the new profile once (about the cost in KI-001).
