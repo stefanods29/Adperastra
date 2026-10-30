@@ -37,7 +37,22 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      # Reuse compiled dependencies and the audit tools between runs.
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: adperastra
+          cache-on-failure: true
+
+      - name: Cache developer audit tools
+        id: audit-tools
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\AdperastraDevTools
+          key: audit-tools-cargo-audit-0.22.2-cargo-deny-0.20.2
+
       - name: Install pinned developer audit tools
+        if: steps.audit-tools.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           $toolRoot = Join-Path $env:LOCALAPPDATA 'AdperastraDevTools'

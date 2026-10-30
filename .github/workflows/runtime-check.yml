@@ -1,0 +1,55 @@
+# Started by hand: only the packaged app runtime check, for quick answers about
+# problems that happen only on hosted machines. Does not replace build-windows.
+name: Runtime check
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Variants to run
+        type: choice
+        default: quick
+        options: [quick, full]
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}\target
+      CARGO_TERM_COLOR: never
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: adperastra
+          save-if: false
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Run the runtime check
+        shell: pwsh
+        run: .\scripts\verify-runtime.ps1 -Mode ${{ inputs.mode }} -OutputDirectory build\verification\runtime
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-${{ github.run_id }}
+          path: build/verification/
+          if-no-files-found: warn
