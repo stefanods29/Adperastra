@@ -38,6 +38,7 @@
     "genericFile": "Archivo",
     "onlineOnly": "Solo en línea",
     "isLink": "Acceso directo",
+    "columnPreview": "Vista previa",
     "contentModified": "Fecha de modificación: {date}",
     "contentSize": "Tamaño: {size}",
     "loadingFolder": "Cargando carpeta...",

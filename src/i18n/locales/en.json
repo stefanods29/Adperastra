@@ -38,6 +38,7 @@
     "genericFile": "File",
     "onlineOnly": "Online only",
     "isLink": "Link",
+    "columnPreview": "Preview",
     "contentModified": "Date modified: {date}",
     "contentSize": "Size: {size}",
     "loadingFolder": "Loading folder...",
