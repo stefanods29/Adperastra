@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import Button from "../components/Button";
 import HelpButton from "../components/HelpButton";
 import type { AppSettings, LanguageSetting } from "../services/settings";
+import LayoutSettings from "./settings/LayoutSettings";
 import OpeningFilesSettings from "./settings/OpeningFilesSettings";
 import ViewsSettings from "./settings/ViewsSettings";
 
@@ -113,6 +114,14 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
           ))}
         </div>
       </div>
+      <LayoutSettings
+        layout={settings.layout}
+        detailsPane={settings.explorer.details_pane}
+        onChange={(layout, detailsPane) =>
+          onApply({ ...settings, layout, explorer: { ...settings.explorer, details_pane: detailsPane } })
+        }
+        onOpenHelp={onOpenHelpPage}
+      />
       <ViewsSettings explorer={settings.explorer} onChange={(explorer) => onApply({ ...settings, explorer })} onOpenHelp={onOpenHelpPage} />
       <OpeningFilesSettings open={settings.open} onChange={(open) => onApply({ ...settings, open })} onOpenHelp={onOpenHelpPage} />
       <p className="adp-note">{t("settings.persistNote")}</p>

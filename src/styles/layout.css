@@ -80,3 +80,7 @@
 .adp-tabrail--right .adp-tab--active { box-shadow:inset -3px 0 0 var(--adp-accent-current); }
 .adp-tabrail .adp-tab-close { margin-left:auto; }
 .adp-tabrail-toggle { align-self:flex-start; }
+
+/* Settings > Layout (Step 05c). */
+.adp-layout-presets { display:flex; flex-direction:column; list-style:none; margin:0; padding:0; gap:var(--adp-space-2); }
+.adp-layout-preset { display:flex; align-items:center; gap:var(--adp-space-3); }
