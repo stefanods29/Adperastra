@@ -1,0 +1,185 @@
+/* Column view (Step 05b). Colors only through tokens. */
+
+.adp-colview {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 1px solid var(--adp-color-border-default);
+}
+
+.adp-colview-column {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  flex: none;
+  min-height: 0;
+  box-sizing: border-box;
+  border-right: 1px solid var(--adp-color-border-default);
+}
+
+.adp-colview-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+}
+
+.adp-colview-list:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-colview-inner {
+  position: relative;
+  width: 100%;
+}
+
+.adp-colview-row {
+  position: absolute;
+  top: 0;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  gap: var(--adp-space-2);
+  padding: 0 var(--adp-space-3);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+  cursor: pointer;
+  user-select: none;
+}
+
+.adp-colview-row:hover,
+.adp-colview-row--path,
+.adp-colview-row--path:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-colview-row--selected,
+.adp-colview-row--selected:hover {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-colview-row--hidden {
+  opacity: 0.55;
+}
+
+.adp-colview-list:focus-visible .adp-colview-row--focused {
+  box-shadow: inset 0 0 0 1px var(--adp-accent-current);
+}
+
+.adp-colview-row .adp-file-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.adp-colview-row:has(.adp-rename) {
+  z-index: 5;
+}
+
+.adp-colview-row .adp-rename {
+  flex: 1;
+}
+
+.adp-colview-chevron {
+  display: inline-flex;
+  flex: none;
+  margin-left: auto;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-colview-note {
+  margin: 0;
+  padding: var(--adp-space-3);
+}
+
+.adp-colview-column > .adp-skeleton-rows {
+  padding: var(--adp-space-3);
+}
+
+.adp-colview-resizer {
+  flex: none;
+  position: relative;
+  z-index: 2;
+  cursor: col-resize;
+  width: 6px;
+  margin: 0 -3px;
+  background: transparent;
+}
+
+.adp-colview-resizer:hover {
+  background: var(--adp-color-border-input);
+}
+
+.adp-colview-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+  gap: var(--adp-space-3);
+  padding: var(--adp-space-7);
+}
+
+.adp-colview-preview-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-colview-preview-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  width: 100%;
+  text-align: center;
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+}
+
+.adp-colview-preview-type {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  text-align: center;
+}
+
+.adp-colview-preview-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  width: 100%;
+  margin: 0;
+  row-gap: var(--adp-space-1);
+  column-gap: var(--adp-space-3);
+  font-size: var(--adp-font-small);
+}
+
+.adp-colview-preview-facts dt {
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-colview-preview-facts dd {
+  margin: 0;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-colview-preview-cloud {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
