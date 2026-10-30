@@ -3,11 +3,18 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import HelpButton from "../../components/HelpButton";
 import Button from "../../components/Button";
+import Slider from "../../components/Slider";
 import Switch from "../../components/Switch";
 import { VIEW_MODE_ICONS, VIEW_MODE_LABEL_KEYS } from "../../commands/explorerCommands";
 import { errorText } from "../../services/errors";
 import { clearFolderViews } from "../../services/folderViews";
-import type { ExplorerViewSettings, ViewModeId } from "../../services/settings";
+import {
+  COLUMN_WIDTH_MAX,
+  COLUMN_WIDTH_MIN,
+  clampColumnWidth,
+  type ExplorerViewSettings,
+  type ViewModeId,
+} from "../../services/settings";
 import { visibleViewModes } from "../explorer/views/viewModes";
 
 /** Swaps a view with its neighbour in that direction (Step 05a). */
@@ -145,6 +152,25 @@ export default function ViewsSettings({ explorer, onChange, onOpenHelp }: ViewsS
             );
           })}
         </ul>
+      </div>
+      <h4 className="adp-heading">{t("settings.viewsColumns")}</h4>
+      <div className="adp-setting-row">
+        <span className="adp-setting-label">{t("settings.columnWidth")}</span>
+        <Slider
+          value={explorer.column_width}
+          min={COLUMN_WIDTH_MIN}
+          max={COLUMN_WIDTH_MAX}
+          label={t("settings.columnWidth")}
+          onChange={(value) => onChange({ ...explorer, column_width: clampColumnWidth(value) })}
+        />
+        <p className="adp-note">{t("settings.columnWidthNote")}</p>
+      </div>
+      <div className="adp-setting-row">
+        <Switch
+          label={t("settings.columnPreview")}
+          checked={explorer.column_preview}
+          onChange={(checked) => onChange({ ...explorer, column_preview: checked })}
+        />
       </div>
     </section>
   );
