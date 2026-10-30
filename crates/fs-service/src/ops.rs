@@ -1,9 +1,11 @@
 //! File operations (Step 03b): create, copy, move, recycle, restore and
 //! permanent delete. Copying is chunked so progress and Cancel work on
 //! files of any size; a cancelled or failed copy never leaves a partial
-//! file behind, and nothing is ever overwritten unless the caller chose
-//! the `Replace` policy (the UI asks the user first). Even then the old
-//! item goes to the Recycle Bin, so Undo can bring it back.
+//! file behind. The app never replaces an existing item: `Merge` adds new
+//! items into an existing folder and leaves same-named files alone, while
+//! `Skip` and `KeepBoth` handle every other name clash. The `Replace`
+//! policy remains in the engine for the approved-target work of the full
+//! conflict window; `file_op_start` refuses it until that exists.
 //!
 //! Recursive walks never follow a directory link into a folder that is
 //! already being copied, so link loops terminate with a skipped item
@@ -20,6 +22,8 @@ use std::sync::atomic::Ordering;
 
 #[path = "transfer.rs"]
 mod transfer;
+#[path = "verified_remove.rs"]
+mod verified_remove;
 pub use transfer::{
     apply_transfer, transfer_bytes, TransferEffect, TransferKind, MAX_TRANSFER_BYTES,
 };
@@ -27,9 +31,12 @@ pub use transfer::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ConflictPolicy {
+    /// Disabled at the app boundary until exact approved targets exist.
     Replace,
     Skip,
     KeepBoth,
+    /// Add new items into an existing folder; never replace a file.
+    Merge,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -69,6 +76,14 @@ pub struct ReplacedItem {
     pub path: PathBuf,
     /// The item's own entry in the Recycle Bin (`$R...` path), when found.
     pub bin_id: Option<String>,
+}
+
+/// An existing target the UI asks about before a copy or move.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Conflict {
+    pub path: PathBuf,
+    /// True when the target is a folder, so the UI offers Merge.
+    pub is_dir: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -125,6 +140,21 @@ fn is_real_dir(path: &Path) -> bool {
         .is_ok_and(|m| m.is_dir() && !m.file_type().is_symlink())
 }
 
+#[cfg(windows)]
+fn directory_link(metadata: &fs::Metadata) -> bool {
+    use std::os::windows::fs::MetadataExt;
+    use windows::Win32::Storage::FileSystem::{
+        FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_REPARSE_POINT,
+    };
+    let attrs = metadata.file_attributes();
+    attrs & FILE_ATTRIBUTE_DIRECTORY.0 != 0 && attrs & FILE_ATTRIBUTE_REPARSE_POINT.0 != 0
+}
+
+#[cfg(not(windows))]
+fn directory_link(metadata: &fs::Metadata) -> bool {
+    metadata.file_type().is_symlink()
+}
+
 /// A drive or network-share root (for example `C:`): never moved,
 /// recycled or deleted as a whole.
 fn is_drive_root(path: &Path) -> bool {
@@ -143,14 +173,15 @@ fn same_folder(a: &Path, b: &Path) -> bool {
         .eq_ignore_ascii_case(&b.to_string_lossy())
 }
 
-/// `name (2).ext`, `name (3).ext`... like Windows Explorer.
+/// `name (1).ext`, `name (2).ext`...: New items, downloads and pasted
+/// files count from one, so the first copy has an obvious number.
 pub fn unique_destination(dir: &Path, name: &str) -> PathBuf {
     let first = dir.join(name);
     if !exists(&first) {
         return first;
     }
     let (base, extension) = split_name(name);
-    for number in 2..10_000 {
+    for number in 1..10_000 {
         let candidate = dir.join(format!("{base} ({number}){extension}"));
         if !exists(&candidate) {
             return candidate;
@@ -159,7 +190,8 @@ pub fn unique_destination(dir: &Path, name: &str) -> PathBuf {
     first
 }
 
-/// `name - Copy.ext`, then `name - Copy (2).ext` (same-folder paste).
+/// `name - Copy.ext`, then `name - Copy (2).ext`...: a copied item, like
+/// Windows Explorer. Moves keep their number form instead.
 fn copy_destination(dir: &Path, name: &str) -> PathBuf {
     let (base, extension) = split_name(name);
     let first = dir.join(format!("{base} - Copy{extension}"));
@@ -209,13 +241,20 @@ pub fn create_item(parent: &Path, name: &str, kind: CreateKind) -> Result<PathBu
 }
 
 /// Targets inside `dest_dir` that already exist (what the UI asks about).
-pub fn check_conflicts(sources: &[PathBuf], dest_dir: &Path) -> Vec<PathBuf> {
+pub fn check_conflicts(sources: &[PathBuf], dest_dir: &Path) -> Vec<Conflict> {
     let mut conflicts = Vec::new();
     for source in sources {
         if let Some(name) = source.file_name() {
             let target = dest_dir.join(name);
             if exists(&target) {
-                conflicts.push(target);
+                // A folder link is not offered as a merge target; the
+                // operation safety check refuses it anyway.
+                let is_dir = fs::symlink_metadata(&target)
+                    .is_ok_and(|metadata| metadata.is_dir() && !directory_link(&metadata));
+                conflicts.push(Conflict {
+                    path: target,
+                    is_dir,
+                });
             }
         }
     }
@@ -238,7 +277,7 @@ struct Plan {
 
 /// Expand top-level items into a flat copy plan. Directory links are only
 /// followed into folders not already in the plan (loop guard).
-fn expand(sources: &[PathBuf]) -> Plan {
+fn expand(sources: &[PathBuf], moving: bool) -> Plan {
     let mut plan = Plan {
         entries: Vec::new(),
         skipped: Vec::new(),
@@ -266,12 +305,19 @@ fn expand(sources: &[PathBuf]) -> Plan {
                 continue;
             }
         };
+        if moving && directory_link(&metadata) {
+            plan.skipped.push(SkippedItem {
+                path: source.clone(),
+                reason: "link_not_supported".to_string(),
+            });
+            continue;
+        }
         let rel = PathBuf::from(&name);
         if metadata.is_dir() {
             if let Ok(canonical) = fs::canonicalize(source) {
                 visited_dirs.insert(canonical.to_string_lossy().to_lowercase());
             }
-            expand_dir(source, &rel, &mut plan, &mut visited_dirs);
+            expand_dir(source, &rel, &mut plan, &mut visited_dirs, moving);
         } else {
             let size = metadata.len();
             plan.total_bytes += size;
@@ -286,7 +332,13 @@ fn expand(sources: &[PathBuf]) -> Plan {
     plan
 }
 
-fn expand_dir(dir: &Path, rel: &Path, plan: &mut Plan, visited: &mut HashSet<String>) {
+fn expand_dir(
+    dir: &Path,
+    rel: &Path,
+    plan: &mut Plan,
+    visited: &mut HashSet<String>,
+    moving: bool,
+) {
     plan.entries.push(PlanEntry {
         from: dir.to_path_buf(),
         rel: rel.to_path_buf(),
@@ -328,6 +380,25 @@ fn expand_dir(dir: &Path, rel: &Path, plan: &mut Plan, visited: &mut HashSet<Str
     children
         .sort_by_key(|(path, _, _)| path.file_name().map(|n| n.to_string_lossy().to_lowercase()));
     for (child, file_type, size) in children {
+        if moving && (file_type.is_dir() || file_type.is_symlink()) {
+            match fs::symlink_metadata(&child) {
+                Ok(metadata) if directory_link(&metadata) => {
+                    plan.skipped.push(SkippedItem {
+                        path: child,
+                        reason: "link_not_supported".to_string(),
+                    });
+                    continue;
+                }
+                Err(error) => {
+                    plan.skipped.push(SkippedItem {
+                        path: child,
+                        reason: reason(&FsError::from(error)),
+                    });
+                    continue;
+                }
+                _ => {}
+            }
+        }
         let Some(name) = child.file_name().map(|n| n.to_string_lossy().into_owned()) else {
             continue;
         };
@@ -359,7 +430,7 @@ fn expand_dir(dir: &Path, rel: &Path, plan: &mut Plan, visited: &mut HashSet<Str
                     continue;
                 }
             }
-            expand_dir(&child, &child_rel, plan, visited);
+            expand_dir(&child, &child_rel, plan, visited, moving);
         } else {
             plan.total_bytes += size;
             plan.entries.push(PlanEntry {
@@ -406,6 +477,7 @@ struct Runner<'a> {
     cancelled: bool,
     /// Items `Replace` sent to the Recycle Bin, in order.
     replaced: Vec<PathBuf>,
+    snapshots: HashMap<PathBuf, verified_remove::Snapshot>,
 }
 
 impl Runner<'_> {
@@ -432,18 +504,18 @@ impl Runner<'_> {
         source: &Path,
         dest_dir: &Path,
         report: &mut OpReport,
-    ) -> Option<PathBuf> {
+    ) -> Option<(PathBuf, bool)> {
         let name = item_name(source).ok()?;
         let target = dest_dir.join(&name);
         if !exists(&target) {
-            return Some(target);
+            return Some((target, false));
         }
         // Moving an item onto itself is never meaningful; copying it into
         // its own folder with KeepBoth is the "paste here" duplicate.
         if same_folder(source, &target) {
             if !self.moving && self.policy == ConflictPolicy::KeepBoth {
                 let name = item_name(source).ok()?;
-                return Some(copy_destination(dest_dir, &name));
+                return Some((copy_destination(dest_dir, &name), false));
             }
             report.skipped.push(SkippedItem {
                 path: source.to_path_buf(),
@@ -460,10 +532,23 @@ impl Runner<'_> {
                 None
             }
             ConflictPolicy::KeepBoth => {
-                if source.parent().is_some_and(|p| same_folder(p, dest_dir)) {
-                    Some(copy_destination(dest_dir, &name))
+                if self.moving {
+                    Some((unique_destination(dest_dir, &name), false))
                 } else {
-                    Some(unique_destination(dest_dir, &name))
+                    Some((copy_destination(dest_dir, &name), false))
+                }
+            }
+            ConflictPolicy::Merge => {
+                if is_real_dir(source) && is_real_dir(&target) {
+                    // Add new items inside the existing folder. Nested file
+                    // clashes are skipped in `copy_plan`, never replaced.
+                    Some((target, false))
+                } else if is_real_dir(source) != is_real_dir(&target) {
+                    skip(report, source, "kind_mismatch");
+                    None
+                } else {
+                    skip(report, source, "exists");
+                    None
                 }
             }
             ConflictPolicy::Replace => {
@@ -473,7 +558,7 @@ impl Runner<'_> {
                     skip(report, source, "kind_mismatch");
                     return None;
                 }
-                Some(target)
+                Some((target, true))
             }
         }
     }
@@ -481,7 +566,12 @@ impl Runner<'_> {
     /// Copy one file. The data is written to a hidden sibling first and
     /// only swapped in once complete, so a failed or cancelled Replace
     /// keeps the old destination and never leaves a partial file behind.
-    fn copy_file(&mut self, from: &Path, to: &Path) -> std::result::Result<(), FsError> {
+    fn copy_file(
+        &mut self,
+        from: &Path,
+        to: &Path,
+        replace_existing: bool,
+    ) -> std::result::Result<(), FsError> {
         if is_real_dir(to) {
             return Err(FsError::Io(std::io::ErrorKind::AlreadyExists.into()));
         }
@@ -493,6 +583,11 @@ impl Runner<'_> {
             .unwrap_or_default();
         let partial = unique_destination(parent, &format!("~{name}.partial"));
         let mut input = fs::File::open(from)?;
+        let initial_snapshot = if self.moving {
+            Some(verified_remove::snapshot(&input)?)
+        } else {
+            None
+        };
         let mut output = fs::OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -513,6 +608,11 @@ impl Runner<'_> {
                 self.bytes_done += read as u64;
             }
             output.flush()?;
+            if let Some(initial) = &initial_snapshot {
+                if verified_remove::snapshot(&input)? != *initial {
+                    return Err(FsError::Io(std::io::ErrorKind::Other.into()));
+                }
+            }
             Ok(())
         })();
         drop(output);
@@ -525,12 +625,21 @@ impl Runner<'_> {
         // The complete copy takes the old file's place only after the old
         // file is safely in the Recycle Bin (Undo restores it).
         let result = result
-            .and_then(|()| self.recycle_replaced(to))
-            .and_then(|()| fs::rename(&partial, to).map_err(FsError::from));
+            .and_then(|()| {
+                if replace_existing {
+                    self.recycle_replaced(to)
+                } else {
+                    Ok(())
+                }
+            })
+            .and_then(|()| transfer::rename_new(&partial, to));
         if let Err(error) = result {
             let _ = remove_file_forced(&partial);
             self.bytes_done = started_at;
             return Err(error);
+        }
+        if let Some(snapshot) = initial_snapshot {
+            self.snapshots.insert(from.to_path_buf(), snapshot);
         }
         Ok(())
     }
@@ -559,6 +668,7 @@ impl Runner<'_> {
         plan: &Plan,
         source: &Path,
         target: &Path,
+        replace_top_level: bool,
         report: &mut OpReport,
     ) -> Vec<PathBuf> {
         // Plan entries copied successfully (files and folders), for moves.
@@ -619,7 +729,8 @@ impl Runner<'_> {
                 }
                 // A file conflict inside a merged folder follows the policy.
                 let mut written = dest.clone();
-                if exists(&dest) && dest != entry.from {
+                let conflict = exists(&dest) && dest != entry.from;
+                if conflict {
                     match self.policy {
                         ConflictPolicy::Skip => {
                             skip(report, &entry.from, "exists");
@@ -627,20 +738,34 @@ impl Runner<'_> {
                             continue;
                         }
                         ConflictPolicy::KeepBoth => {
-                            // Numbered name inside the merged folder.
-                            written = unique_destination(
-                                dest.parent().unwrap_or(target),
-                                &entry
-                                    .from
-                                    .file_name()
-                                    .map(|n| n.to_string_lossy().into_owned())
-                                    .unwrap_or_default(),
-                            );
+                            // A copy gets "- Copy"; a move gets a number.
+                            let parent = dest.parent().unwrap_or(target);
+                            let name = entry
+                                .from
+                                .file_name()
+                                .map(|n| n.to_string_lossy().into_owned())
+                                .unwrap_or_default();
+                            written = if self.moving {
+                                unique_destination(parent, &name)
+                            } else {
+                                copy_destination(parent, &name)
+                            };
+                        }
+                        ConflictPolicy::Merge => {
+                            skip(report, &entry.from, "exists");
+                            self.bytes_done += entry.size;
+                            continue;
                         }
                         ConflictPolicy::Replace => {}
                     }
                 }
-                match self.copy_file(&entry.from, &written) {
+                match self.copy_file(
+                    &entry.from,
+                    &written,
+                    conflict
+                        && self.policy == ConflictPolicy::Replace
+                        && (dest != target || replace_top_level),
+                ) {
                     Ok(()) => {
                         copied.push(entry.from.clone());
                         report.transfer.push(TransferEffect {
@@ -777,7 +902,7 @@ pub fn copy_items(
     let mut report = OpReport::default();
     let plans: Vec<Plan> = sources
         .iter()
-        .map(|s| expand(std::slice::from_ref(s)))
+        .map(|s| expand(std::slice::from_ref(s), false))
         .collect();
     check_transfer_budget(&plans, dest_dir)?;
     let total_bytes: u64 = plans.iter().map(|p| p.total_bytes).sum();
@@ -797,6 +922,7 @@ pub fn copy_items(
         current: String::new(),
         cancelled: false,
         replaced: Vec::new(),
+        snapshots: HashMap::new(),
     };
     for (source, plan) in sources.iter().zip(plans.iter()) {
         if runner.cancelled() {
@@ -812,8 +938,9 @@ pub fn copy_items(
             runner.report();
             continue;
         }
-        if let Some(target) = runner.target_for(source, dest_dir, &mut report) {
-            let copied = runner.copy_plan(plan, source, &target, &mut report);
+        if let Some((target, replace_top_level)) = runner.target_for(source, dest_dir, &mut report)
+        {
+            let copied = runner.copy_plan(plan, source, &target, replace_top_level, &mut report);
             let files_total = plan.entries.iter().filter(|e| !e.is_dir).count();
             let files_copied = copied.iter().filter(|p| !p.is_dir()).count();
             // An item only counts as copied if at least one of its files
@@ -847,7 +974,7 @@ pub fn move_items(
     let mut report = OpReport::default();
     let plans: Vec<Plan> = sources
         .iter()
-        .map(|s| expand(std::slice::from_ref(s)))
+        .map(|s| expand(std::slice::from_ref(s), true))
         .collect();
     check_transfer_budget(&plans, dest_dir)?;
     let total_bytes: u64 = plans.iter().map(|p| p.total_bytes).sum();
@@ -867,12 +994,22 @@ pub fn move_items(
         current: String::new(),
         cancelled: false,
         replaced: Vec::new(),
+        snapshots: HashMap::new(),
     };
     for (source, plan) in sources.iter().zip(plans.iter()) {
         if runner.cancelled() {
             break;
         }
         runner.current = source.to_string_lossy().into_owned();
+        if plan
+            .skipped
+            .iter()
+            .any(|item| item.reason == "link_not_supported")
+        {
+            runner.items_done += plan.entries.len();
+            runner.report();
+            continue;
+        }
         if source.is_dir() && dest_dir.starts_with(source) {
             report.skipped.push(SkippedItem {
                 path: source.clone(),
@@ -887,21 +1024,23 @@ pub fn move_items(
             runner.items_done += plan.entries.len();
             continue;
         }
-        let Some(target) = runner.target_for(source, dest_dir, &mut report) else {
+        let Some((target, replace_top_level)) = runner.target_for(source, dest_dir, &mut report)
+        else {
             runner.items_done += plan.entries.len();
             continue;
         };
-        // Fast path: a plain rename (same volume). A file the user chose to
-        // replace goes to the Recycle Bin first; a folder that already
-        // exists is merged below instead.
-        if !is_real_dir(&target) {
-            if let Err(error) = runner.recycle_replaced(&target) {
-                skip(&mut report, source, &reason(&error));
-                runner.items_done += plan.entries.len();
-                continue;
-            }
-        }
-        if !is_real_dir(&target) && fs::rename(source, &target).is_ok() {
+        // Fast path: a plain no-replace rename (same volume). Existing
+        // targets are handled by the copy path, which completes the copy
+        // before recycling a target selected for replacement.
+        let target_is_dir = is_real_dir(&target);
+        #[cfg(windows)]
+        let renamed =
+            !target_is_dir && !exists(&target) && transfer::rename_new(source, &target).is_ok();
+        // The portable no-replace helper uses hard links and cannot move
+        // directories. Use the copy path outside Windows instead.
+        #[cfg(not(windows))]
+        let renamed = false;
+        if renamed {
             runner.bytes_done += plan.total_bytes;
             runner.items_done += plan.entries.len();
             report.created.push(CompletedItem {
@@ -926,7 +1065,7 @@ pub fn move_items(
         // folder): copy + delete. The copy replaces an old file only once
         // it is complete.
         let effect_start = report.transfer.len();
-        let copied = runner.copy_plan(plan, source, &target, &mut report);
+        let copied = runner.copy_plan(plan, source, &target, replace_top_level, &mut report);
         if runner.cancelled {
             break;
         }
@@ -944,6 +1083,10 @@ pub fn move_items(
             .collect();
         let mut fully_moved = true;
         for entry in entries {
+            if runner.cancelled() {
+                fully_moved = false;
+                break;
+            }
             if !copied_set.contains(&entry.from.to_string_lossy().to_lowercase()) {
                 fully_moved = false;
                 continue;
@@ -951,13 +1094,29 @@ pub fn move_items(
             let result = if entry.is_dir {
                 fs::remove_dir(&entry.from).map_err(FsError::from)
             } else {
-                remove_file_forced(&entry.from)
+                match (
+                    effect_indices.get(&entry.from),
+                    runner.snapshots.get(&entry.from),
+                ) {
+                    (Some(index), Some(snapshot)) => verified_remove::remove_if_matches(
+                        &entry.from,
+                        &report.transfer[*index].to,
+                        snapshot,
+                        token,
+                    ),
+                    _ => Err(FsError::Validation("missing copied item".to_string())),
+                }
             };
             match result {
                 Ok(()) => {
                     if let Some(index) = effect_indices.get(&entry.from) {
                         report.transfer[*index].source_removed = true;
                     }
+                }
+                Err(FsError::Cancelled) => {
+                    runner.cancelled = true;
+                    fully_moved = false;
+                    break;
                 }
                 Err(error) => {
                     fully_moved = false;
@@ -1340,4 +1499,45 @@ pub fn delete_permanently(
         current: String::new(),
     });
     Ok(report)
+}
+
+#[cfg(test)]
+mod destination_race_tests {
+    use super::*;
+    use crate::new_cancellation_token;
+
+    #[test]
+    fn copy_does_not_replace_a_new_destination_for_skip_or_keep_both() {
+        for policy in [
+            ConflictPolicy::Skip,
+            ConflictPolicy::KeepBoth,
+            ConflictPolicy::Replace,
+        ] {
+            let dir = tempfile::tempdir().unwrap();
+            let source = dir.path().join("source.txt");
+            let target = dir.path().join("target.txt");
+            fs::write(&source, b"source").unwrap();
+            // Simulate a file appearing after a destination was selected.
+            fs::write(&target, b"other application").unwrap();
+            let token = new_cancellation_token();
+            let mut progress = |_: &OpProgress| {};
+            let mut runner = Runner {
+                policy,
+                moving: false,
+                token: &token,
+                progress: &mut progress,
+                items_total: 1,
+                items_done: 0,
+                bytes_total: 6,
+                bytes_done: 0,
+                current: String::new(),
+                cancelled: false,
+                replaced: Vec::new(),
+                snapshots: HashMap::new(),
+            };
+            assert!(runner.copy_file(&source, &target, false).is_err());
+            assert_eq!(fs::read(&target).unwrap(), b"other application");
+            assert!(runner.replaced.is_empty());
+        }
+    }
 }

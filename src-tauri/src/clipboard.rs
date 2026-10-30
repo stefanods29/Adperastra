@@ -7,6 +7,10 @@
 
 use serde::{Deserialize, Serialize};
 
+#[cfg(windows)]
+#[path = "bounded_stream.rs"]
+mod bounded_stream;
+
 /// Most file paths one clipboard request may carry.
 pub const MAX_CLIPBOARD_FILES: usize = 10_000;
 /// Largest clipboard text handed to the UI (paste-as-file), in bytes.
@@ -44,12 +48,30 @@ mod imp {
     const CF_HDROP_ID: u32 = 15;
     const CF_DIBV5_ID: u32 = 17;
 
+    // Bound decoded 32-bit pixels to 256 MiB and reject extreme axes.
+    fn valid_image_dimensions(width: u32, height: u32) -> bool {
+        width > 0
+            && height > 0
+            && width <= 32_768
+            && height <= 32_768
+            && u64::from(width) * u64::from(height) <= 64 * 1024 * 1024
+    }
+
     pub fn hwnd_from(raw: isize) -> HWND {
         HWND(raw as *mut c_void)
     }
 
     fn wide(value: &str) -> Vec<u16> {
         value.encode_utf16().chain(std::iter::once(0)).collect()
+    }
+
+    fn wide_path(value: &std::path::Path) -> Vec<u16> {
+        use std::os::windows::ffi::OsStrExt;
+        value
+            .as_os_str()
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect()
     }
 
     /// Open the clipboard, retrying briefly: another app may hold it for
@@ -251,39 +273,117 @@ mod imp {
         result
     }
 
+    struct ImagePartial {
+        file: std::fs::File,
+        published: bool,
+    }
+
+    impl ImagePartial {
+        fn handle(&self) -> HANDLE {
+            use std::os::windows::io::AsRawHandle;
+            HANDLE(self.file.as_raw_handle())
+        }
+
+        fn publish(&mut self, target: &std::path::Path) -> windows::core::Result<()> {
+            use windows::Win32::Storage::FileSystem::{
+                FileRenameInfo, SetFileInformationByHandle, FILE_RENAME_INFO,
+            };
+            let path = wide_path(target);
+            let chars = &path[..path.len() - 1];
+            let offset = std::mem::offset_of!(FILE_RENAME_INFO, FileName);
+            let bytes = offset + chars.len() * 2;
+            // u64 backing ensures the Windows structure is suitably aligned.
+            let mut storage = vec![0u64; bytes.div_ceil(8)];
+            let info = storage.as_mut_ptr().cast::<FILE_RENAME_INFO>();
+            // SAFETY: the allocation is aligned and large enough for the
+            // header and filename. Zero sets ReplaceIfExists and RootDirectory.
+            unsafe {
+                (*info).FileNameLength = (chars.len() * 2) as u32;
+                std::ptr::copy_nonoverlapping(
+                    chars.as_ptr(),
+                    std::ptr::addr_of_mut!((*info).FileName).cast::<u16>(),
+                    chars.len(),
+                );
+                SetFileInformationByHandle(
+                    self.handle(),
+                    FileRenameInfo,
+                    info.cast(),
+                    bytes as u32,
+                )?;
+            }
+            self.published = true;
+            Ok(())
+        }
+    }
+
+    impl Drop for ImagePartial {
+        fn drop(&mut self) {
+            use windows::Win32::Storage::FileSystem::{
+                FileDispositionInfo, SetFileInformationByHandle, FILE_DISPOSITION_INFO,
+            };
+            if !self.published {
+                let info = FILE_DISPOSITION_INFO { DeleteFile: true };
+                // SAFETY: the exclusive handle still refers to our own staging
+                // file; failure leaves that file in place rather than deleting another.
+                let _ = unsafe {
+                    SetFileInformationByHandle(
+                        self.handle(),
+                        FileDispositionInfo,
+                        (&info as *const FILE_DISPOSITION_INFO).cast(),
+                        std::mem::size_of_val(&info) as u32,
+                    )
+                };
+            }
+        }
+    }
+
+    /// Keep an exclusive handle for the whole lifetime of the staging file.
+    fn create_image_partial(parent: &std::path::Path, name: &str) -> std::io::Result<ImagePartial> {
+        use std::os::windows::fs::OpenOptionsExt;
+        let partial = fs_service::unique_destination(parent, &format!("~{name}.partial"));
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .access_mode(0x4000_0000 | 0x0001_0000) // GENERIC_WRITE | DELETE
+            .share_mode(0)
+            .open(partial)?;
+        Ok(ImagePartial {
+            file,
+            published: false,
+        })
+    }
+
     /// Save the clipboard image as PNG or JPG in `parent` under
     /// `base_name` (a numbered name is chosen when taken). Screenshots
     /// usually arrive as a bitmap; browsers may also offer ready PNG
     /// data, which is decoded with the same Windows imaging path.
-    pub fn save_image(
-        owner: isize,
-        parent: &std::path::Path,
-        base_name: &str,
-        format: &str,
-    ) -> Result<String, String> {
-        use windows::core::{Interface, PCWSTR};
+    pub fn encode_image(format: &str, output: &mut dyn std::io::Write) -> Result<(), String> {
+        use windows::core::Interface;
         use windows::Win32::Graphics::Gdi::HBITMAP;
         use windows::Win32::Graphics::Imaging::{
             CLSID_WICImagingFactory, GUID_ContainerFormatJpeg, GUID_ContainerFormatPng,
             GUID_WICPixelFormat24bppBGR, GUID_WICPixelFormat32bppBGRA, IWICBitmapSource,
             IWICImagingFactory, WICBitmapEncoderNoCache, WICBitmapUseAlpha,
         };
+        use windows::Win32::System::Com::StructuredStorage::CreateStreamOnHGlobal;
         use windows::Win32::System::Com::{
             CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_INPROC_SERVER,
-            COINIT_APARTMENTTHREADED,
+            COINIT_APARTMENTTHREADED, STATFLAG_NONAME, STATSTG, STGC_DEFAULT, STREAM_SEEK_SET,
         };
 
         let extension = if format == "jpg" { "jpg" } else { "png" };
-        let target = fs_service::unique_destination(parent, &format!("{base_name}.{extension}"));
-        open(owner)?;
+        open(0)?;
         // SAFETY: COM is balanced below; clipboard handles are only used
         // while the clipboard stays open on this thread.
         let initialized = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }.0 >= 0;
         let result = unsafe {
-            (|| -> windows::core::Result<String> {
+            (|| -> windows::core::Result<()> {
                 let factory: IWICImagingFactory =
                     CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)?;
                 // Source: ready PNG data when offered, else the bitmap.
+                // WIC may decode lazily: the memory must outlive the frame,
+                // its decoder and its stream, through WriteSource below.
+                let mut png_bytes = Vec::new();
                 let source: IWICBitmapSource = 'source: {
                     if let Ok(handle) = GetClipboardData(png_format()) {
                         if !handle.is_invalid() {
@@ -292,10 +392,11 @@ mod imp {
                             if size > 0 && size <= 512 * 1024 * 1024 {
                                 let ptr = GlobalLock(hglobal) as *const u8;
                                 if !ptr.is_null() {
-                                    let bytes = std::slice::from_raw_parts(ptr, size).to_vec();
+                                    png_bytes
+                                        .extend_from_slice(std::slice::from_raw_parts(ptr, size));
                                     let _ = GlobalUnlock(hglobal);
                                     let stream = factory.CreateStream()?;
-                                    stream.InitializeFromMemory(&bytes)?;
+                                    stream.InitializeFromMemory(&png_bytes)?;
                                     let decoder = factory.CreateDecoderFromStream(
                                         &stream,
                                         std::ptr::null(),
@@ -322,10 +423,17 @@ mod imp {
                 } else {
                     &GUID_ContainerFormatPng
                 };
-                let stream = factory.CreateStream()?;
-                let target_wide = wide(&target.to_string_lossy());
-                // GENERIC_WRITE
-                stream.InitializeFromFilename(PCWSTR(target_wide.as_ptr()), 0x4000_0000)?;
+                let (mut width, mut height) = (0u32, 0u32);
+                source.GetSize(&mut width, &mut height)?;
+                if !valid_image_dimensions(width, height) {
+                    return Err(windows::core::Error::from_hresult(
+                        windows::Win32::Foundation::E_FAIL,
+                    ));
+                }
+                let stream = super::bounded_stream::bounded(
+                    CreateStreamOnHGlobal(HGLOBAL::default(), true)?,
+                    321 * 1024 * 1024,
+                );
                 let encoder = factory.CreateEncoder(container, std::ptr::null())?;
                 encoder.Initialize(&stream, WICBitmapEncoderNoCache)?;
                 let mut frame: Option<windows::Win32::Graphics::Imaging::IWICBitmapFrameEncode> =
@@ -335,8 +443,6 @@ mod imp {
                     windows::core::Error::from_hresult(windows::Win32::Foundation::E_FAIL)
                 })?;
                 frame.Initialize(None)?;
-                let (mut width, mut height) = (0u32, 0u32);
-                source.GetSize(&mut width, &mut height)?;
                 frame.SetSize(width, height)?;
                 let mut pixel_format = if extension == "jpg" {
                     GUID_WICPixelFormat24bppBGR
@@ -347,7 +453,43 @@ mod imp {
                 frame.WriteSource(&source, std::ptr::null())?;
                 frame.Commit()?;
                 encoder.Commit()?;
-                Ok(target.to_string_lossy().into_owned())
+                stream.Commit(STGC_DEFAULT)?;
+                drop(frame);
+                drop(encoder);
+                let mut info = STATSTG::default();
+                stream.Stat(&mut info, STATFLAG_NONAME)?;
+                // The stream also rejects writes and resizing beyond this bound.
+                if info.cbSize > 321 * 1024 * 1024 {
+                    return Err(windows::core::Error::from_hresult(
+                        windows::Win32::Foundation::E_FAIL,
+                    ));
+                }
+                stream.Seek(0, STREAM_SEEK_SET, None)?;
+                output.write_all(&info.cbSize.to_le_bytes()).map_err(|_| {
+                    windows::core::Error::from_hresult(windows::Win32::Foundation::E_FAIL)
+                })?;
+                let mut remaining = info.cbSize;
+                let mut buffer = [0u8; 65536];
+                while remaining > 0 {
+                    let count = remaining.min(buffer.len() as u64) as u32;
+                    let mut read = 0u32;
+                    stream
+                        .Read(buffer.as_mut_ptr().cast(), count, Some(&mut read))
+                        .ok()?;
+                    if read == 0 {
+                        return Err(windows::core::Error::from_hresult(
+                            windows::Win32::Foundation::E_FAIL,
+                        ));
+                    }
+                    output.write_all(&buffer[..read as usize]).map_err(|_| {
+                        windows::core::Error::from_hresult(windows::Win32::Foundation::E_FAIL)
+                    })?;
+                    remaining -= u64::from(read);
+                }
+                output.flush().map_err(|_| {
+                    windows::core::Error::from_hresult(windows::Win32::Foundation::E_FAIL)
+                })?;
+                Ok(())
             })()
         };
         if initialized {
@@ -356,11 +498,124 @@ mod imp {
         }
         close();
         match result {
-            Ok(path) => Ok(path),
-            Err(_) => {
-                let _ = std::fs::remove_file(&target);
-                Err("image.failed".to_string())
+            Ok(()) => Ok(()),
+            Err(_) => Err("image.failed".to_string()),
+        }
+    }
+
+    pub fn save_image(
+        _owner: isize,
+        parent: &std::path::Path,
+        base_name: &str,
+        format: &str,
+    ) -> Result<String, String> {
+        use std::io::Write;
+        let name = format!("{base_name}.{format}");
+        let bytes = crate::clipboard_image_helper::encode(format)?;
+        let mut partial =
+            create_image_partial(parent, &name).map_err(|_| "image.failed".to_string())?;
+        partial
+            .file
+            .write_all(&bytes)
+            .and_then(|()| partial.file.sync_all())
+            .map_err(|_| "image.failed".to_string())?;
+        for _ in 0..16 {
+            let target = fs_service::unique_destination(parent, &name);
+            match partial.publish(&target) {
+                Ok(()) => return Ok(target.to_string_lossy().into_owned()),
+                Err(_) if target.exists() => continue,
+                Err(_) => return Err("image.failed".to_string()),
             }
+        }
+        Err("image.failed".into())
+    }
+    #[cfg(test)]
+    mod image_tests {
+        use super::*;
+        use windows::Win32::System::Com::{
+            CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED,
+        };
+
+        struct Com;
+        impl Com {
+            fn new() -> Self {
+                unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED).ok().unwrap() };
+                Self
+            }
+        }
+        impl Drop for Com {
+            fn drop(&mut self) {
+                unsafe { CoUninitialize() }
+            }
+        }
+
+        #[test]
+        fn image_dimensions_are_bounded_without_overflow() {
+            assert!(valid_image_dimensions(8192, 8192));
+            assert!(!valid_image_dimensions(0, 1));
+            assert!(!valid_image_dimensions(32769, 1));
+            assert!(!valid_image_dimensions(8193, 8192));
+            assert!(!valid_image_dimensions(u32::MAX, u32::MAX));
+        }
+
+        #[test]
+        fn image_output_never_overwrites_a_destination_created_during_encoding() {
+            let _com = Com::new();
+            let dir = std::env::temp_dir().join(format!(
+                "adp-image-race-{}-{:?}",
+                std::process::id(),
+                std::thread::current().id()
+            ));
+            std::fs::create_dir(&dir).unwrap();
+            let target = dir.join("Screenshot.png");
+            let mut partial = create_image_partial(&dir, "Screenshot.png").unwrap();
+            use std::io::Write;
+            partial.file.write_all(b"new image").unwrap();
+            std::fs::write(&target, b"other file").unwrap();
+            assert!(partial.publish(&target).is_err());
+            assert_eq!(std::fs::read(&target).unwrap(), b"other file");
+            drop(partial);
+            assert_eq!(std::fs::read(&target).unwrap(), b"other file");
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+
+        #[test]
+        fn partial_creation_never_replaces_an_existing_file() {
+            let _com = Com::new();
+            let dir = std::env::temp_dir().join(format!(
+                "adp-image-partial-{}-{:?}",
+                std::process::id(),
+                std::thread::current().id()
+            ));
+            std::fs::create_dir(&dir).unwrap();
+            let existing = dir.join("~Screenshot.png.partial");
+            std::fs::write(&existing, b"keep me").unwrap();
+            let partial = create_image_partial(&dir, "Screenshot.png").unwrap();
+            assert_eq!(std::fs::read(existing).unwrap(), b"keep me");
+            drop(partial);
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+
+        #[test]
+        fn staging_handle_denies_replacement_and_publishes_without_overwriting() {
+            let dir = std::env::temp_dir().join(format!(
+                "adp-image-handle-{}-{:?}",
+                std::process::id(),
+                std::thread::current().id()
+            ));
+            std::fs::create_dir(&dir).unwrap();
+            let target = dir.join("Screenshot.png");
+            let partial_path = dir.join("~Screenshot.png.partial");
+            let mut partial = create_image_partial(&dir, "Screenshot.png").unwrap();
+            use std::io::Write;
+            partial.file.write_all(b"image").unwrap();
+            partial.file.sync_all().unwrap();
+            assert!(std::fs::remove_file(&partial_path).is_err());
+            partial.publish(&target).unwrap();
+            drop(partial);
+            assert_eq!(std::fs::read(&target).unwrap(), b"image");
+            assert!(!partial_path.exists());
+            std::fs::remove_dir_all(dir).unwrap();
         }
     }
 }
@@ -403,6 +658,11 @@ pub fn save_image(
     format: &str,
 ) -> Result<String, String> {
     imp::save_image(owner, parent, base_name, format)
+}
+
+#[cfg(windows)]
+pub fn encode_image(format: &str, output: &mut dyn std::io::Write) -> Result<(), String> {
+    imp::encode_image(format, output)
 }
 
 #[cfg(not(windows))]

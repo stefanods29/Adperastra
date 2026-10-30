@@ -9,7 +9,12 @@ import type { FileAction, UndoEntryInput } from "./undo";
  * ADR 0005: Tauri Channels do not arrive under the isolation pattern). */
 
 export type FileOpKind = "copy" | "move" | "recycle" | "restore" | "permanent" | "transfer";
-export type ConflictPolicy = "replace" | "skip" | "keepBoth";
+/** Replace is refused by Rust until exact approved targets exist. */
+export type ConflictPolicy = "merge" | "skip" | "keepBoth";
+export interface ConflictInfo {
+  path: string;
+  is_dir: boolean;
+}
 /** Job priority (contract 10): "foreground" when the user waits on it,
  * "normal" for file operations (the default), "background" for later
  * background tasks (low CPU and disk priority in Rust). */
@@ -82,9 +87,9 @@ export function setRetainedTransfers(entries: readonly UndoEntryInput[]): void {
 }
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
-export async function checkConflicts(sources: string[], destDir: string): Promise<string[]> {
-  const found = (await invoke("check_conflicts", { sources, destDir })) as string[];
-  return found.map(displayPath);
+export async function checkConflicts(sources: string[], destDir: string): Promise<ConflictInfo[]> {
+  const found = (await invoke("check_conflicts", { sources, destDir })) as ConflictInfo[];
+  return found.map((item) => ({ ...item, path: displayPath(item.path) }));
 }
 
 export async function createItem(parent: string, name: string, kind: "folder" | "file"): Promise<string> {

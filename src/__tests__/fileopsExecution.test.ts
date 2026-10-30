@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
-import { executeFileAction, runFileJob, setRetainedTransfers, type OpReport } from "../services/fileops";
+import { entryForJob, executeFileAction, runFileJob, setRetainedTransfers, type OpReport } from "../services/fileops";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("../services/settings", () => ({ isTauriRuntime: () => true }));
@@ -14,6 +14,45 @@ const poll = (value: OpReport) => ({ done: true, report: value, error: null,
 beforeEach(() => { invokeMock.mockReset(); setRetainedTransfers([]); });
 
 describe("executing history actions", () => {
+  it("redo never recycles or overwrites a destination restored by undo", async () => {
+    // A stored replacement history from before Replace was disabled must
+    // still fail safely: the restored old item stays, and Redo reports the
+    // conflict instead of removing it.
+    const source = "C:\\src\\a.txt";
+    const destination = "D:\\out\\a.txt";
+    const entry = entryForJob("move", report({
+      completed: [{ from: source, to: destination }],
+      created: [{ from: source, to: destination }],
+      replaced: [{ path: destination, bin_id: "D:\\$Recycle.Bin\\$Rold.txt" }],
+      transfer_id: "original-transfer",
+    }), "D:\\out");
+    expect(entry).not.toBeNull();
+    let occupant: "new" | "old" | "empty" = "new";
+    let pending = report();
+    invokeMock.mockImplementation(async (command, args) => {
+      if (command === "file_op_start") {
+        const request = (args as { request: { kind: string; reverse: boolean } }).request;
+        if (request.kind === "transfer" && request.reverse && occupant === "new") occupant = "empty";
+        else if (request.kind === "restore" && occupant === "empty") occupant = "old";
+        else if (request.kind === "transfer" && !request.reverse) {
+          if (occupant !== "empty") pending = report({ skipped: [{ path: destination, reason: "exists" }] });
+          else occupant = "new";
+        }
+        return undefined;
+      }
+      if (command === "file_op_poll") {
+        const value = pending;
+        pending = report();
+        return poll(value);
+      }
+      return undefined;
+    });
+    await executeFileAction(entry!.undo);
+    expect(occupant).toBe("old");
+    await expect(executeFileAction(entry!.redo)).rejects.toThrow("ops.exists");
+    expect(occupant).toBe("old");
+  });
+
   it("throws when an Undo job skips an item instead of reporting success", async () => {
     invokeMock.mockImplementation(async (command) => command === "file_op_poll"
       ? poll(report({ skipped: [{ path: "C:\\source.txt", reason: "in_use" }] })) : undefined);

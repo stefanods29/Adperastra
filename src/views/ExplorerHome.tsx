@@ -59,6 +59,7 @@ import {
   startExternalDrag,
   startFileJob,
   setRetainedTransfers,
+  type ConflictInfo,
   type ConflictPolicy,
   type OpReport,
 } from "../services/fileops";
@@ -238,6 +239,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
   const [conflictAsk, setConflictAsk] = useState<{
     name: string;
     more: number;
+    isFolder: boolean;
     answer: (answer: ConflictAnswer | null) => void;
   } | null>(null);
   const [permanentAsk, setPermanentAsk] = useState<{
@@ -459,11 +461,12 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     if (live.current.location.type === "home") setHomeNonce((value) => value + 1);
   };
 
-  const askConflict = (name: string, more: number) =>
+  const askConflict = (name: string, more: number, isFolder: boolean) =>
     new Promise<ConflictAnswer | null>((resolve) => {
       setConflictAsk({
         name,
         more,
+        isFolder,
         answer: (answer) => {
           setConflictAsk(null);
           resolve(answer);
@@ -591,7 +594,7 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
     destDir: string,
   ): Promise<OpReport | null> => {
     if (sources.length === 0) return null;
-    let conflicts: string[] = [];
+    let conflicts: ConflictInfo[] = [];
     try {
       conflicts = await checkConflicts(sources, destDir);
     } catch {
@@ -613,8 +616,8 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
       toastReport(recordJob(kind, report, destDir), report);
       return report;
     }
-    const firstName = baseNameOf(conflicts[0]);
-    const answer = await askConflict(firstName, conflicts.length - 1);
+    const firstName = baseNameOf(conflicts[0].path);
+    const answer = await askConflict(firstName, conflicts.length - 1, conflicts[0].is_dir);
     if (!answer) return null;
     if (answer.forAll) {
       const report = await runTracked(verbKey, kind, sources, { destDir, conflict: answer.policy });
@@ -623,7 +626,10 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
       return report;
     }
     // One by one: plain items first, then each conflict asks again.
-    const conflictTargets = new Set(conflicts.map((path) => displayPath(path).toLowerCase()));
+    const conflictByTarget = new Map(
+      conflicts.map((conflict) => [displayPath(conflict.path).toLowerCase(), conflict]),
+    );
+    const conflictTargets = new Set(conflictByTarget.keys());
     const targetOf = (source: string) => `${displayPath(destDir).replace(/\\$/, "")}\\${baseNameOf(source)}`;
     const plain = sources.filter((source) => !conflictTargets.has(targetOf(source).toLowerCase()));
     const clashing = sources.filter((source) => conflictTargets.has(targetOf(source).toLowerCase()));
@@ -637,10 +643,12 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         recordJob(kind, last, destDir);
       }
       for (const [index, source] of clashing.entries()) {
+        const isFolder =
+          conflictByTarget.get(targetOf(source).toLowerCase())?.is_dir ?? false;
         const policy =
           index === 0
             ? answer.policy
-            : (await askConflict(baseNameOf(source), clashing.length - index - 1))?.policy;
+            : (await askConflict(baseNameOf(source), clashing.length - index - 1, isFolder))?.policy;
         if (!policy) break;
         last = await runTracked(verbKey, kind, [source], { destDir, conflict: policy });
         recordJob(kind, last, destDir);
@@ -1750,7 +1758,12 @@ export default function ExplorerHome({ onStatsChange, onOpenHelp, view: viewProp
         ) : null}
       </div>
       {conflictAsk ? (
-        <ConflictDialog name={conflictAsk.name} moreCount={conflictAsk.more} onAnswer={conflictAsk.answer} />
+        <ConflictDialog
+          name={conflictAsk.name}
+          moreCount={conflictAsk.more}
+          isFolder={conflictAsk.isFolder}
+          onAnswer={conflictAsk.answer}
+        />
       ) : null}
       {permanentAsk ? <PermanentDialog count={permanentAsk.count} onAnswer={permanentAsk.answer} /> : null}
       {systemAsk ? <SystemItemsDialog onAnswer={systemAsk} onOpenHelp={() => onOpenHelp("copying-and-moving")} /> : null}

@@ -16,17 +16,22 @@ export interface ConflictDialogProps {
   name: string;
   /** How many more conflicts are waiting after this one. */
   moreCount: number;
+  /** True when the target is a folder, which can be merged. */
+  isFolder: boolean;
   onAnswer: (answer: ConflictAnswer | null) => void;
 }
 
-/** Simple conflict dialog (the full conflict window arrives in 09c). */
-export function ConflictDialog({ name, moreCount, onAnswer }: ConflictDialogProps) {
+/** Simple conflict dialog (the full conflict window arrives in 09c).
+ * Replacing is not offered yet: it needs an exact approved target, which
+ * the full conflict window will provide. */
+export function ConflictDialog({ name, moreCount, isFolder, onAnswer }: ConflictDialogProps) {
   const { t } = useTranslation();
   const [forAll, setForAll] = useState(true);
   const answer = (policy: ConflictPolicy) => onAnswer({ policy, forAll });
   return (
     <Dialog title={t("dialogs.conflictTitle")} onClose={() => onAnswer(null)}>
       <p className="adp-dialog-text">{t("dialogs.conflictBody", { name })}</p>
+      {isFolder ? <p className="adp-dialog-note">{t("dialogs.mergeNote")}</p> : null}
       {moreCount > 0 ? <p className="adp-dialog-text">{t("dialogs.conflictMore", { count: moreCount })}</p> : null}
       <label className="adp-dialog-check">
         <input type="checkbox" checked={forAll} onChange={(event) => setForAll(event.target.checked)} />
@@ -40,12 +45,18 @@ export function ConflictDialog({ name, moreCount, onAnswer }: ConflictDialogProp
         <button type="button" className="adp-btn" onClick={() => answer("skip")}>
           {t("dialogs.skip")}
         </button>
-        <button type="button" className="adp-btn" onClick={() => answer("keepBoth")}>
+        <button
+          type="button"
+          className={isFolder ? "adp-btn" : "adp-btn adp-btn--primary"}
+          onClick={() => answer("keepBoth")}
+        >
           {t("dialogs.keepBoth")}
         </button>
-        <button type="button" className="adp-btn adp-btn--primary" onClick={() => answer("replace")}>
-          {t("dialogs.replace")}
-        </button>
+        {isFolder ? (
+          <button type="button" className="adp-btn adp-btn--primary" onClick={() => answer("merge")}>
+            {t("dialogs.merge")}
+          </button>
+        ) : null}
       </div>
     </Dialog>
   );

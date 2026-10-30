@@ -4,22 +4,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../i18n";
 import ExplorerHome from "../views/ExplorerHome";
 import type { ExplorerItem } from "../services/explorer";
-import type { ConflictPolicy, OpReport } from "../services/fileops";
+import type { ConflictInfo, ConflictPolicy, OpReport } from "../services/fileops";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 const fixture = vi.hoisted(() => {
   const systems = new Set<string>();
+  const folders = new Set<string>();
   const output = new Map<string, string>();
   return {
-  items: [] as ExplorerItem[],
-  systems,
-  sources: ["C:\\Source\\a.txt", "C:\\Source\\b.txt"],
-  cut: false,
-  conflicts: [] as string[],
-  output,
-  requests: [] as { kind: string; sources: string[]; conflict?: ConflictPolicy }[],
-};
+    items: [] as ExplorerItem[],
+    systems,
+    folders,
+    sources: ["C:\\Source\\a.txt", "C:\\Source\\b.txt"],
+    cut: false,
+    conflicts: [] as ConflictInfo[],
+    output,
+    requests: [] as { kind: string; sources: string[]; conflict?: ConflictPolicy }[],
+  };
 });
 
 vi.mock("@tanstack/react-virtual", () => ({
@@ -62,8 +64,10 @@ vi.mock("../services/fileops", async (original) => ({
   clipboardClear: async () => undefined,
   checkConflicts: async () => fixture.conflicts,
   startFileJob: async (kind: string, sources: string[], options: { conflict?: ConflictPolicy; allowSystem?: boolean } = {}) => {
+    const targetOf = (source: string) => `C:\\Dest\\${source.split("\\").pop()!}`;
     const systemSource = kind !== "copy" && sources.some((source) => fixture.systems.has(source));
-    const systemTarget = options.conflict === "replace" && fixture.conflicts.some((target) => fixture.systems.has(target));
+    const systemTarget = options.conflict === "merge" &&
+      sources.some((source) => fixture.systems.has(targetOf(source)));
     if ((systemSource || systemTarget) && !options.allowSystem) {
       return { id: "checking", cancel: async () => undefined, completion: Promise.reject(new Error("ops.system_confirmation_required")) };
     }
@@ -71,12 +75,25 @@ vi.mock("../services/fileops", async (original) => ({
     const report: OpReport = { completed: [], skipped: [], replaced: [], created: [], cancelled: false };
     for (const source of sources) {
       const name = source.split("\\").pop()!;
-      let target = `C:\\Dest\\${name}`;
-      if (fixture.output.has(target) && options.conflict === "skip") {
-        report.skipped.push({ path: source, reason: "exists" });
-        continue;
+      let target = targetOf(source);
+      if (fixture.output.has(target)) {
+        if (options.conflict === "skip") {
+          report.skipped.push({ path: source, reason: "exists" });
+          continue;
+        }
+        if (options.conflict === "keepBoth") target = target.replace(/(\.[^.]*)?$/, " - Copy$1");
+        if (options.conflict === "merge") {
+          if (!fixture.folders.has(target)) {
+            report.skipped.push({ path: source, reason: "exists" });
+            continue;
+          }
+          const added = `${target}\\new.txt`;
+          fixture.output.set(added, "new file in folder");
+          report.completed.push({ from: source, to: target });
+          report.created.push({ from: source, to: added });
+          continue;
+        }
       }
-      if (fixture.output.has(target) && options.conflict === "keepBoth") target = target.replace(".txt", " (2).txt");
       fixture.output.set(target, `new ${name}`);
       report.completed.push({ from: source, to: target });
       report.created.push({ from: source, to: target });
@@ -115,6 +132,7 @@ async function renderFolder() {
 beforeEach(() => {
   fixture.items = [item("system.ini")];
   fixture.systems.clear();
+  fixture.folders.clear();
   fixture.sources = ["C:\\Source\\a.txt", "C:\\Source\\b.txt"];
   fixture.cut = false;
   fixture.conflicts = [];
@@ -129,20 +147,41 @@ afterEach(async () => {
 });
 
 describe("Explorer file-operation confirmations", () => {
-  it("applies Replace then Keep both separately when the for-all box is cleared", async () => {
-    fixture.conflicts = ["C:\\Dest\\a.txt", "C:\\Dest\\b.txt"];
-    fixture.output.set("C:\\Dest\\a.txt", "old a");
+  it("applies Merge then Keep both separately when the for-all box is cleared", async () => {
+    fixture.sources = ["C:\\Source\\folder", "C:\\Source\\b.txt"];
+    fixture.conflicts = [
+      { path: "C:\\Dest\\folder", is_dir: true },
+      { path: "C:\\Dest\\b.txt", is_dir: false },
+    ];
+    fixture.folders.add("C:\\Dest\\folder");
+    fixture.output.set("C:\\Dest\\folder", "folder");
+    fixture.output.set("C:\\Dest\\folder\\keep.txt", "old keep");
     fixture.output.set("C:\\Dest\\b.txt", "old b");
     await renderFolder();
     await key("v", { ctrlKey: true });
-    expect(dialog()?.textContent).toContain("a.txt");
+    expect(dialog()?.textContent).toContain("folder");
+    expect(dialog()?.textContent).toContain("Merge");
     await click(dialog()!.querySelector("input")!);
-    await answer("Replace");
+    await answer("Merge");
     expect(dialog()?.textContent).toContain("b.txt");
+    expect(dialog()?.textContent).not.toContain("Merge");
     await answer("Keep both");
-    expect(fixture.output.get("C:\\Dest\\a.txt")).toBe("new a.txt");
+    expect(fixture.output.get("C:\\Dest\\folder\\keep.txt")).toBe("old keep");
+    expect(fixture.output.get("C:\\Dest\\folder\\new.txt")).toBe("new file in folder");
     expect(fixture.output.get("C:\\Dest\\b.txt")).toBe("old b");
-    expect(fixture.output.get("C:\\Dest\\b (2).txt")).toBe("new b.txt");
+    expect(fixture.output.get("C:\\Dest\\b - Copy.txt")).toBe("new b.txt");
+    expect(fixture.requests.map((request) => request.conflict)).toEqual(["merge", "keepBoth"]);
+  });
+
+  it("does not offer Replace or Merge for a file conflict", async () => {
+    fixture.conflicts = [{ path: "C:\\Dest\\a.txt", is_dir: false }];
+    fixture.output.set("C:\\Dest\\a.txt", "old");
+    await renderFolder();
+    await key("v", { ctrlKey: true });
+    const labels = [...dialog()!.querySelectorAll("button")].map((button) => button.textContent);
+    expect(labels).not.toContain("Replace");
+    expect(labels).not.toContain("Merge");
+    expect(labels).toContain("Keep both");
   });
 
   it("cancels recycling a system item without starting a job", async () => {
@@ -190,18 +229,19 @@ describe("Explorer file-operation confirmations", () => {
     expect(fixture.requests.map((request) => request.kind)).toEqual(["move"]);
   });
 
-  it("warns before replacing a system target and preserves it on cancellation", async () => {
-    fixture.sources = ["C:\\Source\\system.ini"];
-    fixture.conflicts = ["C:\\Dest\\system.ini"];
-    fixture.systems.add(fixture.conflicts[0]);
-    fixture.output.set(fixture.conflicts[0], "old system file");
+  it("warns before merging into a system folder and preserves it on cancellation", async () => {
+    fixture.sources = ["C:\\Source\\system"];
+    fixture.conflicts = [{ path: "C:\\Dest\\system", is_dir: true }];
+    fixture.folders.add("C:\\Dest\\system");
+    fixture.systems.add(fixture.conflicts[0].path);
+    fixture.output.set(fixture.conflicts[0].path, "old system folder");
     await renderFolder();
     await key("v", { ctrlKey: true });
-    await answer("Replace");
+    await answer("Merge");
     expect(dialog()?.textContent).toContain("system item");
     expect(fixture.requests).toHaveLength(0);
     await answer("Cancel");
-    expect(fixture.output.get(fixture.conflicts[0])).toBe("old system file");
+    expect(fixture.output.get(fixture.conflicts[0].path)).toBe("old system folder");
     expect(fixture.requests).toHaveLength(0);
   });
 });

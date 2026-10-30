@@ -44,7 +44,7 @@ pub use list::{
 };
 pub use ops::{
     check_conflicts, copy_items, create_item, delete_permanently, move_items, op_error_reason,
-    recycle_items, restore_bin_items, restore_items, unique_destination, CompletedItem,
+    recycle_items, restore_bin_items, restore_items, unique_destination, CompletedItem, Conflict,
     ConflictPolicy, CreateKind, OpProgress, OpReport, ReplacedItem, SkippedItem,
 };
 pub use rename::{rename_error_reason, rename_in_place};

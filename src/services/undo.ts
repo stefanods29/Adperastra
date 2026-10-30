@@ -3,6 +3,8 @@
  * what to do as data (a FileAction), never as closures, so the Recent
  * actions list can show and run them long after the toast is gone. */
 
+import type { ConflictPolicy } from "./fileops";
+
 export type FileAction =
   /** Replay exact file-transfer effects retained in Rust. */
   | { type: "transfer"; id: string; reverse: boolean }
@@ -11,7 +13,7 @@ export type FileAction =
   /** Move several items, each `from` to its exact `to`. */
   | { type: "movePairs"; pairs: { from: string; to: string }[] }
   /** Copy items into a folder (redo of a copy; undo of a move is pairs). */
-  | { type: "copy"; sources: string[]; destDir: string; conflict: "replace" | "skip" | "keepBoth" }
+  | { type: "copy"; sources: string[]; destDir: string; conflict: ConflictPolicy }
   /** Send items to the Recycle Bin (undo of copy/new). */
   | { type: "recycle"; paths: string[] }
   /** Restore items from the Recycle Bin to these original paths. With

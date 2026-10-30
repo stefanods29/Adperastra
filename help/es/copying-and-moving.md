@@ -13,16 +13,17 @@ Copia, mueve y cambia el nombre de archivos y carpetas con la barra de comandos,
 
 Si ya hay un elemento con el mismo nombre en la carpeta, se te pregunta qué hacer:
 
-- **Reemplazar** usa tu elemento en lugar del que está ahí. El elemento que estaba ahí va a la Papelera de reciclaje, así que Deshacer (Ctrl+Z) lo recupera. Dos carpetas con el mismo nombre se combinan: tus archivos se agregan a la carpeta existente.
+- **Combinar** (dos carpetas con el mismo nombre) agrega tus archivos a la carpeta existente y conserva los que ya están ahí. Los archivos con el mismo nombre se omiten y aparecen en la lista al terminar la operación.
 - **Omitir** deja ambos como están.
-- **Conservar ambos** mantiene el elemento existente y agrega el tuyo con un número, como «report (2)».
+- **Conservar ambos** mantiene el elemento existente y agrega el tuyo como «report - Copy» (luego «report - Copy (2)»). Un elemento movido que conserva ambos recibe un número, como «report (1)».
 
-Marca **Hacer esto para todos los conflictos** para usar la misma respuesta en toda la operación. Nada se reemplaza nunca sin preguntar. Un archivo y una carpeta con el mismo nombre nunca se reemplazan entre sí; ese elemento se omite y aparece en la lista al terminar la operación.
+Marca **Hacer esto para todos los conflictos** para usar la misma respuesta en toda la operación. Nada se reemplaza ni se sobrescribe nunca. Un archivo y una carpeta con el mismo nombre no se pueden combinar; ese elemento se omite y aparece en la lista al terminar la operación. Reemplazar archivos llegará con la ventana de conflictos completa.
 
 ## Elementos nuevos
 
 - **Nuevo** > **Nueva carpeta** (Ctrl+Shift+N) o **Nuevo** > **Documento de texto** crea un elemento vacío y abre su nombre listo para editar.
 - Pulsa **Intro** para conservar el nombre o **Escape** para cancelar; el elemento se conserva, y puedes eliminarlo con **Eliminar** si no lo quieres.
+- Cuando el nombre ya está ocupado, el elemento nuevo cuenta desde uno: «Nueva carpeta (1)», «Nueva carpeta (2)». Las descargas y los archivos pegados usan los mismos nombres numerados.
 
 ## Operaciones grandes
 
@@ -34,6 +35,6 @@ Consulta también: «Eliminar y la Papelera de reciclaje», «Arrastrar y soltar
 
 ## Elementos del sistema y vínculos de carpetas
 
-Mover o reemplazar un elemento del sistema de Windows, incluso uno dentro de una carpeta seleccionada, muestra una advertencia aparte antes de cambiar nada. **Cancelar** está seleccionado al principio. Elige **Continuar** solo si sabes que es seguro. Los demás archivos no necesitan esta confirmación adicional. Los archivos que no se cambian dentro de una carpeta combinada no provocan una advertencia.
+Mover, combinar con o eliminar un elemento del sistema de Windows, incluso uno dentro de una carpeta seleccionada, muestra una advertencia aparte antes de cambiar nada. **Cancelar** está seleccionado al principio. Elige **Continuar** solo si sabes que es seguro. Los demás archivos no necesitan esta confirmación adicional. Los archivos que no se cambian dentro de una carpeta combinada no provocan una advertencia.
 
-Las raíces de las unidades y las carpetas Windows y Archivos de programa están protegidas. Si un movimiento o una eliminación contiene un vínculo o una unión de carpetas, se omite en lugar de seguir el vínculo. También se omite reemplazar un elemento a través de uno de esos vínculos. El panel de operaciones muestra lo que se omitió; las copias normales conservan su protección contra ciclos de vínculos.
+Las raíces de las unidades y las carpetas Windows y Archivos de programa están protegidas. Si un movimiento o una eliminación contiene un vínculo o una unión de carpetas, se omite en lugar de seguir el vínculo. También se omite combinar con un elemento a través de uno de esos vínculos. El panel de operaciones muestra lo que se omitió; las copias normales conservan su protección contra ciclos de vínculos.

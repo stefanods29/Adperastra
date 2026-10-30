@@ -20,6 +20,8 @@ use thiserror::Error;
 
 mod classic_menu;
 mod clipboard;
+#[cfg(windows)]
+mod clipboard_image_helper;
 mod drag;
 mod explorer;
 mod operation_safety;
@@ -1348,9 +1350,12 @@ pub struct FileOpPoll {
 
 fn parse_conflict_policy(value: &str) -> Result<fs_service::ConflictPolicy, String> {
     match value {
-        "replace" => Ok(fs_service::ConflictPolicy::Replace),
+        // Replace stays unavailable until recycling can be bound to the
+        // exact item the user approved (contract 10, full conflict window).
+        "replace" => Err("ops.replace_unavailable".to_string()),
         "skip" => Ok(fs_service::ConflictPolicy::Skip),
         "keepBoth" => Ok(fs_service::ConflictPolicy::KeepBoth),
+        "merge" => Ok(fs_service::ConflictPolicy::Merge),
         _ => Err(format!("invalid conflict policy {value:?}")),
     }
 }
@@ -1373,19 +1378,14 @@ async fn check_conflicts(
     window: WebviewWindow,
     sources: Vec<String>,
     dest_dir: String,
-) -> Result<Vec<String>, String> {
+) -> Result<Vec<fs_service::Conflict>, String> {
     ensure_main(window.label())?;
     let sources = validate_op_sources(&sources)?;
     validate_absolute_path(&dest_dir).map_err(|_| "ops.not_found".to_string())?;
     let dest = PathBuf::from(dest_dir);
-    tauri::async_runtime::spawn_blocking(move || {
-        fs_service::check_conflicts(&sources, &dest)
-            .iter()
-            .map(|path| path.to_string_lossy().into_owned())
-            .collect::<Vec<String>>()
-    })
-    .await
-    .map_err(|e| e.to_string())
+    tauri::async_runtime::spawn_blocking(move || fs_service::check_conflicts(&sources, &dest))
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// Create an empty folder or file ("New"); returns its real path, which
@@ -2267,6 +2267,12 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     Ok(())
 }
 fn main() {
+    #[cfg(windows)]
+    if std::env::args().nth(1).as_deref() == Some(clipboard_image_helper::HELPER_FLAG) {
+        std::process::exit(clipboard_image_helper::run(
+            std::env::args().nth(2).as_deref(),
+        ));
+    }
     // The classic-menu helper is this executable started with a flag; it
     // never starts the app itself.
     if std::env::args().nth(1).as_deref() == Some(classic_menu::HELPER_FLAG) {
@@ -2657,13 +2663,19 @@ mod tests {
 
     #[test]
     fn file_op_request_parsing() {
+        // Replace is refused until exact approved targets exist; the UI
+        // offers Merge, Skip and Keep both instead.
         assert_eq!(
-            parse_conflict_policy("replace").unwrap(),
-            fs_service::ConflictPolicy::Replace
+            parse_conflict_policy("replace").err().as_deref(),
+            Some("ops.replace_unavailable")
         );
         assert_eq!(
             parse_conflict_policy("keepBoth").unwrap(),
             fs_service::ConflictPolicy::KeepBoth
+        );
+        assert_eq!(
+            parse_conflict_policy("merge").unwrap(),
+            fs_service::ConflictPolicy::Merge
         );
         assert!(parse_conflict_policy("mergeEverything").is_err());
         // The conflict policy defaults to the safe choice.

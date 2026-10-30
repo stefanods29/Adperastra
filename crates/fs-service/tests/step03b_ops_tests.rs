@@ -33,22 +33,22 @@ fn tree(root: &std::path::Path) -> Vec<String> {
 }
 
 #[test]
-fn unique_destination_numbers_like_windows() {
+fn unique_destination_numbers_from_one() {
     let dir = tempfile::tempdir().unwrap();
     fs::write(dir.path().join("notes.txt"), b"x").unwrap();
     assert_eq!(
         unique_destination(dir.path(), "notes.txt"),
-        dir.path().join("notes (2).txt")
+        dir.path().join("notes (1).txt")
     );
-    fs::write(dir.path().join("notes (2).txt"), b"x").unwrap();
+    fs::write(dir.path().join("notes (1).txt"), b"x").unwrap();
     assert_eq!(
         unique_destination(dir.path(), "notes.txt"),
-        dir.path().join("notes (3).txt")
+        dir.path().join("notes (2).txt")
     );
     fs::create_dir(dir.path().join("Trips")).unwrap();
     assert_eq!(
         unique_destination(dir.path(), "Trips"),
-        dir.path().join("Trips (2)")
+        dir.path().join("Trips (1)")
     );
 }
 
@@ -58,7 +58,7 @@ fn create_item_makes_unique_empty_items() {
     let folder = create_item(dir.path(), "New folder", CreateKind::Folder).unwrap();
     assert!(folder.is_dir());
     let again = create_item(dir.path(), "New folder", CreateKind::Folder).unwrap();
-    assert_eq!(again, dir.path().join("New folder (2)"));
+    assert_eq!(again, dir.path().join("New folder (1)"));
     let file = create_item(dir.path(), "New text file.txt", CreateKind::File).unwrap();
     assert_eq!(fs::read(&file).unwrap(), Vec::<u8>::new());
     assert!(create_item(dir.path(), "a/b.txt", CreateKind::File).is_err());
@@ -123,8 +123,8 @@ fn copy_never_overwrites_without_replace() {
         &mut no_progress,
     )
     .unwrap();
-    assert_eq!(kept.completed[0].to, dst.path().join("a (2).txt"));
-    assert_eq!(fs::read(dst.path().join("a (2).txt")).unwrap(), b"new");
+    assert_eq!(kept.completed[0].to, dst.path().join("a - Copy.txt"));
+    assert_eq!(fs::read(dst.path().join("a - Copy.txt")).unwrap(), b"new");
 
     let replaced = copy_items(
         &[src.path().join("a.txt")],
@@ -136,6 +136,114 @@ fn copy_never_overwrites_without_replace() {
     .unwrap();
     assert_eq!(replaced.completed.len(), 1);
     assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"new");
+}
+
+#[test]
+fn merge_keeps_existing_files_and_copies_new_ones() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::create_dir(src.path().join("A")).unwrap();
+    fs::write(src.path().join("A/same.txt"), b"new same").unwrap();
+    fs::write(src.path().join("A/new.txt"), b"new").unwrap();
+    fs::create_dir(dst.path().join("A")).unwrap();
+    fs::write(dst.path().join("A/same.txt"), b"old same").unwrap();
+    fs::write(dst.path().join("A/mine.txt"), b"mine").unwrap();
+    let report = copy_items(
+        &[src.path().join("A")],
+        dst.path(),
+        ConflictPolicy::Merge,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1, "{report:?}");
+    assert!(report.replaced.is_empty());
+    assert_eq!(
+        fs::read(dst.path().join("A/same.txt")).unwrap(),
+        b"old same"
+    );
+    assert_eq!(fs::read(dst.path().join("A/new.txt")).unwrap(), b"new");
+    assert_eq!(fs::read(dst.path().join("A/mine.txt")).unwrap(), b"mine");
+    assert!(report
+        .skipped
+        .iter()
+        .any(|item| { item.reason == "exists" && item.path.ends_with("same.txt") }));
+    assert!(report
+        .created
+        .iter()
+        .any(|item| item.to.ends_with("new.txt")));
+    assert!(!report
+        .created
+        .iter()
+        .any(|item| item.to.ends_with("same.txt")));
+}
+
+#[test]
+fn merge_into_a_file_target_is_skipped_without_touching_it() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("a.txt"), b"new").unwrap();
+    fs::write(dst.path().join("a.txt"), b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("a.txt")],
+        dst.path(),
+        ConflictPolicy::Merge,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert!(report.replaced.is_empty());
+    assert_eq!(report.skipped[0].reason, "exists");
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"old");
+}
+
+#[test]
+fn move_merge_keeps_conflicting_sources_and_undoes_only_what_moved() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::create_dir(src.path().join("A")).unwrap();
+    fs::write(src.path().join("A/same.txt"), b"new same").unwrap();
+    fs::write(src.path().join("A/new.txt"), b"new").unwrap();
+    fs::create_dir(dst.path().join("A")).unwrap();
+    fs::write(dst.path().join("A/same.txt"), b"old same").unwrap();
+    let report = move_items(
+        &[src.path().join("A")],
+        dst.path(),
+        ConflictPolicy::Merge,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty(), "{report:?}");
+    assert!(report.replaced.is_empty());
+    assert_eq!(
+        fs::read(dst.path().join("A/same.txt")).unwrap(),
+        b"old same"
+    );
+    assert_eq!(fs::read(dst.path().join("A/new.txt")).unwrap(), b"new");
+    assert_eq!(
+        fs::read(src.path().join("A/same.txt")).unwrap(),
+        b"new same"
+    );
+    assert!(!src.path().join("A/new.txt").exists());
+    fs_service::ops::apply_transfer(
+        &report.transfer,
+        true,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(fs::read(src.path().join("A/new.txt")).unwrap(), b"new");
+    assert_eq!(
+        fs::read(src.path().join("A/same.txt")).unwrap(),
+        b"new same"
+    );
+    assert_eq!(
+        fs::read(dst.path().join("A/same.txt")).unwrap(),
+        b"old same"
+    );
+    assert!(!dst.path().join("A/new.txt").exists());
 }
 
 #[test]
@@ -156,6 +264,25 @@ fn copy_into_the_same_folder_uses_the_copy_name() {
         fs::read(dir.path().join("report - Copy.txt")).unwrap(),
         b"data"
     );
+}
+
+#[test]
+fn move_keep_both_uses_a_number_not_the_copy_name() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("report.txt"), b"new").unwrap();
+    fs::write(dst.path().join("report.txt"), b"old").unwrap();
+    let report = move_items(
+        &[src.path().join("report.txt")],
+        dst.path(),
+        ConflictPolicy::KeepBoth,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed[0].to, dst.path().join("report (1).txt"));
+    assert_eq!(fs::read(dst.path().join("report.txt")).unwrap(), b"old");
+    assert_eq!(fs::read(dst.path().join("report (1).txt")).unwrap(), b"new");
 }
 
 #[test]
@@ -202,17 +329,27 @@ fn move_renames_then_removes_the_source() {
 }
 
 #[test]
-fn check_conflicts_lists_existing_targets_only() {
+fn check_conflicts_lists_existing_targets_and_their_kind() {
     let src = tempfile::tempdir().unwrap();
     let dst = tempfile::tempdir().unwrap();
     fs::write(src.path().join("here.txt"), b"1").unwrap();
     fs::write(src.path().join("gone.txt"), b"2").unwrap();
+    fs::create_dir(src.path().join("folder")).unwrap();
     fs::write(dst.path().join("here.txt"), b"old").unwrap();
+    fs::create_dir(dst.path().join("folder")).unwrap();
     let conflicts = check_conflicts(
-        &[src.path().join("here.txt"), src.path().join("gone.txt")],
+        &[
+            src.path().join("here.txt"),
+            src.path().join("gone.txt"),
+            src.path().join("folder"),
+        ],
         dst.path(),
     );
-    assert_eq!(conflicts, vec![dst.path().join("here.txt")]);
+    assert_eq!(conflicts.len(), 2);
+    assert_eq!(conflicts[0].path, dst.path().join("here.txt"));
+    assert!(!conflicts[0].is_dir);
+    assert_eq!(conflicts[1].path, dst.path().join("folder"));
+    assert!(conflicts[1].is_dir);
 }
 
 #[test]

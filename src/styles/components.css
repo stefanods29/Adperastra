@@ -45,6 +45,7 @@
 .adp-dialog-title { font-size:var(--adp-font-section); font-weight:600; }
 .adp-dialog-body { padding:var(--adp-space-6); color:var(--adp-color-text-body-muted); }
 .adp-dialog-text { margin:0 0 var(--adp-space-4); font-size:var(--adp-font-body); }
+.adp-dialog-note { margin:0 0 var(--adp-space-4); font-size:var(--adp-font-small); color:var(--adp-color-text-secondary); }
 .adp-dialog-check { display:flex; align-items:center; gap:var(--adp-space-3); font-size:var(--adp-font-body); color:var(--adp-color-text-primary); margin:var(--adp-space-4) 0; cursor:pointer; }
 .adp-dialog-actions { display:flex; align-items:center; gap:var(--adp-space-3); margin-top:var(--adp-space-6); }
 .adp-btn--danger { background:var(--adp-accent-pdf); border-color:var(--adp-accent-pdf); color:var(--adp-color-text-on-accent); }

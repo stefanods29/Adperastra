@@ -287,7 +287,7 @@ fn copy_new_file(
 }
 
 #[cfg(windows)]
-fn rename_new(from: &Path, to: &Path) -> Result<()> {
+pub(super) fn rename_new(from: &Path, to: &Path) -> Result<()> {
     use windows::core::PCWSTR;
     use windows::Win32::Storage::FileSystem::{MoveFileExW, MOVEFILE_WRITE_THROUGH};
     let from = crate::winpath::long_path_wide(from);
@@ -304,7 +304,7 @@ fn rename_new(from: &Path, to: &Path) -> Result<()> {
 }
 
 #[cfg(not(windows))]
-fn rename_new(from: &Path, to: &Path) -> Result<()> {
+pub(super) fn rename_new(from: &Path, to: &Path) -> Result<()> {
     fs::hard_link(from, to)?;
     fs::remove_file(from)?;
     Ok(())
