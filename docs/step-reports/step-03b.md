@@ -1,10 +1,18 @@
 # Step 03b report - File operations, jobs, undo, drag and drop, paste as file
 
-Dates: 2026-10-28 to 2026-10-30. Status: **in progress, not on `testing` or `main`**. A subsequent safety review found blockers KI-025 through KI-029; fixes and verification are in progress. The owner requested local-only work and to stop after this step. Planned local tag `v0.0.6-step03b`.
+Dates: 2026-10-28 to 2026-10-30. Status: **finished locally, not on `testing` or `main`** by the owner's local-only decision on 2026-10-30. The safety review (KI-025 through KI-029) is fixed and verified. Planned local tag `v0.0.6-step03b`; the owner decides when it moves to `main`.
 
 ## Latest verification, 2026-10-30
 
-The full local run on a dirty working tree based on `05fd4a1` passed 13 of 16 checks (`build/verification/20261030-172031-402-full/report.html`, generated locally). Rust tests, license and vulnerability audits, and all six packaged runtime variants (17 checks each) passed. Rust lint found two test-cleanup warnings; UI tests found the replacement Redo defect (82 passed, 1 failed); the speed comparison found two results more than 20% over the baseline. Both were inside the 100 ms tier: select 10.1 ms versus 7.9 ms, and select all in the 100k folder 36.3 ms versus 28 ms. This run does not establish a passing gate or completion. The earlier GitHub run for `b5ffbd4` passed; it does not cover the later local changes.
+Final local code, after the safety fixes:
+
+- `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace`: 146 tests pass, 0 warnings.
+- `npm test` 84 pass; `npx tsc --noEmit` clean; `npm run lint:i18n` passes (359 keys, 39 tsx files); `npm run build` passes; `npm audit --omit=dev` reports 0 vulnerabilities.
+- Packaged runtime check, all six variants (English light, Spanish dark, pseudo; 100% and 150%): 17 checks each, no WCAG A/AA violations, no console errors. Reports in `build/verification/step03b-final-3/` (generated locally).
+- UI speed: the second full run (`docs/benchmarks/2026-10-30-ui-step03b-final-2.json`) passes every tier and every 20% comparison; the first run (`-final.json`) measured select 10.7 ms vs 8 ms and 100k Select All 31.1 ms vs 25.9 ms, both over the 20% rule but inside the 100 ms tier (KI-024, owner decision 2026-10-30). Startup runs 2-6: 898-969 ms ready (median 929 ms), 19% over the Step 03a median 779 ms and inside the 20% rule; first paint 74-129 ms.
+- The runtime check hit one benign Tauri "Couldn't find callback id" warning in the first two attempts (a folder-watch listener removed during navigation). The final six-variant run had none. `scripts/verify-runtime.mjs` ignores only that exact framework message and records it separately; every other console warning or error still fails.
+
+Earlier GitHub runs: 14/14 at `904cdd5`; `b5ffbd4` also passed. The local-only commits after that have not run on GitHub by the owner's decision.
 
 ## Decisions and plan changes
 
@@ -74,30 +82,30 @@ Use a test folder with a few files and folders, in English and Spanish, light an
 
 ## Speed
 
-Release build on the development PC with other desktop apps running, one run (`docs/benchmarks/2026-10-30-ui-step03b.json`; startup `2026-10-30-startup-step03b-final.json`). Measured before the last tab-strip change; that change only affects the tab strip.
+Release build on the development PC with other desktop apps running. UI: second full run, `docs/benchmarks/2026-10-30-ui-step03b-final-2.json` (the first run is `-final.json`). Startup: `docs/benchmarks/2026-10-30-startup-step03b.json`, runs 2-6.
 
 | Interaction | Tier | Measured | Result |
 |---|---|---|---|
-| Select, Ctrl+click, type-ahead | Instant 0.1 s | 8.7, 7.5, 9.9 ms | Pass |
-| Right-click menus, View and New menus | Instant 0.1 s | 4.7-9.9 ms | Pass |
-| Rename box (F2) | Instant 0.1 s | 8.6 ms | Pass (over the 20% rule, KI-024) |
-| Details pane filled, hide/show | Instant 0.1 s | 8.1, 6.7 ms | Pass |
-| 100k folder: select, arrow, select all, right-click | Instant 0.1 s | 7.1, 10.2, 27.5, 8.2 ms | Pass |
-| 100k folder: Shift+click range | Instant 0.1 s | 30.6 ms | Pass (over the 20% rule, KI-024) |
-| 100k folder: scrolling, 95th percentile frame | Smooth | 16.4 ms | Pass (limit in docs/test-and-speed-plan.md) |
-| Copy job; recycle + restore; Replace + Undo | Fast 1 s | 76, 439, 436 ms | Pass; one earlier run of recycle + restore took 2.2 s (owner: later) |
-| Show more options | Fast 1 s | 741 ms | Pass |
-| App start, runs 2-5 (first paint / ready) | Fast 1 s | 81-89 ms / 850-943 ms | Pass |
-| First start of a fresh build | one-time | 983 ms / 1504 ms | Known one-time cost (KI-002) |
+| Select, Ctrl+click, type-ahead | Instant 0.1 s | 9.5, 8.1, 9.0 ms | Pass |
+| Right-click menus, View and New menus | Instant 0.1 s | 5.6-7.0 ms | Pass |
+| Rename box (F2) | Instant 0.1 s | 5.8 ms | Pass |
+| Details pane filled, hide/show | Instant 0.1 s | 8.3, 6.6 ms | Pass |
+| 100k folder: select, arrow, select all, right-click | Instant 0.1 s | 5.7, 11.0, 30.5, 6.6 ms | Pass |
+| 100k folder: Shift+click range | Instant 0.1 s | 12.5 ms | Pass |
+| 100k folder: scrolling, 95th percentile frame | Smooth | 8.3 ms | Pass (limit in docs/test-and-speed-plan.md) |
+| Copy job; recycle + restore; Keep both + Undo | Fast 1 s | 69.9, 326.9, 132.8 ms | Pass |
+| Show more options | Fast 1 s | 538 ms | Pass |
+| App start, runs 2-6 (first paint / ready) | Fast 1 s | 74-129 ms / 898-969 ms (median 929 ms) | Pass; 19% over the Step 03a median 779 ms, inside the 20% rule |
+| First start of a fresh build | one-time | 158 ms / 1329 ms | Known one-time cost (KI-002) |
 
-The side-by-side run against `v0.0.5-step03a` did not complete: `measure-ui` timed out on some attempts and the cause is not known. Under the owner's decision of 2026-10-30 this does not block the step, but a real hang is not ruled out. The 20% comparisons above are against one earlier run, on a PC where the same build varied up to 2x.
+The first full UI run measured select 10.7 ms versus 8 ms and 100k Select All 31.1 ms versus 25.9 ms, both over the 20% rule; the second run measured 9.5 ms and 30.5 ms and passed all rows. Both runs are well inside the 100 ms Instant tier. This is the run-to-run noise recorded in KI-024 and accepted by the owner on 2026-10-30. The side-by-side `measure-ab.ps1` run against `v0.0.5-step03a` was not repeated; the 20% comparison is against the Step 03a JSON on the same PC, not alternating builds.
 
 ## Earlier verification
 
 `scripts/gate.ps1` arrives with P2, so these commands stood in for it. `scripts/test-all.ps1 -Mode full` was never run as one command, because the audit tools are not installed on this PC.
 
-- Local, final code: `npm test` 82 passed; `npm run lint:i18n` passed (357 keys); help check passed (38 pages); verification helper tests 7 passed.
-- Local, last Rust change included: `cargo fmt --check` and `cargo clippy -D warnings` clean; `cargo test --workspace` 124 passed. These were not rerun after the later UI and script changes.
+- Local, final code: `npm test` 84 passed; `npm run lint:i18n` passed (359 keys); help check passed (38 pages); verification helper tests 7 passed.
+- Local, final code: `cargo fmt --check` and `cargo clippy -D warnings` clean; `cargo test --workspace` 146 passed.
 - Local, final code: packaged runtime check passed in all six variants (English light, Spanish dark, pseudo; 100% and 150%), 17 checks each, no console errors, no WCAG A/AA violations, including the tab strip with a closable tab and keyboard tab switching.
 - GitHub: 14/14 at `904cdd5` (run 41087578938). `f650cfe` failed 13/14 on a startup race in the runtime check, fixed afterwards. The later run for `b5ffbd4` passed, but does not cover subsequent local changes. `main` requires that check.
 - Not run: GitHub's full mode (speed check on port 9444 is untested there); the by-hand runtime workflow (usable only once on `main`); the owner's hand checks; Narrator.
@@ -105,7 +113,7 @@ The side-by-side run against `v0.0.5-step03a` did not complete: `measure-ui` tim
 
 ## Screenshots vs. Figma
 
-`docs/screenshots/step-03b/`: Home (`00`), folder with Details (`01`), item menu (`02`), View menu (`03`), multi-select (`04`), refused rename (`05`), Sort menu (`06`), undo toast (`07`), permanent-delete warning (`08`), conflict dialog (`09`), Recent actions (`10`), jobs panel during a copy (`11`), each in English light, Spanish dark and the pseudo-locale. Compared with `plan/design/screens/01-explorer-home.png`: the command bar, list and Details pane match the approved 03a layout; the new dialogs and the jobs panel have no Figma frame and follow the approved preview (DESIGN_DEVIATIONS.md, 2026-10-28). The runtime check also captures the folder and undo screens in all six variants (English light, Spanish dark, pseudo; 100% and 150%) under `build/verification/`. The breadcrumb arrows are now 24 px targets (DESIGN_DEVIATIONS.md, 2026-10-30); a fresh screenshot set showing them is not yet committed.
+`docs/screenshots/step-03b/`: Home (`00`), folder with Details (`01`), item menu (`02`), View menu (`03`), multi-select (`04`), refused rename (`05`), Sort menu (`06`), undo toast (`07`), permanent-delete warning (`08`), file conflict with Keep both (`09`), Recent actions (`10`), jobs panel during a copy (`11`), and folder conflict with Merge (`12`), each in English light, Spanish dark and the pseudo-locale. Compared with `plan/design/screens/01-explorer-home.png`: the command bar, list and Details pane match the approved 03a layout; the new dialogs and the jobs panel have no Figma frame and follow the approved previews (DESIGN_DEVIATIONS.md, 2026-10-28 and 2026-10-30). The runtime check also captures the folder and undo screens in all six variants (English light, Spanish dark, pseudo; 100% and 150%) under `build/verification/`. The refreshed set includes the 24 px breadcrumb targets.
 
 ## Help pages
 
@@ -142,9 +150,9 @@ The complete list is `git log --oneline testing..step-03b-file-operations`. Tag 
 
 ## Open before reaching `main`
 
-1. Push the branch and get `build-windows` green on the final code (the owner asked not to push on 2026-10-30).
-2. Merge into `testing`, pull request to `main`, tag `v0.0.6-step03b`, update `plan/STATUS.md`.
-3. Owner decisions 2026-10-30 (plan/STATUS.md): unreliable speed checks do not block; the address bar's 0 px click space with long paths is accepted; the slow recycle + restore is left for later.
+1. The owner chose local-only work on 2026-10-30: the branch, local `testing` and local tags only; no push, pull request, or `main` change. Push and CI (`build-windows`) must run before a release if the owner changes that decision.
+2. The owner checks the packaged app and decides when the step moves to `main` and gets `v0.0.6-step03b`.
+3. Owner decisions 2026-10-30 (plan/STATUS.md): Replace is removed until the full conflict window (KI-030); duplicate names follow the owner's copy/number rules; unreliable speed checks do not block; the address bar's 0 px click space with long paths is accepted; the slow recycle + restore is left for later.
 4. For P2: its recipe stages `CLAUDE.md`, which is never committed: copy it locally only. Its CI change (T3) must be adapted to `scripts/test-all.ps1`.
 
 ## Proposal for the next step
