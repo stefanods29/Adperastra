@@ -65,7 +65,7 @@ node scripts/check-base.mjs
 ```
 
 - If it prints `Base check passed (17 files match commit 11aced2).`, continue.
-- If it prints `Base check FAILED`, change nothing more and commit nothing. Tell the owner: "Plan v2 was written for commit 11aced2, but these files changed since then:" followed by the list it printed, and "Please send this list to the planner so the recipes can be refreshed." Then stop and wait.
+- If it prints `Base check FAILED`, the files it lists changed after the recipes were written, so some "find exactly" blocks may no longer match. Do not stop. Tell the owner the list in one line, then continue with P2, applying each change to the current file where the text has moved (`plan/pitfalls.md` P-29). Before starting each of 04a, 04b and 04c, check its recipe against the listed files the same way and correct it in its own `docs(plan)` commit (AGENTS.md golden rule 4).
 
 **Files:** add to `.gitignore`, at the end:
 
@@ -187,8 +187,7 @@ After changing `src/i18n/locales/en.json`, run `npm run i18n:pseudo`.
 ### T6 - Finish
 
 1. `git push -u origin chore/plan-v2`
-2. Tell the owner: "Plan v2 is adopted on branch chore/plan-v2. The gate passes. May I merge it into testing and main?" and wait.
-3. After the owner says yes:
+2. Merge it into `testing` and `main` without waiting for the owner (AGENTS.md section 4D):
    ```powershell
    git checkout testing
    git pull
@@ -203,7 +202,13 @@ After changing `src/i18n/locales/en.json`, run `npm run i18n:pseudo`.
    git checkout testing
    git merge --ff-only main
    ```
-4. In `plan/STATUS.md` (on `testing`): set P2 to `done`, "Current step" to `04a`, commit `docs(status): plan v2 adopted, next 04a [P2]`, push.
+3. In `plan/STATUS.md` (on `testing`): set P2 to `done`, "Current step" to `04a`, commit `docs(status): plan v2 adopted, next 04a [P2]`, push.
+4. Delete the `adperastra-plan-v2.1` folder (Recycle Bin); `plan/` is now the only plan folder:
+   ```powershell
+   Add-Type -AssemblyName Microsoft.VisualBasic
+   [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory((Resolve-Path .\adperastra-plan-v2.1).Path, 'OnlyErrorDialogs', 'SendToRecycleBin')
+   ```
+5. Tell the owner in one line that plan v2 is on `main`, then start Step 04a.
 
 ## Done when
 

@@ -12,7 +12,7 @@ The owner pastes the planner prompt from `plan/PROMPTS.md` to start a planner se
 |---|---|
 | The repository (the app's code) | `C:\Users\stefa\Documents\Adperastra` |
 | Plan folders (the owner's extracted plan zips) | `adperastra-plan-*` folders inside the repository folder. The newest one (now `adperastra-plan-v2.1`) is complete. Older ones (`adperastra-plan-v2`) are only kept for reference. They are never committed (`.git/info/exclude`, Step P2) |
-| Where the planner writes | the newest plan folder: `adperastra-plan-v2.1\plan\steps\step-<id>.md` and the plan files listed in section 8. Never anything else. When the coding agent has the planner role too (AGENTS.md section 5, "Exception"), it writes the guide and those plan files in the repository's `plan/` on the step's branch instead |
+| Where the planner writes | the newest plan folder: `adperastra-plan-v2.1\plan\steps\step-<id>.md` and the plan files listed in section 8. Never anything else. When the coding agent has the planner role too (AGENTS.md section 5, "A step without a guide"), it writes the guide and those plan files in the repository's `plan/` on the step's branch instead |
 | How guides reach the repository | the owner tells the coding agent "apply the plan update from adperastra-plan-v2.1" (AGENTS.md section 8) |
 
 The planner reads the repository but never changes it: no edits to app code, no commits, no branches. Never read, print or copy anything under `C:\Users\stefa\.adperastra\` (signing keys).

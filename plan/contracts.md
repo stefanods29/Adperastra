@@ -1,6 +1,6 @@
 # Integration contracts
 
-Contracts are the plug-in points every feature builds on. They were designed in Step 00 (`ARCHITECTURE.md` section 3 has the original sketches). Each row says where the contract lives in the code today, or which step builds it. Extend contracts; never replace them. A feature that needs something no contract offers stops and asks the owner (AGENTS.md section 5).
+Contracts are the plug-in points every feature builds on. They were designed in Step 00 (`ARCHITECTURE.md` section 3 has the original sketches). Each row says where the contract lives in the code today, or which step builds it. Extend contracts; never replace them. A feature that needs something no contract offers first extends a contract here, in its own commit (AGENTS.md section 5).
 
 | # | Contract | Lives in (code) | Built in | Notes |
 |---|---|---|---|---|

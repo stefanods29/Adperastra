@@ -5,7 +5,7 @@
 - `main`: always releasable, protected (pull request + passing `build-windows` CI check). Never push to it directly, never force-push.
 - `testing`: finished steps are merged here and checked before reaching `main`.
 - One branch per step, created from `testing`, named in the step file (for example `step-04a-file-tabs`).
-- Tags on `main` after the owner approves a step: the tag in the step file (`v0.0.7-step04a`). Milestones get `v0.1.0`, `v0.2.0`...
+- Tags on `main` as soon as a finished step is merged, without waiting for the owner: the tag in the step file (`v0.0.7-step04a`). Milestones get `v0.1.0`, `v0.2.0`...
 - The exact commands for starting, finishing and merging a step are in `AGENTS.md` section 4. Use them as written.
 
 ## Commits
@@ -46,7 +46,7 @@ The task lists them. As a rule:
 
 ## Checks by hand (end of every step)
 
-The step file lists them. Run them in the packaged app (`.\scripts\gate.ps1 -Package`, then `build\Adperastra\Adperastra.exe`), in English and Spanish, light and dark. Write the result of each one in the step report.
+The step file lists them. The agent creates the test files and writes the list in the step report; the owner runs the checks later in the packaged app (`.\scripts\gate.ps1 -Package`, then `build\Adperastra\Adperastra.exe`), in English and Spanish, light and dark, and the results go in the step report. A problem found this way becomes an `F` task (AGENTS.md section 4E).
 
 ## Screenshots
 

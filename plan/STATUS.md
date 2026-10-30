@@ -10,7 +10,7 @@ The agent updates this file at the end of every step (AGENTS.md section 4).
 
 States: `done`, `in progress`, `waiting for owner`, `ready` (full recipe with the code: build it by copying exactly), `guide` (precise guide without code: every decision, the order of the work and the tests are given; you write the code exactly as it describes), `outline` (not written yet: stop and tell the owner, see `plan/EXPANDING.md`).
 
-Guides for the steps after 05a are written by the planner (`plan/EXPANDING.md`) into the newest plan folder; the owner then asks you to apply the plan update (AGENTS.md section 8). If the next step's file is missing or its state is `outline`, stop and tell the owner, unless the decisions log below gives you the planner role (AGENTS.md section 5, "Exception").
+Guides for the steps after 05a are written by the planner (`plan/EXPANDING.md`) into the newest plan folder; the owner then asks you to apply the plan update (AGENTS.md section 8). If the next step's file is missing or its state is `outline`, stop and tell the owner, unless the decisions log below gives you the planner role (AGENTS.md section 5, "A step without a guide").
 
 | Step | Name | State | Tag |
 |---|---|---|---|
@@ -91,6 +91,7 @@ Guides for the steps after 05a are written by the planner (`plan/EXPANDING.md`) 
 
 ## Owner decisions log (newest first)
 
+- 2026-10-29: Continuous work. The agent goes from step to step without waiting for the owner. When a step's checks pass and no Blocker or Major is left open, it merges the step into `testing`, puts it on `main` through a pull request once CI passes, tags it, tells the owner in one short message, and starts the next step. When something breaks, it fixes the cause itself and writes down what it changed; it stops only in the cases in AGENTS.md section 5. Publishing a GitHub release still needs the owner's yes. The owner checks finished steps afterwards, and problems they report become `F` tasks. This replaces "The owner still checks and approves every step" in the planner-role entry below.
 - 2026-10-29: The coding agent also has the planner role. It builds the steps in this file's order; for every step still in `outline` it first writes the guide itself (`plan/EXPANDING.md`, into `plan/steps/` on the step branch, its own `docs(plan)` commit), then builds it. The owner still checks and approves every step. Never commit `CLAUDE.md`, `.claude/` or `.mcp.json` (excluded on purpose in `.git/info/exclude`), and commit messages never name AI tools.
 - 2026-10-29: The "bzip2-1.0.6" license is allowed (`plan/rules.md` R-LIC-1). Step 06e adds bzip2 archives (`.bz2`, `.tbz`, `.tbz2`, `.tar.bz2`) and bzip2-compressed entries in zip and 7z files.
 - 2026-10-29: The plan zips are kept extracted in `adperastra-plan-*` folders inside the repository folder and never committed. Step 05a is written as a guide. The planner writes the next guides into the newest plan folder (`adperastra-plan-v2.1`), and the coding agent copies them in when the owner asks (AGENTS.md section 8).

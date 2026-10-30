@@ -1,6 +1,6 @@
 # Step <id> report - <step name>
 
-Dates: <start> to <end>. Status: waiting for owner approval. Tag after approval: `<tag>`.
+Dates: <start> to <end>. Status: on `main` as `<tag>`; the owner's checks are still to do.
 
 ## How to try it
 
@@ -20,6 +20,10 @@ Dates: <start> to <end>. Status: waiting for owner approval. Tag after approval:
 ## Not in this step (on purpose)
 
 - <features the step file says come later>
+
+## Decisions and plan changes made during the step
+
+- <what was decided or changed in the plan, why, and where it is written> or "none".
 
 ## Speed (development PC, packaged release build)
 

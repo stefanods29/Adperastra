@@ -90,7 +90,7 @@ Follow `plan/speed.md`. Measure what the recipe lists; a slower result than its 
 Every defect, deferral and speed miss is written in `KNOWN_ISSUES.md` (template `plan/templates/known-issue.md`), with the next free ID `KI-<number>`.
 
 - **Blocker:** data loss or corruption, a security or sandbox hole, a crash or freeze in a normal flow, a broken core feature, a license problem, or an accessibility barrier in a main flow. Fixed before the step is done. Never deferred.
-- **Major:** a speed-tier miss in something done every day, a feature that only partly works, a serious usability or accessibility problem with a workaround. Deferred only with the owner's approval; fixed before the next milestone.
+- **Major:** a speed-tier miss in something done every day, a feature that only partly works, a serious usability or accessibility problem with a workaround. Fixed before the step goes to `main`. Only when the fix needs a later step's work may it move to that step (before the next milestone), with the step and the reason written in the issue.
 - **Minor:** cosmetic problems, one-time costs, rare edge cases, placeholders. Reviewed at every milestone.
 - When unsure, choose the higher severity. A milestone cannot be released with a Blocker or Major open.
 

@@ -1,6 +1,6 @@
 # Libraries (locked list)
 
-Only the libraries on this page may be used, at the version given. A step recipe or guide says when each one is added (recipe `plan/recipes/add-dependency.md`: its own `deps:` commit, plus `THIRD_PARTY_LICENSES.md` and `docs/dependency-and-license-table.md`). Never add a library that is not here, never pick another version, and never swap one for "something better": if a library does not work as the step describes, stop with `BLOCKED.md` (`plan/pitfalls.md` P-26).
+Only the libraries on this page may be used, at the version given. A step recipe or guide says when each one is added (recipe `plan/recipes/add-dependency.md`: its own `deps:` commit, plus `THIRD_PARTY_LICENSES.md` and `docs/dependency-and-license-table.md`). Never pick another version, and never swap a library for "something better". If a library does not work as the step describes, first check its real API (`plan/pitfalls.md` P-26). Only if it truly cannot do the job, choose another one whose license is allowed (`plan/rules.md` R-LIC), add it to this page with the reason, then add it with the recipe (AGENTS.md section 5).
 
 Licenses allowed: `plan/rules.md` R-LIC.
 

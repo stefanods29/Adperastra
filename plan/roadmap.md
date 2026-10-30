@@ -1,6 +1,6 @@
 # Roadmap
 
-Difficulty: ★ very easy ... ★★★★★ very hard. Each step depends only on earlier steps. Every step ends with the owner's approval, a merge to `main` and a tag (AGENTS.md section 4).
+Difficulty: ★ very easy ... ★★★★★ very hard. Each step depends only on earlier steps. Every step ends with a merge to `main` and a tag, without waiting for the owner, who checks it afterwards (AGENTS.md section 4).
 
 Tags: steps get `v0.<milestone>.<n>-step<id>` (for example `v0.0.7-step04a`); a milestone release gets `v0.1.0`, `v0.2.0`, ... After a milestone, numbering continues from it (the step after `v0.1.0` is `v0.1.1-step09a`).
 
