@@ -6,6 +6,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useTranslation } from "react-i18next";
 import { tabKeyTarget } from "./services/tabKeys";
 import DropdownMenu from "./components/DropdownMenu";
+import { KeyTipsContext } from "./ribbon/keyTips";
 import IconButton from "./components/IconButton";
 import { applyLanguage } from "./i18n";
 import {
@@ -499,6 +500,7 @@ export default function App() {
         </div>
       </header>
 
+      <KeyTipsContext.Provider value={showKeyTips}>
       <main className="adp-main">
         {/* The Explorer stays mounted so it keeps its folder, selection and
             scroll position; it ignores shortcuts and drops while hidden. */}
@@ -546,6 +548,7 @@ export default function App() {
           <Suspense fallback={null}><GalleryView onOpenHelp={() => openTab("help", "using-help")} /></Suspense>
         ) : null}
       </main>
+      </KeyTipsContext.Provider>
 
       <footer className="adp-statusbar" hidden={activeTab.kind === "file"}>
         {activeTab.kind === "explorer" ? (

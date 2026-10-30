@@ -1,0 +1,18 @@
+/* Ribbon framework and viewer frame (Step 04b). Colors only through tokens. */
+.adp-viewer { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.adp-viewer-content { flex: 1; min-height: 0; position: relative; display: flex; }
+
+.adp-ribbon { flex: none; background: var(--adp-color-surface-window); border-bottom: 1px solid var(--adp-color-border-panel); }
+.adp-ribbon-tabs { display: flex; align-items: flex-end; gap: var(--adp-space-1); height: 34px; padding: 0 var(--adp-space-5); }
+.adp-ribbon-tab { position: relative; height: 30px; padding: 0 var(--adp-space-4); border: none; border-bottom: 2px solid transparent; background: transparent; color: var(--adp-color-text-secondary); font: inherit; font-size: var(--adp-font-command); cursor: pointer; }
+.adp-ribbon-tab--active { color: var(--adp-color-text-primary); border-bottom-color: var(--adp-ribbon-accent); font-weight: 600; }
+.adp-ribbon-body { display: flex; align-items: center; height: 48px; padding: 0 var(--adp-space-5); gap: var(--adp-space-1); overflow-x: auto; }
+.adp-ribbon-group { display: flex; align-items: center; gap: var(--adp-space-1); flex: none; }
+.adp-ribbon-sep { width: 1px; height: 24px; margin: 0 var(--adp-space-3); background: var(--adp-color-border-subtle); }
+.adp-ribbon-btn { position: relative; display: inline-flex; align-items: center; gap: var(--adp-space-2); height: 32px; padding: 0 var(--adp-space-3); border: 1px solid transparent; border-radius: var(--adp-radius-sm); background: transparent; color: var(--adp-color-text-primary); font: inherit; font-size: var(--adp-font-body); white-space: nowrap; cursor: pointer; }
+.adp-ribbon-btn:hover:not(:disabled) { background: var(--adp-color-surface-selected); }
+.adp-ribbon-btn:disabled { opacity: 0.45; cursor: default; }
+.adp-ribbon-btn--pressed { background: color-mix(in srgb, var(--adp-ribbon-accent) 14%, transparent); border-color: color-mix(in srgb, var(--adp-ribbon-accent) 40%, transparent); }
+.adp-ribbon-btn:focus-visible, .adp-ribbon-tab:focus-visible { outline: 2px solid var(--adp-ribbon-accent); outline-offset: 1px; }
+.adp-ribbon-custom { display: inline-flex; align-items: center; gap: var(--adp-space-2); font-size: var(--adp-font-body); color: var(--adp-color-text-secondary); }
+.adp-ribbon-custom select { height: 28px; border: 1px solid var(--adp-color-border-input); border-radius: var(--adp-radius-sm); background: var(--adp-color-surface-window); color: var(--adp-color-text-primary); font: inherit; font-size: var(--adp-font-body); }

@@ -456,6 +456,20 @@
     "imageError": "This image couldn't be shown. It may be damaged, or in a format the viewer doesn't support.",
     "dimensions": "{width} × {height} px",
     "zoom": "Zoom",
-    "fit": "Fit"
+    "fit": "Fit",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomReset": "Reset zoom",
+    "fitToWindow": "Fit to window",
+    "actualSize": "Actual size",
+    "rotateLeft": "Rotate left",
+    "rotateRight": "Rotate right",
+    "matches": "{count, plural, =0 {No matches} one {# match} other {# matches}}"
+  },
+  "ribbon": {
+    "view": "View",
+    "zoom": "Zoom",
+    "show": "Show",
+    "rotate": "Rotate"
   }
 }

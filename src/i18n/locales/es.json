@@ -456,6 +456,20 @@
     "imageError": "No se pudo mostrar esta imagen. Puede estar dañada o en un formato que el visor no admite.",
     "dimensions": "{width} × {height} px",
     "zoom": "Zoom",
-    "fit": "Ajustar"
+    "fit": "Ajustar",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "zoomReset": "Restablecer el zoom",
+    "fitToWindow": "Ajustar a la ventana",
+    "actualSize": "Tamaño real",
+    "rotateLeft": "Girar a la izquierda",
+    "rotateRight": "Girar a la derecha",
+    "matches": "{count, plural, =0 {Sin coincidencias} one {# coincidencia} other {# coincidencias}}"
+  },
+  "ribbon": {
+    "view": "Vista",
+    "zoom": "Zoom",
+    "show": "Mostrar",
+    "rotate": "Girar"
   }
 }

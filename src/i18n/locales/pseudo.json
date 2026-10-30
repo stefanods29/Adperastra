@@ -456,6 +456,20 @@
     "imageError": "[Thïs ïmägë çøüldñ't bë shøwñ. Ït mäÿ bë dämägëd, ør ïñ ä førmät thë vïëwër døësñ't süppørt. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
     "dimensions": "[{width} × {height} px ~~]",
     "zoom": "[Zøøm ~~]",
-    "fit": "[Fït ~~]"
+    "fit": "[Fït ~~]",
+    "zoomIn": "[Zøøm ïñ ~~~]",
+    "zoomOut": "[Zøøm øüt ~~~]",
+    "zoomReset": "[Rësët zøøm ~~~~]",
+    "fitToWindow": "[Fït tø wïñdøw ~~~~~]",
+    "actualSize": "[Äçtüäl sïzë ~~~~]",
+    "rotateLeft": "[Røtätë lëft ~~~~]",
+    "rotateRight": "[Røtätë rïght ~~~~~]",
+    "matches": "[{count, plural, =0 {Ñø mätçhës} one {# mätçh} other {# mätçhës}} ~~~~]"
+  },
+  "ribbon": {
+    "view": "[Vïëw ~~]",
+    "zoom": "[Zøøm ~~]",
+    "show": "[Shøw ~~]",
+    "rotate": "[Røtätë ~~~]"
   }
 }
