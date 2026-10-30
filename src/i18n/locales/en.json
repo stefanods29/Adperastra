@@ -340,6 +340,15 @@
     "copyPath": {
       "other": "The path couldn't be copied."
     },
+    "files": {
+      "not_found": "This file no longer exists.",
+      "not_a_file": "This is a folder, not a file.",
+      "access_denied": "You don't have permission to open this file.",
+      "read_failed": "This file couldn't be read.",
+      "too_many_open": "Too many files are open. Close some tabs and try again.",
+      "invalid_request": "This file couldn't be opened.",
+      "other": "This file couldn't be opened."
+    },
     "ops": {
       "exists": "There's already an item with this name here.",
       "access_denied": "You don't have permission to change this item.",

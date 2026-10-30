@@ -340,6 +340,15 @@
     "copyPath": {
       "other": "[Thë päth çøüldñ't bë çøpïëd. ~~~~~~~~~]"
     },
+    "files": {
+      "not_found": "[Thïs fïlë ñø løñgër ëxïsts. ~~~~~~~~~]",
+      "not_a_file": "[Thïs ïs ä føldër, ñøt ä fïlë. ~~~~~~~~~]",
+      "access_denied": "[Ÿøü døñ't hävë përmïssïøñ tø øpëñ thïs fïlë. ~~~~~~~~~~~~~~]",
+      "read_failed": "[Thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~]",
+      "too_many_open": "[Tøø mäñÿ fïlës ärë øpëñ. Çløsë sømë täbs äñd trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~]",
+      "invalid_request": "[Thïs fïlë çøüldñ't bë øpëñëd. ~~~~~~~~~~]",
+      "other": "[Thïs fïlë çøüldñ't bë øpëñëd. ~~~~~~~~~~]"
+    },
     "ops": {
       "exists": "[Thërë's älrëädÿ äñ ïtëm wïth thïs ñämë hërë. ~~~~~~~~~~~~~~]",
       "access_denied": "[Ÿøü døñ't hävë përmïssïøñ tø çhäñgë thïs ïtëm. ~~~~~~~~~~~~~~~]",

@@ -340,6 +340,15 @@
     "copyPath": {
       "other": "No se pudo copiar la ruta."
     },
+    "files": {
+      "not_found": "Este archivo ya no existe.",
+      "not_a_file": "Esto es una carpeta, no un archivo.",
+      "access_denied": "No tienes permiso para abrir este archivo.",
+      "read_failed": "No se pudo leer este archivo.",
+      "too_many_open": "Hay demasiados archivos abiertos. Cierra algunas pestañas e inténtalo de nuevo.",
+      "invalid_request": "No se pudo abrir este archivo.",
+      "other": "No se pudo abrir este archivo."
+    },
     "ops": {
       "exists": "Ya hay un elemento con este nombre aquí.",
       "access_denied": "No tienes permiso para cambiar este elemento.",
