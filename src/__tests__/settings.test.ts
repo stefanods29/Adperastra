@@ -23,6 +23,7 @@ describe("normalizeSettings", () => {
       explorer: defaultSettings().explorer,
       files: defaultSettings().files,
       open: defaultSettings().open,
+      layout: defaultSettings().layout,
     });
   });
 
@@ -44,7 +45,7 @@ describe("normalizeSettings", () => {
       column_preview: true,
     });
     expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
-    expect(defaultSettings().schema_version).toBe(7);
+    expect(defaultSettings().schema_version).toBe(8);
     expect(defaultSettings().files.paste_image_format).toBe("png");
     expect(normalizeSettings({ files: { paste_image_format: "jpg" } }).files.paste_image_format).toBe("jpg");
     expect(normalizeSettings({ files: { paste_image_format: "gif" } }).files.paste_image_format).toBe("png");
@@ -109,6 +110,64 @@ describe("normalizeSettings", () => {
     expect(explorer({ hidden_view_modes: ["columns"] }).hidden_view_modes).toEqual(["columns"]);
     const eight = ["extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content"];
     expect(explorer({ view_mode_order: eight }).view_mode_order).toEqual([...eight, "columns"]);
+  });
+
+  it("normalizes the layout section (schema 8)", () => {
+    const layout = (input: Record<string, unknown>) => normalizeSettings({ layout: input }).layout;
+    const defaults = defaultSettings().layout;
+    expect(defaults).toEqual({
+      toolbar_position: "top",
+      toolbar_mode: "full",
+      tab_bar_position: "top",
+      tab_bar_collapsed: false,
+      nav_pane_position: "left",
+      details_pane_position: "right",
+      saved_presets: [],
+    });
+    expect(layout({})).toEqual(defaults);
+    expect(layout({ toolbar_position: "left" }).toolbar_position).toBe("left");
+    expect(layout({ toolbar_position: "middle" }).toolbar_position).toBe("top");
+    expect(layout({ toolbar_mode: "iconsOnly" }).toolbar_mode).toBe("iconsOnly");
+    expect(layout({ toolbar_mode: "tiny" }).toolbar_mode).toBe("full");
+    expect(
+      layout({ tab_bar_position: "bottom", nav_pane_position: "hidden", details_pane_position: "bottom" }),
+    ).toMatchObject({ tab_bar_position: "bottom", nav_pane_position: "hidden", details_pane_position: "bottom" });
+    expect(layout({ details_pane_position: "hidden" }).details_pane_position).toBe("right");
+    expect(layout({ tab_bar_collapsed: "yes" }).tab_bar_collapsed).toBe(false);
+    const kept = layout({
+      saved_presets: [
+        { name: "  Work ", toolbar_position: "left" },
+        { name: "" },
+        { name: "work" },
+        "x",
+        { name: "a".repeat(70) },
+      ],
+    });
+    expect(kept.saved_presets).toEqual([
+      {
+        name: "Work",
+        toolbar_position: "left",
+        toolbar_mode: "full",
+        tab_bar_position: "top",
+        tab_bar_collapsed: false,
+        nav_pane_position: "left",
+        details_pane_position: "right",
+      },
+      {
+        name: "a".repeat(60),
+        toolbar_position: "top",
+        toolbar_mode: "full",
+        tab_bar_position: "top",
+        tab_bar_collapsed: false,
+        nav_pane_position: "left",
+        details_pane_position: "right",
+      },
+    ]);
+    const many = Array.from({ length: 25 }, (_, index) => ({ name: `p${index}` }));
+    expect(layout({ saved_presets: many }).saved_presets.map((preset) => preset.name)).toEqual(
+      Array.from({ length: 20 }, (_, index) => `p${index}`),
+    );
+    expect(layout({ saved_presets: "nope" }).saved_presets).toEqual([]);
   });
 
   it("clampColumnWidth rounds and keeps the limits", () => {

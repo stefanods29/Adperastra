@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 7;
+export const SETTINGS_SCHEMA_VERSION = 8;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -124,6 +124,65 @@ export interface OpenSettings {
   open_with: Record<string, OpenWith>;
 }
 
+/** Where the toolbar sits (schema 8, Step 05c). */
+export type ToolbarPosition = "top" | "bottom" | "left" | "right";
+
+/** How the toolbar is drawn (schema 8, Step 05c). */
+export type ToolbarMode = "full" | "compact" | "iconsOnly" | "autoHide";
+
+/** Where the tabs sit (schema 8, Step 05c). */
+export type TabBarPosition = "top" | "bottom" | "left" | "right";
+
+/** Where the navigation pane sits (schema 8, Step 05c). */
+export type NavPanePosition = "left" | "right" | "hidden";
+
+/** Where the Details pane sits, when it is shown (schema 8, Step 05c). */
+export type DetailsPanePosition = "right" | "bottom";
+
+/** The six layout values a preset stores (schema 8, Step 05c). */
+export interface LayoutValues {
+  toolbar_position: ToolbarPosition;
+  toolbar_mode: ToolbarMode;
+  tab_bar_position: TabBarPosition;
+  tab_bar_collapsed: boolean;
+  nav_pane_position: NavPanePosition;
+  details_pane_position: DetailsPanePosition;
+}
+
+/** One saved layout preset (schema 8, Step 05c). */
+export interface SavedLayout extends LayoutValues {
+  name: string;
+}
+
+/** Where the toolbar, tabs and panes go (schema 8, Step 05c). The Details
+ * pane's visibility stays `explorer.details_pane`. */
+export interface LayoutSettings extends LayoutValues {
+  saved_presets: SavedLayout[];
+}
+
+/** Every toolbar position, in the order the menu shows them. */
+export const TOOLBAR_POSITIONS: readonly ToolbarPosition[] = ["top", "bottom", "left", "right"];
+/** Every toolbar look, in the order the menu shows them. */
+export const TOOLBAR_MODES: readonly ToolbarMode[] = ["full", "compact", "iconsOnly", "autoHide"];
+/** Every navigation pane position. */
+export const NAV_PANE_POSITIONS: readonly NavPanePosition[] = ["left", "right", "hidden"];
+/** Every Details pane position. */
+export const DETAILS_PANE_POSITIONS: readonly DetailsPanePosition[] = ["right", "bottom"];
+/** Most saved layout presets (Step 05c). */
+export const MAX_SAVED_LAYOUTS = 20;
+/** Longest saved layout preset name, in characters (Step 05c). */
+export const MAX_LAYOUT_NAME = 60;
+
+/** The layout section's defaults, before any saved preset. */
+const LAYOUT_DEFAULTS: LayoutValues = {
+  toolbar_position: "top",
+  toolbar_mode: "full",
+  tab_bar_position: "top",
+  tab_bar_collapsed: false,
+  nav_pane_position: "left",
+  details_pane_position: "right",
+};
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
@@ -131,6 +190,7 @@ export interface AppSettings {
   explorer: ExplorerViewSettings;
   files: FileSettings;
   open: OpenSettings;
+  layout: LayoutSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -168,6 +228,10 @@ export function defaultSettings(): AppSettings {
       protected_view: true,
       open_with: {},
     },
+    layout: {
+      ...LAYOUT_DEFAULTS,
+      saved_presets: [],
+    },
   };
 }
 
@@ -199,6 +263,47 @@ function normalizeOpenWith(value: unknown): Record<string, OpenWith> {
     }
   }
   return result;
+}
+
+/** The first `MAX_LAYOUT_NAME` code points of a name, trimmed at both ends. */
+function layoutName(value: string): string {
+  return Array.from(value.trim()).slice(0, MAX_LAYOUT_NAME).join("").trim();
+}
+
+/** The layout section, repaired field by field (schema 8, Step 05c). */
+function normalizeLayout(value: unknown): LayoutSettings {
+  const input = isRecord(value) ? value : {};
+  const values: LayoutValues = {
+    toolbar_position: pick(input.toolbar_position, TOOLBAR_POSITIONS, LAYOUT_DEFAULTS.toolbar_position),
+    toolbar_mode: pick(input.toolbar_mode, TOOLBAR_MODES, LAYOUT_DEFAULTS.toolbar_mode),
+    tab_bar_position: pick(input.tab_bar_position, TOOLBAR_POSITIONS, LAYOUT_DEFAULTS.tab_bar_position),
+    tab_bar_collapsed: typeof input.tab_bar_collapsed === "boolean" ? input.tab_bar_collapsed : LAYOUT_DEFAULTS.tab_bar_collapsed,
+    nav_pane_position: pick(input.nav_pane_position, NAV_PANE_POSITIONS, LAYOUT_DEFAULTS.nav_pane_position),
+    details_pane_position: pick(input.details_pane_position, DETAILS_PANE_POSITIONS, LAYOUT_DEFAULTS.details_pane_position),
+  };
+  const savedPresets: SavedLayout[] = [];
+  const seen = new Set<string>();
+  if (Array.isArray(input.saved_presets)) {
+    for (const entry of input.saved_presets) {
+      if (savedPresets.length >= MAX_SAVED_LAYOUTS) break;
+      if (!isRecord(entry) || typeof entry.name !== "string") continue;
+      const name = layoutName(entry.name);
+      if (name === "") continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      savedPresets.push({
+        name,
+        toolbar_position: pick(entry.toolbar_position, TOOLBAR_POSITIONS, LAYOUT_DEFAULTS.toolbar_position),
+        toolbar_mode: pick(entry.toolbar_mode, TOOLBAR_MODES, LAYOUT_DEFAULTS.toolbar_mode),
+        tab_bar_position: pick(entry.tab_bar_position, TOOLBAR_POSITIONS, LAYOUT_DEFAULTS.tab_bar_position),
+        tab_bar_collapsed: typeof entry.tab_bar_collapsed === "boolean" ? entry.tab_bar_collapsed : LAYOUT_DEFAULTS.tab_bar_collapsed,
+        nav_pane_position: pick(entry.nav_pane_position, NAV_PANE_POSITIONS, LAYOUT_DEFAULTS.nav_pane_position),
+        details_pane_position: pick(entry.details_pane_position, DETAILS_PANE_POSITIONS, LAYOUT_DEFAULTS.details_pane_position),
+      });
+    }
+  }
+  return { ...values, saved_presets: savedPresets };
 }
 
 /** Pure: every field falls back independently when missing or invalid. */
@@ -256,6 +361,7 @@ export function normalizeSettings(input: unknown): AppSettings {
       protected_view: flag(openInput.protected_view, defaults.open.protected_view),
       open_with: normalizeOpenWith(openInput.open_with),
     },
+    layout: normalizeLayout(input.layout),
   };
 }
 
