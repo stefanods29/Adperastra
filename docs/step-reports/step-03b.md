@@ -22,7 +22,7 @@ Decisions made during the step (all written in the repository):
 
 - **Replace never deletes** (ADR 0007): the item being replaced goes to the Recycle Bin first, so Undo brings it back.
 - **Exact Undo for moves:** a move keeps a plan of exactly what changed on disk, so a cancelled or partly finished move undoes only what happened (KI-019).
-- **System items ask first** for move, recycle, permanent delete and Replace (KI-020).
+- **System items ask first** for move, recycle and permanent delete (KI-020); the old Replace-target check remains for the future conflict window.
 - **Setup window licenses:** the license audit found two bundled pieces outside the allowed list (R-LIC-1): egui's built-in Ubuntu font and `webpki-roots` (CDLA-Permissive-2.0). Both are gone: the setup window uses Inter, or the Windows UI font installed on the PC when Inter is missing (read at run time, never bundled), and downloads trust the Windows certificate store (`rustls-native-certs`, `schannel`).
 - **License check scope:** the npm check covers what ships. Development-only packages never reach the app; `argparse` is a runtime dependency of markdown-it but only its command-line program uses it, so it is listed with that reason in `scripts/license-policy.json`.
 - **WebView2 profile in the data folder** (R-BG-2): the window is now created in code with its profile under `<data>\webview`. Before, every instance shared one profile in `%LOCALAPPDATA%`, and a leftover instance made the next one fail to start; that was the CI runtime failure. The old folder is left behind once (KI-023, Minor).
@@ -64,7 +64,7 @@ Use a test folder with a few files and folders, in English and Spanish, light an
 12. Open Help, press Tab until the current tab has focus, and use the arrow keys, Home and End to switch tabs; Ctrl+W closes the tab. The **x** still closes it with the mouse. With a screen reader (Narrator), move through the tabs, the column headers and the address bar: names and sort order are read out.
 13. Rename a downloaded `AdperastraSetup` payload font (`payload\fonts\Inter.ttf`) and start the setup: the repair window still shows readable text.
 
-## Previously reported behavior (now under safety review)
+## What works
 
 - File operations through the command bar, menus and keyboard: New folder / text document, Cut, Copy, Paste, Rename, Delete (Recycle Bin), Shift+Delete (warning first), Paste as file. Name conflicts offer Merge (folders), Skip and Keep both; Replace is not offered (KI-030).
 - Jobs: copy, move, recycle, restore and delete run in the background with progress, Cancel and a list of skipped items; priorities foreground / normal / background are ready for later background work.
@@ -144,7 +144,10 @@ The safety review adds these commits on top of the step's earlier history:
 - `83ee390` fix(ops): never write through a destination junction
 - `fe49ee3` fix(app): send conflict paths as strings
 - `2e57d3d` fix(bench): measure Keep both and Undo instead of the removed Replace
-- (docs and report commits follow)
+- `ac1f549` docs: record the step-03b safety review and Merge decision
+- `898bf30` test(bench): refresh step-03b screenshots and final measurements
+- `f7d9fb2` fix(test): ignore the benign Tauri watch callback warning
+- `0046607` docs(reports): final step-03b verification, screenshots and speed numbers
 
 The complete list is `git log --oneline testing..step-03b-file-operations`. Tag not created yet (owner chose local-only on 2026-10-30).
 
