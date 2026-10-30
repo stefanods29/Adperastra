@@ -11,6 +11,18 @@ that fixed it.
 
 ## Open
 
+### KI-029 - Clipboard image decoding runs in the app process (Blocker)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (untrusted image parsing can crash or hang the main app).
+- **What:** Pasting a clipboard image invokes Windows image decoding in the main process without a helper timeout, contrary to R-SEC-9.
+- **Workaround:** Avoid pasting images as files until the decoder is isolated.
+- **Target:** Step 03b, before completion.
+
+### KI-028 - Redo fails after undoing a replacement (Blocker)
+- **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (Redo of a normal file operation is broken).
+- **What:** Undo restores the original destination, but Redo then tries to create the replacement without first handling that restored item.
+- **Workaround:** Repeat the operation manually and choose the conflict action again.
+- **Target:** Step 03b, before completion; any correction must also satisfy the approved-target safety contract.
+
 ### KI-025 - Pasting an image can overwrite a newly created file (Blocker)
 - **Found in:** Step 03b, 2026-10-30. **Severity:** Blocker (possible data loss and unsafe image-buffer lifetime).
 - **What:** Image paste writes directly to a selected name, which another program may create before the write; failure cleanup can also remove that file. The PNG decoder may outlive its input buffer.
