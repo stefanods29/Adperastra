@@ -8,7 +8,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -30,7 +30,7 @@ mod operation_safety;
 mod shell;
 mod transfer_history;
 
-pub const CURRENT_SCHEMA: u32 = 4;
+pub const CURRENT_SCHEMA: u32 = 5;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -198,6 +198,41 @@ impl Default for FileSettings {
     }
 }
 
+/// Most entries in `open_with`.
+pub const MAX_OPEN_WITH: usize = 500;
+
+/// How files open (schema 5, Step 04c): Settings > Opening files.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OpenSettings {
+    /// Files from the internet open in protected view.
+    #[serde(default = "default_true")]
+    pub protected_view: bool,
+    /// Extension (lower case, no dot) to "builtin" or "windows". An
+    /// extension that is not listed opens in the built-in viewer when
+    /// there is one.
+    #[serde(default)]
+    pub open_with: BTreeMap<String, String>,
+}
+
+impl Default for OpenSettings {
+    fn default() -> Self {
+        Self {
+            protected_view: true,
+            open_with: BTreeMap::new(),
+        }
+    }
+}
+
+/// An extension as `open_with` stores it: 1 to 16 characters from a-z,
+/// 0-9, `_`, `+` and `-`.
+fn is_valid_extension_key(ext: &str) -> bool {
+    !ext.is_empty()
+        && ext.len() <= 16
+        && ext
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '_' | '+' | '-'))
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default = "default_schema_version")]
@@ -210,6 +245,8 @@ pub struct Settings {
     pub explorer: ExplorerViewSettings,
     #[serde(default)]
     pub files: FileSettings,
+    #[serde(default)]
+    pub open: OpenSettings,
 }
 
 impl Default for Settings {
@@ -220,6 +257,7 @@ impl Default for Settings {
             theme: ThemeSettings::default(),
             explorer: ExplorerViewSettings::default(),
             files: FileSettings::default(),
+            open: OpenSettings::default(),
         }
     }
 }
@@ -277,6 +315,19 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             settings.explorer.group_by
         )));
     }
+    if settings.open.open_with.len() > MAX_OPEN_WITH {
+        return Err(AppError::Validation(format!(
+            "open_with has {} entries (at most {MAX_OPEN_WITH})",
+            settings.open.open_with.len()
+        )));
+    }
+    for (ext, choice) in &settings.open.open_with {
+        if !is_valid_extension_key(ext) || !matches!(choice.as_str(), "builtin" | "windows") {
+            return Err(AppError::Validation(format!(
+                "unsupported open_with entry {ext:?}: {choice:?} (expected builtin or windows)"
+            )));
+        }
+    }
     Ok(())
 }
 
@@ -302,6 +353,7 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         },
         explorer: ExplorerViewSettings::default(),
         files: FileSettings::default(),
+        open: OpenSettings::default(),
     }
 }
 
@@ -339,6 +391,22 @@ fn migrate_v2(value: serde_json::Value) -> Settings {
     }
 }
 
+/// Older files keep everything they have; fields added since then
+/// come from their serde defaults. Invalid files fall back to defaults.
+fn migrate_keep_known(value: serde_json::Value) -> Settings {
+    match serde_json::from_value::<Settings>(value) {
+        Ok(mut settings) => {
+            settings.schema_version = CURRENT_SCHEMA;
+            if validate(&settings).is_ok() {
+                settings
+            } else {
+                Settings::default()
+            }
+        }
+        Err(_) => Settings::default(),
+    }
+}
+
 /// Upgrade any on-disk settings value to the current schema.
 /// Unknown or invalid shapes fall back to defaults rather than failing,
 /// so a corrupt settings file can never stop the app from starting.
@@ -356,6 +424,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
+            Some(4) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -2447,7 +2516,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.schema_version, 5);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -2459,7 +2528,7 @@ mod tests {
     fn migrate_v1_flat_json() {
         let value = serde_json::json!({ "language": "es", "theme": "dark" });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_source, "design");
@@ -2482,7 +2551,7 @@ mod tests {
             "theme": { "mode": "dark", "accent_source": "custom", "accent_custom": "#112233" }
         });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.theme.accent_custom, "#112233");
@@ -2511,7 +2580,7 @@ mod tests {
             "explorer": { "show_hidden": true, "show_extensions": false, "item_checkboxes": true, "details_pane": true, "group_by": "type" }
         });
         let settings = migrate(value).unwrap();
-        assert_eq!(settings.schema_version, 4);
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert!(settings.explorer.show_hidden);
@@ -2544,6 +2613,59 @@ mod tests {
         };
         let value = serde_json::to_value(&original).unwrap();
         assert_eq!(migrate(value).unwrap(), original);
+    }
+
+    #[test]
+    fn settings_v4_migrates_to_v5_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 4,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "explorer": { "show_hidden": true, "show_extensions": true, "item_checkboxes": false, "details_pane": true, "group_by": "none" },
+            "files": { "paste_image_format": "jpg" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 5);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(settings.explorer.show_hidden);
+        assert_eq!(settings.files.paste_image_format, "jpg");
+        assert_eq!(settings.open, OpenSettings::default());
+        assert!(settings.open.protected_view);
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_open_with() {
+        let mut settings = Settings::default();
+        settings
+            .open
+            .open_with
+            .insert("txt".to_string(), "windows".to_string());
+        settings
+            .open
+            .open_with
+            .insert("c++".to_string(), "builtin".to_string());
+        assert!(validate(&settings).is_ok());
+        for (ext, choice) in [
+            ("txt", "notepad"),
+            ("TXT", "windows"),
+            ("", "windows"),
+            ("a.b", "windows"),
+            ("abcdefghijklmnopq", "windows"),
+        ] {
+            let mut bad = Settings::default();
+            bad.open
+                .open_with
+                .insert(ext.to_string(), choice.to_string());
+            assert!(validate(&bad).is_err(), "{ext:?} {choice:?}");
+        }
+        let mut many = Settings::default();
+        for n in 0..=MAX_OPEN_WITH {
+            many.open
+                .open_with
+                .insert(format!("x{n}"), "windows".to_string());
+        }
+        assert!(validate(&many).is_err());
     }
 
     #[test]

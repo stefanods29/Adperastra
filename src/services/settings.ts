@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 4;
+export const SETTINGS_SCHEMA_VERSION = 5;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -31,12 +31,24 @@ export interface FileSettings {
   paste_image_format: PasteImageFormat;
 }
 
+export type OpenWith = "builtin" | "windows";
+
+/** How files open (schema 5, Step 04c): Settings > Opening files. */
+export interface OpenSettings {
+  /** Files from the internet open in protected view. */
+  protected_view: boolean;
+  /** Extension (lower case, no dot) to where it opens. An extension that
+   * is not listed opens in the built-in viewer when there is one. */
+  open_with: Record<string, OpenWith>;
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
   theme: ThemeSettings;
   explorer: ExplorerViewSettings;
   files: FileSettings;
+  open: OpenSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -64,6 +76,10 @@ export function defaultSettings(): AppSettings {
     files: {
       paste_image_format: "png",
     },
+    open: {
+      protected_view: true,
+      open_with: {},
+    },
   };
 }
 
@@ -75,6 +91,26 @@ function pick<T extends string>(value: unknown, allowed: readonly T[], fallback:
   return typeof value === "string" && (allowed as readonly string[]).includes(value)
     ? (value as T)
     : fallback;
+}
+
+/** Same rule as Rust `is_valid_extension_key`. */
+const EXTENSION_KEY_RE = /^[a-z0-9_+-]{1,16}$/;
+/** Same limit as Rust `MAX_OPEN_WITH`. */
+export const MAX_OPEN_WITH = 500;
+
+/** Keep only valid `open_with` entries, at most `MAX_OPEN_WITH`. */
+function normalizeOpenWith(value: unknown): Record<string, OpenWith> {
+  const result: Record<string, OpenWith> = {};
+  if (!isRecord(value)) return result;
+  let count = 0;
+  for (const [ext, choice] of Object.entries(value)) {
+    if (count >= MAX_OPEN_WITH) break;
+    if (EXTENSION_KEY_RE.test(ext) && (choice === "builtin" || choice === "windows")) {
+      result[ext] = choice;
+      count += 1;
+    }
+  }
+  return result;
 }
 
 /** Pure: every field falls back independently when missing or invalid. */
@@ -92,6 +128,7 @@ export function normalizeSettings(input: unknown): AppSettings {
   const themeInput = isRecord(input.theme) ? input.theme : {};
   const explorerInput = isRecord(input.explorer) ? input.explorer : {};
   const filesInput = isRecord(input.files) ? input.files : {};
+  const openInput = isRecord(input.open) ? input.open : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
@@ -115,6 +152,10 @@ export function normalizeSettings(input: unknown): AppSettings {
     },
     files: {
       paste_image_format: pick(filesInput.paste_image_format, ["png", "jpg"] as const, defaults.files.paste_image_format),
+    },
+    open: {
+      protected_view: flag(openInput.protected_view, defaults.open.protected_view),
+      open_with: normalizeOpenWith(openInput.open_with),
     },
   };
 }

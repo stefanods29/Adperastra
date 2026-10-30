@@ -22,6 +22,7 @@ describe("normalizeSettings", () => {
       theme: { mode: "dark", accent_source: "custom", accent_custom: "#0067C0" },
       explorer: defaultSettings().explorer,
       files: defaultSettings().files,
+      open: defaultSettings().open,
     });
   });
 
@@ -37,10 +38,22 @@ describe("normalizeSettings", () => {
       group_by: "none",
     });
     expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
-    expect(defaultSettings().schema_version).toBe(4);
+    expect(defaultSettings().schema_version).toBe(5);
     expect(defaultSettings().files.paste_image_format).toBe("png");
     expect(normalizeSettings({ files: { paste_image_format: "jpg" } }).files.paste_image_format).toBe("jpg");
     expect(normalizeSettings({ files: { paste_image_format: "gif" } }).files.paste_image_format).toBe("png");
+  });
+
+  it("keeps valid opening-file choices and drops invalid ones", () => {
+    expect(defaultSettings().open).toEqual({ protected_view: true, open_with: {} });
+    const result = normalizeSettings({
+      open: { protected_view: false, open_with: { txt: "windows", md: "builtin", MP4: "windows", "a.b": "windows", png: "paint" } },
+    });
+    expect(result.open).toEqual({ protected_view: false, open_with: { txt: "windows", md: "builtin" } });
+    expect(normalizeSettings({ open: { protected_view: "no", open_with: [] } }).open).toEqual(defaultSettings().open);
+    const many: Record<string, string> = {};
+    for (let n = 0; n < 600; n += 1) many[`x${n}`] = "windows";
+    expect(Object.keys(normalizeSettings({ open: { open_with: many } }).open.open_with)).toHaveLength(500);
   });
 
   it("falls back per-field for invalid values", () => {
