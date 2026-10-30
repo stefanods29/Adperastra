@@ -1,3 +1,4 @@
+import { hexHandler } from "./hex";
 import { imageHandler } from "./image";
 import { markdownHandler } from "./markdown";
 import { mediaHandler } from "./media";
@@ -13,6 +14,8 @@ export function createHandlerRegistry(): HandlerRegistry {
   // Markdown before text: ties on ".md" go to the Markdown viewer.
   registry.register(markdownHandler);
   registry.register(textHandler);
+  // Never chosen by itself (no extensions or types): only "Open as hex".
+  registry.register(hexHandler);
   return registry;
 }
 

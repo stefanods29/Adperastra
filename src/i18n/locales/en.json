@@ -404,7 +404,9 @@
     "right": "Right",
     "up": "Up",
     "down": "Down",
-    "space": "Space"
+    "space": "Space",
+    "pageUp": "Page Up",
+    "pageDown": "Page Down"
   },
   "files": {
     "newFolderName": "New folder",
@@ -450,7 +452,8 @@
     "image": "Image",
     "text": "Text",
     "markdown": "Markdown",
-    "media": "Audio and video"
+    "media": "Audio and video",
+    "hex": "Hex"
   },
   "protected": {
     "message": "This file came from the internet, so it opened in protected view.",
@@ -531,6 +534,10 @@
     "audio": "Audio",
     "cantPlay": "This file can't be played here: the built-in player doesn't support its format.",
     "noPicture": "There is no picture to show. If this video should have one, its format isn't supported here."
+  },
+  "hex": {
+    "label": "Bytes of {name}",
+    "loadError": "The bytes of this file couldn't be read."
   },
   "links": {
     "openTitle": "Open this link?",

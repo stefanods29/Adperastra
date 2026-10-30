@@ -404,7 +404,9 @@
     "right": "Flecha derecha",
     "up": "Flecha arriba",
     "down": "Flecha abajo",
-    "space": "Espacio"
+    "space": "Espacio",
+    "pageUp": "Re Pág",
+    "pageDown": "Av Pág"
   },
   "files": {
     "newFolderName": "Nueva carpeta",
@@ -450,7 +452,8 @@
     "image": "Imagen",
     "text": "Texto",
     "markdown": "Markdown",
-    "media": "Audio y video"
+    "media": "Audio y video",
+    "hex": "Hexadecimal"
   },
   "protected": {
     "message": "Este archivo proviene de Internet, así que se abrió en vista protegida.",
@@ -531,6 +534,10 @@
     "audio": "Audio",
     "cantPlay": "Este archivo no se puede reproducir aquí: el reproductor integrado no admite su formato.",
     "noPicture": "No hay imagen para mostrar. Si este video debería tener una, su formato no se admite aquí."
+  },
+  "hex": {
+    "label": "Bytes de {name}",
+    "loadError": "No se pudieron leer los bytes de este archivo."
   },
   "links": {
     "openTitle": "¿Abrir este vínculo?",

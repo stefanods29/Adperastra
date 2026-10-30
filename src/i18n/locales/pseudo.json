@@ -404,7 +404,9 @@
     "right": "[Rïght ~~]",
     "up": "[Üp ~~]",
     "down": "[Døwñ ~~]",
-    "space": "[Späçë ~~]"
+    "space": "[Späçë ~~]",
+    "pageUp": "[Pägë Üp ~~~]",
+    "pageDown": "[Pägë Døwñ ~~~~]"
   },
   "files": {
     "newFolderName": "[Ñëw føldër ~~~~]",
@@ -450,7 +452,8 @@
     "image": "[Ïmägë ~~]",
     "text": "[Tëxt ~~]",
     "markdown": "[Märkdøwñ ~~~~]",
-    "media": "[Äüdïø äñd vïdëø ~~~~~~]"
+    "media": "[Äüdïø äñd vïdëø ~~~~~~]",
+    "hex": "[Hëx ~~]"
   },
   "protected": {
     "message": "[Thïs fïlë çämë frøm thë ïñtërñët, sø ït øpëñëd ïñ prøtëçtëd vïëw. ~~~~~~~~~~~~~~~~~~~~~]",
@@ -531,6 +534,10 @@
     "audio": "[Äüdïø ~~]",
     "cantPlay": "[Thïs fïlë çäñ't bë pläÿëd hërë: thë büïlt-ïñ pläÿër døësñ't süppørt ïts førmät. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
     "noPicture": "[Thërë ïs ñø pïçtürë tø shøw. Ïf thïs vïdëø shøüld hävë øñë, ïts førmät ïsñ't süppørtëd hërë. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
+  },
+  "hex": {
+    "label": "[Bÿtës øf {name} ~~~]",
+    "loadError": "[Thë bÿtës øf thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~~~~~]"
   },
   "links": {
     "openTitle": "[Øpëñ thïs lïñk? ~~~~~]",

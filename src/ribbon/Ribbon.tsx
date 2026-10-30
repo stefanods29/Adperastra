@@ -92,6 +92,13 @@ export default function Ribbon<C>({ def, ctx, commands, accent, active }: Ribbon
     );
   };
 
+  // A group whose controls are all hidden (Parts for a small file) is left out.
+  const isShown = (control: RibbonControl) => {
+    if (control.type === "custom") return true;
+    const command = byId.get(control.command);
+    return command !== undefined && isCommandVisible(command, ctx);
+  };
+
   return (
     <div className="adp-ribbon" style={{ ["--adp-ribbon-accent" as string]: `var(--adp-accent-${accent})` }}>
       {def.tabs.length > 1 ? (
@@ -112,7 +119,7 @@ export default function Ribbon<C>({ def, ctx, commands, accent, active }: Ribbon
         </div>
       ) : null}
       <div className="adp-ribbon-body" role="toolbar" aria-label={t(tab.labelKey)}>
-        {tab.groups.map((group, index) => (
+        {tab.groups.filter((group) => group.controls.some(isShown)).map((group, index) => (
           <div key={group.id} className="adp-ribbon-group" role="group" aria-label={t(group.labelKey)}>
             {index > 0 ? <span className="adp-ribbon-sep" aria-hidden="true" /> : null}
             {group.controls.map(renderControl)}

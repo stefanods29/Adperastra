@@ -13,6 +13,8 @@ const KEY_NAMES: Record<string, string> = {
   up: "keys.up",
   down: "keys.down",
   space: "keys.space",
+  pageup: "keys.pageUp",
+  pagedown: "keys.pageDown",
 };
 
 export function formatShortcut(shortcut: string, t: (key: string) => string): string {

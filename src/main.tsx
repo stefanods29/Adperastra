@@ -9,6 +9,7 @@ import "./styles/filetabs.css";
 import "./styles/ribbon.css";
 import "./styles/viewers.css";
 import "./styles/media.css";
+import "./styles/hex.css";
 
 const container = document.getElementById("root");
 if (!container) {
