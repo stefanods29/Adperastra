@@ -178,6 +178,43 @@ fn merge_keeps_existing_files_and_copies_new_ones() {
         .any(|item| item.to.ends_with("same.txt")));
 }
 
+#[cfg(windows)]
+#[test]
+fn merge_never_writes_through_a_destination_junction() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    let outside = tempfile::tempdir().unwrap();
+    fs::create_dir_all(src.path().join("A").join("link")).unwrap();
+    fs::write(src.path().join("A").join("link").join("new.txt"), b"new").unwrap();
+    fs::create_dir(dst.path().join("A")).unwrap();
+    fs::write(outside.path().join("keep.txt"), b"outside").unwrap();
+    let status = std::process::Command::new("cmd")
+        .args(["/C", "mklink", "/J"])
+        .arg(dst.path().join("A").join("link"))
+        .arg(outside.path())
+        .status()
+        .unwrap();
+    assert!(status.success());
+    let report = copy_items(
+        &[src.path().join("A")],
+        dst.path(),
+        ConflictPolicy::Merge,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(!outside.path().join("new.txt").exists());
+    assert_eq!(
+        fs::read(outside.path().join("keep.txt")).unwrap(),
+        b"outside"
+    );
+    assert!(report
+        .skipped
+        .iter()
+        .any(|item| item.reason == "link_not_supported"));
+    fs::remove_dir(dst.path().join("A").join("link")).unwrap();
+}
+
 #[test]
 fn merge_into_a_file_target_is_skipped_without_touching_it() {
     let src = tempfile::tempdir().unwrap();

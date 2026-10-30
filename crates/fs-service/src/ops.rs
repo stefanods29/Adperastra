@@ -137,7 +137,7 @@ fn exists(path: &Path) -> bool {
 
 fn is_real_dir(path: &Path) -> bool {
     path.symlink_metadata()
-        .is_ok_and(|m| m.is_dir() && !m.file_type().is_symlink())
+        .is_ok_and(|metadata| metadata.is_dir() && !directory_link(&metadata))
 }
 
 #[cfg(windows)]
@@ -675,6 +675,8 @@ impl Runner<'_> {
         let mut copied: Vec<PathBuf> = Vec::new();
         // Folders this copy created; anything inside them is new too.
         let mut new_dirs: HashSet<String> = HashSet::new();
+        // Destination folders that are links: never write through them.
+        let mut skipped_links: HashSet<String> = HashSet::new();
         let key = |path: &Path| path.to_string_lossy().to_lowercase();
         let name = item_name(source).unwrap_or_default();
         for entry in &plan.entries {
@@ -689,12 +691,24 @@ impl Runner<'_> {
             } else {
                 target.join(suffix)
             };
+            self.current = entry.from.to_string_lossy().into_owned();
+            self.items_done += 1;
+            if dest
+                .parent()
+                .is_some_and(|parent| skipped_links.contains(&key(parent)))
+            {
+                skip(report, &entry.from, "link_not_supported");
+                continue;
+            }
             let inside_new = dest
                 .parent()
                 .is_some_and(|parent| new_dirs.contains(&key(parent)));
-            self.current = entry.from.to_string_lossy().into_owned();
-            self.items_done += 1;
             if entry.is_dir {
+                if fs::symlink_metadata(&dest).is_ok_and(|metadata| directory_link(&metadata)) {
+                    skipped_links.insert(key(&dest));
+                    skip(report, &entry.from, "link_not_supported");
+                    continue;
+                }
                 let existed = exists(&dest);
                 match fs::create_dir_all(&dest) {
                     Ok(()) => {
