@@ -260,13 +260,12 @@ if (mode === "full") {
       await run("restore", [target]);
       return performance.now() - t0;
     })()`);
-    // Replace + Undo: the replaced file goes to the Recycle Bin and comes
-    // back from its exact bin entry (not the newer copy with its path).
-    await timed("replace a file, then undo it (jobs)", `(async () => {
+    // Keep both + Undo: the numbered copy is created next to the original
+    // and Undo sends only that copy to the Recycle Bin.
+    await timed("copy with Keep both, then undo it (jobs)", `(async () => {
       const invoke = window.__TAURI_INTERNALS__.invoke;
       const source = ${JSON.stringify(join(demo, "notes.txt"))};
       const dest = ${JSON.stringify(join(demo, "BenchCopy"))};
-      const target = dest + "\\\\notes.txt";
       const run = async (request) => {
         const id = "bench-" + request.kind + "-" + Math.random().toString(36).slice(2);
         await invoke("file_op_start", { request: { dest_dir: null, conflict: "skip", ...request }, requestId: id });
@@ -279,12 +278,11 @@ if (mode === "full") {
         throw new Error("timeout");
       };
       const t0 = performance.now();
-      const copied = await run({ kind: "copy", sources: [source], dest_dir: dest, conflict: "replace" });
-      const replaced = (copied.replaced ?? []).filter((item) => item.bin_id);
-      if (replaced.length !== 1) return "replaced item not reported: " + JSON.stringify(copied);
-      await run({ kind: "recycle", sources: [target] });
-      const restored = await run({ kind: "restore", sources: replaced.map((r) => r.path), bin_ids: replaced.map((r) => r.bin_id) });
-      if (restored.completed.length !== 1) return "restore failed: " + JSON.stringify(restored);
+      const copied = await run({ kind: "copy", sources: [source], dest_dir: dest, conflict: "keepBoth" });
+      const created = (copied.created ?? [])[0];
+      if (!created) return "kept copy not reported: " + JSON.stringify(copied);
+      const recycled = await run({ kind: "recycle", sources: [created.to] });
+      if (recycled.completed.length !== 1) return "undo failed: " + JSON.stringify(recycled);
       return performance.now() - t0;
     })()`);
     cleanup03b();
