@@ -11,11 +11,11 @@ The owner pastes the planner prompt from `plan/PROMPTS.md` to start a planner se
 | What | Where |
 |---|---|
 | The repository (the app's code) | `C:\Users\stefa\Documents\Adperastra` |
-| Plan folders (the owner's extracted plan zips) | `adperastra-plan-*` folders inside the repository folder. The newest one (now `adperastra-plan-v2.1`) is complete. Older ones (`adperastra-plan-v2`) are only kept for reference. They are never committed (`.git/info/exclude`, Step P2) |
-| Where the planner writes | the newest plan folder: `adperastra-plan-v2.1\plan\steps\step-<id>.md` and the plan files listed in section 8. Never anything else. When the coding agent has the planner role too (AGENTS.md section 5, "A step without a guide"), it writes the guide and those plan files in the repository's `plan/` on the step's branch instead |
-| How guides reach the repository | the owner tells the coding agent "apply the plan update from adperastra-plan-v2.1" (AGENTS.md section 8) |
+| The plan | `plan/` in the repository is the only plan folder (`plan/STATUS.md` decisions log, 2026-10-30) |
+| Where the planner writes | `plan/steps/step-<id>.md` and the plan files listed in section 8, on the step's branch. Never anything else |
+| How guides reach the repository | as their own `docs(plan)` commit on the step's branch (AGENTS.md section 5, "A step without a guide") |
 
-The planner reads the repository but never changes it: no edits to app code, no commits, no branches. Never read, print or copy anything under `C:\Users\stefa\.adperastra\` (signing keys).
+The planner changes only those plan files, never app code. Never read, print or copy anything under `C:\Users\stefa\.adperastra\` (signing keys).
 
 ## 2. Order and timing
 
@@ -84,7 +84,7 @@ Data safety (`plan/rules.md` R-SAFE: Recycle Bin, never overwrite without a choi
    - every test's expected values were worked out by hand;
    - nothing in it is code (section 6);
    - the gate can pass after each task (types, tests and translations changed together).
-5. Tell the owner: "The guide for step <id> is ready in adperastra-plan-v2.1. Tell the coding agent: apply the plan update from adperastra-plan-v2.1." Then continue with the next step if the owner asked for several.
+5. Commit the guide: `docs(plan): guide for step <id> [step-<id>/guide]`.
 
 ## 9. Research method (how to investigate before writing)
 

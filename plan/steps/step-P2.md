@@ -19,12 +19,12 @@ The repository uses the new plan: precise step recipes, one check command (`.\sc
 
 ## Read first
 
-- `AGENTS.md` (new), `plan/STATUS.md`, `plan/git-and-testing.md`.
+- `plan/p2-files/AGENTS.md` (the new `AGENTS.md`), `plan/STATUS.md`, `plan/git-and-testing.md`.
 
 ## Decisions (already made)
 
-- D1. The owner has extracted the newest plan zip into the folder `adperastra-plan-v2.1` inside the repository folder (an older folder `adperastra-plan-v2` may be there too; it is not used). T1 copies from that folder into the repository, replacing files: `AGENTS.md`, `CLAUDE.md`, `opencode.json`, and `scripts/gate.ps1`, `scripts/check-ipc.mjs`, `scripts/check-i18n.mjs`, `scripts/make-pseudo.mjs`, `scripts/icu-lite.mjs`, `scripts/check-base.mjs`. `plan/` is not copied: the plan folders were already merged into `plan/` during Step 03b. The `adperastra-plan-*` folders themselves never go into Git (`.git/info/exclude`, which is local and never committed).
-- D2. That merge already removed the v1 step files that the plan folder does not ship (their texts are kept in `plan/reference/v1-steps/`) and replaced the misplaced folder `plan/design-sc/` with `plan/design/screens/`. Later guides arrive in plan updates (AGENTS.md section 8).
+- D1. The files this step brings in are kept in `plan/p2-files/`, because the plan folders were merged into `plan/` during Step 03b and deleted (`plan/STATUS.md` decisions log, 2026-10-30). T1 copies them into the repository, replacing files: `AGENTS.md`, `CLAUDE.md`, `opencode.json`, and `scripts/gate.ps1`, `scripts/check-ipc.mjs`, `scripts/check-i18n.mjs`, `scripts/make-pseudo.mjs`, `scripts/icu-lite.mjs`, `scripts/check-base.mjs`. `CLAUDE.md` is local only (`.git/info/exclude`) and is never committed.
+- D2. That merge already removed the v1 step files that the plan folder did not ship (their texts are kept in `plan/reference/v1-steps/`) and replaced the misplaced folder `plan/design-sc/` with `plan/design/screens/`. Later guides are written into `plan/steps/` (`plan/EXPANDING.md`).
 - D3. `pseudo.json` is generated from now on. Regenerating it changes all its strings once; that is expected.
 - D4. `BLOCKED.md` is never committed (`.gitignore`).
 - D5. `scripts/check-base.mjs` compares 17 files with the Git hashes in `plan/base.json`. If any differs, the recipes may not fit the code: the step stops before changing anything.
@@ -33,16 +33,15 @@ The repository uses the new plan: precise step recipes, one check command (`.\sc
 
 ### T1 - Put the new plan on its own branch
 
-First keep the plan folders out of Git and copy the agent files and scripts into the repository (`plan/` is already merged, D1). In the repository folder, run exactly:
+First copy the agent files and scripts into the repository (D1). In the repository folder, run exactly:
 
 ```powershell
-Add-Content -Path .git\info\exclude -Value "/adperastra-plan-*/"
-Copy-Item .\adperastra-plan-v2.1\AGENTS.md, .\adperastra-plan-v2.1\CLAUDE.md, .\adperastra-plan-v2.1\opencode.json -Destination . -Force
-robocopy .\adperastra-plan-v2.1\scripts .\scripts /E /NFL /NDL /NJH /NJS /NP
+Copy-Item .\plan\p2-files\AGENTS.md, .\plan\p2-files\CLAUDE.md, .\plan\p2-files\opencode.json -Destination . -Force
+robocopy .\plan\p2-files\scripts .\scripts /E /NFL /NDL /NJH /NJS /NP
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed with code $LASTEXITCODE" }
 ```
 
-Check: `git status --short` shows `AGENTS.md` as changed and shows no `adperastra-plan-` folder. If a plan folder is listed, stop (golden rule 4).
+Check: `git status --short` shows `AGENTS.md` as changed.
 
 Then run exactly:
 
@@ -55,8 +54,6 @@ git stash pop
 ```
 
 If `git stash pop` reports a conflict, stop (golden rule 4).
-
-Check: `Get-ChildItem plan\steps` lists exactly the same file names as `Get-ChildItem .\adperastra-plan-v2.1\plan\steps`.
 
 **Base check.** The recipes of P2, 04a, 04b and 04c were written for the code at commit `11aced2` (the last Step 03b commit at that time). Run:
 
@@ -80,7 +77,7 @@ node scripts/check-base.mjs
 **Commit:** stage only the plan and agent files in this commit (the scripts go in T2):
 
 ```powershell
-git add AGENTS.md CLAUDE.md opencode.json plan .gitignore
+git add AGENTS.md opencode.json plan .gitignore
 git commit -m "docs(plan): adopt plan v2 with step recipes [P2/T1]"
 ```
 
@@ -203,10 +200,13 @@ After changing `src/i18n/locales/en.json`, run `npm run i18n:pseudo`.
    git merge --ff-only main
    ```
 3. In `plan/STATUS.md` (on `testing`): set P2 to `done`, "Current step" to `04a`, commit `docs(status): plan v2 adopted, next 04a [P2]`, push.
-4. Delete the `adperastra-plan-v2.1` folder (Recycle Bin); `plan/` is now the only plan folder:
+4. Remove `plan/p2-files/` (on `testing`), because its files are now in place:
    ```powershell
+   git rm -r --quiet plan/p2-files
+   git commit -m "docs(plan): remove plan/p2-files, its files are in place [P2]"
+   git push
    Add-Type -AssemblyName Microsoft.VisualBasic
-   [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory((Resolve-Path .\adperastra-plan-v2.1).Path, 'OnlyErrorDialogs', 'SendToRecycleBin')
+   [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory((Resolve-Path .\plan\p2-files).Path, 'OnlyErrorDialogs', 'SendToRecycleBin')
    ```
 5. Tell the owner in one line that plan v2 is on `main`, then start Step 04a.
 
@@ -214,6 +214,5 @@ After changing `src/i18n/locales/en.json`, run `npm run i18n:pseudo`.
 
 - [ ] `.\scripts\gate.ps1` prints `GATE PASSED` on `testing`.
 - [ ] CI is green on the pull request.
-- [ ] `plan/steps/` holds exactly the step files of `adperastra-plan-v2.1\plan\steps`, `plan/design-sc/` no longer exists, and `plan/design/screens/` has 6 PNG files.
-- [ ] `git status` never lists an `adperastra-plan-` folder.
+- [ ] `plan/p2-files/` and `plan/design-sc/` no longer exist, and `plan/design/screens/` has 6 PNG files.
 - [ ] `plan/STATUS.md` says the current step is 04a.

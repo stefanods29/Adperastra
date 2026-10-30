@@ -10,7 +10,7 @@ The agent updates this file at the end of every step (AGENTS.md section 4).
 
 States: `done`, `in progress`, `waiting for owner`, `ready` (full recipe with the code: build it by copying exactly), `guide` (precise guide without code: every decision, the order of the work and the tests are given; you write the code exactly as it describes), `outline` (not written yet: stop and tell the owner, see `plan/EXPANDING.md`).
 
-Guides for the steps after 05a are written by the planner (`plan/EXPANDING.md`) into the newest plan folder; the owner then asks you to apply the plan update (AGENTS.md section 8). If the next step's file is missing or its state is `outline`, stop and tell the owner, unless the decisions log below gives you the planner role (AGENTS.md section 5, "A step without a guide").
+Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.md`). If the next step's file is missing or its state is `outline`, stop and tell the owner, unless the decisions log below gives you the planner role (AGENTS.md section 5, "A step without a guide").
 
 | Step | Name | State | Tag |
 |---|---|---|---|
@@ -91,6 +91,7 @@ Guides for the steps after 05a are written by the planner (`plan/EXPANDING.md`) 
 
 ## Owner decisions log (newest first)
 
+- 2026-10-30: `plan/` is the only plan folder. The `adperastra-plan-*` folders were deleted, and the files Step P2 still needs (the new agent files and scripts) moved to `plan/p2-files/` until P2 puts them in place. Plan changes go directly into `plan/`, in their own `docs(plan)` commit; older entries that mention plan folders or plan updates no longer apply.
 - 2026-10-30: Speed checks that are merely unreliable (timeouts that come and go, noisy numbers) do not block a step; only a result that is clearly slow for the user does. The narrow click space in the address bar with long paths is accepted. The one slow recycle + restore measurement (2.2 s) is left for later.
 
 - 2026-10-29: Continuous work. The agent goes from step to step without waiting for the owner. When a step's checks pass and no Blocker or Major is left open, it merges the step into `testing`, puts it on `main` through a pull request once CI passes, tags it, tells the owner in one short message, and starts the next step. When something breaks, it fixes the cause itself and writes down what it changed; it stops only in the cases in AGENTS.md section 5. Publishing a GitHub release still needs the owner's yes. The owner checks finished steps afterwards, and problems they report become `F` tasks. This replaces "The owner still checks and approves every step" in the planner-role entry below.

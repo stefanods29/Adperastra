@@ -1,6 +1,6 @@
 # Prompts for the owner
 
-Copy a prompt, paste it into the AI, and send it. The folder names assume the plan zip `adperastra-plan-v2.1.zip` was extracted into `C:\Users\stefa\Documents\Adperastra\adperastra-plan-v2.1`.
+These prompts were written when the plan lived in `C:\Users\stefa\Documents\Adperastra\adperastra-plan-v2.1`. That folder was merged into `plan/` and deleted on 2026-10-30, so they no longer work as written: update their folder paths before using one.
 
 ## 1. Planner: keep writing the next steps
 
