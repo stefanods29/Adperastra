@@ -47,12 +47,24 @@ foreach ($variant in $variants) {
         $env:ADPERASTRA_DATA_DIR = $dataDir
         $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$port --disable-background-timer-throttling --disable-renderer-backgrounding"
         $process = Start-Process -FilePath $Exe -PassThru -WindowStyle Hidden
-        $deadline = [DateTime]::UtcNow.AddSeconds(30)
+        # A fresh WebView2 profile on a cold machine (hosted runners) can take
+        # far longer than on the development PC; stop early if the app exits.
+        $deadline = [DateTime]::UtcNow.AddSeconds(90)
         $ready = $false
-        while (-not $ready -and [DateTime]::UtcNow -lt $deadline) {
+        while (-not $ready -and -not $process.HasExited -and [DateTime]::UtcNow -lt $deadline) {
             try { $targets = Invoke-RestMethod -Uri "http://127.0.0.1:$port/json/list" -TimeoutSec 1; $ready = @($targets | Where-Object type -eq 'page').Count -gt 0 } catch { Start-Sleep -Milliseconds 150 }
         }
-        if (-not $ready) { throw 'The isolated WebView2 test app did not start' }
+        if (-not $ready) {
+            $state = if ($process.HasExited) { "exited with code $($process.ExitCode)" } else { 'still running, no page on the debugging port after 90 s' }
+            Write-Output "App $state. Files in the test data folder:"
+            Get-ChildItem -LiteralPath $dataDir -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+                Write-Output "  $($_.FullName.Substring($dataDir.Length)) ($($_.Length) bytes)"
+                if ($_.Extension -in '.log', '.txt' -and $_.Length -lt 65536) { Get-Content -LiteralPath $_.FullName -TotalCount 25 | ForEach-Object { Write-Output "    $_" } }
+            }
+            $webview = @(Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue).Count
+            Write-Output "WebView2 processes running: $webview"
+            throw "The isolated WebView2 test app did not start ($state)"
+        }
         node (Join-Path $PSScriptRoot 'verify-runtime.mjs') $port $fixture $OutputDirectory $variant.language $variant.theme $Mode ([string]$variant.scale)
         if ($LASTEXITCODE -ne 0) { throw "Runtime verification failed ($($variant.language)/$($variant.theme)/$($variant.scale))" }
     } finally {

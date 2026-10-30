@@ -113,6 +113,34 @@ Invoke-Verification "Packaged runtime $Mode checks" {
     & $processShell -NoProfile -ExecutionPolicy Bypass -File $runtime -Mode $Mode -OutputDirectory (Join-Path $OutputDirectory 'runtime')
 }
 
+if ($Mode -eq 'full') {
+    Invoke-Verification 'Speed tiers and regressions' {
+        $corpus = Join-Path $env:TEMP 'adperastra-corpus\folder-100k'
+        if (-not (Test-Path -LiteralPath $corpus)) {
+            & $processShell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'generate-corpus.ps1')
+            if ($LASTEXITCODE -ne 0) { throw 'Could not generate the test corpus.' }
+        }
+        $speedJson = Join-Path $OutputDirectory 'speed-ui.json'
+        # The step comes from the branch name (step-<id>-...); testing/main use plan/STATUS.md's current step.
+        $branch = git branch --show-current
+        $stepId = if ($branch -match '^step-([0-9a-zA-Z]+)-') { $Matches[1] } else { ((Get-Content plan/STATUS.md -Raw) -replace '(?s).*?\*\*Current step:\*\* `([^`]+)`.*','$1') }
+        if ($env:GITHUB_ACTIONS -eq 'true') {
+            # Hosted runners are other hardware: tiers only, no 20% comparison.
+            & $processShell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'measure-ui.ps1') -Out $speedJson -Step $stepId
+            if ($LASTEXITCODE -ne 0) { throw 'UI speed measurement failed.' }
+            node scripts/compare-benchmarks.mjs $speedJson --tiers-only
+        } else {
+            # This PC: measured alongside the previous step's tag, so the
+            # 20% rule compares builds, not how busy the PC was that day.
+            $baseline = git tag --list 'v*-step*' --sort=-creatordate --merged HEAD | Select-Object -First 1
+            if (-not $baseline) { throw 'No earlier step tag to compare with.' }
+            & $processShell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'measure-ab.ps1') -Step $stepId -Baseline $baseline -Out $speedJson
+            if ($LASTEXITCODE -ne 0) { throw 'UI speed measurement failed.' }
+            node scripts/compare-benchmarks.mjs $speedJson
+        }
+    }
+}
+
 $failures = @($checks | Where-Object { -not $_.passed })
 $report = [ordered]@{
     schema = 1; mode = $Mode; passed = ($failures.Count -eq 0)

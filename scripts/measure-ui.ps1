@@ -15,6 +15,7 @@ param(
   [ValidateSet("en", "es", "pseudo")][string]$Language = "en",
   [ValidateSet("light", "dark")][string]$Theme = "light",
   [int]$Port = 9333,
+  [Parameter(Mandatory = $true)][string]$Step,
   [switch]$ScreenshotsOnly
 )
 $ErrorActionPreference = "Stop"
@@ -69,7 +70,7 @@ try {
   # PowerShell drops empty arguments, so "-" stands for "none".
   $outPath = if ($Out) { $Out } else { "-" }
   $shotPath = if ($Shots) { Join-Path $root $Shots } else { "-" }
-  node (Join-Path $PSScriptRoot "measure-ui.mjs") $Port $demo $BigFolder $mode $outPath $shotPath $Language $Theme
+  node (Join-Path $PSScriptRoot "measure-ui.mjs") $Port $demo $BigFolder $mode $outPath $shotPath $Language $Theme $Step
   if ($LASTEXITCODE -ne 0) { throw "measure-ui.mjs failed" }
 } finally {
   Remove-Item Env:\WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS -ErrorAction SilentlyContinue

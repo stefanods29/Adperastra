@@ -19,7 +19,12 @@ socket.onmessage = ({data}) => {
     const handlers = pending.get(message.id);
     if (handlers) { pending.delete(message.id); clearTimeout(handlers.timer); message.error ? handlers.reject(new Error(message.error.message)) : handlers.resolve(message.result); }
   } else if (message.method === 'Runtime.exceptionThrown') {
-    consoleErrors.push(message.params.exceptionDetails.exception?.description ?? message.params.exceptionDetails.text);
+    // Rejections with a non-Error value have no description: keep the
+    // value and where it was thrown, so the report says what failed.
+    const details = message.params.exceptionDetails;
+    const thrown = details.exception?.description ?? (details.exception && 'value' in details.exception ? JSON.stringify(details.exception.value) : '');
+    const frame = details.stackTrace?.callFrames?.[0];
+    consoleErrors.push([details.text, thrown, frame ? `at ${frame.functionName || '(anonymous)'} ${frame.url}:${frame.lineNumber + 1}:${frame.columnNumber + 1}` : ''].filter(Boolean).join(' '));
   } else if (message.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(message.params.type)) {
     consoleErrors.push(message.params.args.map(arg => arg.value ?? arg.description).join(' '));
   }
@@ -41,7 +46,10 @@ const checks = [];
 const metrics = [];
 const check = (name, result = true) => { assert(result, name); checks.push({name, passed:true}); };
 const press = async (key, code, vk, modifiers=0) => {
-  await send('Input.dispatchKeyEvent', {type:'keyDown',key,code,windowsVirtualKeyCode:vk,modifiers});
+  // A real Enter key carries the '\r' character; without it a form's
+  // implicit submission never happens.
+  const text = key === 'Enter' && !modifiers ? {text:'\r',unmodifiedText:'\r'} : {};
+  await send('Input.dispatchKeyEvent', {type:'keyDown',key,code,windowsVirtualKeyCode:vk,modifiers,...text});
   await send('Input.dispatchKeyEvent', {type:'keyUp',key,code,windowsVirtualKeyCode:vk,modifiers});
 };
 const click = async selector => {
@@ -148,6 +156,8 @@ try {
   writeFileSync(join(output,`runtime-${language}-${theme}-${scale*100}.json`),JSON.stringify({language,theme,scale,mode,checks,metrics,consoleErrors},null,2));
   console.log(`${language}/${theme}/${scale*100}%: ${checks.length} runtime checks passed`);
 } catch(error) {
+  // Keep what the page showed when the check failed.
+  try { await snapshot('failure'); } catch { /* the page may be gone */ }
   writeFileSync(join(output,`runtime-${language}-${theme}-${scale*100}.json`),JSON.stringify({language,theme,scale,mode,checks,metrics,consoleErrors,error:String(error.stack??error)},null,2));
   throw error;
 } finally {socket.close();}

@@ -3,13 +3,14 @@
 // is dispatched, then the clock stops at the next painted frame (two
 // animation frames), which is what the user sees. Median of RUNS runs.
 //
-// node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme>
+// node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme> [step]
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const args = process.argv.slice(2).map((value) => (value === "-" ? "" : value));
-const [port, demo, big, mode, outFile, shotDir, lang, theme] = args;
+const [port, demo, big, mode, outFile, shotDir, lang, theme, stepId] = args;
+if (mode === "full" && outFile && !stepId) throw new Error("measure-ui.mjs needs the step id (9th argument)");
 const RUNS = 7;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -163,6 +164,24 @@ if (mode === "full") {
   results.push(await measure("100k folder: select all (Ctrl+A)", `window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "a", ctrlKey: true })`));
   results.push(await measure("100k folder: right-click with all selected", `window.__m.list().focus(); window.__m.key(window.__m.list(), { key: "a", ctrlKey: true }); true`, `window.__m.context(window.__m.rows()[2])`, `window.__m.closeMenus(); true`));
   results.push(await measure("100k folder: Shift+click range", `window.__m.click(window.__m.rows()[0]); true`, `window.__m.click(window.__m.rows()[20], { shiftKey: true })`));
+  // Smooth tier: scroll the 100k list one wheel-step per frame for 2 s and
+  // record every frame interval. The display's own frame time is the median
+  // interval; a frame slower than 1.5x of it is a dropped frame.
+  const scroll = await page(`(async () => {
+    const list = window.__m.list(); list.scrollTop = 0; await window.__m.frame();
+    const gaps = []; let last = performance.now(); const end = last + 2000;
+    while (performance.now() < end) {
+      list.scrollTop += 120;
+      await new Promise((r) => requestAnimationFrame(r));
+      const now = performance.now(); gaps.push(now - last); last = now;
+    }
+    gaps.sort((a, b) => a - b);
+    const at = (q) => gaps[Math.min(gaps.length - 1, Math.floor(q * gaps.length))];
+    const display = at(0.5);
+    return { frames: gaps.length, display_ms: display, p95_ms: at(0.95), max_ms: gaps[gaps.length - 1], dropped: gaps.filter((g) => g > display * 1.5).length };
+  })()`);
+  results.push({ name: "100k folder: scroll frame time (p95)", median_ms: Math.round(scroll.p95_ms * 10) / 10, p95_frame_ms: Math.round(scroll.p95_ms * 10) / 10, max_ms: Math.round(scroll.max_ms * 10) / 10, runs: scroll.frames, display_frame_ms: Math.round(scroll.display_ms * 10) / 10, dropped_frames: scroll.dropped, tier: "smooth" });
+  console.log(`100k folder: scroll ${scroll.frames} frames, display ${scroll.display_ms.toFixed(1)} ms, p95 ${scroll.p95_ms.toFixed(1)} ms, dropped ${scroll.dropped}`);
   const menuMs = await page(`Number(document.querySelector(".adp-explorer").dataset.lastMenuOpenMs ?? -1)`);
   console.log(`last instrumented menu open: ${menuMs} ms`);
 
@@ -289,7 +308,7 @@ if (mode === "full") {
 if (outFile && results.length > 0) {
   const record = {
     date: new Date().toISOString(),
-    step: "03b",
+    step: stepId,
     build: "release (tauri build --no-bundle)",
     method: "Inside the packaged app's page: action dispatched, clock stopped at the next painted frame (two animation frames). Median of 7 runs.",
     language: lang,

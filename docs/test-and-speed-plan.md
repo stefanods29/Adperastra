@@ -44,3 +44,27 @@ shipped; 08c verifies the installer and portable zip contain none of them.
 - Tiers (`plan/speed.md`): Instant 0.1 s, Smooth 16 ms/frame, Fast 1 s,
   Waiting-with-feedback 1-10 s, Background job over 10 s. A slowdown over
   20% versus the previous step fails the suite.
+
+## What actually runs today (Step 03b)
+
+`scripts/test-all.ps1 -Mode quick|full` is the one command; GitHub runs
+quick on every push and full every Monday (`.github/workflows/ci.yml`).
+Every check writes a log and the run writes `report.html`/`report.json`
+under `build/verification/`.
+
+| Suite | Quick | Full | Where |
+|---|---|---|---|
+| Rust format, lints, unit/integration/file-safety tests | x | x | `cargo fmt`, `cargo clippy`, `cargo test` |
+| Translations, hardcoded text, help parity and links | x | x | `npm run lint:i18n`, `verification-checks.mjs help` |
+| UI logic and component tests, TypeScript build | x | x | `npm test`, `npm run build` |
+| 50 MB / secrets / signing-key scan of tracked files | x | x | `verification-checks.mjs repo` |
+| Licenses of everything that ships (Rust: `cargo-deny`; npm: runtime packages; development-only packages never ship) | x | x | `scripts/license-policy.json` |
+| Vulnerability audits (`cargo audit`, `npm audit`) | x | x | |
+| Packaged app runtime checks in real WebView2 (smoke, file filter, rename, copy/recycle/restore, Ctrl+Z/Ctrl+Y, no console errors, axe-core WCAG A/AA) | English light | English, Spanish dark, pseudo; 100% and 150% | `verify-runtime.ps1` |
+| Speed: every interaction meets its tier; more than 20% slower than the previous step's JSON fails (changes under 2 ms are timer noise); 100k-folder scroll frame time and dropped frames | - | x (tiers only on GitHub's other hardware) | `measure-ui.ps1`, `compare-benchmarks.mjs` |
+| Screenshots | - | x (runtime check) | compared with the Figma frames side by side in the step report, by the owner; no automatic pixel comparison, because the Figma text is example content |
+
+Not built yet, and the step that builds it: fuzzing and the malicious file
+set (04a, with the first file parsers), sandbox checks for untrusted
+content (04a), Office and AI suites (13, 17a), installer tests (08d),
+Narrator/NVDA (10f), cold start after a reboot (owner, KI-003).
