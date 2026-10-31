@@ -51,7 +51,7 @@ const SettingsView = lazy(() => import("./views/SettingsView"));
 const SESSION_KEY = "adperastra-session";
 const HELP_SLUGS: Record<TabKind, string> = {
   explorer: "browsing-folders",
-  settings: "changing-language-and-theme",
+  settings: "the-settings-page",
   help: "using-help",
   gallery: "using-help",
   file: "opening-files",
@@ -526,7 +526,7 @@ export default function App() {
           <Suspense fallback={null}><SettingsView
             settings={settings}
             onApply={applySettings}
-            onOpenHelp={() => openTab("help", "changing-language-and-theme")}
+            onOpenHelp={() => openTab("help", "the-settings-page")}
             onOpenHelpPage={(slug) => openTab("help", slug)}
           /></Suspense>
         ) : null}
