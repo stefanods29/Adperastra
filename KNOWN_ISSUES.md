@@ -11,6 +11,12 @@ that fixed it.
 
 ## Open
 
+### KI-037 - The speed record's step name comes only from the runner (Minor)
+- **Found in:** Step 06a, while applying the guide's "the step value `05d` becomes `06a`" (2026-10-30). **Severity:** Minor (tooling; nothing the user sees, and no measuring result is wrong).
+- **What:** `scripts/measure-ui.mjs` has no hardcoded step value: the JSON record's `step` comes from the 9th argument, which `scripts/measure-ui.ps1` fills from `-Step` or the branch name. A run outside a step branch, without `-Step`, records `"unknown"`, and the guide's instruction has nothing to change. The same instruction in Step 05d's guide was not applied for the same reason.
+- **Workaround:** pass `-Step 06a` (or run on the step's branch) so the record is named correctly.
+- **Target:** reviewed at the next milestone.
+
 ### KI-035 - The line under the toolbar stops partway across the window (Minor)
 - **Found in:** Step 05c screenshots, 2026-10-30. **Severity:** Minor (cosmetic).
 - **What:** With the toolbar on top in the moved-pane, tabs-on-the-left and Classic layouts, the thin line under the command bar ends before the right edge of the window.
