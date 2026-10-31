@@ -562,14 +562,16 @@
     "down": "Down",
     "space": "Space",
     "pageUp": "Page Up",
-    "pageDown": "Page Down"
+    "pageDown": "Page Down",
+    "backspace": "Backspace"
   },
   "files": {
     "newFolderName": "New folder",
     "newTextFileName": "New text document.txt",
     "pastedImageName": "Pasted image {stamp}",
     "pastedTextName": "Pasted text {stamp}",
-    "shortcutName": "{name} - Shortcut"
+    "shortcutName": "{name} - Shortcut",
+    "extractedFolderName": "Extracted files"
   },
   "jobs": {
     "title": "File operations",
@@ -609,7 +611,8 @@
     "text": "Text",
     "markdown": "Markdown",
     "media": "Audio and video",
-    "hex": "Hex"
+    "hex": "Hex",
+    "archive": "Archive"
   },
   "protected": {
     "message": "This file came from the internet, so it opened in protected view.",
@@ -691,6 +694,47 @@
     "audio": "Audio",
     "cantPlay": "This file can't be played here: the built-in player doesn't support its format.",
     "noPicture": "There is no picture to show. If this video should have one, its format isn't supported here."
+  },
+  "archive": {
+    "ribbonTab": "Archive",
+    "groupExtract": "Extract",
+    "groupNavigate": "Navigate",
+    "extractAll": "Extract all",
+    "extractSelected": "Extract selected…",
+    "openEntry": "Open",
+    "openLocation": "Open item location",
+    "up": "Up one level",
+    "refresh": "Refresh",
+    "listLabel": "Contents of {name}",
+    "pathLabel": "Folder in the archive",
+    "reading": "Reading the archive…",
+    "readingPercent": "Reading the archive… {percent}%",
+    "readCancelled": "Reading was cancelled.",
+    "tryAgain": "Try again",
+    "emptyFolder": "This folder is empty.",
+    "emptyArchive": "This archive is empty.",
+    "noMatches": "No items match “{text}”.",
+    "searchNote": "Matches in the whole archive",
+    "truncated": "Showing the first {count, number} items. Use the search box to find the others.",
+    "searchTruncated": "Showing the first {count, number} matches.",
+    "hiddenNote": "{count, plural, one {# item is hidden because its name can't be used safely on Windows.} other {# items are hidden because their names can't be used safely on Windows.}}",
+    "encryptedNote": "{count, plural, one {# item is protected with a password and can't be opened yet.} other {# items are protected with a password and can't be opened yet.}}",
+    "partialNote": "This archive seems damaged: only part of it could be read.",
+    "opening": "Opening {name}…",
+    "linkCannotOpen": "Links inside archives can't be opened.",
+    "statusItems": "{count, plural, one {# item} other {# items}}",
+    "statusFiles": "{count, plural, one {# file} other {# files}}, {size} when extracted",
+    "linkType": "Link",
+    "pickFolderTitle": "Choose where to extract",
+    "format": {
+      "zip": "ZIP archive",
+      "seven_z": "7z archive",
+      "tar": "TAR archive",
+      "tar_gz": "TAR archive (gzip)",
+      "tar_xz": "TAR archive (xz)",
+      "gz": "gzip file",
+      "xz": "xz file"
+    }
   },
   "hex": {
     "label": "Bytes of {name}",

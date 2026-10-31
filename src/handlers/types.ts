@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType, LazyExoticComponent } from "react";
+import type { ArchiveExtractRequest } from "../services/archive";
 import type { FileTypeInfo } from "../services/files";
 
 /** File-type handlers (contract 13, Step 04a). A handler shows one kind of
@@ -47,6 +48,11 @@ export interface HandlerViewProps {
   /** The file came from the internet and protected view is on (Step 04c):
    * views keep links off (and, from Step 06a, start without editing). */
   protectedView: boolean;
+  /** Open another file in a new tab; the archive tab opens a file that lives
+   * inside it this way (Step 06d). Rejects with a `files.*` code. */
+  onOpenFile?: (path: string) => Promise<void>;
+  /** Extract through the Explorer's jobs panel (Step 06d). */
+  onExtractArchive?: (request: ArchiveExtractRequest) => void;
 }
 
 export interface Handler {

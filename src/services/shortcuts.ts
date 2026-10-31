@@ -15,6 +15,7 @@ const KEY_NAMES: Record<string, string> = {
   space: "keys.space",
   pageup: "keys.pageUp",
   pagedown: "keys.pageDown",
+  backspace: "keys.backspace",
 };
 
 export function formatShortcut(shortcut: string, t: (key: string) => string): string {

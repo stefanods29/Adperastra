@@ -11,6 +11,7 @@ import Skeleton from "../components/Skeleton";
 import Slider from "../components/Slider";
 import { handlers } from "../handlers";
 import type { FileTabStatus, FindRequest } from "../handlers/types";
+import type { ArchiveExtractRequest } from "../services/archive";
 import { errorCode, errorText } from "../services/errors";
 import { displayPath, openItem, parentPathOf, pathSegments } from "../services/explorer";
 import { fileDetect, fileGrant, fileRevoke, fileUnblock, fileUrl, type FileTypeInfo } from "../services/files";
@@ -29,6 +30,11 @@ export interface FileTabViewProps {
   onOpenHelp: (slug: string) => void;
   /** Settings > Opening files > Protected view (Step 04c). */
   protectedViewEnabled: boolean;
+  /** Open another file in a new tab; the archive tab opens a file that lives
+   * inside it this way (Step 06d). Rejects with a `files.*` code. */
+  onOpenFile?: (path: string) => Promise<void>;
+  /** Extract through the Explorer's jobs panel (Step 06d). */
+  onExtractArchive?: (request: ArchiveExtractRequest) => void;
 }
 
 type Phase =
@@ -40,7 +46,7 @@ type Phase =
 /** One file tab (Step 04a): navigation row, the handler's view, and the
  * file tab's own status bar. Gets a file token when it mounts and gives it
  * back when it unmounts (plan/pitfalls.md P-28). */
-export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder, onClose, onViewState, onOpenHelp, protectedViewEnabled }: FileTabViewProps) {
+export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder, onClose, onViewState, onOpenHelp, protectedViewEnabled, onOpenFile, onExtractArchive }: FileTabViewProps) {
   const { t } = useTranslation();
   const path = tab.path ?? "";
   const handler = tab.handler ? handlers.get(tab.handler) : undefined;
@@ -196,6 +202,8 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
               onOpenInWindowsApp={openInWindowsApp}
               find={find}
               protectedView={protectedView}
+              onOpenFile={onOpenFile}
+              onExtractArchive={onExtractArchive}
             />
           </Suspense>
         ) : null}

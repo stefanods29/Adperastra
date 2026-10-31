@@ -15,6 +15,7 @@ import "./styles/media.css";
 import "./styles/hex.css";
 import "./styles/settings.css";
 import "./styles/layout.css";
+import "./styles/archive.css";
 
 const container = document.getElementById("root");
 if (!container) {

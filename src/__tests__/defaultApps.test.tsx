@@ -39,7 +39,7 @@ describe("default apps", () => {
     const groups = defaultAppGroups();
     const all = groups.flatMap((group) => group.extensions);
     expect(new Set(all).size).toBe(all.length);
-    expect(groups.map((group) => group.id)).toEqual(["image", "media", "markdown", "text"]);
+    expect(groups.map((group) => group.id)).toEqual(["image", "media", "markdown", "text", "archive"]);
     expect(groups.find((group) => group.id === "markdown")?.extensions).toContain("md");
     expect(groups.find((group) => group.id === "text")?.extensions).not.toContain("md");
   });
@@ -65,7 +65,7 @@ describe("default apps", () => {
     root = createRoot(container);
     await act(async () => root?.render(<OpeningFilesSettings open={open} onChange={onChange} onOpenHelp={() => undefined} />));
     const groupSelects = container.querySelectorAll<HTMLSelectElement>(".adp-defaultapps-head select");
-    expect(groupSelects).toHaveLength(4);
+    expect(groupSelects).toHaveLength(5);
     await act(async () => {
       groupSelects[1].value = "windows";
       groupSelects[1].dispatchEvent(new Event("change", { bubbles: true }));

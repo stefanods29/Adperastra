@@ -1,3 +1,4 @@
+import { archiveHandler } from "./archive";
 import { hexHandler } from "./hex";
 import { imageHandler } from "./image";
 import { markdownHandler } from "./markdown";
@@ -16,6 +17,7 @@ export function createHandlerRegistry(): HandlerRegistry {
   registry.register(textHandler);
   // Never chosen by itself (no extensions or types): only "Open as hex".
   registry.register(hexHandler);
+  registry.register(archiveHandler);
   return registry;
 }
 

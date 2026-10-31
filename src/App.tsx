@@ -513,6 +513,7 @@ export default function App() {
               onViewState={(view) => setTabsState((current) => setTabView(current, tab.id, view))}
               onOpenHelp={(slug) => openTab("help", slug)}
               protectedViewEnabled={settings.open.protected_view}
+              onOpenFile={(path) => openFile(path, false)}
             />
           ))}
         {activeTab.kind === "help" ? (
