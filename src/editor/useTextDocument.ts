@@ -432,7 +432,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   };
 
   const save = useCallback(async (): Promise<boolean> => {
-    if (readOnlyRef.current !== null) return false;
+    if (!loadedRef.current || readOnlyRef.current !== null) return false;
     return performSave(false);
     // performSave and the refs above always read the latest state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -440,7 +440,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
 
   const saveAs = useCallback(async (): Promise<boolean> => {
     const view = viewRef.current;
-    if (!view || paged) return false;
+    if (!view || paged || !loadedRef.current) return false;
     const doc = view.state.doc;
     const current = encodingRef.current;
     const chosen = await pickSavePath(

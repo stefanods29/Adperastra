@@ -32,6 +32,7 @@ interface SavedMarkdownState {
 interface MarkdownCtx {
   mode: "rendered" | "source" | "split";
   zoom: number;
+  ready: boolean;
   editable: boolean;
   dirty: boolean;
   canSaveAs: boolean;
@@ -259,6 +260,7 @@ export default function MarkdownView({
   const ctx: MarkdownCtx = {
     mode: settings.mode,
     zoom: settings.zoom,
+    ready: doc.encoding !== null,
     editable,
     dirty,
     canSaveAs: true,
@@ -269,7 +271,7 @@ export default function MarkdownView({
   const commands = useMemo<Command<MarkdownCtx>[]>(
     () => [
       { id: "markdown.save", labelKey: "editor.save", icon: Save, shortcut: "Ctrl+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.dirty, run: () => void doc.save() },
-      { id: "markdown.saveAs", labelKey: "editor.saveAs", icon: SaveAll, shortcut: "Ctrl+Shift+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: () => true, run: () => void doc.saveAs() },
+      { id: "markdown.saveAs", labelKey: "editor.saveAs", icon: SaveAll, shortcut: "Ctrl+Shift+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.ready, run: () => void doc.saveAs() },
       { id: "markdown.undo", labelKey: "editor.undoHint", icon: Undo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canUndo, run: () => doc.undo() },
       { id: "markdown.redo", labelKey: "editor.redoHint", icon: Redo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canRedo, run: () => doc.redo() },
       { id: "markdown.spellcheck", labelKey: "editor.spellcheck", icon: SpellCheck, risk: "read-only", helpSlug: "editing-text-and-code", checkKind: "toggle", checkedWhen: (c) => c.spellcheck, enabledWhen: () => true, run: (c) => update({ spellcheck: !c.spellcheck }) },
