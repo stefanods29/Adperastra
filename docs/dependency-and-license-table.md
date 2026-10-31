@@ -30,6 +30,8 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | Version history (06b) | rusqlite 0.41 (MIT) with bundled SQLite (public domain), adopted in Step 06b for the version store index | plain JSON + files | Needs Rust 1.89 or newer |
 | Version history (06b) | blake3 1.8 (CC0-1.0 OR Apache-2.0), adopted in Step 06b to recognize identical versions and store them once | sha2 | `Hasher` implements `std::io::Write` |
 | Version history (06b) | zstd 0.14 (BSD-3-Clause), adopted in Step 06b to compress kept versions | - | 0.13 was MIT; 0.14 is BSD-3-Clause |
+| Version history transitive dependencies (06b) | arrayvec 0.7.8 (MIT OR Apache-2.0), constant_time_eq 0.4.2 (CC0-1.0 OR MIT-0 OR Apache-2.0), fallible-iterator 0.3.0 and fallible-streaming-iterator 0.1.9 (MIT OR Apache-2.0), hashlink 0.12.2 (MIT OR Apache-2.0), libsqlite3-sys 0.39.1 (MIT; bundled SQLite public domain) | - | Checked installed manifests; SQLite WASM/VFS dependencies are not built for Windows |
+| SQLite build tool (06b) | vcpkg 0.2.15 (MIT OR Apache-2.0) | - | Build only; checked installed manifest |
 | PDF edit (14a) | pdf-lib (MIT) | lopdf (MIT); qpdf external | Standard annotations |
 | Image editing (14b/18) | Fabric.js or Konva (MIT) + image crate | PixiJS (MIT); miniPaint (MIT, reference) | 18a needs tiled/GPU path |
 | PSD (07c/18b) | ag-psd (MIT) | flattened composite only | - |

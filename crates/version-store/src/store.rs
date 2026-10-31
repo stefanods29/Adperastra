@@ -6,8 +6,11 @@ use std::time::Duration;
 
 use rusqlite::{params, Connection, OptionalExtension};
 
-use crate::pending::{modified_unix, pending_dir, PendingSidecar};
-use crate::{path_key, StoreError, VersionInfo, STORE_SCHEMA};
+use crate::coordination::{PendingLock, StoreLock};
+use crate::pending::{
+    cleanup_incomplete, modified_unix, pending_dir, snapshot_locked, PendingSidecar,
+};
+use crate::{path_key, StoreError, VersionSession, STORE_SCHEMA};
 
 /// A sidecar without its copy is left alone this long, then removed.
 const LONELY_SIDECAR_SECS: u64 = 60;
@@ -17,14 +20,14 @@ const ZSTD_LEVEL: i32 = 3;
 
 /// The opened version store: one connection, one folder of blobs.
 pub struct VersionStore {
-    conn: Connection,
-    dir: PathBuf,
+    pub(crate) conn: Connection,
+    pub(crate) dir: PathBuf,
 }
 
 impl VersionStore {
     /// Open (or create) a store in `dir`.
     pub fn open(dir: &Path) -> Result<VersionStore, StoreError> {
-        std::fs::create_dir_all(dir)?;
+        let _lock = StoreLock::acquire(dir)?;
         std::fs::create_dir_all(dir.join("blobs"))?;
         std::fs::create_dir_all(dir.join("open"))?;
         std::fs::create_dir_all(pending_dir(dir))?;
@@ -62,22 +65,48 @@ impl VersionStore {
             "INSERT OR IGNORE INTO meta (key, value) VALUES ('schema_version', ?1)",
             params![STORE_SCHEMA.to_string()],
         )?;
+        // Unlike ROWID allocation, this durable high-water mark survives trim
+        // and delete_all. A stale undo id must never identify new content.
+        conn.execute(
+            "INSERT OR IGNORE INTO meta (key, value)
+             SELECT 'next_version_id', CAST(COALESCE(MAX(id), 0) + 1 AS TEXT) FROM versions",
+            [],
+        )?;
         Ok(VersionStore {
             conn,
             dir: dir.to_path_buf(),
         })
     }
 
+    /// Exclude every other store operation for a composite restore. Merely
+    /// retaining an opened store never retains its OS lock.
+    pub fn session(&mut self) -> Result<VersionSession<'_>, StoreError> {
+        let lock = StoreLock::acquire(&self.dir)?;
+        Ok(VersionSession {
+            store: self,
+            _lock: lock,
+        })
+    }
+
     /// Store every pending copy, oldest first. Returns how many versions were
     /// added. Runs in the background worker (Step 06b D3).
     pub fn import_pending(&mut self, now_unix: u64) -> Result<usize, StoreError> {
+        let _lock = StoreLock::acquire(&self.dir)?;
+        self.import_pending_locked(now_unix)
+    }
+
+    fn import_pending_locked(&mut self, now_unix: u64) -> Result<usize, StoreError> {
         let pending = pending_dir(&self.dir);
         std::fs::create_dir_all(&pending)?;
-        let mut sidecars: Vec<PathBuf> = std::fs::read_dir(&pending)?
-            .filter_map(|entry| entry.ok())
-            .map(|entry| entry.path())
-            .filter(|path| path.extension().is_some_and(|ext| ext == "json"))
-            .collect();
+        let mut sidecars: Vec<PathBuf> = {
+            let _pending_lock = PendingLock::acquire(&self.dir)?;
+            cleanup_incomplete(&pending, now_unix)?;
+            std::fs::read_dir(&pending)?
+                .filter_map(|entry| entry.ok())
+                .map(|entry| entry.path())
+                .filter(|path| path.extension().is_some_and(|ext| ext == "json"))
+                .collect()
+        };
         sidecars.sort();
         let mut added = 0usize;
         for sidecar in sidecars {
@@ -90,11 +119,13 @@ impl VersionStore {
                     Err(_) => false,
                 };
                 if old {
+                    let _pending_lock = PendingLock::acquire(&self.dir)?;
                     let _ = std::fs::remove_file(&sidecar);
                 }
                 continue;
             }
-            if self.import_one(&sidecar, &raw, &mut added)? {
+            if self.import_one(&sidecar, &raw, &mut added)?.is_some() {
+                let _pending_lock = PendingLock::acquire(&self.dir)?;
                 let _ = std::fs::remove_file(&raw);
                 let _ = std::fs::remove_file(&sidecar);
             }
@@ -102,24 +133,27 @@ impl VersionStore {
         Ok(added)
     }
 
-    /// Store one pending pair. `false` leaves both files for a later run.
+    /// Store one complete pending pair; return its exact inserted or deduplicated id.
     fn import_one(
         &mut self,
         sidecar: &Path,
         raw: &Path,
         added: &mut usize,
-    ) -> Result<bool, StoreError> {
+    ) -> Result<Option<i64>, StoreError> {
         let Ok(text) = std::fs::read_to_string(sidecar) else {
-            return Ok(false);
+            return Ok(None);
         };
         let Ok(entry) = serde_json::from_str::<PendingSidecar>(&text) else {
-            return Ok(false);
+            return Ok(None);
         };
+        let size = std::fs::metadata(raw)?.len();
+        if size != entry.size || size > crate::MAX_SNAPSHOT_BYTES {
+            return Ok(None);
+        }
         let hash = hash_file(raw)?;
         if !self.blob_exists(&hash)? {
             self.store_blob(raw, &hash)?;
         }
-        let size = std::fs::metadata(raw)?.len();
         let tx = self.conn.transaction()?;
         let file_id: i64 = match tx
             .query_row(
@@ -144,20 +178,35 @@ impl VersionStore {
                 tx.last_insert_rowid()
             }
         };
-        let newest: Option<String> = tx
+        let newest: Option<(i64, String)> = tx
             .query_row(
-                "SELECT hash FROM versions WHERE file_id = ?1
+                "SELECT id, hash FROM versions WHERE file_id = ?1
                  ORDER BY created_unix DESC, id DESC LIMIT 1",
                 params![file_id],
-                |row| row.get(0),
+                |row| Ok((row.get(0)?, row.get(1)?)),
             )
             .optional()?;
-        if newest.as_deref() != Some(hash.as_str()) {
+        let id = if let Some((id, _)) = newest.filter(|(_, newest_hash)| newest_hash == &hash) {
+            id
+        } else {
+            let id: i64 = tx.query_row(
+                "SELECT CAST(value AS INTEGER) FROM meta WHERE key = 'next_version_id'",
+                [],
+                |row| row.get(0),
+            )?;
+            let next = id
+                .checked_add(1)
+                .ok_or_else(|| StoreError::Sql("version id limit".to_string()))?;
+            tx.execute(
+                "UPDATE meta SET value = ?1 WHERE key = 'next_version_id'",
+                params![next.to_string()],
+            )?;
             tx.execute(
                 "INSERT INTO versions
-                     (file_id, created_unix, reason, size, hash, file_modified_unix)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                     (id, file_id, created_unix, reason, size, hash, file_modified_unix)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
                 params![
+                    id,
                     file_id,
                     entry.created_unix as i64,
                     entry.reason,
@@ -171,9 +220,46 @@ impl VersionStore {
                 params![hash],
             )?;
             *added += 1;
-        }
+            id
+        };
         tx.commit()?;
-        Ok(true)
+        Ok(Some(id))
+    }
+
+    /// Preserve the current file and return precisely that snapshot's id.
+    /// The surrounding store session excludes import, trim and explicit deletion.
+    pub fn snapshot_current(
+        &mut self,
+        path: &Path,
+        reason: &str,
+        now_unix: u64,
+    ) -> Result<Option<i64>, StoreError> {
+        let _lock = StoreLock::acquire(&self.dir)?;
+        self.snapshot_current_locked(path, reason, now_unix)
+    }
+
+    pub(crate) fn snapshot_current_locked(
+        &mut self,
+        path: &Path,
+        reason: &str,
+        now_unix: u64,
+    ) -> Result<Option<i64>, StoreError> {
+        self.import_pending_locked(now_unix)?;
+        let copy = {
+            let _pending_lock = PendingLock::acquire(&self.dir)?;
+            snapshot_locked(&self.dir, path, reason, now_unix)?
+        };
+        let Some(copy) = copy else {
+            return Ok(None);
+        };
+        let mut added = 0;
+        let id = self
+            .import_one(&copy.sidecar, &copy.raw, &mut added)?
+            .ok_or_else(|| StoreError::Io("snapshot completion record is invalid".to_string()))?;
+        let _pending_lock = PendingLock::acquire(&self.dir)?;
+        let _ = std::fs::remove_file(copy.raw);
+        let _ = std::fs::remove_file(copy.sidecar);
+        Ok(Some(id))
     }
 
     fn blob_exists(&self, hash: &str) -> Result<bool, StoreError> {
@@ -219,202 +305,36 @@ impl VersionStore {
         Ok(())
     }
 
-    /// A file's versions, newest first.
-    pub fn list(&self, path: &str) -> Result<Vec<VersionInfo>, StoreError> {
-        let mut statement = self.conn.prepare(
-            "SELECT v.id, v.created_unix, v.reason, v.size, v.file_modified_unix
-             FROM versions v JOIN files f ON f.id = v.file_id
-             WHERE f.path_key = ?1
-             ORDER BY v.created_unix DESC, v.id DESC",
-        )?;
-        let rows = statement.query_map(params![path_key(path)], |row| {
-            Ok(VersionInfo {
-                id: row.get(0)?,
-                created_unix: row.get::<_, i64>(1)? as u64,
-                reason: row.get(2)?,
-                size: row.get::<_, i64>(3)? as u64,
-                file_modified_unix: row.get::<_, i64>(4)? as u64,
-            })
-        })?;
-        let mut versions = Vec::new();
-        for version in rows {
-            versions.push(version?);
-        }
-        Ok(versions)
+    /// Restore accepts only a version belonging to this exact normalized path.
+    pub fn read_bytes_for_path(&self, id: i64, path: &str) -> Result<Vec<u8>, StoreError> {
+        let _lock = StoreLock::acquire(&self.dir)?;
+        self.read_bytes_for_path_locked(id, path)
     }
 
-    /// Decompress a version to `dest` (partial file, then rename).
-    pub fn extract(&self, id: i64, dest: &Path) -> Result<(), StoreError> {
-        let hash = self.hash_for(id)?;
-        if let Some(parent) = dest.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let mut partial = dest.as_os_str().to_owned();
-        partial.push(".partial");
-        let partial = PathBuf::from(partial);
-        let written = (|| -> std::io::Result<()> {
-            let source = std::fs::File::open(self.blob_path(&hash))?;
-            let mut target = std::fs::File::create(&partial)?;
-            zstd::stream::copy_decode(source, &mut target)?;
-            target.flush()?;
-            target.sync_all()
-        })();
-        if let Err(error) = written {
-            let _ = std::fs::remove_file(&partial);
-            return Err(StoreError::Io(error.to_string()));
-        }
-        if let Err(error) = std::fs::rename(&partial, dest) {
-            let _ = std::fs::remove_file(&partial);
-            return Err(StoreError::Io(error.to_string()));
-        }
-        Ok(())
-    }
-
-    /// A version's original bytes.
-    pub fn read_bytes(&self, id: i64) -> Result<Vec<u8>, StoreError> {
-        let hash = self.hash_for(id)?;
-        let file = std::fs::File::open(self.blob_path(&hash))?;
-        Ok(zstd::decode_all(file)?)
-    }
-
-    /// Keep the store within its limits: first versions older than
-    /// `keep_days`, then the oldest until the stored size fits `max_bytes`.
-    /// Returns how many versions were deleted.
-    pub fn trim(
-        &mut self,
-        keep_days: u32,
-        max_bytes: u64,
-        now_unix: u64,
-    ) -> Result<usize, StoreError> {
-        let cutoff = now_unix.saturating_sub(u64::from(keep_days) * 86_400);
-        let mut freed: Vec<String> = Vec::new();
-        let mut deleted = 0usize;
-        {
-            let tx = self.conn.transaction()?;
-            let old: Vec<(i64, String)> = {
-                let mut statement =
-                    tx.prepare("SELECT id, hash FROM versions WHERE created_unix < ?1")?;
-                let rows = statement.query_map(params![cutoff as i64], |row| {
-                    Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
-                })?;
-                let mut collected = Vec::new();
-                for row in rows {
-                    collected.push(row?);
-                }
-                collected
-            };
-            for (id, hash) in old {
-                deleted += 1;
-                if delete_version(&tx, id, &hash)? && !freed.contains(&hash) {
-                    freed.push(hash);
-                }
-            }
-            loop {
-                let total: i64 = tx.query_row(
-                    "SELECT COALESCE(SUM(stored_size), 0) FROM blobs WHERE refs > 0",
-                    [],
-                    |row| row.get(0),
-                )?;
-                if total as u64 <= max_bytes {
-                    break;
-                }
-                let oldest: Option<(i64, String)> = tx
-                    .query_row(
-                        "SELECT id, hash FROM versions
-                         ORDER BY created_unix ASC, id ASC LIMIT 1",
-                        [],
-                        |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)),
-                    )
-                    .optional()?;
-                let Some((id, hash)) = oldest else {
-                    break;
-                };
-                deleted += 1;
-                if delete_version(&tx, id, &hash)? && !freed.contains(&hash) {
-                    freed.push(hash);
-                }
-            }
-            tx.commit()?;
-        }
-        for hash in freed {
-            let _ = std::fs::remove_file(self.blob_path(&hash));
-        }
-        Ok(deleted)
-    }
-
-    /// Remove every kept version and blob. User files are never touched.
-    pub fn delete_all(&mut self) -> Result<(), StoreError> {
-        let tx = self.conn.transaction()?;
-        tx.execute("DELETE FROM versions", [])?;
-        tx.execute("DELETE FROM blobs", [])?;
-        tx.execute("DELETE FROM files", [])?;
-        tx.commit()?;
-        clear_dir(&self.dir.join("blobs"))?;
-        clear_dir(&self.dir.join("open"))?;
-        Ok(())
-    }
-
-    /// The compressed size of everything the store keeps, in bytes.
-    pub fn stored_bytes(&self) -> Result<u64, StoreError> {
-        let total: i64 = self.conn.query_row(
-            "SELECT COALESCE(SUM(stored_size), 0) FROM blobs",
-            [],
+    pub(crate) fn read_bytes_for_path_locked(
+        &self,
+        id: i64,
+        path: &str,
+    ) -> Result<Vec<u8>, StoreError> {
+        let belongs: bool = self.conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM versions v JOIN files f ON f.id = v.file_id
+             WHERE v.id = ?1 AND f.path_key = ?2)",
+            params![id, path_key(path)],
             |row| row.get(0),
         )?;
-        Ok(total as u64)
+        if !belongs {
+            return Err(StoreError::NotFound);
+        }
+        self.read_bytes_locked(id)
     }
 
-    fn hash_for(&self, id: i64) -> Result<String, StoreError> {
-        self.conn
-            .query_row(
-                "SELECT hash FROM versions WHERE id = ?1",
-                params![id],
-                |row| row.get(0),
-            )
-            .optional()?
-            .ok_or(StoreError::NotFound)
-    }
-
-    fn blob_path(&self, hash: &str) -> PathBuf {
+    pub(crate) fn blob_path(&self, hash: &str) -> PathBuf {
         let first_two: String = hash.chars().take(2).collect();
         self.dir
             .join("blobs")
             .join(first_two)
             .join(format!("{hash}.zst"))
     }
-}
-
-/// Delete one version and lower its blob's references. `true` when the blob
-/// reached zero and its file is to be removed after the commit.
-fn delete_version(tx: &rusqlite::Transaction<'_>, id: i64, hash: &str) -> Result<bool, StoreError> {
-    tx.execute("DELETE FROM versions WHERE id = ?1", params![id])?;
-    tx.execute(
-        "UPDATE blobs SET refs = refs - 1 WHERE hash = ?1",
-        params![hash],
-    )?;
-    let refs: Option<i64> = tx
-        .query_row(
-            "SELECT refs FROM blobs WHERE hash = ?1",
-            params![hash],
-            |row| row.get(0),
-        )
-        .optional()?;
-    if refs.is_some_and(|value| value <= 0) {
-        tx.execute("DELETE FROM blobs WHERE hash = ?1", params![hash])?;
-        return Ok(true);
-    }
-    Ok(false)
-}
-
-/// Remove everything inside `dir` and leave the folder in place.
-fn clear_dir(dir: &Path) -> Result<(), StoreError> {
-    match std::fs::remove_dir_all(dir) {
-        Ok(()) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(error) => return Err(StoreError::Io(error.to_string())),
-    }
-    std::fs::create_dir_all(dir)?;
-    Ok(())
 }
 
 fn hash_file(path: &Path) -> Result<String, StoreError> {

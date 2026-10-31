@@ -67,9 +67,11 @@ file lists everything that ships inside the app folder.
 - **rusqlite** 0.41 (MIT) with the bundled SQLite (public domain) - the index of kept file versions (Step 06b).
 - **blake3** 1.8 (CC0-1.0 OR Apache-2.0) - recognizes identical versions so they are stored once (Step 06b).
 - **zstd** 0.14 (BSD-3-Clause) - compresses kept versions (Step 06b).
+- Version-store dependencies: **arrayvec** 0.7.8 (MIT OR Apache-2.0), **constant_time_eq** 0.4.2 (CC0-1.0 OR MIT-0 OR Apache-2.0), **fallible-iterator** 0.3.0 and **fallible-streaming-iterator** 0.1.9 (MIT OR Apache-2.0), **hashlink** 0.12.2 (MIT OR Apache-2.0), and **libsqlite3-sys** 0.39.1 (MIT, its bundled SQLite is public domain). These license declarations were checked in the installed packages' manifests; Windows does not build the SQLite WASM/VFS dependencies.
 - **CodeMirror 6** (MIT) - the text and code viewer: code colors, search, line numbers (Step 04b). Packages: @codemirror/state 6.7.6, view 6.43.15, language 6.13.1, commands 6.11.1, search 6.7.2, lang-javascript 6.2.5, lang-json 6.0.2, lang-html 6.4.12, lang-css 6.3.1, lang-xml 6.1.0, lang-markdown 6.5.2, lang-python 6.2.1, lang-rust 6.0.2, lang-sql 6.10.0, lang-java 6.0.2, lang-cpp 6.0.3, lang-yaml 6.1.3, legacy-modes 6.5.5, and @lezer/highlight 1.2.5, with the @lezer parsers they use (all MIT).
 
 ## Development tools (not shipped)
 
+- **vcpkg** 0.2.15 (MIT OR Apache-2.0) - SQLite build integration, not shipped as an app dependency.
 - **docx** 9.15.0 (MIT), **exceljs** 4.4.0 (MIT), **pptxgenjs** 4.0.1 (MIT) - build the Office templates on the developer's PC (Step 06c). Not part of the app.
 

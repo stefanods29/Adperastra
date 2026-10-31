@@ -106,6 +106,7 @@ export const ITEM_MENU: MenuEntry[] = [
   cmd("explorer.showInFolder"),
   cmd("explorer.copyPath"),
   cmd("explorer.properties"),
+  cmd("explorer.versionHistory"),
   cmd("explorer.deletePermanently"),
   separator,
   cmd("explorer.showMoreOptions"),

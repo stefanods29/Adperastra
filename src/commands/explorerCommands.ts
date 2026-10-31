@@ -133,6 +133,8 @@ export interface ExplorerActions {
   toggleFavorite: () => void;
   showInFolder: () => void;
   properties: () => void;
+  /** Open the Version history window (Step 06b). */
+  versionHistory: () => void;
   openInTerminal: () => void;
   selectAll: () => void;
   selectNone: () => void;
@@ -582,6 +584,16 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       helpSlug: "right-click-menu",
       enabledWhen: (ctx) => hasSelection(ctx) || ctx.location === "folder",
       run: () => actions.properties(),
+    },
+    {
+      id: "explorer.versionHistory",
+      labelKey: "commands.versionHistory",
+      icon: History,
+      risk: "read-only",
+      helpSlug: "version-history",
+      visibleWhen: (ctx) => ctx.selection.count === 1 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.count === 1 && ctx.selection.folders === 0,
+      run: () => actions.versionHistory(),
     },
     {
       id: "explorer.openInTerminal",

@@ -16,7 +16,8 @@ param(
   [ValidateSet("light", "dark")][string]$Theme = "light",
   [int]$Port = 9333,
   [string]$Step = "",
-  [switch]$ScreenshotsOnly
+  [switch]$ScreenshotsOnly,
+  [switch]$Review06bc
 )
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot 'test-process-job.ps1')
@@ -24,10 +25,10 @@ $root = Split-Path -Parent $PSScriptRoot
 # The step names the results: from -Step, else the branch (step-<id>-...).
 if (-not $Step) { $Step = if ((git -C $root branch --show-current) -match '^step-([0-9a-zA-Z]+)-') { $Matches[1] } else { "unknown" } }
 if (-not (Test-Path $Exe)) { throw "Build the app first: $Exe not found" }
-if (-not (Test-Path $BigFolder)) { throw "Run scripts\generate-corpus.ps1 first: $BigFolder not found" }
+if (-not $Review06bc -and -not (Test-Path $BigFolder)) { throw "Run scripts\generate-corpus.ps1 first: $BigFolder not found" }
 
 # A small folder that looks like the Figma example (zero-filled files).
-$demo = Join-Path $env:TEMP "adperastra-demo"
+$demo = if ($Review06bc) { Join-Path $env:TEMP ("adperastra-review-06bc-" + [guid]::NewGuid().ToString("N")) } else { Join-Path $env:TEMP "adperastra-demo" }
 if (-not (Test-Path $demo)) {
   New-Item -ItemType Directory -Force $demo | Out-Null
   $files = @(
@@ -50,7 +51,7 @@ if (-not (Test-Path $demo)) {
 # Step 06d: archives for the archive tab (a small one for screenshots, a
 # 10,000-entry one for the speed runs), made with .NET's zip writer.
 $archives = Join-Path $env:TEMP "adperastra-corpus\archives"
-if (-not (Test-Path $archives)) {
+if (-not $Review06bc -and -not (Test-Path $archives)) {
   New-Item -ItemType Directory -Force $archives | Out-Null
   Add-Type -AssemblyName System.IO.Compression
   Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -123,8 +124,13 @@ try {
   # PowerShell drops empty arguments, so "-" stands for "none".
   $outPath = if ($Out) { $Out } else { "-" }
   $shotPath = if (-not $Shots) { "-" } elseif ([IO.Path]::IsPathRooted($Shots)) { $Shots } else { Join-Path $root $Shots }
-  node (Join-Path $PSScriptRoot "measure-ui.mjs") $Port $demo $BigFolder $mode $outPath $shotPath $Language $Theme $Step
-  if ($LASTEXITCODE -ne 0) { throw "measure-ui.mjs failed" }
+  if ($Review06bc) {
+    # Fresh fixtures, no legacy file-operation checks, and no folder cleanup.
+    node (Join-Path $PSScriptRoot "check-06bc-ui.mjs") $Port $demo $outPath $shotPath $Language $Theme
+  } else {
+    node (Join-Path $PSScriptRoot "measure-ui.mjs") $Port $demo $BigFolder $mode $outPath $shotPath $Language $Theme $Step
+  }
+  if ($LASTEXITCODE -ne 0) { throw "UI verification failed" }
 } finally {
   try { if ($job) { $job.Dispose() } } finally {
     $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $savedBrowserArgs
@@ -133,6 +139,11 @@ try {
     $resolvedTemp = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
     $resolvedData = [IO.Path]::GetFullPath($dataDir)
     if (-not $resolvedData.StartsWith($resolvedTemp, [StringComparison]::OrdinalIgnoreCase) -or (Split-Path -Leaf $resolvedData) -notlike 'adperastra-ui-*') { throw 'Refusing cleanup outside the generated test folder' }
-    Remove-Item -LiteralPath $resolvedData -Recurse -Force -ErrorAction SilentlyContinue
+    if ($Review06bc) {
+      Write-Host "Retained review data: $resolvedData"
+      Write-Host "Retained review files: $demo"
+    } else {
+      Remove-Item -LiteralPath $resolvedData -Recurse -Force -ErrorAction SilentlyContinue
+    }
   }
 }

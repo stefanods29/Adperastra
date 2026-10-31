@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import Dialog from "../components/Dialog";
+import ProgressBar from "../components/ProgressBar";
 import Skeleton from "../components/Skeleton";
+import { errorText } from "../services/errors";
 import { displayPath } from "../services/explorer";
-import { emptyTemplateList, templatesList, templatesPickFolder, type TemplateList } from "../services/templates";
+import type { OpProgress } from "../services/fileops";
+import { formatSize } from "../services/format";
+import { templatesList, templatesPickFolder, type TemplateCreateOptions, type TemplateList } from "../services/templates";
 import { fileTile } from "../views/explorer/fileTile";
 import { BUILTIN_TEMPLATES, templateFileName } from "./catalog";
 
@@ -14,8 +18,8 @@ export interface TemplatePickerDialogProps {
   /** The app language: `en` and `es` have their own template files. */
   lang: string;
   /** Create the chosen template under this file name. */
-  onCreate: (templatePath: string, name: string) => void;
-  onFolderChange: (folder: string) => void;
+  onCreate: (templatePath: string, name: string, options?: TemplateCreateOptions) => void | Promise<void>;
+  onFolderChange: (folder: string) => void | Promise<void>;
   onOpenFolder: (folder: string) => void;
   onClose: () => void;
 }
@@ -48,16 +52,42 @@ export default function TemplatePickerDialog({
 }: TemplatePickerDialogProps) {
   const { t } = useTranslation();
   const [list, setList] = useState<TemplateList | null>(null);
+  const [loading, setLoading] = useState(true);
   const [slow, setSlow] = useState(false);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [choosingFolder, setChoosingFolder] = useState(false);
+  const [creatingName, setCreatingName] = useState<string | null>(null);
+  const [progress, setProgress] = useState<OpProgress | null>(null);
+  const mounted = useRef(true);
+  const refreshRequest = useRef(0);
+  const folderPending = useRef(false);
+  const creation = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      refreshRequest.current += 1;
+      creation.current?.abort();
+    };
+  }, []);
 
   const refresh = useCallback(async () => {
+    const request = ++refreshRequest.current;
+    setLoading(true);
+    setSlow(false);
+    setError("");
+    setList(null);
     try {
-      setList(await templatesList(lang));
-    } catch {
-      setList(emptyTemplateList());
+      const next = await templatesList(lang);
+      if (mounted.current && request === refreshRequest.current) setList(next);
+    } catch (failure) {
+      if (mounted.current && request === refreshRequest.current) setError(errorText(t, failure, "templates"));
+    } finally {
+      if (mounted.current && request === refreshRequest.current) setLoading(false);
     }
-  }, [lang]);
+  }, [lang, t]);
 
   useEffect(() => {
     void refresh();
@@ -65,10 +95,10 @@ export default function TemplatePickerDialog({
 
   // Anything not ready within 0.1 s shows a skeleton (R-UI-2).
   useEffect(() => {
-    if (list !== null) return;
+    if (!loading) return;
     const timer = window.setTimeout(() => setSlow(true), 100);
     return () => window.clearTimeout(timer);
-  }, [list]);
+  }, [loading]);
 
   const builtinOptions = useMemo<TemplateOption[]>(() => {
     if (list === null) return [];
@@ -104,16 +134,37 @@ export default function TemplatePickerDialog({
     userOptions[0] ??
     null;
 
-  const create = (option: TemplateOption | null = effective) => {
-    if (!option) return;
-    onCreate(option.path, option.name);
-    onClose();
+  const busy = creatingName !== null;
+  const create = async (option: TemplateOption | null = effective) => {
+    if (!option || creation.current || folderPending.current || loading) return;
+    const controller = new AbortController();
+    creation.current = controller;
+    setCreatingName(option.name);
+    setProgress(null);
+    setError("");
+    try {
+      await onCreate(option.path, option.name, {
+        signal: controller.signal,
+        onProgress: (next) => {
+          if (mounted.current && creation.current === controller) setProgress(next);
+        },
+      });
+      if (mounted.current) onClose();
+    } catch (failure) {
+      if (mounted.current) setError(errorText(t, failure, "templates"));
+    } finally {
+      creation.current = null;
+      if (mounted.current) {
+        setCreatingName(null);
+        setProgress(null);
+      }
+    }
   };
 
   const onListKey = (event: ReactKeyboardEvent<HTMLUListElement>, options: TemplateOption[]) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      create();
+      void create();
       return;
     }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
@@ -124,33 +175,50 @@ export default function TemplatePickerDialog({
     const index = Math.max(0, Math.min(options.length - 1, current + delta));
     setSelectedPath(options[index].path);
     const listElement = event.currentTarget;
-    window.setTimeout(() => {
-      listElement.querySelectorAll<HTMLElement>('[role="option"]')[index]?.focus();
-    }, 0);
+    listElement.querySelectorAll<HTMLElement>('[role="option"]')[index]?.focus();
   };
 
   const chooseFolder = async () => {
-    const picked = await templatesPickFolder(t("templates.folderTitle")).catch(() => null);
-    if (!picked) return;
-    onFolderChange(picked);
-    await refresh();
+    if (folderPending.current || creation.current) return;
+    folderPending.current = true;
+    setChoosingFolder(true);
+    setError("");
+    try {
+      const picked = await templatesPickFolder(t("templates.folderTitle"));
+      if (!picked || !mounted.current) return;
+      await onFolderChange(picked);
+      if (mounted.current) await refresh();
+    } catch (failure) {
+      if (mounted.current) setError(errorText(t, failure, "templates"));
+    } finally {
+      folderPending.current = false;
+      if (mounted.current) setChoosingFolder(false);
+    }
+  };
+
+  const close = () => {
+    if (creation.current) creation.current.abort();
+    else onClose();
   };
 
   const folder = list?.user_folder ?? "";
   const folderMissing = list?.user_folder_missing ?? false;
+  const userError = list?.user_error ?? null;
+  const userSkipped = list?.user_skipped ?? 0;
 
   const notes = list === null ? null : folder === "" ? (
     <p className="adp-dialog-note">{t("templates.mineEmpty")}</p>
   ) : folderMissing ? (
     <p className="adp-dialog-note">{t("templates.mineMissing", { folder: displayPath(folder) })}</p>
-  ) : userOptions.length === 0 ? (
+  ) : userOptions.length === 0 && !userError && userSkipped === 0 ? (
     <p className="adp-dialog-note">{t("templates.mineNone", { folder: displayPath(folder) })}</p>
   ) : null;
 
   return (
-    <Dialog title={t("templates.title")} onClose={onClose} className="adp-templates-dialog">
+    <Dialog title={t("templates.title")} onClose={close} className="adp-templates-dialog">
+      {error ? <p className="adp-dialog-note" role="alert">{error}</p> : null}
       {list === null ? (
-        slow ? <Skeleton variant="rows" count={3} /> : null
+        loading && slow ? <Skeleton variant="rows" count={3} /> : null
       ) : (
         <>
           <div className="adp-templates-section">
@@ -159,6 +227,7 @@ export default function TemplatePickerDialog({
               className="adp-templates-list"
               role="listbox"
               aria-label={t("templates.builtin")}
+              aria-disabled={busy}
               onKeyDown={(event) => onListKey(event, builtinOptions)}
             >
               {builtinOptions.map((option) => (
@@ -166,10 +235,11 @@ export default function TemplatePickerDialog({
                   key={option.path}
                   className="adp-templates-row"
                   role="option"
-                  tabIndex={0}
+                  tabIndex={busy ? -1 : 0}
                   aria-selected={effective?.path === option.path}
-                  onClick={() => setSelectedPath(option.path)}
-                  onDoubleClick={() => create(option)}
+                  onFocus={() => { if (!busy) setSelectedPath(option.path); }}
+                  onClick={() => { if (!busy) setSelectedPath(option.path); }}
+                  onDoubleClick={() => void create(option)}
                 >
                   <TemplateTile name={option.file} />
                   <span className="adp-templates-text">
@@ -184,11 +254,14 @@ export default function TemplatePickerDialog({
           </div>
           <div className="adp-templates-section">
             <h3 className="adp-heading">{t("templates.mine")}</h3>
+            {userError ? <p className="adp-dialog-note" role="alert">{errorText(t, userError, "templates")}</p> : null}
+            {userSkipped > 0 ? <p className="adp-dialog-note" role="status">{t("templates.someUnreadable", { count: userSkipped })}</p> : null}
             {userOptions.length > 0 ? (
               <ul
                 className="adp-templates-list"
                 role="listbox"
                 aria-label={t("templates.mine")}
+                aria-disabled={busy}
                 onKeyDown={(event) => onListKey(event, userOptions)}
               >
                 {userOptions.map((option) => (
@@ -196,10 +269,11 @@ export default function TemplatePickerDialog({
                     key={option.path}
                     className="adp-templates-row"
                     role="option"
-                    tabIndex={0}
+                    tabIndex={busy ? -1 : 0}
                     aria-selected={effective?.path === option.path}
-                    onClick={() => setSelectedPath(option.path)}
-                    onDoubleClick={() => create(option)}
+                    onFocus={() => { if (!busy) setSelectedPath(option.path); }}
+                    onClick={() => { if (!busy) setSelectedPath(option.path); }}
+                    onDoubleClick={() => void create(option)}
                   >
                     <TemplateTile name={option.file} />
                     <span className="adp-templates-text">
@@ -214,20 +288,33 @@ export default function TemplatePickerDialog({
           </div>
         </>
       )}
+      {creatingName !== null ? (
+        <div role="status" aria-live="polite">
+          <p className="adp-dialog-note">{t("templates.creating", { name: creatingName })}</p>
+          <ProgressBar
+            value={progress && progress.bytes_total > 0 ? (100 * progress.bytes_done) / progress.bytes_total : undefined}
+            label={t("templates.creating", { name: creatingName })}
+          />
+          {progress ? <p className="adp-dialog-note">{t("templates.copyProgress", {
+            done: formatSize(progress.bytes_done, lang),
+            total: formatSize(progress.bytes_total, lang),
+          })}</p> : null}
+        </div>
+      ) : null}
       <div className="adp-dialog-actions">
-        <button type="button" className="adp-btn" onClick={() => void chooseFolder()}>
+        <button type="button" className="adp-btn" disabled={busy || choosingFolder} onClick={() => void chooseFolder()}>
           {folder === "" ? t("templates.chooseFolder") : t("templates.changeFolder")}
         </button>
         {folder !== "" && !folderMissing ? (
-          <button type="button" className="adp-btn" onClick={() => onOpenFolder(folder)}>
+          <button type="button" className="adp-btn" disabled={busy || choosingFolder} onClick={() => onOpenFolder(folder)}>
             {t("templates.openFolder")}
           </button>
         ) : null}
         <span className="adp-cmd-spacer" />
-        <button type="button" className="adp-btn" onClick={onClose}>
+        <button type="button" className="adp-btn" onClick={close}>
           {t("common.cancel")}
         </button>
-        <button type="button" className="adp-btn adp-btn--primary" disabled={effective === null} onClick={() => create()}>
+        <button type="button" className="adp-btn adp-btn--primary" disabled={effective === null || busy || choosingFolder || loading} onClick={() => void create()}>
           {t("templates.create")}
         </button>
       </div>

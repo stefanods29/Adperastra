@@ -186,6 +186,17 @@
     "openingFiles": "Opening files",
     "protectedView": "Protected view for files from the internet",
     "protectedViewNote": "Files downloaded from the internet open with a yellow bar, and their links stay off until you unblock them.",
+    "versions": "Version history",
+    "versionsEnabled": "Keep versions of files that Adperastra changes",
+    "versionsKeep": "Keep versions for",
+    "versionsDays": "{count, plural, one {# day} other {# days}}",
+    "versionsMax": "Space for versions",
+    "versionsUsed": "Versions use {size} now.",
+    "versionsDeleteAll": "Delete all versions…",
+    "versionsDeleteTitle": "Delete all versions?",
+    "versionsDeleteBody": "Every kept version of every file is deleted. This can't be undone. Your files themselves are not changed.",
+    "versionsDeleteConfirm": "Delete all versions",
+    "versionsDeleted": "All versions were deleted.",
     "defaultApps": "Default apps",
     "defaultAppsNote": "Choose where each type of file opens when you double-click it: in Adperastra or in its Windows app.",
     "findFileType": "Find a file type (for example txt)",
@@ -330,7 +341,8 @@
     "nothingToPaste": "There's nothing to paste here.",
     "undoNewerFirst": "Undo the newer actions first (Recent actions shows the order).",
     "extracted": "Extracted {name}",
-    "extractedMany": "{count, plural, one {Extracted # archive} other {Extracted # archives}}"
+    "extractedMany": "{count, plural, one {Extracted # archive} other {Extracted # archives}}",
+    "versionRestored": "Restored a version of {name}"
   },
   "commands": {
     "back": "Back",
@@ -344,12 +356,6 @@
     "unpinFolder": "Unpin folder",
     "newFolder": "New folder",
     "newTextFile": "Text file",
-    "newMarkdown": "Markdown note",
-    "newCsv": "CSV table",
-    "newDocument": "Document",
-    "newSpreadsheet": "Spreadsheet",
-    "newPresentation": "Presentation",
-    "newFromTemplate": "From template…",
     "cut": "Cut",
     "copy": "Copy",
     "paste": "Paste",
@@ -418,7 +424,14 @@
     "extract": "Extract",
     "extractAll": "Extract all",
     "extractHere": "Extract here",
-    "extractTo": "Extract to…"
+    "extractTo": "Extract to…",
+    "newMarkdown": "Markdown note",
+    "newCsv": "CSV table",
+    "newDocument": "Document",
+    "newSpreadsheet": "Spreadsheet",
+    "newPresentation": "Presentation",
+    "newFromTemplate": "From template…",
+    "versionHistory": "Version history…"
   },
   "errors": {
     "archive": {
@@ -573,7 +586,8 @@
       "in_use": "Another program is using the file. Close it there and save again.",
       "not_found": "The folder of this file no longer exists. Use Save as…",
       "recycle_failed": "The file you chose couldn't be moved to the Recycle Bin, so nothing was saved.",
-      "write_failed": "Couldn't write the file. Your text is still here; try again or use Save as…"
+      "write_failed": "Couldn't write the file. Your text is still here; try again or use Save as…",
+      "version_failed": "Couldn't keep the previous version, so the file wasn't saved. Free some space, or turn off version history in Settings."
     },
     "recovery": {
       "other": "Couldn't keep a recovery copy of your changes.",
@@ -586,7 +600,19 @@
       "not_allowed": "Only files from the template folders can be used as templates.",
       "not_found": "The template or the folder no longer exists.",
       "invalid_name": "That name can't be used for a file.",
-      "access_denied": "You don't have permission to create files in this folder."
+      "access_denied": "You don't have permission to create files in this folder.",
+      "cancelled": "Creating the file was cancelled."
+    },
+    "versions": {
+      "other": "Something went wrong with the version history. Try again.",
+      "bad_request": "That version can't be used.",
+      "not_found": "That version no longer exists.",
+      "snapshot_failed": "Couldn't keep the current content first, so nothing was changed.",
+      "read_only": "The file is read-only, so it can't be restored. Save a copy instead.",
+      "in_use": "Another program is using the file. Close it there and try again.",
+      "recycle_failed": "The file you chose couldn't be moved to the Recycle Bin, so nothing was saved.",
+      "preview_too_large": "This file is too large to preview here. Open it to look at it.",
+      "replace_unavailable": "Replacing an existing file is not available yet. Choose a new name."
     }
   },
   "keys": {
@@ -935,6 +961,39 @@
       "topic3": "Third topic",
       "thanks": "Thank you",
       "questions": "Questions?"
-    }
+    },
+    "creating": "Creating {name}…",
+    "copyProgress": "{done} of {total}",
+    "someUnreadable": "{count, plural, one {# template could not be read.} other {# templates could not be read.}}"
+  },
+  "versions": {
+    "title": "Version history of {name}",
+    "current": "Current file",
+    "reason": {
+      "save": "Saved in Adperastra",
+      "saveAs": "Replaced with Save as",
+      "restore": "Before restoring a version",
+      "other": "Changed by Adperastra"
+    },
+    "empty": "No versions yet. A version is kept each time Adperastra changes this file.",
+    "tooLarge": "Files over 256 MB don't get versions.",
+    "off": "Version history is off. Existing versions are kept.",
+    "changes": "Changes",
+    "thisVersion": "This version",
+    "noChanges": "This version is the same as the current file.",
+    "tooManyChanges": "There are too many changes to show. Open the version to look at it.",
+    "noPreview": "This kind of file can't be shown here. Open it to look at it.",
+    "unchanged": "{count, plural, one {# unchanged line} other {# unchanged lines}}",
+    "open": "Open",
+    "saveCopy": "Save a copy…",
+    "saveCopyTitle": "Save a copy of this version",
+    "restore": "Restore this version",
+    "restoreTitle": "Restore this version?",
+    "restoreBody": "The file goes back to the version from {date}. Its current content is kept in the history, so you can undo this.",
+    "restoreUnsaved": "Your unsaved changes in this tab will be lost.",
+    "restored": "Restored the version from {date}.",
+    "windowsVersions": "Previous versions from Windows…",
+    "allFiles": "All files",
+    "loadMore": "Load more"
   }
 }

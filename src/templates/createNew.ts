@@ -1,7 +1,7 @@
 /** Creating new files for the New menu (Step 06c). */
 import type { TFunction } from "i18next";
 import { createItem } from "../services/fileops";
-import { templateCreate, templatesList } from "../services/templates";
+import { templateCreate, templatesList, type TemplateCreateOptions } from "../services/templates";
 import { BLANK_KINDS, type BlankKind } from "./catalog";
 
 /** A new blank file: Markdown and CSV are empty, the Office kinds are
@@ -18,6 +18,11 @@ export async function createBlank(kind: BlankKind, destDir: string, t: TFunction
 }
 
 /** A copy of a built-in or My templates file under `name`. */
-export async function createFromTemplate(templatePath: string, destDir: string, name: string): Promise<string> {
-  return templateCreate(templatePath, destDir, name);
+export async function createFromTemplate(
+  templatePath: string,
+  destDir: string,
+  name: string,
+  options?: TemplateCreateOptions,
+): Promise<string> {
+  return templateCreate(templatePath, destDir, name, options);
 }

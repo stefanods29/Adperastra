@@ -20,6 +20,8 @@ export type FileAction =
    * `binIds` (one per original), restore exactly those bin entries: the
    * items a Replace sent there, never a newer item with the same path. */
   | { type: "restore"; originals: string[]; binIds?: string[] }
+  /** Put a kept version of a file back (Step 06b). */
+  | { type: "restoreVersion"; path: string; versionId: number }
   /** Run actions one after another (a grouped entry). */
   | { type: "sequence"; actions: FileAction[] };
 

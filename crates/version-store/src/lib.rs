@@ -1,15 +1,29 @@
 //! Local version store (contract 19, Step 06b).
 
+mod cache;
+mod coordination;
+mod disk;
+mod extraction;
+mod listing;
 mod pending;
+mod retention;
+mod session;
 mod store;
 
 pub use pending::snapshot_to_pending;
+pub use session::VersionSession;
 pub use store::VersionStore;
 
 use serde::{Deserialize, Serialize};
 
 /// Largest file a snapshot keeps, in bytes (256 MiB).
 pub const MAX_SNAPSHOT_BYTES: u64 = 268_435_456;
+
+/// Maximum uncompressed disk space kept in the read-only open-copy cache.
+pub const MAX_OPEN_BYTES: u64 = 1_073_741_824;
+
+/// Maximum disk space reserved by copies waiting for compression.
+pub const MAX_PENDING_BYTES: u64 = 1_073_741_824;
 
 /// Schema version of the store's index (`meta.schema_version`).
 pub const STORE_SCHEMA: u32 = 1;

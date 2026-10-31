@@ -11,6 +11,59 @@ that fixed it.
 
 ## Open
 
+### KI-078 - The editor status keeps the file's opening byte size after saving (Minor)
+- **Found in:** release screenshots during the 06b/06c review, 2026-10-31. **Severity:** Minor.
+- **What:** after seven saves the real file and history show 107 bytes, while the editor status still shows its original 45 bytes. The status reads the original file metadata in the existing editor path; no save data was lost. This existing display issue is documented under the owner's no-existing-fixes policy.
+- **Target:** a later owner-approved editor metadata refresh; hand-check other status fields with it.
+
+
+### KI-075 - The packaged editor reports blocked inline-style CSP violations (Major)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
+- **What:** Release-app verification captured two style-src violations while opening the editor. Tauri adds a style nonce, which makes unsafe-inline ineffective. The CSP declaration and CodeMirror setup are unchanged from testing at 33fbe83; no baseline executable comparison has been run. English/Spanish/pseudo functional flows completed, but their console-clean check remains failed. No CSP relaxation or warning suppression was applied.
+- **Target:** Existing configuration investigation remains outside this batch under the owner's existing-error policy. Fix before release; current runtime verification must not be called entirely clean.
+
+
+
+### KI-068 - Existing text Save and Save as have unsafe staging and replacement paths (Blocker)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Blocker.
+- **What:** Review confirmed the Step 06a baseline uses File::create on a predictable partial path in crates/fs-service/src/save.rs. A pre-existing file/link may be truncated and path cleanup may remove an unrelated arrival. write_new_file probes then uses a replacing rename; text_save.rs Save as recycles a destination before staging completes and cannot bind recycling to an approved object. These are existing defects; the owner instructed this batch to document existing errors without fixing them.
+- **Target:** Owner decides when to repair the Step 06a save path. No publication, main merge or release is allowed with this unresolved.
+
+### KI-069 - Content replacement has a close-to-replace path race (Major)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
+- **What:** The existing explicit content-save contract uses path-based ReplaceFileW. The new restore path holds a target read/rename guard through staging, snapshot and identity revalidation, then must close it before ReplaceFileW. A concurrent path swap in that final interval is not atomically bound to the inspected object. The safety review does not claim that identity revalidation closes this race.
+- **Target:** A shared identity-bound content replacement/recovery design is required before release; keep this limitation visible alongside KI-068 and the approved Replace contract. Existing owner policy leaves the shared save-path repair outside this batch.
+
+### KI-070 - Template build tools include two high advisories in an unused image parser (Minor, bounded deferral)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Minor, bounded deferral.
+- **What:** npm audit including development tools reports 9 moderate and 2 high findings; npm audit --omit=dev reports zero. The high findings are image-size 1.2.1 via pptxgenjs 4.0.1: GHSA-5p2g-fcmc-qvqq (JXL/HEIF) and GHSA-w3rx-r6r6-pgpr (ICNS). The template generator adds text and no images, so those parser paths are not called; none of these build packages ships in the app. image-size 2.0.3 is MIT but outside the declared ^1.2.1 range; no forced override or dependency downgrade was applied.
+- **Target:** Review by 2026-11-07 and before any image input is added to the generator or v0.1 is prepared. Upgrade through a compatible upstream fix or a verified build-only change; do not describe these as only obsolete utility warnings.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### KI-048 - The UI build prints a chunk-size warning (Minor)
+- **Found in:** Step 06b, 2026-10-30, while building after each task. **Severity:** Minor (a build warning only; package/runtime verification belongs to the step reports).
+- **What:** `npm run build` ends with "(!) Some chunks are larger than 500 kB after minification" for the main `index-*.js` chunk (about 535 kB, about 160 kB gzipped). That is Vite's default warning limit, not an error.
+- **Workaround:** none needed; the warning does not stop the build.
+- **Target:** reviewed at the next milestone (a code-splitting pass would silence it).
+
 ### KI-042 - Archives compressed with bzip2 are not read yet (Minor, deferral)
 - **Found in:** Step 06d. **Severity:** Minor (deliberate deferral named in the step file; the owner allowed the bzip2 library for Step 06e).
 - **What:** `.bz2`, `.tbz`, `.tbz2` and `.tar.bz2` files open in their Windows app instead of a tab, and a zip or 7z entry compressed with bzip2 is skipped with "Skipped: it's compressed in a way the app can't read".
@@ -144,6 +197,131 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-076 - Added diff text was unreadable in the dark theme (Major)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
+- **What:** The recipe used a fixed pale green background while inheriting light text in dark mode. The Spanish dark screenshot exposed it. Added rows now mix the existing Excel accent with the current surface token and explicitly use the primary text token; release verification measures actual added/removed text contrast against the 4.5:1 minimum.
+- **Fixed:** local 06b/06c review; full gate passed (349 Rust/462 UI tests), release screenshots inspected in English light, Spanish dark and pseudo-locale. Contrast and 640px/bounds checks passed; separate existing CSP failures remain recorded.
+
+### KI-077 - The template window was constrained to the generic dialog width (Minor)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Minor.
+- **What:** The template selector set width 640px but inherited the generic dialog max-width 520px. Release screenshots confirmed the narrower window. Its own max-width now matches the planned min(640px,92vw); verification checks the measured rectangle and overflow.
+- **Fixed:** local 06b/06c review; full gate passed (349 Rust/462 UI tests), release screenshots inspected in English light, Spanish dark and pseudo-locale. Contrast and 640px/bounds checks passed; separate existing CSP failures remain recorded.
+
+### KI-074 - Editor refresh failure could discard the successful restore Undo ID (Major)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
+- **What:** A restore writes the file before the editor callback finishes. A rejected callback previously prevented the dialog from storing previous_id and reported only failure. The recovery ID is now kept immediately after the successful disk operation; status also states that restoration occurred. A new regression test reproduces the callback failure and verifies Undo uses the exact prior ID.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-065 - Pending snapshots had no disk budget (Major)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
+- **What:** A stalled importer could let pending raw copies grow without the configured compressed-blob limit. Pending publication now enforces a separate 1 GiB budget; exhaustion fails the save before its source changes.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-066 - A long history could exceed the IPC response bound (Major)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
+- **What:** The command returned every version in one response. SQL now fetches bounded pages (2,000 rows plus one lookahead), validates a same-file date/ID cursor, and the dialog offers Load more.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-067 - Two version tests used incompatible fixtures (Minor)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Minor.
+- **What:** The space-limit test used timestamps near 1970 with a 2023 retention clock, so age trimming correctly deleted all versions. Its samples now fall within retention and every assertion remains. The editor test expected CRLF inside CodeMirror; it now expects normalized LF and additionally checks the CRLF save setting.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-071 - An oversized source open for writing returned the wrong snapshot error (Minor)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Minor.
+- **What:** The source consistency guard opened the source before checking the size and returned a sharing error for a file above 256 MiB. A size-only early observation now returns TooLarge as specified; every actual copy is still checked from the guarded opened handle. The existing test remains unchanged.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-072 - Pending publication could replace a colliding completion record (Major)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
+- **What:** A targeted regression test reproduced std::fs::rename replacing an existing internal completion record. Both raw-copy and completion-record publication now use the existing atomic no-replace helper. The test checks that the prior record survives and only owned staging is removed.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-073 - Version-store transitive license notices were incomplete (Major)
+- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
+- **What:** The newly built arrayvec, constant_time_eq, fallible iterator crates, hashlink and libsqlite3-sys were missing from the notices, as was build-only vcpkg. Installed manifests confirm allowed licenses; both notice records now include them. The Windows build does not include rsqlite-vfs or sqlite-wasm-rs.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-049 - Template copies could overwrite or delete an existing partial file (Blocker)
+- **Found in:** review of Step 06c, 2026-10-31. **Severity:** Blocker.
+- **What:** Copying to a predictable partial path used a truncating write and path-based cleanup. A partial file or link already at that name could lose data. The correction uses exclusively created owned handles.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-050 - A template publication race could replace another file (Blocker)
+- **Found in:** review of Step 06c, 2026-10-31. **Severity:** Blocker.
+- **What:** The chosen final name was only probed before a replacing rename. A newly created destination, or exhaustion of numbered names, could be overwritten. Publication must refuse replacement and retry bounded numbered names.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-051 - A changed template path could escape the approved folders (Blocker)
+- **Found in:** review of Step 06c, 2026-10-31. **Severity:** Blocker.
+- **What:** Source authorization canonicalized a path but copying reopened it later. A swapped file or parent junction could redirect the read. Authorization and copying must use the same opened source handle.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-052 - Template listing failures looked like empty folders (Major)
+- **Found in:** review of Step 06c, 2026-10-31. **Severity:** Major.
+- **What:** Listing errors and skipped entries were discarded in Rust and in the picker. The correction preserves diagnostics and displays translated errors or a partial-results note.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-053 - Pressing Enter could create a different template from the focused one (Major)
+- **Found in:** review of Step 06c, 2026-10-31. **Severity:** Major.
+- **What:** Tab could focus Budget or a personal template without changing the selected item; Enter created the previous selection. Focus must update selection.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-054 - Large template copies had no progress or cancellation (Major)
+- **Found in:** review of Step 06c, 2026-10-31. **Severity:** Major.
+- **What:** Create dismissed the picker before an arbitrary-size copy completed. The correction uses shared jobs, byte progress, cancellation, and leaves the picker open until completion.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-055 - A chosen template folder could appear saved when persistence failed (Major)
+- **Found in:** review of Step 06c, 2026-10-31. **Severity:** Major.
+- **What:** The new folder flow used a callback that did not await saving settings and suppressed errors. The correction waits for persistence, preserves the confirmed folder on failure and reports the error.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-056 - An interrupted snapshot copy could be imported as a complete version (Blocker)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Blocker.
+- **What:** The pending raw file was visible while it was still being copied and had no completion evidence. A crash could leave a truncated version. The correction publishes flushed completed copies with their expected length.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-057 - Concurrent version imports and cleanup could delete live content (Blocker)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Blocker.
+- **What:** The worker and commands opened independent store connections; database commits and blob deletion could interleave. The correction serializes store mutations and composite restore work with an OS lock.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-058 - Restore could return the wrong undo snapshot or none after deduplication (Major)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Major.
+- **What:** previous_id was chosen from the newest row reason instead of the actual snapshot result. Skipped snapshots could reuse an unrelated old restore row, and deduplicated snapshots could lose undo. Restore must preserve and return its exact bounded snapshot even when ordinary history is off.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-059 - Stale version identifiers could restore another file's content (Blocker)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Blocker.
+- **What:** Deleting versions allowed SQLite IDs to be reused. A retained undo ID could then name a different file's content. IDs must remain monotonic across deletion and restore must verify the ID belongs to the requested path.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-060 - Delete all versions left pending snapshots to reappear (Major)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Major.
+- **What:** The delete operation cleared imported records but left pending snapshots. The next import resurrected content the user asked to remove. Pending cleanup must be part of the same serialized operation.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-061 - Saving a version copy recycled the old file before preparing the new one (Blocker)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Blocker.
+- **What:** A staging or disk-space failure could leave the original path missing. The guide also authorized a path-based recycle that cannot bind approval to an exact object. Existing destinations are now to be refused until the approved Replace contract is implemented; new names use flushed owned staging and publication without replacement.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-062 - Editor restores offered no Undo button (Major)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Major.
+- **What:** The guide promised Undo in editor history dialogs, but only Explorer restores were added to an undo stack. Editor dialogs must offer Undo using the exact previous snapshot and await the editor reload.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-063 - A growing file could exceed the version preview read limit (Blocker)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Blocker.
+- **What:** The preview checked stale metadata, then read the entire response into memory. A file growing past the limit could cause a large allocation and freeze. Reads now need a bounded range, stream cap and cancellation.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
+
+### KI-064 - Extracted version copies had no space limit and were not counted (Major)
+- **Found in:** review of Step 06b, 2026-10-31. **Severity:** Major.
+- **What:** Repeatedly opening compressed versions could fill the open-copy folder while Settings reported only compressed blob bytes. The correction adds an explicit open-cache budget, bounded decompression and actual disk-usage reporting.
+- **Fixed:** local 06b/06c review, 2026-10-31; full gate passed (349 Rust tests, 462 UI tests). Relevant real-filesystem and interface regressions remain enabled.
 
 ### KI-047 - Some libraries the archive crate pulls in were missing from the license notices (Major, fixed in Step 06d)
 - **Found in:** the review of Step 06d, 2026-10-30.

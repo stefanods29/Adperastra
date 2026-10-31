@@ -1,5 +1,5 @@
 /* Template window (Step 06c). Colors only through tokens. */
-.adp-templates-dialog { width: min(640px, 92vw); }
+.adp-templates-dialog { width: min(640px, 92vw); max-width: min(640px, 92vw); }
 
 .adp-templates-section + .adp-templates-section { margin-top: var(--adp-space-6); }
 .adp-templates-section .adp-heading { margin-bottom: var(--adp-space-3); }

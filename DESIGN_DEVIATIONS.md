@@ -3,11 +3,18 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-31 - Version history review (Step 06b) - owner hand checks pending
+
+- **What:** the guide defines a dialog 880px wide within 92vw, a 280px history list and a flexible preview. No matching design frame is available for this feature, so comparison is against the guide and shared tokens rather than a claimed exact Figma match.
+- **Correction:** a fixed pale-green diff background made added lines unreadable in dark mode. The reviewed row uses the existing Excel accent mixed with the current surface and primary text. Actual contrast is 13.22:1 light / 12.89:1 dark for additions, 11.48:1 light / 8.78:1 dark for removals.
+- **Evidence:** `docs/screenshots/step-06b/42-version-history-*` and `43-version-text-*`, all six visually inspected; raw release checks in `docs/benchmarks/step-06bc-ui-review-*.json`. The pre-fix dark screenshot remains in `docs/screenshots/review-06bc-before/`.
+- **Status:** local review completed for the captured layouts; owner hand checks remain pending. Existing CSP warnings are KI-075, not hidden by the layout correction.
+
 ## 2026-10-30 - The template window (Step 06c) - waiting for the owner's screenshots review
 
 - **What:** the Figma file has no template window and no New menu with templates. It was designed in this step from the measured tokens and the values in `plan/steps/step-06c.md` D7: a dialog `min(640px, 92vw)` wide, two lists with a 260 px maximum height on the panel border and `--adp-radius-md` corners, rows with `--adp-radius-sm` corners and the selected row on `--adp-color-surface-selected-row`, the description line in `--adp-color-text-secondary` at `--adp-font-small`.
 - **Added beyond the guide:** the two sections keep their heading spacing with `--adp-space-3` under each heading and `--adp-space-6` between them, so the headings do not touch the lists.
-- **Evidence:** `docs/screenshots/step-06c/` (`44-new-menu`, `45-template-window`) once the screenshots are taken.
+- **Evidence:** `docs/screenshots/step-06c/` (`44-new-menu`, `45-template-window`), in English light, Spanish dark and pseudo-locale; all six were visually inspected on 2026-10-31. The generic 520px cap was corrected so measured width is 640px within the viewport (KI-077).
 
 ## 2026-10-30 - Themes and appearance (Step 05d) - checked for the owner on 2026-10-30
 

@@ -74,6 +74,18 @@ describe("settings sections", () => {
     expect(views.explorer.show_hidden).toBe(true);
   });
 
+  it("resetSection resets the version settings", () => {
+    const settings: AppSettings = {
+      ...defaultSettings(),
+      versions: { enabled: false, keep_days: 365, max_mb: 5120 },
+      appearance: { ...defaultSettings().appearance, density: "compact" },
+    };
+    const reset = resetSection("versions", settings);
+    expect(reset.versions.keep_days).toBe(30);
+    expect(reset.versions.enabled).toBe(true);
+    expect(reset.appearance.density).toBe("compact");
+  });
+
   it("resetAllSettings keeps the language and the saved presets", () => {
     const settings = changedSettings();
     const reset = resetAllSettings(settings);

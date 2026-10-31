@@ -157,12 +157,16 @@ export default function App() {
 
   // The My templates folder (Step 06c).
   const onTemplatesFolderChange = useCallback(
-    (folder: string) =>
-      applySettings({
+    async (folder: string) => {
+      const saved = await saveSettings({
         ...settingsRef.current,
         templates: { ...settingsRef.current.templates, my_folder: folder },
-      }),
-    [applySettings],
+      });
+      // A rejected save leaves the current folder in memory and on screen.
+      settingsRef.current = { ...settingsRef.current, templates: saved.templates };
+      setSettings(settingsRef.current);
+    },
+    [],
   );
   const layoutValue = useMemo(() => ({ layout: settings.layout, onLayoutChange }), [settings.layout, onLayoutChange]);
 
@@ -562,6 +566,7 @@ export default function App() {
             pasteImageFormat={settings.files?.paste_image_format ?? "png"}
             templatesFolder={settings.templates?.my_folder ?? ""}
             onTemplatesFolderChange={onTemplatesFolderChange}
+            versionsEnabled={settings.versions.enabled}
           />
         </div>
         {tabs

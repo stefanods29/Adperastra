@@ -6145,6 +6145,7 @@ name = "version-store"
 version = "0.1.0"
 dependencies = [
  "blake3",
+ "fs-service",
  "rusqlite",
  "serde",
  "serde_json",

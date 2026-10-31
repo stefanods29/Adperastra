@@ -1,6 +1,6 @@
 import { Compartment } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { BookOpen, Code, Columns2, Redo2, Save, SaveAll, Scan, SpellCheck, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { BookOpen, Code, Columns2, History, Redo2, Save, SaveAll, Scan, SpellCheck, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../../components/Button";
@@ -8,8 +8,11 @@ import Dialog from "../../components/Dialog";
 import type { Command } from "../../commands/registry";
 import { SAVE_ENCODING_LABELS, SAVE_ENCODINGS, spellcheckDefault, type SaveEncodingId } from "../../editor/saveEncoding";
 import { useTextDocument } from "../../editor/useTextDocument";
+import { showProperties } from "../../services/explorer";
 import { formatDate, formatSize } from "../../services/format";
 import { isExternalUrl, openExternalUrl } from "../../services/links";
+import { isTauriRuntime } from "../../services/settings";
+import VersionHistoryDialog from "../../versions/VersionHistoryDialog";
 import Ribbon from "../../ribbon/Ribbon";
 import { useCommandShortcuts } from "../../ribbon/shortcuts";
 import type { RibbonDef } from "../../ribbon/types";
@@ -82,12 +85,14 @@ export default function MarkdownView({
   onDirtyChange,
   registerSave,
   onPathChange,
+  onOpenFile,
 }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState<SavedMarkdownState>(() => readSaved(savedState, info.ext));
   const [source, setSource] = useState<string | null>(null);
   const [colors, setColors] = useState<DocColors>(() => themeColors());
   const [pendingLink, setPendingLink] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const [matches, setMatches] = useState(0);
   const [frameLoads, setFrameLoads] = useState(0);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
@@ -272,6 +277,7 @@ export default function MarkdownView({
     () => [
       { id: "markdown.save", labelKey: "editor.save", icon: Save, shortcut: "Ctrl+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.dirty, run: () => void doc.save() },
       { id: "markdown.saveAs", labelKey: "editor.saveAs", icon: SaveAll, shortcut: "Ctrl+Shift+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.ready, run: () => void doc.saveAs() },
+      { id: "markdown.versionHistory", labelKey: "commands.versionHistory", icon: History, risk: "read-only", helpSlug: "version-history", enabledWhen: () => true, run: () => setShowHistory(true) },
       { id: "markdown.undo", labelKey: "editor.undoHint", icon: Undo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canUndo, run: () => doc.undo() },
       { id: "markdown.redo", labelKey: "editor.redoHint", icon: Redo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canRedo, run: () => doc.redo() },
       { id: "markdown.spellcheck", labelKey: "editor.spellcheck", icon: SpellCheck, risk: "read-only", helpSlug: "editing-text-and-code", checkKind: "toggle", checkedWhen: (c) => c.spellcheck, enabledWhen: () => true, run: (c) => update({ spellcheck: !c.spellcheck }) },
@@ -310,6 +316,7 @@ export default function MarkdownView({
             controls: [
               { type: "button", command: "markdown.save", keyTip: "S" },
               { type: "button", command: "markdown.saveAs", keyTip: "A" },
+              { type: "button", command: "markdown.versionHistory", keyTip: "H" },
             ],
           },
           {
@@ -458,6 +465,28 @@ export default function MarkdownView({
             <Button onClick={() => setPendingLink(null)}>{t("common.cancel")}</Button>
           </div>
         </Dialog>
+      ) : null}
+      {showHistory ? (
+        <VersionHistoryDialog
+          path={info.path}
+          name={info.name}
+          currentModified={doc.expected.modified_unix}
+          currentSize={doc.expected.size}
+          versionsEnabled={true}
+          hasUnsavedChanges={dirty}
+          allowUndo={true}
+          onOpenCopy={(path) => {
+            if (onOpenFile) void onOpenFile(path).catch(() => undefined);
+          }}
+          onShowWindowsVersions={() => {
+            if (isTauriRuntime()) void showProperties([info.path]).catch(() => undefined);
+          }}
+          onRestored={async () => {
+            doc.discard();
+            await doc.reloadFromDisk();
+          }}
+          onClose={() => setShowHistory(false)}
+        />
       ) : null}
       {doc.conflict ? (
         <Dialog title={t("editor.changedTitle")} onClose={() => doc.resolveConflict("cancel")}>

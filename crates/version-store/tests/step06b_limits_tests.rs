@@ -77,7 +77,7 @@ fn trim_keeps_the_size_within_the_limit() {
     let a = user_dir.path().join("a.txt");
     for (index, text) in contents.iter().enumerate() {
         fs::write(&a, text).unwrap();
-        snapshot_to_pending(store_dir.path(), &a, "save", 100 + index as u64).unwrap();
+        snapshot_to_pending(store_dir.path(), &a, "save", NOW - 3 + index as u64).unwrap();
     }
     let mut store = VersionStore::open(store_dir.path()).unwrap();
     store.import_pending(NOW).unwrap();

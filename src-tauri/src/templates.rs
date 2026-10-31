@@ -9,6 +9,12 @@ use tauri::{AppHandle, Manager, State, WebviewWindow};
 
 use crate::{ensure_main, validate_absolute_path, AppState};
 
+#[path = "template_copy.rs"]
+mod template_copy;
+#[cfg(test)]
+use template_copy::copy_template;
+pub(crate) use template_copy::copy_template_with_progress;
+
 /// The built-in templates: their id and their file name in
 /// `templates/builtin/<lang>/`. Same ids as `src/templates/catalog.ts`.
 pub const BUILTIN: [(&str, &str); 6] = [
@@ -58,10 +64,14 @@ pub struct TemplateList {
     pub user: Vec<UserTemplate>,
     pub user_folder: String,
     pub user_folder_missing: bool,
+    #[serde(default)]
+    pub user_error: Option<String>,
+    #[serde(default)]
+    pub user_skipped: usize,
 }
 
 /// Where the shipped templates may live, like `help_roots`.
-fn template_roots(app: &AppHandle) -> Vec<PathBuf> {
+pub(crate) fn template_roots(app: &AppHandle) -> Vec<PathBuf> {
     let mut roots: Vec<PathBuf> = Vec::new();
     let push = |roots: &mut Vec<PathBuf>, path: PathBuf| {
         if !roots.contains(&path) {
@@ -94,6 +104,7 @@ pub fn template_lang(lang: &str) -> &'static str {
 
 /// True when `path` is a real file or folder inside `root` (never `root`
 /// itself). Both sides are canonicalized, so `..` cannot escape.
+#[cfg(test)]
 pub fn is_inside(root: &Path, path: &Path) -> bool {
     let (Ok(root), Ok(path)) = (fs::canonicalize(root), fs::canonicalize(path)) else {
         return false;
@@ -103,12 +114,24 @@ pub fn is_inside(root: &Path, path: &Path) -> bool {
 
 /// The files directly inside the user's folder, in natural name order. A
 /// missing folder is `templates.not_found`.
+#[cfg(test)]
 pub fn list_user_templates(folder: &Path) -> Result<Vec<UserTemplate>, String> {
-    if !folder.is_dir() {
-        return Err("templates.not_found".to_string());
-    }
-    let listing = fs_service::list_dir_std(folder, fs_service::SortSpec::default())
-        .map_err(|_| "templates.not_found".to_string())?;
+    list_user_templates_with_issues(folder).map(|(templates, _)| templates)
+}
+
+fn list_user_templates_with_issues(folder: &Path) -> Result<(Vec<UserTemplate>, usize), String> {
+    let listing =
+        fs_service::list_dir_std(folder, fs_service::SortSpec::default()).map_err(|error| {
+            match error {
+                fs_service::FsError::Io(error) => template_copy::copy_error(&error),
+                _ => "templates.other".to_string(),
+            }
+        })?;
+    Ok(user_templates_from_listing(listing))
+}
+
+fn user_templates_from_listing(listing: fs_service::Listing) -> (Vec<UserTemplate>, usize) {
+    let skipped = listing.skipped.len();
     let mut templates: Vec<UserTemplate> = Vec::new();
     for item in listing.items {
         if item.kind != fs_service::ItemKind::File || item.attrs.hidden || item.attrs.system {
@@ -124,50 +147,12 @@ pub fn list_user_templates(folder: &Path) -> Result<Vec<UserTemplate>, String> {
         });
     }
     templates.sort_by(|a, b| fs_service::natural_cmp(&a.name, &b.name));
-    Ok(templates)
-}
-
-/// Copy a template into `dest_dir` under a unique name: the bytes go to
-/// `~name.partial` first and are renamed into place (R-SAFE-3). The copy
-/// never has the Read-only attribute.
-pub fn copy_template(template: &Path, dest_dir: &Path, name: &str) -> Result<PathBuf, String> {
-    if fs_service::validate_new_name(name).is_err() {
-        return Err("templates.invalid_name".to_string());
-    }
-    if !dest_dir.is_dir() || !template.is_file() {
-        return Err("templates.not_found".to_string());
-    }
-    let target = fs_service::unique_destination(dest_dir, name);
-    let partial = fs_service::partial_path(&target);
-    if let Err(error) = fs::copy(template, &partial) {
-        let _ = fs::remove_file(&partial);
-        return Err(copy_error(&error));
-    }
-    if let Ok(metadata) = fs::metadata(&partial) {
-        let mut permissions = metadata.permissions();
-        // Windows only, and only the copy next to the target.
-        #[allow(clippy::permissions_set_readonly_false)]
-        permissions.set_readonly(false);
-        let _ = fs::set_permissions(&partial, permissions);
-    }
-    if let Err(error) = fs::rename(&partial, &target) {
-        let _ = fs::remove_file(&partial);
-        return Err(copy_error(&error));
-    }
-    Ok(target)
-}
-
-fn copy_error(error: &std::io::Error) -> String {
-    if error.kind() == std::io::ErrorKind::PermissionDenied {
-        "templates.access_denied".to_string()
-    } else {
-        "templates.other".to_string()
-    }
+    (templates, skipped)
 }
 
 /// The folders a template may be copied from: each shipped root's
 /// `builtin` and `blank` folders, and the chosen My templates folder.
-fn template_sources(roots: &[PathBuf], user_folder: &str) -> Vec<PathBuf> {
+pub(crate) fn template_sources(roots: &[PathBuf], user_folder: &str) -> Vec<PathBuf> {
     let mut sources: Vec<PathBuf> = Vec::new();
     for root in roots {
         sources.push(root.join("builtin"));
@@ -216,20 +201,42 @@ fn list_templates(app: &AppHandle, lang: &str, user_folder: &str) -> TemplateLis
             }
         }
     }
-    let folder = Path::new(user_folder);
-    let (user, user_folder_missing) = if user_folder.is_empty() {
-        (Vec::new(), false)
-    } else if folder.is_dir() {
-        (list_user_templates(folder).unwrap_or_default(), false)
-    } else {
-        (Vec::new(), true)
-    };
+    let (user, user_folder_missing, user_error, user_skipped) = user_template_state(user_folder);
     TemplateList {
         builtin,
         blank,
         user,
         user_folder: user_folder.to_string(),
         user_folder_missing,
+        user_error,
+        user_skipped,
+    }
+}
+
+fn user_template_state(user_folder: &str) -> (Vec<UserTemplate>, bool, Option<String>, usize) {
+    if user_folder.is_empty() {
+        return (Vec::new(), false, None, 0);
+    }
+    let folder = Path::new(user_folder);
+    match fs::metadata(folder) {
+        Ok(metadata) if !metadata.is_dir() => return (Vec::new(), true, None, 0),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return (Vec::new(), true, None, 0);
+        }
+        Err(error) => {
+            return (
+                Vec::new(),
+                false,
+                Some(template_copy::copy_error(&error)),
+                0,
+            );
+        }
+        _ => {}
+    }
+    match list_user_templates_with_issues(folder) {
+        Ok((user, skipped)) => (user, false, None, skipped),
+        Err(code) if code == "templates.not_found" => (Vec::new(), true, None, 0),
+        Err(code) => (Vec::new(), false, Some(code), 0),
     }
 }
 
@@ -281,10 +288,14 @@ pub async fn template_create(
     let sources = template_sources(&template_roots(&app), &user_folder);
     tauri::async_runtime::spawn_blocking(move || {
         let template = PathBuf::from(&template_path);
-        if !sources.iter().any(|folder| is_inside(folder, &template)) {
-            return Err("templates.not_allowed".to_string());
-        }
-        let target = copy_template(&template, Path::new(&dest_dir), &name)?;
+        let target = copy_template_with_progress(
+            &template,
+            Path::new(&dest_dir),
+            &name,
+            &sources,
+            &fs_service::new_cancellation_token(),
+            |_| {},
+        )?;
         Ok(crate::explorer::display_path(&target.to_string_lossy()))
     })
     .await
@@ -317,91 +328,5 @@ pub async fn templates_pick_folder(
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn lang_falls_back_to_english() {
-        assert_eq!(template_lang("es"), "es");
-        assert_eq!(template_lang("en"), "en");
-        assert_eq!(template_lang("pseudo"), "en");
-        assert_eq!(template_lang("fr"), "en");
-    }
-
-    #[test]
-    fn is_inside_needs_a_real_child() {
-        let temp = tempfile::tempdir().unwrap();
-        let root = temp.path().join("root");
-        let sibling = temp.path().join("sibling");
-        fs::create_dir_all(&root).unwrap();
-        fs::create_dir_all(&sibling).unwrap();
-        let child = root.join("a.txt");
-        fs::write(&child, b"x").unwrap();
-        assert!(is_inside(&root, &child));
-        assert!(!is_inside(&root, &root));
-        assert!(!is_inside(&root, &sibling));
-        assert!(!is_inside(&root, &root.join("..").join("sibling")));
-    }
-
-    #[test]
-    fn copy_template_never_overwrites() {
-        let temp = tempfile::tempdir().unwrap();
-        let source = temp.path().join("t.docx");
-        fs::write(&source, b"template bytes").unwrap();
-        let dest = temp.path().join("dest");
-        fs::create_dir(&dest).unwrap();
-        let first = copy_template(&source, &dest, "Letter.docx").unwrap();
-        let second = copy_template(&source, &dest, "Letter.docx").unwrap();
-        assert_eq!(first.file_name().unwrap(), "Letter.docx");
-        assert_eq!(second.file_name().unwrap(), "Letter (1).docx");
-        assert_eq!(fs::read(&first).unwrap(), b"template bytes");
-        assert_eq!(fs::read(&second).unwrap(), b"template bytes");
-        let partial_left = fs::read_dir(&dest)
-            .unwrap()
-            .flatten()
-            .any(|entry| entry.file_name().to_string_lossy().ends_with(".partial"));
-        assert!(!partial_left);
-    }
-
-    #[test]
-    fn copy_template_clears_read_only() {
-        let temp = tempfile::tempdir().unwrap();
-        let source = temp.path().join("t.docx");
-        fs::write(&source, b"template bytes").unwrap();
-        let mut permissions = fs::metadata(&source).unwrap().permissions();
-        permissions.set_readonly(true);
-        fs::set_permissions(&source, permissions).unwrap();
-        let dest = temp.path().join("dest");
-        fs::create_dir(&dest).unwrap();
-        let copy = copy_template(&source, &dest, "Letter.docx").unwrap();
-        assert!(!fs::metadata(&copy).unwrap().permissions().readonly());
-        // The template itself stays as it was.
-        assert!(fs::metadata(&source).unwrap().permissions().readonly());
-    }
-
-    #[test]
-    fn user_templates_skip_hidden_files_and_folders() {
-        use windows::Win32::Storage::FileSystem::{SetFileAttributesW, FILE_ATTRIBUTE_HIDDEN};
-        let temp = tempfile::tempdir().unwrap();
-        let folder = temp.path().join("mine");
-        fs::create_dir(&folder).unwrap();
-        fs::write(folder.join("a.txt"), b"a").unwrap();
-        fs::write(folder.join("B.docx"), b"b").unwrap();
-        fs::create_dir(folder.join("sub")).unwrap();
-        let hidden = folder.join("h.txt");
-        fs::write(&hidden, b"h").unwrap();
-        let wide: Vec<u16> = hidden
-            .as_os_str()
-            .to_string_lossy()
-            .encode_utf16()
-            .chain(Some(0))
-            .collect();
-        // SAFETY: the test owns this path; wide is terminated and outlives the call.
-        unsafe {
-            SetFileAttributesW(windows::core::PCWSTR(wide.as_ptr()), FILE_ATTRIBUTE_HIDDEN).unwrap()
-        };
-        let listed = list_user_templates(&folder).unwrap();
-        let names: Vec<&str> = listed.iter().map(|entry| entry.name.as_str()).collect();
-        assert_eq!(names, ["a.txt", "B.docx"]);
-    }
-}
+#[path = "templates_tests.rs"]
+mod tests;

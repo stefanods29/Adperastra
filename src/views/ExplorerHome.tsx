@@ -74,6 +74,7 @@ import type { BlankKind } from "../templates/catalog";
 import TemplatePickerDialog from "../templates/TemplatePickerDialog";
 import { formatShortcut } from "../services/shortcuts";
 import { UndoStack, type UndoEntry } from "../services/undo";
+import VersionHistoryDialog from "../versions/VersionHistoryDialog";
 import { groupItems } from "../services/grouping";
 import {
   canGoBack,
@@ -167,7 +168,9 @@ export interface ExplorerHomeProps {
   extractRequest?: ExplorerExtractRequest | null;
   /** The My templates folder from settings (schema 11, Step 06c). */
   templatesFolder?: string;
-  onTemplatesFolderChange?: (folder: string) => void;
+  onTemplatesFolderChange?: (folder: string) => void | Promise<void>;
+  /** Settings > Version history is on (Step 06b); true when absent. */
+  versionsEnabled?: boolean;
 }
 
 const DEFAULT_VIEW: ExplorerViewSettings = defaultSettings().explorer;
@@ -255,6 +258,7 @@ export default function ExplorerHome({
   extractRequest = null,
   templatesFolder = "",
   onTemplatesFolderChange,
+  versionsEnabled = true,
 }: ExplorerHomeProps) {
   const { t, i18n } = useTranslation();
   const { layout } = useLayout();
@@ -318,6 +322,8 @@ export default function ExplorerHome({
   const [recentOpen, setRecentOpen] = useState(false);
   // The template window (Step 06c).
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  // The file whose Version history window is open (Step 06b).
+  const [historyFor, setHistoryFor] = useState<ExplorerItem | null>(null);
   const pendingRenameRef = useRef<string | null>(null);
   const [dragBadge, setDragBadge] = useState<{ x: number; y: number; key: string; name: string } | null>(null);
   const loadModeRef = useRef<"hard" | "soft">("hard");
@@ -1063,6 +1069,12 @@ export default function ExplorerHome({
         const { selectedPaths: paths, location: current } = live.current;
         const targets = paths.length > 0 ? paths : current.type === "folder" ? [current.path] : [];
         if (targets.length > 0 && isTauriRuntime()) void showProperties(targets).catch((error: unknown) => notifyError(error, "properties"));
+      },
+      versionHistory: () => {
+        const { selectedPaths: paths, itemByPath: byPath } = live.current;
+        if (paths.length !== 1) return;
+        const item = byPath.get(paths[0]);
+        if (item && item.kind !== "folder") setHistoryFor(item);
       },
       openInTerminal: () => {
         const current = live.current.location;
@@ -1931,6 +1943,10 @@ export default function ExplorerHome({
             .catch(() => notify(t("errors.copyPath.other")));
         }}
         onOpenHelp={() => onOpenHelp("details-pane")}
+        onShowHistory={(path) => {
+          const item = live.current.itemByPath.get(path);
+          if (item && item.kind !== "folder") setHistoryFor(item);
+        }}
         placement={placement}
       />
     ) : null;
@@ -2037,6 +2053,39 @@ export default function ExplorerHome({
       ) : null}
       {permanentAsk ? <PermanentDialog count={permanentAsk.count} onAnswer={permanentAsk.answer} /> : null}
       {systemAsk ? <SystemItemsDialog onAnswer={systemAsk} onOpenHelp={() => onOpenHelp("copying-and-moving")} /> : null}
+      {historyFor ? (
+        <VersionHistoryDialog
+          path={historyFor.path}
+          name={historyFor.name}
+          currentModified={historyFor.modified_unix}
+          currentSize={historyFor.size}
+          versionsEnabled={versionsEnabled}
+          onOpenCopy={(path) => {
+            if (onOpenFile) void onOpenFile(path, false).catch((error: unknown) => notifyError(error, "files"));
+          }}
+          onShowWindowsVersions={() => {
+            if (isTauriRuntime())
+              void showProperties([historyFor.path]).catch((error: unknown) => notifyError(error, "properties"));
+          }}
+          onRestored={(result, version) => {
+            if (result.previous_id !== null) {
+              undoStack.current.push({
+                labelKey: "toast.versionRestored",
+                labelArgs: { name: historyFor.name },
+                undo: { type: "restoreVersion", path: historyFor.path, versionId: result.previous_id },
+                redo: { type: "restoreVersion", path: historyFor.path, versionId: version.id },
+              });
+              touchUndo();
+              notifyAction(
+                t("toast.versionRestored", { name: historyFor.name }),
+                undoStack.current.peekUndo(),
+              );
+            }
+            refresh();
+          }}
+          onClose={() => setHistoryFor(null)}
+        />
+      ) : null}
       {recentOpen ? (
         <RecentActionsDialog
           items={undoStack.current.recent(20)}
@@ -2053,14 +2102,11 @@ export default function ExplorerHome({
       ) : null}
       {templatePickerOpen ? (
         <TemplatePickerDialog
-          key={templatesFolder}
           lang={i18n.language}
-          onCreate={(templatePath, name) => {
+          onCreate={async (templatePath, name, options) => {
             const current = live.current.location;
-            if (current.type !== "folder" || !isTauriRuntime()) return;
-            void createFromTemplate(templatePath, current.path, name)
-              .then(recordCreated)
-              .catch(notifyTemplatesError);
+            if (current.type !== "folder" || !isTauriRuntime()) throw new Error("templates.not_found");
+            recordCreated(await createFromTemplate(templatePath, current.path, name, options));
           }}
           onFolderChange={(folder) => onTemplatesFolderChange?.(folder)}
           onOpenFolder={goToFolder}

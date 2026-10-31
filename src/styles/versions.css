@@ -1,0 +1,108 @@
+/* Version history window (Step 06b). Colors only through tokens. */
+
+.adp-versions-dialog {
+  width: min(880px, 92vw);
+  max-width: min(880px, 92vw);
+}
+
+.adp-versions {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: var(--adp-space-5);
+  height: min(520px, 70vh);
+}
+
+.adp-versions-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-height: 0;
+}
+
+.adp-versions-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-versions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--adp-space-2) var(--adp-space-4);
+}
+
+.adp-versions-row[role="option"] {
+  cursor: pointer;
+}
+
+.adp-versions-row--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-versions-row-meta {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-versions-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-height: 0;
+}
+
+.adp-versions-tabs {
+  display: flex;
+  gap: var(--adp-space-2);
+}
+
+.adp-versions-diff,
+.adp-versions-text {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.adp-versions-text {
+  margin: 0;
+  font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-size: var(--adp-font-small);
+}
+
+.adp-versions-spacer {
+  flex: 1;
+}
+
+.adp-diff-row {
+  font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+  white-space: pre-wrap;
+  padding: 0 var(--adp-space-3);
+  font-size: var(--adp-font-small);
+}
+
+.adp-diff-row--same {
+  color: var(--adp-color-text-primary);
+}
+
+.adp-diff-row--added {
+  color: var(--adp-color-text-primary);
+  background: color-mix(in srgb, var(--adp-accent-excel) 15%, var(--adp-color-surface-window));
+  border-left: 3px solid var(--adp-accent-excel);
+}
+
+.adp-diff-row--removed {
+  background: var(--adp-color-status-caution-background);
+  border-left: 3px solid var(--adp-accent-pdf);
+  text-decoration: line-through;
+}
+
+.adp-diff-row--skip {
+  color: var(--adp-color-text-tertiary);
+  font-style: italic;
+}
