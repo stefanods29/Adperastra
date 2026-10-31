@@ -11,6 +11,24 @@ that fixed it.
 
 ## Open
 
+### KI-038 - Archives compressed with bzip2 are not read yet (Minor, deferral)
+- **Found in:** Step 06d. **Severity:** Minor (deliberate deferral named in the step file; the owner allowed the bzip2 library for Step 06e).
+- **What:** `.bz2`, `.tbz`, `.tbz2` and `.tar.bz2` files open in their Windows app instead of a tab, and a zip or 7z entry compressed with bzip2 is skipped with "Skipped: it's compressed in a way the app can't read".
+- **Workaround:** open those files in another app that reads bzip2.
+- **Target:** Step 06e (archives: create, passwords, RAR), which adds bzip2.
+
+### KI-037 - RAR archives open in their Windows app (Minor, deferral)
+- **Found in:** Step 06d. **Severity:** Minor (deliberate deferral named in the step file; RAR is read through a 7-Zip the owner installs, which comes with the archive-creation work).
+- **What:** Double-clicking a `.rar` file opens it in the app Windows uses for RAR files; it does not open as a tab in Adperastra.
+- **Workaround:** none needed; the Windows app shows the archive.
+- **Target:** Step 06e (archives: create, passwords, RAR).
+
+### KI-036 - Archives protected with a password can't be opened yet (Minor, deferral)
+- **Found in:** Step 06d. **Severity:** Minor (deliberate deferral named in the step file: protected items are listed and explained, never opened, so nothing is lost).
+- **What:** Items inside a zip or 7z archive that are protected with a password are listed with the note that they can't be opened yet; extracting them skips them with "Skipped: it's protected with a password" and nothing is written.
+- **Workaround:** open the archive in another app that asks for the password.
+- **Target:** Step 06e (archives: create, passwords, RAR).
+
 ### KI-035 - The line under the toolbar stops partway across the window (Minor)
 - **Found in:** Step 05c screenshots, 2026-10-30. **Severity:** Minor (cosmetic).
 - **What:** With the toolbar on top in the moved-pane, tabs-on-the-left and Classic layouts, the thin line under the command bar ends before the right edge of the window.
