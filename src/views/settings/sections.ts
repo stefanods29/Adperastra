@@ -1,7 +1,14 @@
 /** The Settings page's sections (Step 05d): search words and resets. Pure. */
 import { defaultSettings, type AppSettings } from "../../services/settings";
 
-export type SettingsSectionId = "general" | "appearance" | "theme" | "layout" | "views" | "openingFiles";
+export type SettingsSectionId =
+  | "general"
+  | "appearance"
+  | "theme"
+  | "layout"
+  | "views"
+  | "openingFiles"
+  | "versions";
 
 export interface SettingsSection {
   id: SettingsSectionId;
@@ -79,6 +86,17 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
     helpSlug: "default-apps",
     keywordKeys: ["settings.protectedView", "settings.defaultApps"],
   },
+  {
+    id: "versions",
+    titleKey: "settings.versions",
+    helpSlug: "version-history",
+    keywordKeys: [
+      "settings.versionsEnabled",
+      "settings.versionsKeep",
+      "settings.versionsMax",
+      "settings.versionsDeleteAll",
+    ],
+  },
 ];
 
 /** Case and accents ignored, for the search box. */
@@ -125,7 +143,8 @@ export function resetSection(id: SettingsSectionId, settings: AppSettings): AppS
       },
     };
   }
-  return { ...settings, open: defaults.open };
+  if (id === "openingFiles") return { ...settings, open: defaults.open };
+  return { ...settings, versions: defaults.versions };
 }
 
 /** Every setting back to its default, except the language and the saved layouts. */

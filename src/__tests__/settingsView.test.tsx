@@ -57,10 +57,18 @@ const navTitles = () =>
   [...container!.querySelectorAll(".adp-settings-nav-item")].map((item) => item.textContent?.trim());
 
 describe("SettingsView", () => {
-  it("lists the six sections in order", async () => {
+  it("lists the seven sections in order", async () => {
     await renderSettings();
-    expect(navTitles()).toEqual(["General", "Appearance", "Theme", "Layout", "Views", "Opening files"]);
-    expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(6);
+    expect(navTitles()).toEqual([
+      "General",
+      "Appearance",
+      "Theme",
+      "Layout",
+      "Views",
+      "Opening files",
+      "Version history",
+    ]);
+    expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(7);
   });
 
   it("search keeps only the matching sections", async () => {
