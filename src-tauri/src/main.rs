@@ -19,6 +19,7 @@ use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
 mod appearance;
+mod archive_helper;
 mod classic_menu;
 mod clipboard;
 #[cfg(windows)]
@@ -27,6 +28,7 @@ mod drag;
 mod explorer;
 mod files;
 mod folder_views;
+mod helper;
 mod jobs;
 mod links;
 mod media;
@@ -2810,6 +2812,11 @@ fn main() {
     // never starts the app itself.
     if std::env::args().nth(1).as_deref() == Some(classic_menu::HELPER_FLAG) {
         std::process::exit(classic_menu::run_helper());
+    }
+    // The archive helper (Step 06d) is this executable with its own flag: it
+    // reads archives in a separate process, inside a memory-limited job.
+    if std::env::args().nth(1).as_deref() == Some(archive_helper::HELPER_FLAG) {
+        std::process::exit(archive_helper::run_helper());
     }
     let data_dir = resolve_data_dir();
     let _ = fs::create_dir_all(&data_dir);
