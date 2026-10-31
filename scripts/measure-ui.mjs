@@ -5,7 +5,7 @@
 //
 // node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme> [step]
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 import { join } from "node:path";
 
@@ -28,6 +28,42 @@ function writeTextSamples(folder) {
     join(folder, "guide.md"),
     ["# Project guide", "", "Some **bold** text and a [link](https://example.com).", "", "## Steps", "", "1. One", "2. Two", "", "| Name | Size |", "|---|---|", "| a | 1 |", "", "```js", "const x = 1;", "```"].join("\n"),
   );
+  // Step 06f: a small table, a 100,000-row table, a JSON tree and a 3 MB
+  // file with one marker at a known offset for the hex search.
+  const pool = ["Ana", "Luis", "Eva", "Mateo", "Sofía", "Diego"];
+  const cities = ["Lima", "Bogotá", "Quito", "Cusco", "Madrid", "Santiago"];
+  const tableRow = (index) => `${pool[index % pool.length]},${20 + (index % 60)},${cities[index % cities.length]}`;
+  const small = ["name,age,city"];
+  for (let index = 1; index <= 200; index += 1) small.push(tableRow(index));
+  writeFileSync(join(folder, "people.csv"), `${small.join("\r\n")}\r\n`);
+  const wide = ["name,age,city"];
+  for (let index = 1; index <= 100_000; index += 1) wide.push(tableRow(index));
+  writeFileSync(join(folder, "big-100k.csv"), `${wide.join("\r\n")}\r\n`);
+  const people = Array.from({ length: 200 }, (_, index) => ({
+    name: `${pool[index % pool.length]} ${index + 1}`,
+    age: 20 + (index % 60),
+    city: cities[index % cities.length],
+  }));
+  writeFileSync(join(folder, "data.json"), JSON.stringify({ people }, null, 2));
+  const searchBytes = Buffer.alloc(3 * 1024 * 1024);
+  searchBytes.write("FINDME", 2_097_150, "ascii");
+  writeFileSync(join(folder, "search-3mb.bin"), searchBytes);
+}
+
+/** Step 06f: a real font for the font measurement and screenshot. */
+function copySampleFont(folder) {
+  const source = "C:\\Windows\\Fonts\\arial.ttf";
+  if (!existsSync(source)) {
+    console.log(`no font at ${source}; the font measurement and screenshot are skipped`);
+    return false;
+  }
+  try {
+    copyFileSync(source, join(folder, "arial.ttf"));
+    return true;
+  } catch (error) {
+    console.log(`could not copy the sample font: ${error.message ?? error}`);
+    return false;
+  }
 }
 
 /** Step 06e sample: one MiB that does not compress away, for creation timing. */
@@ -251,6 +287,7 @@ writeGradientPng(join(demo, "photo-1920.png"), 1920, 1080);
 writeTextSamples(demo);
 writeMediaSamples(demo);
 writeArchiveSamples(demo);
+const hasSampleFont = copySampleFont(demo);
 await openFolder(demo);
 const results = [];
 
@@ -882,6 +919,143 @@ if (mode === "full") {
       console.log(`step 06e measurements failed: ${error.message ?? error}`);
     }
   }
+
+  // Step 06f: a 100,000-row table and its sort, a JSON tree, a font and a
+  // hex search through 3 MB. Each part logs and continues on failure.
+  if (stepId === "06f") {
+    const spanish = String(lang).startsWith("es");
+    const openAsLabel = spanish ? "Abrir como" : "Open as";
+    const openAsHexLabel = spanish ? "Abrir como hexadecimal" : "Open as hex";
+    const closeTabExpr = `window.__m.key(window, { key: "w", ctrlKey: true }); true`;
+    const settleExplorer = async () => {
+      await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+      await page(`window.__m.openExplorer(); true`);
+      await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
+      await sleep(150);
+    };
+    const openByName = (name) =>
+      `[...window.__m.rows()].find((r) => r.textContent.includes(${JSON.stringify(name)}))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`;
+    const openAsHex = `(() => {
+      const row = [...window.__m.rows()].find((r) => r.textContent.includes("search-3mb.bin"));
+      window.__m.context(row);
+      const openAs = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openAsLabel)});
+      openAs?.click();
+      return true;
+    })()`;
+    const pickHex = `(() => {
+      const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openAsHexLabel)});
+      item?.click();
+      return true;
+    })()`;
+    const push = (name, values) => {
+      const entry = {
+        name,
+        median_ms: Math.round(median(values) * 10) / 10,
+        max_ms: Math.round(Math.max(...values) * 10) / 10,
+        runs: values.length,
+      };
+      console.log(`${entry.name}: median ${entry.median_ms} ms (max ${entry.max_ms})`);
+      results.push(entry);
+    };
+
+    try {
+      await openFolder(demo);
+      const openTableValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        openTableValues.push(
+          await page(`window.__m.timeUntil(
+            () => { ${openByName("big-100k.csv")} },
+            () => document.querySelector(".adp-table-row .adp-table-cell") != null)`),
+        );
+        await page(closeTabExpr);
+        await settleExplorer();
+      }
+      push("open a 100,000-row CSV (first view)", openTableValues);
+    } catch (error) {
+      console.log(`step 06f open table failed: ${error.message ?? error}`);
+    }
+
+    try {
+      const sortValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        await page(openByName("big-100k.csv"));
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-table-row .adp-table-cell") != null, 15000)`);
+        await page(`document.querySelector(".adp-table-head-cell")?.click(); true`);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-table-head-cell[aria-sort='ascending']") != null, 15000)`);
+        sortValues.push(
+          await page(`window.__m.timeUntil(
+            () => { window.__before = document.querySelector(".adp-table-row .adp-table-cell")?.textContent ?? ""; document.querySelector(".adp-table-head-cell")?.click(); },
+            () => { const cell = document.querySelector(".adp-table-row .adp-table-cell"); return cell != null && cell.textContent !== window.__before; })`),
+        );
+        await page(closeTabExpr);
+        await settleExplorer();
+      }
+      push("sort a 100,000-row CSV", sortValues);
+    } catch (error) {
+      console.log(`step 06f sort table failed: ${error.message ?? error}`);
+    }
+
+    try {
+      const jsonValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        jsonValues.push(
+          await page(`window.__m.timeUntil(
+            () => { ${openByName("data.json")} },
+            () => document.querySelector(".adp-json-row") != null)`),
+        );
+        await page(closeTabExpr);
+        await settleExplorer();
+      }
+      push("open a JSON file (first view)", jsonValues);
+    } catch (error) {
+      console.log(`step 06f open JSON failed: ${error.message ?? error}`);
+    }
+
+    if (hasSampleFont) {
+      try {
+        const fontValues = [];
+        for (let run = 0; run < RUNS; run += 1) {
+          fontValues.push(
+            await page(`window.__m.timeUntil(
+              () => { ${openByName("arial.ttf")} },
+              () => document.querySelector(".adp-font-sample") != null)`),
+          );
+          await page(closeTabExpr);
+          await settleExplorer();
+        }
+        push("open a font (first view)", fontValues);
+      } catch (error) {
+        console.log(`step 06f open font failed: ${error.message ?? error}`);
+      }
+    } else {
+      console.log("open a font (first view): skipped, no sample font");
+    }
+
+    try {
+      const hexValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        await page(openAsHex);
+        await page(pickHex);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-hex-row") != null, 15000)`);
+        await page(`(() => {
+          const input = document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input");
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "FINDME");
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          return true;
+        })()`);
+        hexValues.push(
+          await page(`window.__m.timeUntil(
+            () => { const input = document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input"); input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); },
+            () => document.querySelector(".adp-filetab:not([hidden]) .adp-hex [aria-current='true']") != null)`),
+        );
+        await page(closeTabExpr);
+        await settleExplorer();
+      }
+      push("hex search through a 3 MB file", hexValues);
+    } catch (error) {
+      console.log(`step 06f hex search failed: ${error.message ?? error}`);
+    }
+  }
 }
 
 if (outFile && results.length > 0) {
@@ -1311,6 +1485,66 @@ if (shotDir) {
   await sleep(600);
   await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
   await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+
+  // Step 06f: a table, the same table sorted, a JSON tree, a font and a hex
+  // search. The demo folder stays open, so its path is never typed (KI-033).
+  const openAsLabel = String(lang).startsWith("es") ? "Abrir como" : "Open as";
+  const openAsHexLabel = String(lang).startsWith("es") ? "Abrir como hexadecimal" : "Open as hex";
+  const openByName = (name) =>
+    `[...window.__m.rows()].find((r) => r.textContent.includes(${JSON.stringify(name)}))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`;
+  const backToExplorer = async () => {
+    await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+    await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+    await step(`window.__m.openExplorer()`);
+    await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
+  };
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("big-100k.csv")))`);
+  await step(openByName("big-100k.csv"));
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-table-row .adp-table-cell") != null, 20000)`);
+  await sleep(400);
+  await shot("52-table");
+  await step(`document.querySelector(".adp-table-head-cell")?.click()`);
+  await sleep(900);
+  await shot("53-table-sorted");
+  await backToExplorer();
+  await step(openByName("data.json"));
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-json-row") != null, 20000)`);
+  await sleep(400);
+  await shot("54-json-tree");
+  await backToExplorer();
+  if (hasSampleFont) {
+    await step(openByName("arial.ttf"));
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-font-sample") != null, 20000)`);
+    await sleep(400);
+    await shot("55-font");
+    await backToExplorer();
+  } else {
+    console.log("no sample font; 55-font is skipped");
+  }
+  await step(`(() => {
+    const row = [...window.__m.rows()].find((r) => r.textContent.includes("search-3mb.bin"));
+    window.__m.context(row);
+    const openAs = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openAsLabel)});
+    openAs?.click();
+    return true;
+  })()`);
+  await step(`(() => {
+    const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openAsHexLabel)});
+    item?.click();
+    return true;
+  })()`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-hex-row") != null, 20000)`);
+  await step(`(() => {
+    const input = document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input");
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "FINDME");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  })()`);
+  await step(`window.__m.key(document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input"), { key: "Enter" })`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-hex [aria-current='true']") != null, 15000)`);
+  await sleep(400);
+  await shot("56-hex-search");
+  await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
 }
 
 cdp.close();
