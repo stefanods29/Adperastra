@@ -20,6 +20,7 @@ import "./styles/archive.css";
 import "./styles/archive-create.css";
 import "./styles/templates.css";
 import "./styles/table-view.css";
+import "./styles/font-view.css";
 
 const container = document.getElementById("root");
 if (!container) {

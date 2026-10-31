@@ -719,6 +719,7 @@
     "media": "[Äüdïø äñd vïdëø ~~~~~~]",
     "hex": "[Hëx ~~]",
     "table": "[Täblë ~~]",
+    "font": "[Føñt ~~]",
     "archive": "[Ärçhïvë ~~~]"
   },
   "protected": {
@@ -1034,6 +1035,32 @@
     "creating": "[Çrëätïñg {name}… ~~~~]",
     "copyProgress": "[{done} øf {total} ~~]",
     "someUnreadable": "[{count, plural, one {# tëmplätë çøüld ñøt bë rëäd.} other {# tëmplätës çøüld ñøt bë rëäd.}} ~~~~~~~~~~]"
+  },
+  "font": {
+    "label": "[Prëvïëw øf {name} ~~~~]",
+    "sample": "[Thë qüïçk brøwñ føx jümps øvër thë läzÿ døg. 0123456789 ~~~~~~~~~~~~~~]",
+    "sampleLabel": "[Sämplë tëxt ~~~~]",
+    "sizeLabel": "[{size} px ~~]",
+    "install": "[Ïñställ ~~~]",
+    "installTitle": "[Ïñställ thïs føñt? ~~~~~~]",
+    "installBody": "[Wïñdøws ïñställs {name} äñd mäÿ äsk før përmïssïøñ. Thïs äpp çäñ't üñdø ït; tø rëmøvë thë føñt, üsë Føñts ïñ Wïñdøws Sëttïñgs. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "installConfirm": "[Ïñställ ~~~]",
+    "installed": "[Wïñdøws ïs ïñställïñg thë føñt. ~~~~~~~~~~~]",
+    "protectedNote": "[Türñ øff prøtëçtëd vïëw tø ïñställ thïs føñt. ~~~~~~~~~~~~~~~]",
+    "loadError": "[Thïs føñt çøüldñ't bë shøwñ. Thë fïlë mäÿ bë dämägëd. ~~~~~~~~~~~~~~~~~]",
+    "details": "[Dëtäïls ~~~]",
+    "family": "[Fämïlÿ ~~~]",
+    "style": "[Stÿlë ~~]",
+    "version": "[Vërsïøñ ~~~]",
+    "designer": "[Dësïgñër ~~~~]",
+    "copyright": "[Çøpÿrïght ~~~~]",
+    "license": "[Lïçëñsë ~~~]",
+    "glyphs": "[Glÿphs ~~~]",
+    "faces": "[Thïs fïlë hølds {count} føñts; thë fïrst ïs shøwñ. ~~~~~~~~~~~~~~]",
+    "charMap": "[Çhäräçtër mäp ~~~~~]",
+    "noCharMap": "[Thë çhäräçtër mäp ïsñ't äväïläblë før thïs føñt førmät. ~~~~~~~~~~~~~~~~~~]",
+    "rangesCut": "[Thïs føñt häs mørë çhäräçtërs thäñ thë mäp çäñ lïst. ~~~~~~~~~~~~~~~~~]",
+    "copyChar": "[Çøpÿ {code} ~~]"
   },
   "table": {
     "label": "[Täblë øf {name} ~~~]",

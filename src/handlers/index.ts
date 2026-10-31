@@ -1,4 +1,5 @@
 import { archiveHandler } from "./archive";
+import { fontHandler } from "./font";
 import { hexHandler } from "./hex";
 import { imageHandler } from "./image";
 import { markdownHandler } from "./markdown";
@@ -13,6 +14,7 @@ export function createHandlerRegistry(): HandlerRegistry {
   const registry = new HandlerRegistry();
   registry.register(imageHandler);
   registry.register(mediaHandler);
+  registry.register(fontHandler);
   // Markdown before text: ties on ".md" go to the Markdown viewer.
   registry.register(markdownHandler);
   // The table viewer before text: ".csv" and ".tsv" go to the table, and a

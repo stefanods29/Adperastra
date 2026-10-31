@@ -719,6 +719,7 @@
     "media": "Audio y video",
     "hex": "Hexadecimal",
     "table": "Tabla",
+    "font": "Fuente",
     "archive": "Archivo comprimido"
   },
   "protected": {
@@ -1034,6 +1035,32 @@
     "creating": "Creando {name}…",
     "copyProgress": "{done} de {total}",
     "someUnreadable": "{count, plural, one {No se pudo leer # plantilla.} other {No se pudieron leer # plantillas.}}"
+  },
+  "font": {
+    "label": "Vista previa de {name}",
+    "sample": "El veloz murciélago hindú comía feliz cardillo y kiwi. 0123456789",
+    "sampleLabel": "Texto de muestra",
+    "sizeLabel": "{size} px",
+    "install": "Instalar",
+    "installTitle": "¿Instalar esta fuente?",
+    "installBody": "Windows instala {name} y puede pedir permiso. Esta aplicación no puede deshacerlo; para quitar la fuente, usa Fuentes en Configuración de Windows.",
+    "installConfirm": "Instalar",
+    "installed": "Windows está instalando la fuente.",
+    "protectedNote": "Desactiva la vista protegida para instalar esta fuente.",
+    "loadError": "No se pudo mostrar esta fuente. Es posible que el archivo esté dañado.",
+    "details": "Detalles",
+    "family": "Familia",
+    "style": "Estilo",
+    "version": "Versión",
+    "designer": "Diseñador",
+    "copyright": "Derechos de autor",
+    "license": "Licencia",
+    "glyphs": "Glifos",
+    "faces": "Este archivo contiene {count} fuentes; se muestra la primera.",
+    "charMap": "Mapa de caracteres",
+    "noCharMap": "El mapa de caracteres no está disponible para este formato de fuente.",
+    "rangesCut": "Esta fuente tiene más caracteres de los que puede mostrar el mapa.",
+    "copyChar": "Copiar {code}"
   },
   "table": {
     "label": "Tabla de {name}",

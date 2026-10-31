@@ -719,6 +719,7 @@
     "media": "Audio and video",
     "hex": "Hex",
     "table": "Table",
+    "font": "Font",
     "archive": "Archive"
   },
   "protected": {
@@ -1034,6 +1035,32 @@
     "creating": "Creating {name}…",
     "copyProgress": "{done} of {total}",
     "someUnreadable": "{count, plural, one {# template could not be read.} other {# templates could not be read.}}"
+  },
+  "font": {
+    "label": "Preview of {name}",
+    "sample": "The quick brown fox jumps over the lazy dog. 0123456789",
+    "sampleLabel": "Sample text",
+    "sizeLabel": "{size} px",
+    "install": "Install",
+    "installTitle": "Install this font?",
+    "installBody": "Windows installs {name} and may ask for permission. This app can't undo it; to remove the font, use Fonts in Windows Settings.",
+    "installConfirm": "Install",
+    "installed": "Windows is installing the font.",
+    "protectedNote": "Turn off protected view to install this font.",
+    "loadError": "This font couldn't be shown. The file may be damaged.",
+    "details": "Details",
+    "family": "Family",
+    "style": "Style",
+    "version": "Version",
+    "designer": "Designer",
+    "copyright": "Copyright",
+    "license": "License",
+    "glyphs": "Glyphs",
+    "faces": "This file holds {count} fonts; the first is shown.",
+    "charMap": "Character map",
+    "noCharMap": "The character map isn't available for this font format.",
+    "rangesCut": "This font has more characters than the map can list.",
+    "copyChar": "Copy {code}"
   },
   "table": {
     "label": "Table of {name}",
