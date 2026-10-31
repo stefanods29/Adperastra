@@ -567,12 +567,22 @@
       "in_use": "Otro programa está usando el archivo. Ciérralo allí y vuelve a guardar.",
       "not_found": "La carpeta de este archivo ya no existe. Usa Guardar como…",
       "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
-      "write_failed": "No se pudo escribir el archivo. Tu texto sigue aquí; vuelve a intentarlo o usa Guardar como…"
+      "write_failed": "No se pudo escribir el archivo. Tu texto sigue aquí; vuelve a intentarlo o usa Guardar como…",
+      "version_failed": "No se pudo conservar la versión anterior, así que el archivo no se guardó. Libera espacio o desactiva el historial de versiones en Configuración."
     },
     "recovery": {
       "other": "No se pudo guardar una copia de recuperación de tus cambios.",
       "bad_request": "Esa copia de recuperación no es válida.",
       "too_large": "El texto es demasiado grande para una copia de recuperación. Guárdalo pronto."
+    },
+    "versions": {
+      "other": "Algo salió mal con el historial de versiones. Vuelve a intentarlo.",
+      "bad_request": "Esa versión no se puede usar.",
+      "not_found": "Esa versión ya no existe.",
+      "snapshot_failed": "No se pudo conservar primero el contenido actual, así que no se cambió nada.",
+      "read_only": "El archivo es de solo lectura, así que no se puede restaurar. Guarda una copia en su lugar.",
+      "in_use": "Otro programa está usando el archivo. Ciérralo allí y vuelve a intentarlo.",
+      "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada."
     }
   },
   "keys": {

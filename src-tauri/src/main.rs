@@ -2936,6 +2936,9 @@ fn main() {
             install_snap_subclass(&window);
             #[cfg(not(windows))]
             let _ = window;
+            // Keep versions of file changes in the background (Step 06b).
+            let worker = versions::VersionWorker::start(app.handle().clone());
+            app.manage(worker);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -3001,6 +3004,12 @@ fn main() {
             settings_file::settings_import,
             text_save::text_save,
             text_save::text_pick_save_path,
+            versions::versions_list,
+            versions::versions_extract,
+            versions::versions_restore,
+            versions::versions_save_copy,
+            versions::versions_delete_all,
+            versions::versions_store_size,
             recovery::recovery_write,
             recovery::recovery_read,
             recovery::recovery_delete,

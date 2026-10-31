@@ -567,12 +567,22 @@
       "in_use": "Another program is using the file. Close it there and save again.",
       "not_found": "The folder of this file no longer exists. Use Save as…",
       "recycle_failed": "The file you chose couldn't be moved to the Recycle Bin, so nothing was saved.",
-      "write_failed": "Couldn't write the file. Your text is still here; try again or use Save as…"
+      "write_failed": "Couldn't write the file. Your text is still here; try again or use Save as…",
+      "version_failed": "Couldn't keep the previous version, so the file wasn't saved. Free some space, or turn off version history in Settings."
     },
     "recovery": {
       "other": "Couldn't keep a recovery copy of your changes.",
       "bad_request": "That recovery copy isn't valid.",
       "too_large": "The text is too large for a recovery copy. Save it soon."
+    },
+    "versions": {
+      "other": "Something went wrong with the version history. Try again.",
+      "bad_request": "That version can't be used.",
+      "not_found": "That version no longer exists.",
+      "snapshot_failed": "Couldn't keep the current content first, so nothing was changed.",
+      "read_only": "The file is read-only, so it can't be restored. Save a copy instead.",
+      "in_use": "Another program is using the file. Close it there and try again.",
+      "recycle_failed": "The file you chose couldn't be moved to the Recycle Bin, so nothing was saved."
     }
   },
   "keys": {

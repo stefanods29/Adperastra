@@ -567,12 +567,22 @@
       "in_use": "[Äñøthër prøgräm ïs üsïñg thë fïlë. Çløsë ït thërë äñd sävë ägäïñ. ~~~~~~~~~~~~~~~~~~~~~]",
       "not_found": "[Thë føldër øf thïs fïlë ñø løñgër ëxïsts. Üsë Sävë äs… ~~~~~~~~~~~~~~~~~]",
       "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
-      "write_failed": "[Çøüldñ't wrïtë thë fïlë. Ÿøür tëxt ïs stïll hërë; trÿ ägäïñ ør üsë Sävë äs… ~~~~~~~~~~~~~~~~~~~~~~~]"
+      "write_failed": "[Çøüldñ't wrïtë thë fïlë. Ÿøür tëxt ïs stïll hërë; trÿ ägäïñ ør üsë Sävë äs… ~~~~~~~~~~~~~~~~~~~~~~~]",
+      "version_failed": "[Çøüldñ't këëp thë prëvïøüs vërsïøñ, sø thë fïlë wäsñ't sävëd. Frëë sømë späçë, ør türñ øff vërsïøñ hïstørÿ ïñ Sëttïñgs. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
     },
     "recovery": {
       "other": "[Çøüldñ't këëp ä rëçøvërÿ çøpÿ øf ÿøür çhäñgës. ~~~~~~~~~~~~~~~]",
       "bad_request": "[Thät rëçøvërÿ çøpÿ ïsñ't välïd. ~~~~~~~~~~]",
       "too_large": "[Thë tëxt ïs tøø lärgë før ä rëçøvërÿ çøpÿ. Sävë ït søøñ. ~~~~~~~~~~~~~~~~~~]"
+    },
+    "versions": {
+      "other": "[Sømëthïñg wëñt wrøñg wïth thë vërsïøñ hïstørÿ. Trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~~]",
+      "bad_request": "[Thät vërsïøñ çäñ't bë üsëd. ~~~~~~~~~]",
+      "not_found": "[Thät vërsïøñ ñø løñgër ëxïsts. ~~~~~~~~~~]",
+      "snapshot_failed": "[Çøüldñ't këëp thë çürrëñt çøñtëñt fïrst, sø ñøthïñg wäs çhäñgëd. ~~~~~~~~~~~~~~~~~~~~~]",
+      "read_only": "[Thë fïlë ïs rëäd-øñlÿ, sø ït çäñ't bë rëstørëd. Sävë ä çøpÿ ïñstëäd. ~~~~~~~~~~~~~~~~~~~~~]",
+      "in_use": "[Äñøthër prøgräm ïs üsïñg thë fïlë. Çløsë ït thërë äñd trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~~~~]",
+      "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]"
     }
   },
   "keys": {

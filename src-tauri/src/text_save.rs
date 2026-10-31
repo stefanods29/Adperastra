@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
-use tauri::WebviewWindow;
+use tauri::{AppHandle, Manager, WebviewWindow};
 
 use crate::{ensure_main, versions::ModifyReason};
 
@@ -163,12 +163,13 @@ pub async fn text_save(
 ) -> Result<SavedFile, String> {
     ensure_main(window.label())?;
     check_request(&request)?;
-    tauri::async_runtime::spawn_blocking(move || save_now(request))
+    let app = window.app_handle().clone();
+    tauri::async_runtime::spawn_blocking(move || save_now(app, request))
         .await
         .map_err(|error| error.to_string())?
 }
 
-fn save_now(request: TextSaveRequest) -> Result<SavedFile, String> {
+fn save_now(app: AppHandle, request: TextSaveRequest) -> Result<SavedFile, String> {
     let bytes = encode_text(&request.text, &request.encoding, request.table.as_deref())?;
     let path = Path::new(&request.path);
     let reason = if request.mode == "saveAs" {
@@ -176,7 +177,8 @@ fn save_now(request: TextSaveRequest) -> Result<SavedFile, String> {
     } else {
         ModifyReason::Save
     };
-    crate::versions::before_modify(path, reason)?;
+    crate::versions::before_modify(&app, path, reason)
+        .map_err(|_| "textSave.version_failed".to_string())?;
     let saved = if request.mode == "saveAs" {
         fs_service::recycle_target(path).map_err(|error| save_error_code(&error))?;
         fs_service::write_new_file(path, &bytes).map_err(|error| save_error_code(&error))?
