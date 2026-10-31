@@ -408,6 +408,32 @@
     "presetClassic": "Classic"
   },
   "errors": {
+    "archive": {
+      "other": "Something went wrong with this archive. Try again.",
+      "bad_request": "That can't be done with this archive.",
+      "not_found": "The archive can't be found. It may have been moved or deleted.",
+      "unsupported": "This kind of archive can't be opened here. Try opening it in another app.",
+      "corrupt": "This archive is damaged and can't be read.",
+      "password_required": "This item is protected with a password, which isn't supported yet.",
+      "too_many_entries": "This archive has more than 200,000 items, too many to open safely.",
+      "bomb": "This archive would expand to far more data than it holds. It wasn't extracted, to protect your disk.",
+      "no_space": "There isn't enough free space on the drive to extract this.",
+      "changed": "The archive changed since it was opened. Refresh and try again.",
+      "cancelled": "Cancelled.",
+      "not_a_file": "Only files can be opened.",
+      "access_denied": "You don't have permission to write in that folder.",
+      "dest_missing": "The folder to extract to doesn't exist anymore.",
+      "helper_failed": "The archive couldn't be read. It may be damaged, or it needs more memory than the app allows.",
+      "timeout": "Reading the archive stopped responding.",
+      "no_session": "This archive is no longer open. Refresh to open it again.",
+      "unsafe_path": "Skipped: its name could write outside the folder.",
+      "invalid_name": "Skipped: its name can't be used on Windows.",
+      "link_entry": "Skipped: links are never extracted.",
+      "unsupported_method": "Skipped: it's compressed in a way the app can't read.",
+      "size_mismatch": "Skipped: its size doesn't match what the archive says.",
+      "name_taken": "Skipped: an item with this name was already there.",
+      "damaged": "Skipped: this item is damaged."
+    },
     "rename": {
       "exists": "There's already an item with this name here.",
       "invalid_name": "Windows doesn't allow this name.",

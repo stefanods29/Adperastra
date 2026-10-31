@@ -19,6 +19,7 @@ use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use thiserror::Error;
 
 mod appearance;
+mod archive;
 mod archive_helper;
 mod classic_menu;
 mod clipboard;
@@ -2822,6 +2823,9 @@ fn main() {
     let _ = fs::create_dir_all(&data_dir);
     let logs = logs_dir(&data_dir);
     let _ = fs::create_dir_all(&logs);
+    // Copies of files opened from archives are the app's own temporary
+    // files; the ones a day old go at every start (Step 06d).
+    archive::start_cleanup(data_dir.clone());
     install_panic_hook(logs);
     if std::env::var_os("ADPERASTRA_FORCE_CRASH").is_some() {
         panic!("forced crash (test)");
@@ -2841,6 +2845,7 @@ fn main() {
         .manage(files::FileGrants::default())
         .manage(folder_views::FolderViewsLock::default())
         .manage(jobs::Jobs::default())
+        .manage(archive::ArchiveSessions::default())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -2936,6 +2941,13 @@ fn main() {
             settings_file::settings_import,
             jobs::job_poll,
             jobs::job_cancel,
+            archive::archive_open_start,
+            archive::archive_folder,
+            archive::archive_search,
+            archive::archive_close,
+            archive::archive_open_entry_start,
+            archive::archive_extract_start,
+            archive::archive_pick_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

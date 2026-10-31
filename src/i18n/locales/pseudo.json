@@ -408,6 +408,32 @@
     "presetClassic": "[Çlässïç ~~~]"
   },
   "errors": {
+    "archive": {
+      "other": "[Sømëthïñg wëñt wrøñg wïth thïs ärçhïvë. Trÿ ägäïñ. ~~~~~~~~~~~~~~~~~]",
+      "bad_request": "[Thät çäñ't bë døñë wïth thïs ärçhïvë. ~~~~~~~~~~~~]",
+      "not_found": "[Thë ärçhïvë çäñ't bë føüñd. Ït mäÿ hävë bëëñ møvëd ør dëlëtëd. ~~~~~~~~~~~~~~~~~~~~]",
+      "unsupported": "[Thïs kïñd øf ärçhïvë çäñ't bë øpëñëd hërë. Trÿ øpëñïñg ït ïñ äñøthër äpp. ~~~~~~~~~~~~~~~~~~~~~~~]",
+      "corrupt": "[Thïs ärçhïvë ïs dämägëd äñd çäñ't bë rëäd. ~~~~~~~~~~~~~~]",
+      "password_required": "[Thïs ïtëm ïs prøtëçtëd wïth ä pässwørd, whïçh ïsñ't süppørtëd ÿët. ~~~~~~~~~~~~~~~~~~~~~~]",
+      "too_many_entries": "[Thïs ärçhïvë häs mørë thäñ 200,000 ïtëms, tøø mäñÿ tø øpëñ säfëlÿ. ~~~~~~~~~~~~~~~~~~~]",
+      "bomb": "[Thïs ärçhïvë wøüld ëxpäñd tø fär mørë dätä thäñ ït hølds. Ït wäsñ't ëxträçtëd, tø prøtëçt ÿøür dïsk. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "no_space": "[Thërë ïsñ't ëñøügh frëë späçë øñ thë drïvë tø ëxträçt thïs. ~~~~~~~~~~~~~~~~~~~]",
+      "changed": "[Thë ärçhïvë çhäñgëd sïñçë ït wäs øpëñëd. Rëfrësh äñd trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~~~~]",
+      "cancelled": "[Çäñçëllëd. ~~~~]",
+      "not_a_file": "[Øñlÿ fïlës çäñ bë øpëñëd. ~~~~~~~~]",
+      "access_denied": "[Ÿøü døñ't hävë përmïssïøñ tø wrïtë ïñ thät føldër. ~~~~~~~~~~~~~~~~]",
+      "dest_missing": "[Thë føldër tø ëxträçt tø døësñ't ëxïst äñÿmørë. ~~~~~~~~~~~~~~~~]",
+      "helper_failed": "[Thë ärçhïvë çøüldñ't bë rëäd. Ït mäÿ bë dämägëd, ør ït ñëëds mørë mëmørÿ thäñ thë äpp älløws. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "timeout": "[Rëädïñg thë ärçhïvë støppëd rëspøñdïñg. ~~~~~~~~~~~~~~]",
+      "no_session": "[Thïs ärçhïvë ïs ñø løñgër øpëñ. Rëfrësh tø øpëñ ït ägäïñ. ~~~~~~~~~~~~~~~~~~]",
+      "unsafe_path": "[Skïppëd: ïts ñämë çøüld wrïtë øütsïdë thë føldër. ~~~~~~~~~~~~~~~~]",
+      "invalid_name": "[Skïppëd: ïts ñämë çäñ't bë üsëd øñ Wïñdøws. ~~~~~~~~~~~~~~]",
+      "link_entry": "[Skïppëd: lïñks ärë ñëvër ëxträçtëd. ~~~~~~~~~~~~]",
+      "unsupported_method": "[Skïppëd: ït's çømprëssëd ïñ ä wäÿ thë äpp çäñ't rëäd. ~~~~~~~~~~~~~~~~]",
+      "size_mismatch": "[Skïppëd: ïts sïzë døësñ't mätçh whät thë ärçhïvë säÿs. ~~~~~~~~~~~~~~~~~~]",
+      "name_taken": "[Skïppëd: äñ ïtëm wïth thïs ñämë wäs älrëädÿ thërë. ~~~~~~~~~~~~~~~~]",
+      "damaged": "[Skïppëd: thïs ïtëm ïs dämägëd. ~~~~~~~~~~]"
+    },
     "rename": {
       "exists": "[Thërë's älrëädÿ äñ ïtëm wïth thïs ñämë hërë. ~~~~~~~~~~~~~~]",
       "invalid_name": "[Wïñdøws døësñ't älløw thïs ñämë. ~~~~~~~~~~~]",

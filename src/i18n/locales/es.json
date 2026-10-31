@@ -408,6 +408,32 @@
     "presetClassic": "Clásico"
   },
   "errors": {
+    "archive": {
+      "other": "Algo salió mal con este archivo comprimido. Vuelve a intentarlo.",
+      "bad_request": "Eso no se puede hacer con este archivo comprimido.",
+      "not_found": "No se encuentra el archivo comprimido. Puede que se haya movido o eliminado.",
+      "unsupported": "Este tipo de archivo comprimido no se puede abrir aquí. Prueba a abrirlo en otra aplicación.",
+      "corrupt": "Este archivo comprimido está dañado y no se puede leer.",
+      "password_required": "Este elemento está protegido con contraseña, algo que todavía no es compatible.",
+      "too_many_entries": "Este archivo comprimido tiene más de 200 000 elementos, demasiados para abrirlo de forma segura.",
+      "bomb": "Este archivo comprimido ocuparía muchísimo más espacio que su tamaño. No se extrajo, para proteger tu disco.",
+      "no_space": "No hay suficiente espacio libre en la unidad para extraer esto.",
+      "changed": "El archivo comprimido cambió desde que se abrió. Actualiza y vuelve a intentarlo.",
+      "cancelled": "Cancelado.",
+      "not_a_file": "Solo se pueden abrir archivos.",
+      "access_denied": "No tienes permiso para escribir en esa carpeta.",
+      "dest_missing": "La carpeta donde extraer ya no existe.",
+      "helper_failed": "No se pudo leer el archivo comprimido. Puede estar dañado o necesitar más memoria de la que permite la aplicación.",
+      "timeout": "La lectura del archivo comprimido dejó de responder.",
+      "no_session": "Este archivo comprimido ya no está abierto. Actualiza para volver a abrirlo.",
+      "unsafe_path": "Omitido: su nombre podría escribir fuera de la carpeta.",
+      "invalid_name": "Omitido: su nombre no se puede usar en Windows.",
+      "link_entry": "Omitido: los vínculos nunca se extraen.",
+      "unsupported_method": "Omitido: está comprimido de una forma que la aplicación no puede leer.",
+      "size_mismatch": "Omitido: su tamaño no coincide con lo que indica el archivo comprimido.",
+      "name_taken": "Omitido: ya había un elemento con este nombre.",
+      "damaged": "Omitido: este elemento está dañado."
+    },
     "rename": {
       "exists": "Ya hay un elemento con este nombre aquí.",
       "invalid_name": "Windows no permite este nombre.",
