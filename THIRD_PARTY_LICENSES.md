@@ -69,3 +69,7 @@ file lists everything that ships inside the app folder.
 - **zstd** 0.14 (BSD-3-Clause) - compresses kept versions (Step 06b).
 - **CodeMirror 6** (MIT) - the text and code viewer: code colors, search, line numbers (Step 04b). Packages: @codemirror/state 6.7.6, view 6.43.15, language 6.13.1, commands 6.11.1, search 6.7.2, lang-javascript 6.2.5, lang-json 6.0.2, lang-html 6.4.12, lang-css 6.3.1, lang-xml 6.1.0, lang-markdown 6.5.2, lang-python 6.2.1, lang-rust 6.0.2, lang-sql 6.10.0, lang-java 6.0.2, lang-cpp 6.0.3, lang-yaml 6.1.3, legacy-modes 6.5.5, and @lezer/highlight 1.2.5, with the @lezer parsers they use (all MIT).
 
+## Development tools (not shipped)
+
+- **docx** 9.15.0 (MIT), **exceljs** 4.4.0 (MIT), **pptxgenjs** 4.0.1 (MIT) - build the Office templates on the developer's PC (Step 06c). Not part of the app.
+

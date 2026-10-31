@@ -45,6 +45,9 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | AI runtime (14c/17) | llama.cpp (MIT) helper + ONNX Runtime (MIT) | ONNX Runtime GenAI (MIT); ncnn-vulkan (MIT) | Models never in Git |
 | AI models (14c/17) | Real-ESRGAN (BSD-3), BiRefNet (MIT)/U2-Net (Apache-2.0), LaMa (Apache-2.0), SigLIP 2 (Apache-2.0), whisper.cpp (MIT) | Qwen/Gemma - per-weights license verification required before approval | Never BRIA RMBG (non-commercial), never Piper (GPL) |
 | Fonts (13) | Carlito, Caladea, Liberation, Noto (OFL/Apache-2.0) | - | No Microsoft fonts; re-verify Liberation per release |
+| Office templates (06c) | docx 9.15.0 (MIT), development only: builds the Word templates on the developer's PC and is never shipped with the app | - | - |
+| Office templates (06c) | exceljs 4.4.0 (MIT), development only: builds the spreadsheet templates on the developer's PC and is never shipped with the app | SheetJS CE (Apache-2.0) | - |
+| Office templates (06c) | pptxgenjs 4.0.1 (MIT), development only: builds the presentation templates on the developer's PC and is never shipped with the app | - | - |
 | Testing | Playwright (Apache-2.0), cargo test/fuzz, axe-core (MPL-2.0) | WebdriverIO; pixelmatch (ISC) | Test code never ships |
 
 Explicitly excluded (license gate): Pandoc, MuPDF, Ghostscript, Poppler, ONLYOFFICE, SuperDoc, x264/x265, Univer Pro, Slint (royalty-free terms), Piper TTS, BRIA RMBG, ImageMagick (own license - re-verify or prefer the image crate), exiftool (GPL/Artistic - user-installed only).
