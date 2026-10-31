@@ -16,6 +16,7 @@ Earlier GitHub runs: 14/14 at `904cdd5`; `b5ffbd4` also passed. The local-only c
 
 ## Decisions and plan changes
 
+- **Found later (2026-10-30):** a pasted image could be saved under a garbled name (KI-036), fixed in Step 05d as `fix(clipboard)`.
 Owner decisions (2026-10-28, before building; recorded in `docs/step-plans/step-03b.md` and `DESIGN_DEVIATIONS.md`): the design preview for the jobs panel, conflict dialog, permanent-delete warning, Recent actions and paste-as-file was approved; the `trash` crate (MIT) is used for the Recycle Bin; conflicts offer Replace / Skip / Keep both with "Do this for all"; pasted images default to PNG; undoing a copy sends the copies to the Recycle Bin. On 2026-10-29 the owner made work continuous (no approval needed per step) and merged the plan folders into `plan/`.
 
 Decisions made during the step (all written in the repository):
