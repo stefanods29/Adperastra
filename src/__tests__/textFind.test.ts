@@ -1,7 +1,8 @@
+import { redo, undo } from "@codemirror/commands";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, describe, expect, it } from "vitest";
-import { readOnlyExtensions, runFind } from "../handlers/text/editorSetup";
+import { editableExtensions, readOnlyExtensions, runFind, runReplace } from "../handlers/text/editorSetup";
 
 let view: EditorView | null = null;
 afterEach(() => {
@@ -13,6 +14,13 @@ function makeView(doc: string): EditorView {
   const parent = document.createElement("div");
   document.body.appendChild(parent);
   view = new EditorView({ parent, state: EditorState.create({ doc, extensions: readOnlyExtensions({ phrases: {} }) }) });
+  return view;
+}
+
+function makeEditable(doc: string): EditorView {
+  const parent = document.createElement("div");
+  document.body.appendChild(parent);
+  view = new EditorView({ parent, state: EditorState.create({ doc, extensions: editableExtensions({ phrases: {} }) }) });
   return view;
 }
 
@@ -44,5 +52,32 @@ describe("find in the text viewer", () => {
     const v = makeView("abc");
     expect(v.state.readOnly).toBe(true);
     expect(v.contentDOM.getAttribute("aria-readonly")).toBe("true");
+  });
+
+  it("edits, undoes and redoes", () => {
+    const v = makeEditable("abc");
+    v.dispatch({ changes: { from: 0, insert: "x" }, userEvent: "input.type" });
+    expect(v.state.doc.toString()).toBe("xabc");
+    undo(v);
+    expect(v.state.doc.toString()).toBe("abc");
+    redo(v);
+    expect(v.state.doc.toString()).toBe("xabc");
+    expect(v.state.readOnly).toBe(false);
+  });
+
+  it("match case and whole word narrow the search", () => {
+    const v = makeView("Cat cat category");
+    runFind(v, "cat", "here", { caseSensitive: true, wholeWord: true });
+    expect(selected(v)).toEqual([4, 7]);
+  });
+
+  it("replace one or all", () => {
+    const v = makeEditable("a a a");
+    runReplace(v, "a", "b", false, { caseSensitive: false, wholeWord: false });
+    expect(v.state.doc.toString().startsWith("b")).toBe(true);
+    runReplace(v, "a", "b", true, { caseSensitive: false, wholeWord: false });
+    expect(v.state.doc.toString()).toBe("b b b");
+    undo(v);
+    expect(v.state.doc.toString()).toBe("b a a");
   });
 });

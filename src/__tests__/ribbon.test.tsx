@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import "../i18n";
 import type { Command } from "../commands/registry";
 import Ribbon from "../ribbon/Ribbon";
-import { matchesShortcut } from "../ribbon/shortcuts";
+import { matchesShortcut, useCommandShortcuts } from "../ribbon/shortcuts";
 import type { RibbonDef } from "../ribbon/types";
 
 interface Ctx {
@@ -94,6 +94,40 @@ describe("ribbon groups", () => {
     await act(async () => root.render(<Ribbon def={twoGroups} ctx={{ bold: false, canItalic: true }} commands={commands} accent="explorer" active={true} />));
     expect(container.querySelectorAll(".adp-ribbon-group")).toHaveLength(1);
     expect(container.querySelectorAll(".adp-ribbon-sep")).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
+});
+
+describe("command shortcuts", () => {
+  function Probe({ commands }: { commands: Command<Ctx>[] }) {
+    useCommandShortcuts(commands, { bold: false, canItalic: true }, true);
+    return null;
+  }
+
+  it("a key the focused control handled runs nothing", async () => {
+    const run = vi.fn();
+    const commands: Command<Ctx>[] = [
+      { id: "t.ctrlB", labelKey: "viewer.fitToWindow", icon: Bold, shortcut: "Ctrl+B", risk: "read-only", helpSlug: "viewing-images", enabledWhen: () => true, run },
+    ];
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => root.render(<Probe commands={commands} />));
+
+    const control = document.createElement("div");
+    control.addEventListener("keydown", (event) => event.preventDefault());
+    document.body.appendChild(control);
+    await act(async () => {
+      control.dispatchEvent(new KeyboardEvent("keydown", { key: "b", ctrlKey: true, bubbles: true, cancelable: true }));
+    });
+    expect(run).not.toHaveBeenCalled();
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "b", ctrlKey: true, cancelable: true }));
+    });
+    expect(run).toHaveBeenCalledTimes(1);
+
+    control.remove();
     await act(async () => root.unmount());
   });
 });
