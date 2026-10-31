@@ -51,6 +51,8 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | Office templates (06c) | docx 9.15.0 (MIT), development only: builds the Word templates on the developer's PC and is never shipped with the app | - | - |
 | Office templates (06c) | exceljs 4.4.0 (MIT), development only: builds the spreadsheet templates on the developer's PC and is never shipped with the app | SheetJS CE (Apache-2.0) | - |
 | Office templates (06c) | pptxgenjs 4.0.1 (MIT), development only: builds the presentation templates on the developer's PC and is never shipped with the app | - | - |
+| Tables (06f) | csv 1.4 (Unlicense OR MIT) with csv-core 0.1 (Unlicense OR MIT), adopted in Step 06f to parse CSV and TSV in Rust; @tanstack/react-table is not adopted | custom parser | Parsing stays in Rust; the UI asks for pages of at most 500 rows |
+| Fonts (06f) | ttf-parser 0.25 (MIT OR Apache-2.0), adopted in Step 06f with default features off and `std`, read only in the font helper process | OS APIs | Font bytes never parsed in the app process; the UI loads them with the browser's FontFace |
 | Testing | Playwright (Apache-2.0), cargo test/fuzz, axe-core (MPL-2.0) | WebdriverIO; pixelmatch (ISC) | Test code never ships |
 
 Explicitly excluded (license gate): Pandoc, MuPDF, Ghostscript, Poppler, ONLYOFFICE, SuperDoc, x264/x265, Univer Pro, Slint (royalty-free terms), Piper TTS, BRIA RMBG, ImageMagick (own license - re-verify or prefer the image crate), exiftool (GPL/Artistic - user-installed only).
