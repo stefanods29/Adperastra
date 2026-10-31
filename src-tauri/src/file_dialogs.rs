@@ -74,6 +74,41 @@ pub fn pick_open_path(
     dialog_result(shown)
 }
 
+/// Shows Windows' folder picker and returns the chosen folder. A cancelled
+/// dialog is `Ok(None)`; a failure is the plain code `dialog.failed`.
+#[cfg(windows)]
+pub fn pick_folder_path(owner: isize, title: &str) -> Result<Option<String>, String> {
+    use windows::core::HSTRING;
+    use windows::Win32::Foundation::E_FAIL;
+    use windows::Win32::System::Com::{CoCreateInstance, CoTaskMemFree, CLSCTX_INPROC_SERVER};
+    use windows::Win32::UI::Shell::{
+        FileOpenDialog, IFileOpenDialog, FOS_FORCEFILESYSTEM, FOS_PATHMUSTEXIST, FOS_PICKFOLDERS,
+        SIGDN_FILESYSPATH,
+    };
+
+    let _com = ComApartment::enter();
+    // SAFETY: COM is initialized on this thread by `_com`; the dialog and the
+    // strings passed to it stay alive for the whole call.
+    let shown = unsafe {
+        CoCreateInstance::<_, IFileOpenDialog>(&FileOpenDialog, None, CLSCTX_INPROC_SERVER)
+            .and_then(|dialog| {
+                dialog.SetTitle(&HSTRING::from(title))?;
+                dialog.SetOptions(
+                    dialog.GetOptions()?
+                        | FOS_PICKFOLDERS
+                        | FOS_FORCEFILESYSTEM
+                        | FOS_PATHMUSTEXIST,
+                )?;
+                dialog.Show(Some(crate::shell::hwnd_from(owner)))?;
+                let raw = dialog.GetResult()?.GetDisplayName(SIGDN_FILESYSPATH)?;
+                let path = raw.to_string();
+                CoTaskMemFree(Some(raw.0 as *const _));
+                path.map_err(|_| windows::core::Error::from(E_FAIL))
+            })
+    };
+    dialog_result(shown)
+}
+
 /// A cancelled dialog is `None`; any other COM error is a code for the UI.
 #[cfg(windows)]
 fn dialog_result(shown: windows::core::Result<String>) -> Result<Option<String>, String> {
@@ -168,5 +203,10 @@ pub fn pick_open_path(
     _filter_name: &str,
     _pattern: &str,
 ) -> Result<Option<String>, String> {
+    Err("dialog.failed".to_string())
+}
+
+#[cfg(not(windows))]
+pub fn pick_folder_path(_owner: isize, _title: &str) -> Result<Option<String>, String> {
     Err("dialog.failed".to_string())
 }

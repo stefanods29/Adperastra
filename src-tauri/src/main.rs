@@ -38,6 +38,7 @@ mod operation_safety;
 mod recovery;
 mod settings_file;
 mod shell;
+mod templates;
 mod text_save;
 mod transfer_history;
 mod versions;
@@ -3055,6 +3056,9 @@ fn main() {
             archive::archive_open_entry_start,
             archive::archive_extract_start,
             archive::archive_pick_folder,
+            templates::templates_list,
+            templates::template_create,
+            templates::templates_pick_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

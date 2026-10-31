@@ -34,6 +34,7 @@ if ($ReuseSetup) {
 $out = Join-Path $root "build\Adperastra"
 Copy-Item (Join-Path $env:CARGO_TARGET_DIR "release\Adperastra.exe") $out -Force
 Copy-Item (Join-Path $root "help") (Join-Path $out "help") -Recurse -Force
+Copy-Item (Join-Path $root "templates") (Join-Path $out "templates") -Recurse -Force
 Add-Content (Join-Path $out "RUN.txt") ""
 Add-Content (Join-Path $out "RUN.txt") "4. The app itself: run Adperastra.exe, or just run AdperastraSetup.exe -"
 Add-Content (Join-Path $out "RUN.txt") "   after a good check it now starts Adperastra.exe for you (Step 01b)."

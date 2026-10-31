@@ -573,6 +573,14 @@
       "other": "No se pudo guardar una copia de recuperación de tus cambios.",
       "bad_request": "Esa copia de recuperación no es válida.",
       "too_large": "El texto es demasiado grande para una copia de recuperación. Guárdalo pronto."
+    },
+    "templates": {
+      "other": "No se pudo crear el archivo. Vuelve a intentarlo.",
+      "bad_request": "Esa plantilla no se puede usar.",
+      "not_allowed": "Solo se pueden usar como plantillas los archivos de las carpetas de plantillas.",
+      "not_found": "La plantilla o la carpeta ya no existe.",
+      "invalid_name": "Ese nombre no se puede usar para un archivo.",
+      "access_denied": "No tienes permiso para crear archivos en esta carpeta."
     }
   },
   "keys": {

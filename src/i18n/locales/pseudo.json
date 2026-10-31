@@ -573,6 +573,14 @@
       "other": "[Çøüldñ't këëp ä rëçøvërÿ çøpÿ øf ÿøür çhäñgës. ~~~~~~~~~~~~~~~]",
       "bad_request": "[Thät rëçøvërÿ çøpÿ ïsñ't välïd. ~~~~~~~~~~]",
       "too_large": "[Thë tëxt ïs tøø lärgë før ä rëçøvërÿ çøpÿ. Sävë ït søøñ. ~~~~~~~~~~~~~~~~~~]"
+    },
+    "templates": {
+      "other": "[Çøüldñ't çrëätë thë fïlë. Trÿ ägäïñ. ~~~~~~~~~~~~]",
+      "bad_request": "[Thät tëmplätë çäñ't bë üsëd. ~~~~~~~~~]",
+      "not_allowed": "[Øñlÿ fïlës frøm thë tëmplätë føldërs çäñ bë üsëd äs tëmplätës. ~~~~~~~~~~~~~~~~~~~~~]",
+      "not_found": "[Thë tëmplätë ør thë føldër ñø løñgër ëxïsts. ~~~~~~~~~~~~~~~]",
+      "invalid_name": "[Thät ñämë çäñ't bë üsëd før ä fïlë. ~~~~~~~~~~~]",
+      "access_denied": "[Ÿøü døñ't hävë përmïssïøñ tø çrëätë fïlës ïñ thïs føldër. ~~~~~~~~~~~~~~~~~~~]"
     }
   },
   "keys": {

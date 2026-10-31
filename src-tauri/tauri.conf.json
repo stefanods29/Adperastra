@@ -36,7 +36,8 @@
     "active": true,
     "targets": ["nsis"],
     "resources": {
-      "../help": "help"
+      "../help": "help",
+      "../templates": "templates"
     },
     "icon": []
   }

@@ -573,6 +573,14 @@
       "other": "Couldn't keep a recovery copy of your changes.",
       "bad_request": "That recovery copy isn't valid.",
       "too_large": "The text is too large for a recovery copy. Save it soon."
+    },
+    "templates": {
+      "other": "Couldn't create the file. Try again.",
+      "bad_request": "That template can't be used.",
+      "not_allowed": "Only files from the template folders can be used as templates.",
+      "not_found": "The template or the folder no longer exists.",
+      "invalid_name": "That name can't be used for a file.",
+      "access_denied": "You don't have permission to create files in this folder."
     }
   },
   "keys": {
