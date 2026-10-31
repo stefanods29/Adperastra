@@ -699,7 +699,13 @@
     "recovered": "Se conservaron los cambios sin guardar de {time} para este archivo.",
     "recoveredChanged": "Se conservaron los cambios sin guardar de {time} para este archivo, pero el archivo cambió después.",
     "restore": "Restaurar",
-    "discard": "Descartar"
+    "discard": "Descartar",
+    "replaceWith": "Reemplazar con",
+    "replace": "Reemplazar",
+    "replaceAll": "Reemplazar todo",
+    "matchCase": "Coincidir mayúsculas y minúsculas",
+    "wholeWord": "Palabra completa",
+    "closeReplace": "Cerrar reemplazar"
   },
   "markdown": {
     "renderedMode": "Vista de lectura",

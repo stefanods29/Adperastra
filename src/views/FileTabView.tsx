@@ -1,4 +1,4 @@
-import { ArrowUp, FileQuestion, RotateCw, ShieldAlert } from "lucide-react";
+import { ArrowUp, FileQuestion, RotateCw, ShieldAlert, X } from "lucide-react";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Breadcrumb from "../components/Breadcrumb";
@@ -9,6 +9,8 @@ import IconButton from "../components/IconButton";
 import SearchBox from "../components/SearchBox";
 import Skeleton from "../components/Skeleton";
 import Slider from "../components/Slider";
+import Switch from "../components/Switch";
+import TextInput from "../components/TextInput";
 import { handlers } from "../handlers";
 import type { FileTabStatus, FindRequest } from "../handlers/types";
 import { errorCode, errorText } from "../services/errors";
@@ -48,13 +50,24 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
   const [status, setStatus] = useState<FileTabStatus>({ items: [] });
   const [reloadKey, setReloadKey] = useState(0);
   const [find, setFind] = useState<FindRequest>({ text: "", request: 0, backwards: false });
+  const [replaceOpen, setReplaceOpen] = useState(false);
+  const [replaceText, setReplaceText] = useState("");
+  const [options, setOptions] = useState({ caseSensitive: false, wholeWord: false });
+  const [replaceRequest, setReplaceRequest] = useState<{ request: number; all: boolean } | null>(null);
+  const replaceCount = useRef(0);
   const searchRef = useRef<HTMLDivElement | null>(null);
+  const replaceRef = useRef<HTMLDivElement | null>(null);
   const [unblocked, setUnblocked] = useState(false);
   const [askUnblock, setAskUnblock] = useState(false);
   const [unblockError, setUnblockError] = useState<string | null>(null);
   const canFind = handler?.supportsFind === true;
+  const supportsReplace = handler?.supportsReplace === true;
   const findAgain = useCallback((backwards: boolean) => {
     setFind((current) => ({ ...current, request: current.request + 1, backwards }));
+  }, []);
+  const askReplace = useCallback((all: boolean) => {
+    replaceCount.current += 1;
+    setReplaceRequest({ request: replaceCount.current, all });
   }, []);
 
   // Ctrl+F focuses the search box; F3 / Shift+F3 find the next / previous match.
@@ -66,6 +79,10 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
         const input = searchRef.current?.querySelector("input");
         input?.focus();
         input?.select();
+      } else if ((event.ctrlKey || event.metaKey) && !event.altKey && (event.key === "h" || event.key === "H")) {
+        if (!supportsReplace) return;
+        event.preventDefault();
+        setReplaceOpen(true);
       } else if (event.key === "F3") {
         event.preventDefault();
         findAgain(event.shiftKey);
@@ -73,7 +90,13 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, canFind, findAgain]);
+  }, [active, canFind, findAgain, supportsReplace]);
+
+  // The replace row's text box takes the focus when it opens (Ctrl+H).
+  useEffect(() => {
+    if (!replaceOpen) return;
+    replaceRef.current?.querySelector("input")?.focus();
+  }, [replaceOpen]);
 
   useEffect(() => {
     if (!isTauriRuntime() || !path) return;
@@ -124,6 +147,14 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
     id: index === all.length - 1 ? "" : segment.path,
     label: segment.label,
   }));
+  // The search box, its options, and a replace request when one was asked.
+  const viewFind: FindRequest = {
+    ...find,
+    options,
+    replace: replaceRequest
+      ? { text: replaceText, request: replaceRequest.request, all: replaceRequest.all }
+      : undefined,
+  };
   return (
     <div className="adp-filetab" hidden={!active}>
       <div className="adp-filetab-nav">
@@ -154,6 +185,47 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
         ) : null}
         <HelpButton onOpenHelp={() => onOpenHelp(handler?.helpSlug ?? "opening-files")} />
       </div>
+      {replaceOpen && supportsReplace ? (
+        <div
+          ref={replaceRef}
+          className="adp-filetab-replace"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setReplaceOpen(false);
+              searchRef.current?.querySelector("input")?.focus();
+              return;
+            }
+            if (event.key !== "Enter" || !(event.target instanceof HTMLInputElement)) return;
+            event.preventDefault();
+            askReplace(event.ctrlKey && event.altKey);
+          }}
+        >
+          <TextInput
+            value={replaceText}
+            onChange={setReplaceText}
+            placeholder={t("editor.replaceWith")}
+            ariaLabel={t("editor.replaceWith")}
+          />
+          <Switch
+            checked={options.caseSensitive}
+            onChange={(caseSensitive) => setOptions((current) => ({ ...current, caseSensitive }))}
+            label={t("editor.matchCase")}
+          />
+          <Switch
+            checked={options.wholeWord}
+            onChange={(wholeWord) => setOptions((current) => ({ ...current, wholeWord }))}
+            label={t("editor.wholeWord")}
+          />
+          <Button disabled={find.text === ""} onClick={() => askReplace(false)}>
+            {t("editor.replace")}
+          </Button>
+          <Button disabled={find.text === ""} onClick={() => askReplace(true)}>
+            {t("editor.replaceAll")}
+          </Button>
+          <IconButton icon={X} labelKey="editor.closeReplace" onClick={() => setReplaceOpen(false)} />
+        </div>
+      ) : null}
       {protectedView ? (
         <div className="adp-protected-bar" role="status">
           <ShieldAlert size={16} aria-hidden="true" className="adp-protected-icon" />
@@ -194,7 +266,7 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
               onStateChange={onViewState}
               onStatus={setStatus}
               onOpenInWindowsApp={openInWindowsApp}
-              find={find}
+              find={viewFind}
               protectedView={protectedView}
             />
           </Suspense>

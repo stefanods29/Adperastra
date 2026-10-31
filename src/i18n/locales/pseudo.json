@@ -699,7 +699,13 @@
     "recovered": "[Üñsävëd çhäñgës frøm {time} wërë këpt før thïs fïlë. ~~~~~~~~~~~~~~~]",
     "recoveredChanged": "[Üñsävëd çhäñgës frøm {time} wërë këpt før thïs fïlë, büt thë fïlë çhäñgëd äftër thät. ~~~~~~~~~~~~~~~~~~~~~~~~~~]",
     "restore": "[Rëstørë ~~~]",
-    "discard": "[Dïsçärd ~~~]"
+    "discard": "[Dïsçärd ~~~]",
+    "replaceWith": "[Rëpläçë wïth ~~~~~]",
+    "replace": "[Rëpläçë ~~~]",
+    "replaceAll": "[Rëpläçë äll ~~~~]",
+    "matchCase": "[Mätçh çäsë ~~~~]",
+    "wholeWord": "[Whølë wørd ~~~~]",
+    "closeReplace": "[Çløsë rëpläçë ~~~~~]"
   },
   "markdown": {
     "renderedMode": "[Rëädïñg vïëw ~~~~~]",

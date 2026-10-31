@@ -699,7 +699,13 @@
     "recovered": "Unsaved changes from {time} were kept for this file.",
     "recoveredChanged": "Unsaved changes from {time} were kept for this file, but the file changed after that.",
     "restore": "Restore",
-    "discard": "Discard"
+    "discard": "Discard",
+    "replaceWith": "Replace with",
+    "replace": "Replace",
+    "replaceAll": "Replace all",
+    "matchCase": "Match case",
+    "wholeWord": "Whole word",
+    "closeReplace": "Close replace"
   },
   "markdown": {
     "renderedMode": "Reading view",

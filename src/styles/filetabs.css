@@ -37,6 +37,8 @@
 }
 .adp-image-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--adp-space-4); color: var(--adp-color-text-secondary); }
 .adp-image-skeleton { width: 320px; height: 220px; }
+.adp-filetab-replace { display: flex; flex-wrap: wrap; align-items: center; gap: var(--adp-space-3); padding: var(--adp-space-2) var(--adp-space-7); border-bottom: 1px solid var(--adp-color-border-default); background: var(--adp-color-surface-window); }
+.adp-filetab-replace .adp-input { width: 270px; }
 .adp-filetab-search { width: 270px; flex: none; }
 .adp-filetab-search .adp-search { width: 100%; height: 34px; border: none; background: var(--adp-color-surface-chrome); }
 .adp-filetab-search .adp-search-input { flex: 1; min-width: 0; border: none; background: transparent; }
