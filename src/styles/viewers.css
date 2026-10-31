@@ -7,3 +7,5 @@
 .adp-text-notice + .adp-text-host { margin-top: 28px; }
 .adp-markdown-frame { flex: 1; min-width: 0; border: none; background: var(--adp-color-surface-window); }
 .adp-link-preview { word-break: break-all; font-family: "Cascadia Mono", Consolas, monospace; color: var(--adp-color-text-primary); }
+.adp-editor-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--adp-space-3); padding: var(--adp-space-2) var(--adp-space-5); background: var(--adp-color-surface-header); border-bottom: 1px solid var(--adp-color-border-panel); color: var(--adp-color-text-primary); font-size: var(--adp-font-small); }
+.adp-editor-bar--error { background: var(--adp-color-status-caution-background); color: var(--adp-color-status-caution); }

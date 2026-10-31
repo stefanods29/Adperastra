@@ -27,5 +27,7 @@ export const textHandler: Handler = {
   helpSlug: "viewing-text",
   speedTier: "fast",
   supportsFind: true,
+  editable: true,
+  supportsReplace: true,
   view: lazy(() => import("./TextView")),
 };
