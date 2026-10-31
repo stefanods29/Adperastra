@@ -642,6 +642,10 @@
     },
     "json": {
       "other": "[Çøüldñ't shøw thïs JSØÑ fïlë. ~~~~~~~~~~]"
+    },
+    "font": {
+      "other": "[Çøüldñ't rëäd thïs føñt. ~~~~~~~~]",
+      "install_failed": "[Wïñdøws çøüldñ't ïñställ thïs føñt. ~~~~~~~~~~~~]"
     }
   },
   "keys": {

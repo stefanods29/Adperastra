@@ -642,6 +642,10 @@
     },
     "json": {
       "other": "Couldn't show this JSON file."
+    },
+    "font": {
+      "other": "Couldn't read this font.",
+      "install_failed": "Windows couldn't install this font."
     }
   },
   "keys": {
