@@ -28,7 +28,7 @@ Before checking, create the test folder `%TEMP%\adp-06a` with these files (plain
 4. `unix.txt`: edit and save: still Unix line endings. Change **Line endings** to Windows and save: Notepad shows Windows endings.
 5. `latin.txt`: shows "Árbol café"; edit and save: still one byte per letter (the size grows only by the letters typed). Then type the Cyrillic letter "Ж" and save (Save with is still Windows-1252): the message names the line and column, and nothing is saved.
 6. Edit `notes.txt`, then change it in Notepad and save there; save in the app: the "changed on disk" question; try Reload and Overwrite.
-7. **Save as…** `notes copy.txt`: the tab shows the new name; save as onto an existing file: Windows asks; the old file is in the Recycle Bin.
+7. **Save as…** `notes copy.txt`: the tab shows the new name; save as onto an existing file: after Windows asks, a message says to choose a new name and the existing file is unchanged (changed by F3, KI-087).
 8. `locked.txt`: the read-only note; Save is off; Save as works. `big.log`: parts mode, read-only. A file downloaded from the internet: editing off until Unblock, then on without reopening.
 9. `readme.md`: Split mode: typing updates the page after a short pause; switching modes keeps the edits; save works.
 10. Type in `notes.txt` and close the tab: Save / Don't save / Cancel each behave; with two unsaved tabs, close the window: one question listing both.
@@ -40,7 +40,7 @@ Before checking, create the test folder `%TEMP%\adp-06a` with these files (plain
 
 - Safe save: the new text goes to `~<name>.partial` next to the file, is flushed, then swapped in with `ReplaceFileW`; a failure removes only the partial file. The version hook (`versions::before_modify`) runs first (a no-op until Step 06b).
 - A file changed by another program after it was opened is never overwritten without asking: **Overwrite**, **Reload** or **Cancel**.
-- Save as through Windows' save dialog, with the old file sent to the Recycle Bin first.
+- Save as through Windows' save dialog, which only creates new files since F3 (at first, the old file went to the Recycle Bin).
 - Eight save encodings (UTF-8 with and without BOM, UTF-16 LE and BE, Windows-1252, ISO-8859-15, Windows-1250, Windows-1251) and Windows/Unix line endings; a character the encoding can't hold stops the save and names its line and column.
 - Text and Markdown files are editable in place, with undo and redo, Ctrl+S and Ctrl+Shift+S, a dot on the tab and "Unsaved changes" in the status bar.
 - Find and replace: Ctrl+H, Match case, Whole word, Replace, Replace all (one undo step).
@@ -127,6 +127,10 @@ c9a64d7 feat(editor): recovery copies of unsaved text [step-06a/T4]
 03dd7fe feat(editor): save text safely with the version hook [step-06a/T2]
 2a6a764 feat(fs-service): safe replace of a file's content [step-06a/T1]
 ```
+
+## Later repair (2026-10-31)
+
+KI-068 is fixed (`1a6209f`, F3): saves use owned staging with a random name, and a failed swap never deletes the only copy of the content. Save as onto an existing file is refused (KI-087). The path-based swap race stays open as KI-069.
 
 ## Next step
 

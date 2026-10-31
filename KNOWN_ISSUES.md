@@ -11,6 +11,18 @@ that fixed it.
 
 ## Open
 
+### KI-088 - Saving or extracting below a folder that is a mounted volume is refused (Minor)
+- **Found in:** the KI-068 repair, 2026-10-31. **Severity:** Minor (a rare setup; nothing is written and nothing is lost).
+- **What:** The folder pin refuses every folder that redirects to another place, which includes a drive mounted into a folder. Cloud-synced folders are allowed by a test of their tag only: a real OneDrive folder has not been tried.
+- **Workaround:** use the drive's own letter.
+- **Target:** reviewed at the next milestone.
+
+### KI-087 - Save as cannot replace an existing file (Major)
+- **Found in:** the KI-068 repair, 2026-10-31. **Severity:** Major (a part of Save as is unavailable; choosing a new name is the workaround).
+- **What:** Recycling can't yet be tied to the exact file the user approved (`plan/contracts.md`, approved Replace targets), so Save as onto an existing file stops with a message and changes nothing. Windows' dialog still asks "replace?" first, and answering yes leads to that message.
+- **Workaround:** choose a new name, or move the old file away first.
+- **Target:** Step 09f, because the fix needs the conflict window's approval and recovery work, the same as Replace and version copies. Remove the dialog's question or enable Replace there.
+
 ### KI-086 - JSON numbers beyond 64 bits show rounded in the tree (Minor)
 - **Found in:** Step 06f (D8), 2026-10-31. **Severity:** Minor (the value is still readable, and Open as text shows the exact text; the file is never changed).
 - **What:** The tree reads numbers as 64-bit integers or doubles, so an integer beyond 64 bits, or a very long decimal, can appear rounded in the tree.
@@ -35,12 +47,6 @@ that fixed it.
 - **Workaround:** close and reopen the file tab.
 - **Target:** later owner-approved repair of existing reader error state; not silently bundled into the new search/offset work under the existing-error policy.
 
-### KI-079 - Existing archive extraction may delete a partial file it did not create (Blocker)
-- **Found in:** Step 06e guide research, 2026-10-31; verified in the existing Step 06d `crates/archive/src/write.rs`.
-- **What:** `write_partial` uses create_new, but `write_entry` unconditionally removes the predictable partial path after any failure, including failure to create it. A pre-existing foreign partial can therefore be deleted. The writer flushes its buffer but does not sync the file before publication. Its path-based cleanup/publication also releases staging ownership too early.
-- **Workaround:** use only disposable extraction folders. New 06e mutation paths must use an additive owned-staging writer rather than inherit this behavior.
-- **Target:** existing 06d repair remains an owner decision under the no-existing-fixes policy. This open Blocker prevents release/main publication; it is not marked fixed or silently deferred. Independent planning and new safe paths may continue locally.
-
 ### KI-078 - The editor status keeps the file's opening byte size after saving (Minor)
 - **Found in:** release screenshots during the 06b/06c review, 2026-10-31. **Severity:** Minor.
 - **What:** after seven saves the real file and history show 107 bytes, while the editor status still shows its original 45 bytes. The status reads the original file metadata in the existing editor path; no save data was lost. This existing display issue is documented under the owner's no-existing-fixes policy.
@@ -54,15 +60,10 @@ that fixed it.
 
 
 
-### KI-068 - Existing text Save and Save as have unsafe staging and replacement paths (Blocker)
-- **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Blocker.
-- **What:** Review confirmed the Step 06a baseline uses File::create on a predictable partial path in crates/fs-service/src/save.rs. A pre-existing file/link may be truncated and path cleanup may remove an unrelated arrival. write_new_file probes then uses a replacing rename; text_save.rs Save as recycles a destination before staging completes and cannot bind recycling to an approved object. These are existing defects; the owner instructed this batch to document existing errors without fixing them.
-- **Target:** Owner decides when to repair the Step 06a save path. No publication, main merge or release is allowed with this unresolved.
-
 ### KI-069 - Content replacement has a close-to-replace path race (Major)
 - **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
 - **What:** The existing explicit content-save contract uses path-based ReplaceFileW. The new restore path holds a target read/rename guard through staging, snapshot and identity revalidation, then must close it before ReplaceFileW. A concurrent path swap in that final interval is not atomically bound to the inspected object. The safety review does not claim that identity revalidation closes this race.
-- **Target:** A shared identity-bound content replacement/recovery design is required before release; keep this limitation visible alongside KI-068 and the approved Replace contract. Existing owner policy leaves the shared save-path repair outside this batch.
+- **Target:** A shared identity-bound content replacement/recovery design is required before release; keep this limitation visible alongside the approved Replace contract. The KI-068 repair moved saves to owned staging, but the swap itself is still path-based, so this race remains.
 
 ### KI-070 - Template build tools include two high advisories in an unused image parser (Minor, bounded deferral)
 - **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Minor, bounded deferral.
@@ -221,6 +222,18 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-079 - Archive extraction could delete a partial file it did not create (Blocker, fixed after Step 06f)
+- **Found in:** Step 06e guide research, 2026-10-31, by reading the Step 06d code.
+- **What:** A failed extraction removed the predictable `~name.partial` next to the target, even when that file belonged to someone else. The file was not flushed to the disk before it got its final name.
+- **Fix:** `write_entry` now writes through `OwnedOutput` below a `PinnedDirectory`: a random staging name, flushed, published without replacing, and removed only through its own handle. After a killed helper, only abandoned `~adp-<name>-<uuid>.partial` files that nobody holds are removed. Each file is now flushed to the disk, which makes extracting many small files somewhat slower; this has not been measured.
+- **Fixed in:** 7806263 (step-06d/F3).
+
+### KI-068 - Text Save and Save as had unsafe staging and replacement paths (Blocker, fixed after Step 06f)
+- **Found in:** local 06b/06c review, 2026-10-31.
+- **What:** A save could truncate or remove a file that already had the predictable `~name.partial` name, or follow a link there. A save to a missing file and Save as used a rename that replaces. Save as sent the old file to the Recycle Bin before the new content was written, and could not tie that to the file the user approved. The same review of the code found one more way to lose data: when `ReplaceFileW` failed after removing the old file, the new content was deleted too.
+- **Fix:** Saves use the same owned staging and no-replace publication as KI-079, and look at the target again just before the swap. After a failed swap the staging file is removed only when the old file is known to still be in place; otherwise the content is published or kept. Save as now only creates new files (KI-087). The remaining race in the swap itself is KI-069.
+- **Fixed in:** 1a6209f (step-06a/F3).
 
 ### KI-032 - The hex viewer had no search or Go to offset (fixed in Step 06f)
 - **Found in:** Step 04c, 2026-10-30.
