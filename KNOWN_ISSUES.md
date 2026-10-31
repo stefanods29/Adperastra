@@ -11,6 +11,12 @@ that fixed it.
 
 ## Open
 
+### KI-043 - The UI build prints a chunk-size warning (Minor)
+- **Found in:** Step 06b, 2026-10-30, while building after each task. **Severity:** Minor (a build warning only; the build, the package and the app are fine).
+- **What:** `npm run build` ends with "(!) Some chunks are larger than 500 kB after minification" for the main `index-*.js` chunk (about 535 kB, about 160 kB gzipped). That is Vite's default warning limit, not an error.
+- **Workaround:** none needed; the warning does not stop the build.
+- **Target:** reviewed at the next milestone (a code-splitting pass would silence it).
+
 ### KI-042 - Archives compressed with bzip2 are not read yet (Minor, deferral)
 - **Found in:** Step 06d. **Severity:** Minor (deliberate deferral named in the step file; the owner allowed the bzip2 library for Step 06e).
 - **What:** `.bz2`, `.tbz`, `.tbz2` and `.tar.bz2` files open in their Windows app instead of a tab, and a zip or 7z entry compressed with bzip2 is skipped with "Skipped: it's compressed in a way the app can't read".
