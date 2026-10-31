@@ -23,7 +23,7 @@ Still to do (the coordinator runs the hand checks later). The list is the step f
 8. `bad.json`: says line 1 and the column with **Open as text**. `long.json`: **Show more** adds the next 1,000.
 9. A font from `C:\Windows\Fonts`: six sample sizes, details and a character map; type your name in **Sample text**; select a character and paste it elsewhere.
 10. On the font, **Install** then **Cancel** does nothing.
-11. `sample.bin` > **Open as** > **Open as hex**; Ctrl+F `FINDME`, Enter: moves to part 3, highlights across the row and shows the offset; Shift+F3 wraps and finds it again.
+11. `sample.bin` > **Open as** > **Open as hex**; Ctrl+F `FINDME`, Enter: moves to part 2, highlights the match and shows the offset (the word crosses into part 3, so part 2 shows its start); Shift+F3 wraps and finds it again.
 12. **Search as bytes**, `46 49 4E`: found; `4`: the pairs message.
 13. Ctrl+G, `0x10`: goes there. `ZZ`: the message and the window stays open.
 14. Repeat 1, 7, 9 and 11 in Spanish and in the dark theme; everything reachable by keyboard, focus visible.
