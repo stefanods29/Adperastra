@@ -3,12 +3,12 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
-## 2026-10-30 - Themes and appearance (Step 05d) - owner approval still to come
+## 2026-10-30 - Themes and appearance (Step 05d) - checked for the owner on 2026-10-30
 
 - **What:** the Figma file has only the light theme. **Bright**, **Paper**, **AMOLED black** and **High contrast** were designed in this step from the same tokens; their values live in `themes/bright.tokens.json`, `themes/paper.tokens.json`, `themes/amoled.tokens.json` and `themes/highContrast.tokens.json`, and the contrast test in `src/__tests__/themes.test.ts` checks every theme.
 - **Dark theme change:** the text on the accent in the dark theme is now `#000000`. White on `#4CC2FF` was only about 2:1; black gives about 10:1.
 - **Spacing and corners:** the density setting replaces the measured spacing tokens and row heights (compact, comfortable and spacious in `plan/steps/step-05d.md`), and the corner radius setting replaces the measured `--adp-radius-*` values with 0, the theme's values or slightly larger ones. The comfortable density and the standard radius keep the measured design.
-- **Owner approval:** still to come. The checkpoint screenshots (`31-theme-bright` to `38-settings-search` in `docs/screenshots/step-05d/`) are taken later; any color the owner asks for is changed in the token files only, and the contrast test must still pass. No changes requested yet.
+- **Owner approval:** the owner asked the agent to check the screenshots instead of reviewing them personally (2026-10-30). The agent found the themes readable in `31-theme-bright` to `38-settings-search` (`docs/screenshots/step-05d/`) and requested no color changes. The owner has not judged the colors personally. Any color they want changed goes in the token files only, and the contrast test must still pass.
 
 ## 2026-10-30 - Movable toolbars, panels and tabs (Step 05c) - approved by the owner on 2026-10-30
 

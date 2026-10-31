@@ -1,6 +1,6 @@
 # Step 05d report - Appearance, built-in themes, Settings page
 
-Dates: 2026-10-30. Status: built and committed on the local branch `step-05d-appearance` (base `d99680e`, the Step 05c status commit). Not merged, not tagged, and nothing was pushed: the owner's rules for this batch keep all work local. Tests, the packaged gate, the speed measurements and the screenshots are still to be run by the owner. The **T10 owner checkpoint** (approval of the new themes) is still to come.
+Dates: 2026-10-30. Status: **merged into local `testing`. The full gate passed (193 Rust tests and 334 UI tests before the last CSS fix; it passed again after it). The speed run, the pseudo-locale screenshots and the owner's hand checks are still to do.** Nothing was pushed and `main` was not touched.
 
 ## How to try it
 
@@ -47,7 +47,9 @@ Dates: 2026-10-30. Status: built and committed on the local branch `step-05d-app
 
 - **F1 (Step 03b's code):** the full gate found that a pasted image could be saved under a garbled name, because the name passed to Windows had no terminating zero (KI-036). Fixed in `src-tauri/src/clipboard.rs`, with a new test.
 - **T1 to T8** were already committed when this session started; this session built **T9** (help pages), **T10** (screenshot steps) and **T11** (speed measurements and design notes), each committed on its own.
-- **T10 owner checkpoint not run.** The batch rules forbid starting the app, taking screenshots and stopping for the checkpoint, so the screenshot steps were written and committed and the run happens later. `DESIGN_DEVIATIONS.md` and this report say plainly that the owner's approval of the themes is still to come, and any colour the owner asks for is then a token-file change (with the contrast test still passing).
+- **T10 checkpoint:** the worker did not run it, because the batch rules forbade screenshots. The screenshots were taken after the merge. The owner asked the agent to check them instead (2026-10-30); see `DESIGN_DEVIATIONS.md`.
+- **T7 and T8** were finished in the main session, because the worker could not be restarted at the time. T1 to T6 and T9 to T11 were built by the worker.
+- **F2 (Step 05c's code):** the density screenshots showed nearly every toolbar button in the overflow menu, because the bar was only as wide as its buttons (KI-035). Fixed in `src/styles/layout.css`.
 - **T10 screenshot script.** The eight new shots (`31-theme-bright` to `38-settings-search`) are added after Step 05c's last action (Standard preset, Explorer shown). The script remembers which theme mode was pressed when Settings first opened and puts the standard `light`/`dark` cards and that mode back before the density shots, so the rest of the run and the next runs see the same settings. Each theme shot opens Settings, clicks the mode and the card, returns to the Explorer, clicks the third item and waits 300 ms. Search text is typed with the native value setter and a bubbling `input` event, the way the page's own handler expects it.
 - **T11 item 1** ("the record's step value `05c` becomes `05d`"): `scripts/measure-ui.mjs` has no literal step value and never had; the record's step comes from the command line (`-Step`, else the branch name, `step-05d-appearance` gives `05d`). Nothing to change, the same as in Step 05c.
 - **T11 measurements** are added after Step 05c's last measurement (the Classic preset), open Settings once, measure "switch to the dark theme (Settings)" and "change the density (Settings)", then put the remembered theme mode and the comfortable density back and show the Explorer again, so the app is left as it started.
@@ -95,7 +97,7 @@ The owner fills this table (or tells you the results in chat and you copy them).
 
 ## Screenshots
 
-`docs/screenshots/step-05d/`: still to be taken. The script now produces `31-theme-bright`, `32-theme-paper`, `33-theme-amoled`, `34-theme-high-contrast`, `35-density-compact`, `36-density-spacious`, `37-settings-page` and `38-settings-search`, in English light, Spanish dark and the pseudo-locale, on top of the earlier screens.
+`docs/screenshots/step-05d/`: all earlier screens plus `31-theme-bright` to `38-settings-search`, in English light and Spanish dark. The pseudo-locale set is pending. `34` and `36` in Spanish dark show the message logged as KI-037.
 
 ## Known issues
 
@@ -105,7 +107,7 @@ The owner fills this table (or tells you the results in chat and you copy them).
 
 ## Design deviations, dependencies, licenses
 
-- `DESIGN_DEVIATIONS.md`: new section "2026-10-30 - Themes and appearance (Step 05d)" (the four new themes designed from the tokens, the dark theme's text on the accent now black, density and corner radius values). It records that the owner's approval is still to come.
+- `DESIGN_DEVIATIONS.md`: new section "2026-10-30 - Themes and appearance (Step 05d)" (the four new themes designed from the tokens, the dark theme's text on the accent now black, density and corner radius values). It records that the agent checked the screenshots at the owner's request.
 - New dependencies: none.
 
 ## Commits

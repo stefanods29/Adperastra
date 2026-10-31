@@ -11,10 +11,11 @@ that fixed it.
 
 ## Open
 
-### KI-035 - The line under the toolbar stops partway across the window (Minor)
-- **Found in:** Step 05c screenshots, 2026-10-30. **Severity:** Minor (cosmetic).
-- **What:** With the toolbar on top in the moved-pane, tabs-on-the-left and Classic layouts, the thin line under the command bar ends before the right edge of the window.
-- **Target:** reviewed at the next milestone.
+### KI-037 - The Undo history can report no room after only a few file operations (Major)
+- **Found in:** Step 05d screenshot runs, 2026-10-30; the code dates from Step 03b. **Severity:** Major until explained (a file operation is refused, though no file changes).
+- **What:** The Spanish dark screenshot run twice showed `ops.undo_limit` ("Not enough room in the Undo history") after a handful of file operations in a fresh session. The English run showed no such message, but its panel keeps a "Copying 1 item" row with no progress bar. Each running transfer reserves 32 MiB of a 128 MiB budget, so four unfinished reservations are enough to cause this; a reservation that is never released is the first thing to check. In one other run, `notes.txt` also did not come back within 15 s after Delete and Undo; that run was not repeated.
+- **Workaround:** restart the app.
+- **Target:** not fixed yet; the owner decides when.
 
 ### KI-034 - Narrow layouts crowd the address bar and the Size column (Minor)
 - **Found in:** Step 05c screenshots, 2026-10-30, at 1200 x 900. **Severity:** Minor (the owner approved the designs with these visible).
@@ -120,6 +121,11 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-035 - The toolbar did not fill its row and could hide its buttons (Major, fixed in Step 05d)
+- **Found in:** Step 05c screenshots; its worse effect in the Step 05d density screenshots, 2026-10-30.
+- **What:** Since Step 05c the command bar was only as wide as its buttons, so the line under it stopped partway. When it measured itself again, as after a density change, it decided there was no room and moved nearly every button into the overflow menu.
+- **Fix:** a bar above or below the content now fills the row (`src/styles/layout.css`). Confirmed in the density screenshots.
 
 ### KI-036 - A pasted image could be saved under a garbled name (Blocker, fixed in Step 05d)
 - **Found in:** the Step 05d full gate, 2026-10-30; the code dates from Step 03b. **Severity:** Blocker (wrong file name, a read past a buffer, and a false success report in a normal flow).

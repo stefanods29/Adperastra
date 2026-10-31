@@ -5,6 +5,9 @@
 .adp-dock--left { flex-direction:row; }
 .adp-dock--right { flex-direction:row-reverse; }
 .adp-dock-bar { flex:none; display:flex; }
+/* A bar above or below the content fills the row: the command bar measures its
+   own width to decide which buttons fit. */
+.adp-dock--top > .adp-dock-bar > *, .adp-dock--bottom > .adp-dock-bar > * { flex:1 1 auto; min-width:0; }
 .adp-dock-content { flex:1; min-width:0; min-height:0; display:flex; position:relative; }
 
 /* Hide until pointed at: a thin line on the side, over the content. Never a
