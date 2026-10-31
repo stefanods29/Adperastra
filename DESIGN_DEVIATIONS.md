@@ -3,6 +3,13 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-30 - Themes and appearance (Step 05d) - owner approval still to come
+
+- **What:** the Figma file has only the light theme. **Bright**, **Paper**, **AMOLED black** and **High contrast** were designed in this step from the same tokens; their values live in `themes/bright.tokens.json`, `themes/paper.tokens.json`, `themes/amoled.tokens.json` and `themes/highContrast.tokens.json`, and the contrast test in `src/__tests__/themes.test.ts` checks every theme.
+- **Dark theme change:** the text on the accent in the dark theme is now `#000000`. White on `#4CC2FF` was only about 2:1; black gives about 10:1.
+- **Spacing and corners:** the density setting replaces the measured spacing tokens and row heights (compact, comfortable and spacious in `plan/steps/step-05d.md`), and the corner radius setting replaces the measured `--adp-radius-*` values with 0, the theme's values or slightly larger ones. The comfortable density and the standard radius keep the measured design.
+- **Owner approval:** still to come. The checkpoint screenshots (`31-theme-bright` to `38-settings-search` in `docs/screenshots/step-05d/`) are taken later; any color the owner asks for is changed in the token files only, and the contrast test must still pass. No changes requested yet.
+
 ## 2026-10-30 - Movable toolbars, panels and tabs (Step 05c) - approved by the owner on 2026-10-30
 
 - **What:** the Figma file has only the top layout. The side toolbars (200, 168 or 48 px columns), the bottom toolbar, the auto-hide line (6 px), the tab column (220 or 48 px, rows 36 px), the bottom tab row (36 px), the navigation pane on the right and the Details pane at the bottom (200 px) were designed in this step from the existing tokens and the measured values in `plan/design-spec.md`.

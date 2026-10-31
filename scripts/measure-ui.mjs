@@ -574,6 +574,19 @@ if (mode === "full") {
       `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(2)}; await window.__m.frame(); ${submenuRadio(0)}; })()`,
     ),
   );
+
+  // Step 05d: switching the theme and the density from the Settings page.
+  const themeMode = (id) => `document.querySelector('[data-theme-mode="${id}"]').click()`;
+  const density = (id) => `document.querySelector('[data-appearance-density="${id}"]').click()`;
+  await page(`window.__m.openSettings()`);
+  await sleep(300);
+  const rememberedMode = await page(`document.querySelector("[data-theme-mode][aria-pressed='true']")?.dataset.themeMode ?? "system"`);
+  results.push(await measure("switch to the dark theme (Settings)", themeMode("light"), themeMode("dark"), `true`));
+  results.push(await measure("change the density (Settings)", density("comfortable"), density("spacious"), density("comfortable")));
+  // Leave the app as it started: the same theme mode, and the Explorer shown.
+  await page(`${themeMode(rememberedMode)}; ${density("comfortable")}; true`);
+  await page(`window.__m.openExplorer()`);
+  await sleep(300);
 }
 
 if (outFile && results.length > 0) {
