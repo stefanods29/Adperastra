@@ -154,6 +154,20 @@ export default function App() {
     (layout: AppSettings["layout"]) => applySettings({ ...settingsRef.current, layout }),
     [applySettings],
   );
+
+  // The My templates folder (Step 06c).
+  const onTemplatesFolderChange = useCallback(
+    async (folder: string) => {
+      const saved = await saveSettings({
+        ...settingsRef.current,
+        templates: { ...settingsRef.current.templates, my_folder: folder },
+      });
+      // A rejected save leaves the current folder in memory and on screen.
+      settingsRef.current = { ...settingsRef.current, templates: saved.templates };
+      setSettings(settingsRef.current);
+    },
+    [],
+  );
   const layoutValue = useMemo(() => ({ layout: settings.layout, onLayoutChange }), [settings.layout, onLayoutChange]);
 
   // No browser menu (Back, Refresh, Print...) anywhere in the app; text
@@ -550,6 +564,9 @@ export default function App() {
             view={settings.explorer}
             onViewChange={onViewChange}
             pasteImageFormat={settings.files?.paste_image_format ?? "png"}
+            templatesFolder={settings.templates?.my_folder ?? ""}
+            onTemplatesFolderChange={onTemplatesFolderChange}
+            versionsEnabled={settings.versions.enabled}
           />
         </div>
         {tabs

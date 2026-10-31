@@ -1,0 +1,37 @@
+/* Template window (Step 06c). Colors only through tokens. */
+.adp-templates-dialog { width: min(640px, 92vw); max-width: min(640px, 92vw); }
+
+.adp-templates-section + .adp-templates-section { margin-top: var(--adp-space-6); }
+.adp-templates-section .adp-heading { margin-bottom: var(--adp-space-3); }
+
+.adp-templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  max-height: 260px;
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-md);
+  padding: var(--adp-space-1);
+  margin: 0;
+  list-style: none;
+}
+
+.adp-templates-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--adp-space-3);
+  padding: var(--adp-space-2) var(--adp-space-4);
+  border-radius: var(--adp-radius-sm);
+  cursor: pointer;
+}
+
+.adp-templates-row[aria-selected='true'] { background: var(--adp-color-surface-selected-row); }
+
+.adp-templates-text { display: flex; flex-direction: column; min-width: 0; }
+
+.adp-templates-description {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}

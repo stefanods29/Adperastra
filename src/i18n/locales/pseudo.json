@@ -186,6 +186,17 @@
     "openingFiles": "[Øpëñïñg fïlës ~~~~~]",
     "protectedView": "[Prøtëçtëd vïëw før fïlës frøm thë ïñtërñët ~~~~~~~~~~~~~~~]",
     "protectedViewNote": "[Fïlës døwñløädëd frøm thë ïñtërñët øpëñ wïth ä ÿëlløw bär, äñd thëïr lïñks stäÿ øff üñtïl ÿøü üñbløçk thëm. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "versions": "[Vërsïøñ hïstørÿ ~~~~~~]",
+    "versionsEnabled": "[Këëp vërsïøñs øf fïlës thät Ädpërästrä çhäñgës ~~~~~~~~~~~~~~~~]",
+    "versionsKeep": "[Këëp vërsïøñs før ~~~~~~]",
+    "versionsDays": "[{count, plural, one {# däÿ} other {# däÿs}} ~~]",
+    "versionsMax": "[Späçë før vërsïøñs ~~~~~~~]",
+    "versionsUsed": "[Vërsïøñs üsë {size} ñøw. ~~~~~~]",
+    "versionsDeleteAll": "[Dëlëtë äll vërsïøñs… ~~~~~~~]",
+    "versionsDeleteTitle": "[Dëlëtë äll vërsïøñs? ~~~~~~~]",
+    "versionsDeleteBody": "[Ëvërÿ këpt vërsïøñ øf ëvërÿ fïlë ïs dëlëtëd. Thïs çäñ't bë üñdøñë. Ÿøür fïlës thëmsëlvës ärë ñøt çhäñgëd. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "versionsDeleteConfirm": "[Dëlëtë äll vërsïøñs ~~~~~~~]",
+    "versionsDeleted": "[Äll vërsïøñs wërë dëlëtëd. ~~~~~~~~~]",
     "defaultApps": "[Dëfäült äpps ~~~~~]",
     "defaultAppsNote": "[Çhøøsë whërë ëäçh tÿpë øf fïlë øpëñs whëñ ÿøü døüblë-çlïçk ït: ïñ Ädpërästrä ør ïñ ïts Wïñdøws äpp. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
     "findFileType": "[Fïñd ä fïlë tÿpë (før ëxämplë txt) ~~~~~~~~~~~]",
@@ -330,7 +341,8 @@
     "nothingToPaste": "[Thërë's ñøthïñg tø pästë hërë. ~~~~~~~~~~]",
     "undoNewerFirst": "[Üñdø thë ñëwër äçtïøñs fïrst (Rëçëñt äçtïøñs shøws thë ørdër). ~~~~~~~~~~~~~~~~~~~~]",
     "extracted": "[Ëxträçtëd {name} ~~~~]",
-    "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]"
+    "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]",
+    "versionRestored": "[Rëstørëd ä vërsïøñ øf {name} ~~~~~~~~]"
   },
   "commands": {
     "back": "[Bäçk ~~]",
@@ -412,7 +424,14 @@
     "extract": "[Ëxträçt ~~~]",
     "extractAll": "[Ëxträçt äll ~~~~]",
     "extractHere": "[Ëxträçt hërë ~~~~~]",
-    "extractTo": "[Ëxträçt tø… ~~~~]"
+    "extractTo": "[Ëxträçt tø… ~~~~]",
+    "newMarkdown": "[Märkdøwñ ñøtë ~~~~~]",
+    "newCsv": "[ÇSV täblë ~~~~]",
+    "newDocument": "[Døçümëñt ~~~~]",
+    "newSpreadsheet": "[Sprëädshëët ~~~~~]",
+    "newPresentation": "[Prësëñtätïøñ ~~~~~]",
+    "newFromTemplate": "[Frøm tëmplätë… ~~~~~]",
+    "versionHistory": "[Vërsïøñ hïstørÿ… ~~~~~~]"
   },
   "errors": {
     "archive": {
@@ -567,12 +586,33 @@
       "in_use": "[Äñøthër prøgräm ïs üsïñg thë fïlë. Çløsë ït thërë äñd sävë ägäïñ. ~~~~~~~~~~~~~~~~~~~~~]",
       "not_found": "[Thë føldër øf thïs fïlë ñø løñgër ëxïsts. Üsë Sävë äs… ~~~~~~~~~~~~~~~~~]",
       "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
-      "write_failed": "[Çøüldñ't wrïtë thë fïlë. Ÿøür tëxt ïs stïll hërë; trÿ ägäïñ ør üsë Sävë äs… ~~~~~~~~~~~~~~~~~~~~~~~]"
+      "write_failed": "[Çøüldñ't wrïtë thë fïlë. Ÿøür tëxt ïs stïll hërë; trÿ ägäïñ ør üsë Sävë äs… ~~~~~~~~~~~~~~~~~~~~~~~]",
+      "version_failed": "[Çøüldñ't këëp thë prëvïøüs vërsïøñ, sø thë fïlë wäsñ't sävëd. Frëë sømë späçë, ør türñ øff vërsïøñ hïstørÿ ïñ Sëttïñgs. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
     },
     "recovery": {
       "other": "[Çøüldñ't këëp ä rëçøvërÿ çøpÿ øf ÿøür çhäñgës. ~~~~~~~~~~~~~~~]",
       "bad_request": "[Thät rëçøvërÿ çøpÿ ïsñ't välïd. ~~~~~~~~~~]",
       "too_large": "[Thë tëxt ïs tøø lärgë før ä rëçøvërÿ çøpÿ. Sävë ït søøñ. ~~~~~~~~~~~~~~~~~~]"
+    },
+    "templates": {
+      "other": "[Çøüldñ't çrëätë thë fïlë. Trÿ ägäïñ. ~~~~~~~~~~~~]",
+      "bad_request": "[Thät tëmplätë çäñ't bë üsëd. ~~~~~~~~~]",
+      "not_allowed": "[Øñlÿ fïlës frøm thë tëmplätë føldërs çäñ bë üsëd äs tëmplätës. ~~~~~~~~~~~~~~~~~~~~~]",
+      "not_found": "[Thë tëmplätë ør thë føldër ñø løñgër ëxïsts. ~~~~~~~~~~~~~~~]",
+      "invalid_name": "[Thät ñämë çäñ't bë üsëd før ä fïlë. ~~~~~~~~~~~]",
+      "access_denied": "[Ÿøü døñ't hävë përmïssïøñ tø çrëätë fïlës ïñ thïs føldër. ~~~~~~~~~~~~~~~~~~~]",
+      "cancelled": "[Çrëätïñg thë fïlë wäs çäñçëllëd. ~~~~~~~~~~~]"
+    },
+    "versions": {
+      "other": "[Sømëthïñg wëñt wrøñg wïth thë vërsïøñ hïstørÿ. Trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~~]",
+      "bad_request": "[Thät vërsïøñ çäñ't bë üsëd. ~~~~~~~~~]",
+      "not_found": "[Thät vërsïøñ ñø løñgër ëxïsts. ~~~~~~~~~~]",
+      "snapshot_failed": "[Çøüldñ't këëp thë çürrëñt çøñtëñt fïrst, sø ñøthïñg wäs çhäñgëd. ~~~~~~~~~~~~~~~~~~~~~]",
+      "read_only": "[Thë fïlë ïs rëäd-øñlÿ, sø ït çäñ't bë rëstørëd. Sävë ä çøpÿ ïñstëäd. ~~~~~~~~~~~~~~~~~~~~~]",
+      "in_use": "[Äñøthër prøgräm ïs üsïñg thë fïlë. Çløsë ït thërë äñd trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~~~~]",
+      "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "preview_too_large": "[Thïs fïlë ïs tøø lärgë tø prëvïëw hërë. Øpëñ ït tø løøk ät ït. ~~~~~~~~~~~~~~~~~~~]",
+      "replace_unavailable": "[Rëpläçïñg äñ ëxïstïñg fïlë ïs ñøt äväïläblë ÿët. Çhøøsë ä ñëw ñämë. ~~~~~~~~~~~~~~~~~~~~~~]"
     }
   },
   "keys": {
@@ -593,6 +633,11 @@
   "files": {
     "newFolderName": "[Ñëw føldër ~~~~]",
     "newTextFileName": "[Ñëw tëxt døçümëñt.txt ~~~~~~~~]",
+    "newMarkdownName": "[Ñëw ñøtë.md ~~~~]",
+    "newCsvName": "[Ñëw täblë.çsv ~~~~~]",
+    "newDocumentName": "[Ñëw døçümëñt.døçx ~~~~~~]",
+    "newSpreadsheetName": "[Ñëw sprëädshëët.xlsx ~~~~~~~~]",
+    "newPresentationName": "[Ñëw prësëñtätïøñ.pptx ~~~~~~~~]",
     "pastedImageName": "[Pästëd ïmägë {stamp} ~~~~~]",
     "pastedTextName": "[Pästëd tëxt {stamp} ~~~~]",
     "shortcutName": "[{name} - Shørtçüt ~~~~]",
@@ -827,5 +872,128 @@
     "dark": "[Ädpërästrä därk ~~~~~~]",
     "amoled": "[ÄMØLËD bläçk ~~~~~]",
     "highContrast": "[Hïgh çøñträst ~~~~~]"
+  },
+  "templates": {
+    "title": "[Ñëw frøm tëmplätë ~~~~~~]",
+    "builtin": "[Büïlt-ïñ tëmplätës ~~~~~~~]",
+    "mine": "[Mÿ tëmplätës ~~~~~]",
+    "mineEmpty": "[Çhøøsë ä føldër: ëvërÿ fïlë ÿøü këëp ïñ ït bëçømës ä tëmplätë. ~~~~~~~~~~~~~~~~~~~~]",
+    "mineMissing": "[Thë føldër {folder} çäñ't bë føüñd. Çhøøsë äñøthër øñë. ~~~~~~~~~~~~~~~]",
+    "mineNone": "[Thë føldër {folder} häs ñø fïlës ÿët. Sävë ä fïlë thërë tø üsë ït äs ä tëmplätë. ~~~~~~~~~~~~~~~~~~~~~~]",
+    "chooseFolder": "[Çhøøsë føldër… ~~~~~]",
+    "changeFolder": "[Çhäñgë føldër… ~~~~~]",
+    "openFolder": "[Øpëñ føldër ~~~~]",
+    "folderTitle": "[Çhøøsë thë føldër før ÿøür tëmplätës ~~~~~~~~~~~~~]",
+    "create": "[Çrëätë ~~~]",
+    "letter": {
+      "name": "[Lëttër ~~~]",
+      "description": "[Ä sïmplë lëttër wïth ÿøür äddrëss äñd thë rëçïpïëñt's. ~~~~~~~~~~~~~~~~~~]",
+      "yourName": "[[Ÿøür ñämë] ~~~~]",
+      "yourAddress": "[[Ÿøür äddrëss] ~~~~~]",
+      "date": "[[Dätë] ~~]",
+      "recipientName": "[[Rëçïpïëñt's ñämë] ~~~~~~]",
+      "recipientAddress": "[[Rëçïpïëñt's äddrëss] ~~~~~~~]",
+      "greeting": "[Dëär [ñämë], ~~~~]",
+      "body": "[Wrïtë ÿøür lëttër hërë. ~~~~~~~~]",
+      "closing": "[Kïñd rëgärds, ~~~~~]"
+    },
+    "report": {
+      "name": "[Rëpørt ~~~]",
+      "description": "[Ä rëpørt wïth ä tïtlë pägë hëädïñg äñd føür sëçtïøñs. ~~~~~~~~~~~~~~~~~~]",
+      "title": "[Rëpørt tïtlë ~~~~~]",
+      "byline": "[[Äüthør] · [Dätë] ~~~~]",
+      "summary": "[Sümmärÿ ~~~]",
+      "introduction": "[Ïñtrødüçtïøñ ~~~~~]",
+      "findings": "[Fïñdïñgs ~~~~]",
+      "conclusions": "[Çøñçlüsïøñs ~~~~~]",
+      "placeholder": "[Wrïtë hërë. ~~~~]"
+    },
+    "budget": {
+      "name": "[Büdgët ~~~]",
+      "description": "[Pläññëd äñd äçtüäl spëñdïñg bÿ çätëgørÿ, wïth tøtäls. ~~~~~~~~~~~~~~~~~~]",
+      "sheet": "[Büdgët ~~~]",
+      "category": "[Çätëgørÿ ~~~~]",
+      "planned": "[Pläññëd ~~~]",
+      "actual": "[Äçtüäl ~~~]",
+      "difference": "[Dïffërëñçë ~~~~]",
+      "total": "[Tøtäl ~~]",
+      "housing": "[Høüsïñg ~~~]",
+      "food": "[Føød ~~]",
+      "transport": "[Träñspørt ~~~~]",
+      "utilities": "[Ütïlïtïës ~~~~]",
+      "other": "[Øthër ~~]"
+    },
+    "invoice": {
+      "name": "[Ïñvøïçë ~~~]",
+      "description": "[Äñ ïñvøïçë thät ädds üp ïts lïñës, täx äñd tøtäl. ~~~~~~~~~~~~~~~~]",
+      "sheet": "[Ïñvøïçë ~~~]",
+      "title": "[Ïñvøïçë ~~~]",
+      "number": "[Ïñvøïçë ñümbër ~~~~~~]",
+      "date": "[Dätë ~~]",
+      "billTo": "[Bïll tø ~~~]",
+      "description2": "[Dësçrïptïøñ ~~~~~]",
+      "quantity": "[Qüäñtïtÿ ~~~~]",
+      "unitPrice": "[Üñït prïçë ~~~~]",
+      "amount": "[Ämøüñt ~~~]",
+      "subtotal": "[Sübtøtäl ~~~~]",
+      "tax": "[Täx ~~]",
+      "total": "[Tøtäl ~~]"
+    },
+    "meeting": {
+      "name": "[Mëëtïñg ñøtës ~~~~~]",
+      "description": "[Dätë, ättëñdëës, ägëñdä, ñøtës äñd äçtïøñ ïtëms. ~~~~~~~~~~~~~~~~]",
+      "title": "[Mëëtïñg ñøtës ~~~~~]",
+      "date": "[Dätë ~~]",
+      "attendees": "[Ättëñdëës ~~~~]",
+      "agenda": "[Ägëñdä ~~~]",
+      "notes": "[Ñøtës ~~]",
+      "actions": "[Äçtïøñ ïtëms ~~~~~]",
+      "actionItem": "[Täsk, përsøñ, düë dätë ~~~~~~~]"
+    },
+    "presentation": {
+      "name": "[Sïmplë prësëñtätïøñ ~~~~~~~~]",
+      "description": "[Ä tïtlë slïdë, äñ ägëñdä äñd ä çløsïñg slïdë. ~~~~~~~~~~~~~~]",
+      "title": "[Prësëñtätïøñ tïtlë ~~~~~~~]",
+      "byline": "[[Ÿøür ñämë] · [Dätë] ~~~~~]",
+      "agenda": "[Ägëñdä ~~~]",
+      "topic1": "[Fïrst tøpïç ~~~~]",
+      "topic2": "[Sëçøñd tøpïç ~~~~~]",
+      "topic3": "[Thïrd tøpïç ~~~~]",
+      "thanks": "[Thäñk ÿøü ~~~~]",
+      "questions": "[Qüëstïøñs? ~~~~]"
+    },
+    "creating": "[Çrëätïñg {name}… ~~~~]",
+    "copyProgress": "[{done} øf {total} ~~]",
+    "someUnreadable": "[{count, plural, one {# tëmplätë çøüld ñøt bë rëäd.} other {# tëmplätës çøüld ñøt bë rëäd.}} ~~~~~~~~~~]"
+  },
+  "versions": {
+    "title": "[Vërsïøñ hïstørÿ øf {name} ~~~~~~~]",
+    "current": "[Çürrëñt fïlë ~~~~~]",
+    "reason": {
+      "save": "[Sävëd ïñ Ädpërästrä ~~~~~~~]",
+      "saveAs": "[Rëpläçëd wïth Sävë äs ~~~~~~~~]",
+      "restore": "[Bëførë rëstørïñg ä vërsïøñ ~~~~~~~~~~]",
+      "other": "[Çhäñgëd bÿ Ädpërästrä ~~~~~~~~]"
+    },
+    "empty": "[Ñø vërsïøñs ÿët. Ä vërsïøñ ïs këpt ëäçh tïmë Ädpërästrä çhäñgës thïs fïlë. ~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "tooLarge": "[Fïlës øvër 256 MB døñ't gët vërsïøñs. ~~~~~~~~~~~]",
+    "off": "[Vërsïøñ hïstørÿ ïs øff. Ëxïstïñg vërsïøñs ärë këpt. ~~~~~~~~~~~~~~~~~]",
+    "changes": "[Çhäñgës ~~~]",
+    "thisVersion": "[Thïs vërsïøñ ~~~~~]",
+    "noChanges": "[Thïs vërsïøñ ïs thë sämë äs thë çürrëñt fïlë. ~~~~~~~~~~~~~~~]",
+    "tooManyChanges": "[Thërë ärë tøø mäñÿ çhäñgës tø shøw. Øpëñ thë vërsïøñ tø løøk ät ït. ~~~~~~~~~~~~~~~~~~~~~]",
+    "noPreview": "[Thïs kïñd øf fïlë çäñ't bë shøwñ hërë. Øpëñ ït tø løøk ät ït. ~~~~~~~~~~~~~~~~~~]",
+    "unchanged": "[{count, plural, one {# üñçhäñgëd lïñë} other {# üñçhäñgëd lïñës}} ~~~~~~]",
+    "open": "[Øpëñ ~~]",
+    "saveCopy": "[Sävë ä çøpÿ… ~~~~]",
+    "saveCopyTitle": "[Sävë ä çøpÿ øf thïs vërsïøñ ~~~~~~~~~]",
+    "restore": "[Rëstørë thïs vërsïøñ ~~~~~~~~]",
+    "restoreTitle": "[Rëstørë thïs vërsïøñ? ~~~~~~~~]",
+    "restoreBody": "[Thë fïlë gøës bäçk tø thë vërsïøñ frøm {date}. Ïts çürrëñt çøñtëñt ïs këpt ïñ thë hïstørÿ, sø ÿøü çäñ üñdø thïs. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "restoreUnsaved": "[Ÿøür üñsävëd çhäñgës ïñ thïs täb wïll bë løst. ~~~~~~~~~~~~~~~]",
+    "restored": "[Rëstørëd thë vërsïøñ frøm {date}. ~~~~~~~~~]",
+    "windowsVersions": "[Prëvïøüs vërsïøñs frøm Wïñdøws… ~~~~~~~~~~~]",
+    "allFiles": "[Äll fïlës ~~~~]",
+    "loadMore": "[Løäd mørë ~~~~]"
   }
 }

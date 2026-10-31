@@ -38,12 +38,14 @@ mod operation_safety;
 mod recovery;
 mod settings_file;
 mod shell;
+mod template_jobs;
+mod templates;
 mod text_save;
 mod transfer_history;
 mod versions;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 9;
+pub const CURRENT_SCHEMA: u32 = 11;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -394,6 +396,71 @@ impl Default for AppearanceSettings {
     }
 }
 
+/// The lengths Settings > Version history offers, in days (schema 10,
+/// Step 06b).
+pub const KEEP_DAYS: [u32; 4] = [7, 30, 90, 365];
+
+/// The space Settings > Version history offers, in megabytes (schema 10,
+/// Step 06b).
+pub const MAX_VERSIONS_MB: [u32; 5] = [256, 512, 1024, 2048, 5120];
+
+fn default_keep_days() -> u32 {
+    30
+}
+
+fn default_max_versions_mb() -> u32 {
+    1024
+}
+
+/// The versions kept of files the app changes (schema 10, Step 06b).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VersionSettings {
+    /// Keep a version before every change the app makes.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// One of `KEEP_DAYS`: how long a version is kept.
+    #[serde(default = "default_keep_days")]
+    pub keep_days: u32,
+    /// One of `MAX_VERSIONS_MB`: how much space versions may use.
+    #[serde(default = "default_max_versions_mb")]
+    pub max_mb: u32,
+}
+
+impl Default for VersionSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            keep_days: default_keep_days(),
+            max_mb: default_max_versions_mb(),
+        }
+    }
+}
+
+/// Longest My templates folder path the settings accept, in characters
+/// (schema 11, Step 06c).
+pub const MAX_TEMPLATE_FOLDER_CHARS: usize = 1024;
+
+fn default_my_folder() -> String {
+    String::new()
+}
+
+/// The folder the user keeps their own file templates in (schema 11,
+/// Step 06c).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TemplateSettings {
+    /// Empty when no folder is chosen; otherwise an absolute path.
+    #[serde(default = "default_my_folder")]
+    pub my_folder: String,
+}
+
+impl Default for TemplateSettings {
+    fn default() -> Self {
+        Self {
+            my_folder: default_my_folder(),
+        }
+    }
+}
+
 fn default_paste_image_format() -> String {
     "png".to_string()
 }
@@ -467,6 +534,10 @@ pub struct Settings {
     pub layout: LayoutSettings,
     #[serde(default)]
     pub appearance: AppearanceSettings,
+    #[serde(default)]
+    pub versions: VersionSettings,
+    #[serde(default)]
+    pub templates: TemplateSettings,
 }
 
 impl Default for Settings {
@@ -480,6 +551,8 @@ impl Default for Settings {
             open: OpenSettings::default(),
             layout: LayoutSettings::default(),
             appearance: AppearanceSettings::default(),
+            versions: VersionSettings::default(),
+            templates: TemplateSettings::default(),
         }
     }
 }
@@ -630,6 +703,31 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             "unsupported animations {:?} (expected full, reduced or off)",
             settings.appearance.animations
         )));
+    }
+    if !KEEP_DAYS.contains(&settings.versions.keep_days) {
+        return Err(AppError::Validation(format!(
+            "unsupported versions.keep_days {} (expected one of {KEEP_DAYS:?})",
+            settings.versions.keep_days
+        )));
+    }
+    if !MAX_VERSIONS_MB.contains(&settings.versions.max_mb) {
+        return Err(AppError::Validation(format!(
+            "unsupported versions.max_mb {} (expected one of {MAX_VERSIONS_MB:?})",
+            settings.versions.max_mb
+        )));
+    }
+    if !settings.templates.my_folder.is_empty() {
+        if settings.templates.my_folder.chars().count() > MAX_TEMPLATE_FOLDER_CHARS {
+            return Err(AppError::Validation(format!(
+                "templates.my_folder is longer than {MAX_TEMPLATE_FOLDER_CHARS} characters"
+            )));
+        }
+        validate_absolute_path(&settings.templates.my_folder).map_err(|_| {
+            AppError::Validation(format!(
+                "templates.my_folder {:?} is not an absolute path",
+                settings.templates.my_folder
+            ))
+        })?;
     }
     if !matches!(settings.files.paste_image_format.as_str(), "png" | "jpg") {
         return Err(AppError::Validation(format!(
@@ -784,6 +882,8 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         open: OpenSettings::default(),
         layout: LayoutSettings::default(),
         appearance: AppearanceSettings::default(),
+        versions: VersionSettings::default(),
+        templates: TemplateSettings::default(),
     }
 }
 
@@ -854,7 +954,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
-            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) => {
+            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) => {
                 Ok(migrate_keep_known(value.clone()))
             }
             Some(3) => Ok(migrate_v3(value.clone())),
@@ -2880,6 +2980,9 @@ fn main() {
             install_snap_subclass(&window);
             #[cfg(not(windows))]
             let _ = window;
+            // Keep versions of file changes in the background (Step 06b).
+            let worker = versions::VersionWorker::start(app.handle().clone());
+            app.manage(worker);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -2945,6 +3048,12 @@ fn main() {
             settings_file::settings_import,
             text_save::text_save,
             text_save::text_pick_save_path,
+            versions::versions_list,
+            versions::versions_extract,
+            versions::versions_restore,
+            versions::versions_save_copy,
+            versions::versions_delete_all,
+            versions::versions_store_size,
             recovery::recovery_write,
             recovery::recovery_read,
             recovery::recovery_delete,
@@ -2957,6 +3066,10 @@ fn main() {
             archive::archive_open_entry_start,
             archive::archive_extract_start,
             archive::archive_pick_folder,
+            templates::templates_list,
+            templates::template_create,
+            template_jobs::template_create_start,
+            templates::templates_pick_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
@@ -3005,7 +3118,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 9);
+        assert_eq!(settings.schema_version, 11);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -3287,6 +3400,79 @@ mod tests {
         assert_eq!(settings.theme.light_theme, "light");
         assert_eq!(settings.theme.dark_theme, "dark");
         assert_eq!(settings.appearance, AppearanceSettings::default());
+    }
+
+    #[test]
+    fn settings_v9_migrates_to_v10_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 9,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "appearance": {
+                "ui_scale": 125,
+                "density": "compact",
+                "corner_radius": "round",
+                "animations": "reduced"
+            }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.appearance.density, "compact");
+        assert_eq!(settings.appearance.ui_scale, 125);
+        assert_eq!(settings.versions, VersionSettings::default());
+    }
+
+    #[test]
+    fn settings_v10_migrates_to_v11_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 10,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "versions": { "enabled": true, "keep_days": 90, "max_mb": 1024 }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.versions.keep_days, 90);
+        assert_eq!(settings.templates.my_folder, "");
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_templates_folder() {
+        let mut relative = Settings::default();
+        relative.templates.my_folder = r"relative\folder".to_string();
+        assert!(validate(&relative).is_err());
+
+        let mut too_long = Settings::default();
+        too_long.templates.my_folder = "a".repeat(1025);
+        assert!(validate(&too_long).is_err());
+
+        let mut empty = Settings::default();
+        empty.templates.my_folder = String::new();
+        assert!(validate(&empty).is_ok());
+
+        let mut good = Settings::default();
+        good.templates.my_folder = r"C:\Users\Ana\Templates".to_string();
+        assert!(validate(&good).is_ok());
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_versions() {
+        let mut bad_days = Settings::default();
+        bad_days.versions.keep_days = 14;
+        assert!(validate(&bad_days).is_err());
+
+        let mut bad_size = Settings::default();
+        bad_size.versions.max_mb = 100;
+        assert!(validate(&bad_size).is_err());
+
+        let mut good = Settings::default();
+        good.versions.keep_days = 365;
+        good.versions.max_mb = 5120;
+        assert!(validate(&good).is_ok());
     }
 
     #[test]

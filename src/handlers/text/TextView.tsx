@@ -1,6 +1,6 @@
 import { Compartment } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { ChevronLeft, ChevronRight, Hash, Redo2, Save, SaveAll, Scan, SpellCheck, Undo2, WrapText, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Hash, History, Redo2, Save, SaveAll, Scan, SpellCheck, Undo2, WrapText, ZoomIn, ZoomOut } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../../components/Button";
@@ -8,7 +8,10 @@ import Dialog from "../../components/Dialog";
 import type { Command } from "../../commands/registry";
 import { useTextDocument } from "../../editor/useTextDocument";
 import { SAVE_ENCODING_LABELS, SAVE_ENCODINGS, spellcheckDefault, type SaveEncodingId } from "../../editor/saveEncoding";
+import { showProperties } from "../../services/explorer";
 import { formatDate, formatSize } from "../../services/format";
+import { isTauriRuntime } from "../../services/settings";
+import VersionHistoryDialog from "../../versions/VersionHistoryDialog";
 import Ribbon from "../../ribbon/Ribbon";
 import { useCommandShortcuts } from "../../ribbon/shortcuts";
 import type { RibbonDef } from "../../ribbon/types";
@@ -75,11 +78,13 @@ export default function TextView({
   onDirtyChange,
   registerSave,
   onPathChange,
+  onOpenFile,
 }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const compartments = useRef({ language: new Compartment(), wrap: new Compartment(), numbers: new Compartment() });
   const [settings, setSettings] = useState<SavedTextState>(() => readSaved(savedState, info.ext));
   const [part, setPart] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
   const paged = info.size > LARGE_TEXT_BYTES;
   const parts = paged ? Math.ceil(info.size / PART_BYTES) : 1;
 
@@ -203,6 +208,7 @@ export default function TextView({
     () => [
       { id: "text.save", labelKey: "editor.save", icon: Save, shortcut: "Ctrl+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.dirty, run: () => void doc.save() },
       { id: "text.saveAs", labelKey: "editor.saveAs", icon: SaveAll, shortcut: "Ctrl+Shift+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.canSaveAs && c.ready, run: () => void doc.saveAs() },
+      { id: "text.versionHistory", labelKey: "commands.versionHistory", icon: History, risk: "read-only", helpSlug: "version-history", enabledWhen: (c) => !c.paged, run: () => setShowHistory(true) },
       { id: "text.undo", labelKey: "editor.undoHint", icon: Undo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canUndo, run: () => doc.undo() },
       { id: "text.redo", labelKey: "editor.redoHint", icon: Redo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canRedo, run: () => doc.redo() },
       { id: "text.spellcheck", labelKey: "editor.spellcheck", icon: SpellCheck, risk: "read-only", helpSlug: "editing-text-and-code", checkKind: "toggle", checkedWhen: (c) => c.spellcheck, enabledWhen: () => true, run: (c) => update({ spellcheck: !c.spellcheck }) },
@@ -242,6 +248,7 @@ export default function TextView({
             controls: [
               { type: "button", command: "text.save", keyTip: "S" },
               { type: "button", command: "text.saveAs", keyTip: "A" },
+              { type: "button", command: "text.versionHistory", keyTip: "H" },
             ],
           },
           {
@@ -399,6 +406,28 @@ export default function TextView({
         hidden={doc.failed}
         style={{ ["--adp-text-zoom" as string]: String(settings.zoom) }}
       />
+      {showHistory && !paged ? (
+        <VersionHistoryDialog
+          path={info.path}
+          name={info.name}
+          currentModified={doc.expected.modified_unix}
+          currentSize={doc.expected.size}
+          versionsEnabled={true}
+          hasUnsavedChanges={dirty}
+          allowUndo={true}
+          onOpenCopy={(path) => {
+            if (onOpenFile) void onOpenFile(path).catch(() => undefined);
+          }}
+          onShowWindowsVersions={() => {
+            if (isTauriRuntime()) void showProperties([info.path]).catch(() => undefined);
+          }}
+          onRestored={async () => {
+            doc.discard();
+            await doc.reloadFromDisk();
+          }}
+          onClose={() => setShowHistory(false)}
+        />
+      ) : null}
       {doc.conflict ? (
         <Dialog title={t("editor.changedTitle")} onClose={() => doc.resolveConflict("cancel")}>
           <p className="adp-dialog-text">{t("editor.changedBody", { name: info.name })}</p>

@@ -89,6 +89,14 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 22a | PowerPoint-style editing | outline | v0.5.10-step22a |
 | 22b | AI for decks and the style library (v1.0) | outline | v1.0.0 |
 
+## Local implementation review log
+
+- 2026-10-31: The 06b/06c batch review corrects incomplete/unsafe snapshot publication, cross-process store coordination, exact/stable restore IDs, pending/open budgets (1 GiB each), bounded preview/decompression, 2,000-row history pages, and safe new-name version copies. Existing-destination copies remain unavailable under KI-030. Restore retains the shared final ReplaceFileW limitation (KI-069); the older Save/Save as defects (KI-068) are documented under the owner's existing-error policy.
+- 2026-10-31: Template creation authorizes/copies the same opened source, pins approved roots and destination, creates owned staging and publishes without replacement. It uses additive shared jobs for progress/cancel; optional list diagnostics preserve partial errors. Focus selects the intended template; folder persistence and creation are awaited, with errors retained in the picker. The picker width/max-width are 640px within the viewport.
+- 2026-10-31: Review introduced no new external library. Allowed transitive notices were completed; build-only image parser advisories are bounded/deferred as KI-070 because the generator contains no image input. No forced override or version downgrade.
+- 2026-10-31: Full gate: 349 Rust/462 UI tests. The release app was built without bundling/signing. Scoped checks completed 20 functional assertions per language (en/light, es/dark, pseudo/light), including exact restored/undone bytes, contrast and bounds; 12 screenshots were visually inspected. Actions measured about 29–32ms. Each run still fails its console-clean check on two style CSP violations (KI-075); runtime is not entirely clean. The original fixed-green dark diff was corrected using accent/surface tokens. Older regression speeds and owner checks remain pending.
+- 2026-10-31: `measure-ui.ps1 -Review06bc` uses fresh retained data/fixtures and never invokes legacy permanent cleanup. Test processes are closed through their own job handles. The original unscoped runner is not authorized for this review. No project/worktree/build/session was deleted; no remote operation or main change was made.
+
 ## Owner decisions log (newest first)
 
 - 2026-10-30: The owner asked the agent to check the Step 05d theme screenshots instead of reviewing them personally.

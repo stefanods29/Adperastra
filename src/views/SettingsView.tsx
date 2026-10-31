@@ -12,6 +12,7 @@ import GeneralSettings from "./settings/GeneralSettings";
 import LayoutSettings from "./settings/LayoutSettings";
 import OpeningFilesSettings from "./settings/OpeningFilesSettings";
 import ThemeSettings from "./settings/ThemeSettings";
+import VersionsSettings from "./settings/VersionsSettings";
 import {
   SETTINGS_SECTIONS,
   resetAllSettings,
@@ -107,7 +108,16 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
         />
       );
     }
-    return <OpeningFilesSettings open={settings.open} onChange={(open) => onApply({ ...settings, open })} onOpenHelp={onOpenHelpPage} />;
+    if (section.id === "openingFiles") {
+      return (
+        <OpeningFilesSettings
+          open={settings.open}
+          onChange={(open) => onApply({ ...settings, open })}
+          onOpenHelp={onOpenHelpPage}
+        />
+      );
+    }
+    return <VersionsSettings settings={settings} onApply={onApply} onOpenHelp={onOpenHelpPage} />;
   };
 
   return (

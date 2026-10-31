@@ -5,6 +5,8 @@
 //! commands; later backing stores (archives 06c, containers 09e) reuse the
 //! same `Item` shape through `BackingKind`.
 
+#[cfg(windows)]
+mod attributes;
 pub mod details;
 pub mod drafts;
 pub mod folder_views;
@@ -37,6 +39,9 @@ pub enum FsError {
 }
 
 pub type Result<T> = std::result::Result<T, FsError>;
+
+#[cfg(windows)]
+pub use attributes::clear_owned_readonly;
 
 pub use details::{attribute_names, filetime_to_unix, item_details, ItemDetails};
 pub use drafts::{

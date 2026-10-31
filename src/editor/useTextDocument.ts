@@ -65,6 +65,10 @@ export interface TextDocumentResult {
   setLineEnding: (ending: LineEndingChoice) => void;
   readOnly: ReadOnlyReason | null;
   dirty: boolean;
+  /** The size and modified time the hook last saw on disk (Step 06b). */
+  expected: { modified_unix: number; size: number };
+  /** Read the file again from disk and drop its recovery copy (Step 06b). */
+  reloadFromDisk: () => Promise<void>;
   failed: boolean;
   cursor: { line: number; column: number; lines: number };
   save: () => Promise<boolean>;
@@ -115,6 +119,10 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   const [saveEncoding, setSaveEncodingState] = useState<SaveEncodingId>("utf-8");
   const [lineEnding, setLineEndingState] = useState<LineEndingChoice>("crlf");
   const [dirty, setDirty] = useState(false);
+  const [expected, setExpected] = useState({
+    modified_unix: info.modified_unix,
+    size: info.size,
+  });
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [cursor, setCursor] = useState({ line: 1, column: 1, lines: 1 });
@@ -133,6 +141,11 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   // Latest values for the callbacks registered once.
   const live = useRef({ options, t, conflictResolve });
   live.current = { options, t, conflictResolve };
+
+  const setExpectation = useCallback((next: { modified_unix: number; size: number }) => {
+    expectedRef.current = next;
+    setExpected(next);
+  }, []);
 
   const applyDirty = useCallback((next: boolean) => {
     if (dirtyRef.current === next) return;
@@ -249,7 +262,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
         lineEndingRef.current = ending;
         savedEndingRef.current = ending;
         setLineEndingState(ending);
-        expectedRef.current = { modified_unix: info.modified_unix, size: info.size };
+        setExpectation({ modified_unix: info.modified_unix, size: info.size });
         loadedRef.current = true;
         setLoaded(true);
         applyDirty(false);
@@ -268,7 +281,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
     return () => {
       cancelled = true;
     };
-  }, [url, paged, part, info.size, info.path, info.modified_unix, applyDirty]);
+  }, [url, paged, part, info.size, info.path, info.modified_unix, applyDirty, setExpectation]);
 
   // Editing turns on when the text is loaded and nothing keeps it read-only.
   useEffect(() => {
@@ -371,7 +384,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
       baselineRef.current = doc;
       savedEncodingRef.current = encoded.encoding;
       savedEndingRef.current = lineEndingRef.current;
-      expectedRef.current = { modified_unix: result.modified_unix, size: result.size };
+      setExpectation({ modified_unix: result.modified_unix, size: result.size });
       await deleteDraft(live.current.options.info.path).catch(() => undefined);
       applyDirty(computeDirty(view.state));
       return true;
@@ -407,8 +420,9 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
       setLineEndingState(ending);
       if (isTauriRuntime()) {
         const fresh = await fileDetect(live.current.options.info.path).catch(() => null);
-        if (fresh) expectedRef.current = { modified_unix: fresh.modified_unix, size: fresh.size };
+        if (fresh) setExpectation({ modified_unix: fresh.modified_unix, size: fresh.size });
       }
+      await deleteDraft(live.current.options.info.path).catch(() => undefined);
       applyDirty(false);
     } catch {
       setNotice(errorText(live.current.t, "textSave.other", "textSave"));
@@ -481,7 +495,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
       baselineRef.current = doc;
       savedEncodingRef.current = encoding;
       savedEndingRef.current = lineEndingRef.current;
-      expectedRef.current = { modified_unix: result.modified_unix, size: result.size };
+      setExpectation({ modified_unix: result.modified_unix, size: result.size });
       await deleteDraft(live.current.options.info.path).catch(() => undefined);
       if (result.path !== live.current.options.info.path) {
         live.current.options.onPathChange?.(result.path);
@@ -550,6 +564,8 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
     setLineEnding,
     readOnly,
     dirty,
+    expected,
+    reloadFromDisk,
     failed,
     cursor,
     save,

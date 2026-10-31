@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 9;
+export const SETTINGS_SCHEMA_VERSION = 11;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -221,6 +221,33 @@ export interface AppearanceSettings {
   animations: AnimationLevel;
 }
 
+/** How long versions are kept, in days (schema 10, Step 06b). */
+export type KeepDays = 7 | 30 | 90 | 365;
+/** Every keep length, in the order the settings select shows it. */
+export const KEEP_DAYS: readonly KeepDays[] = [7, 30, 90, 365];
+
+/** How much space versions may use, in megabytes (schema 10, Step 06b). */
+export type MaxVersionsMb = 256 | 512 | 1024 | 2048 | 5120;
+/** Every space choice, in the order the settings select shows it. */
+export const MAX_VERSIONS_MB: readonly MaxVersionsMb[] = [256, 512, 1024, 2048, 5120];
+
+/** The versions kept of files the app changes (schema 10, Step 06b). */
+export interface VersionSettings {
+  enabled: boolean;
+  keep_days: KeepDays;
+  max_mb: MaxVersionsMb;
+}
+
+/** Longest My templates folder path, in characters (schema 11, Step 06c). */
+export const MAX_TEMPLATE_FOLDER_CHARS = 1024;
+
+/** The folder the user keeps their own file templates in (schema 11,
+ * Step 06c). */
+export interface TemplateSettings {
+  /** Empty when no folder is chosen. */
+  my_folder: string;
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
@@ -230,6 +257,8 @@ export interface AppSettings {
   open: OpenSettings;
   layout: LayoutSettings;
   appearance: AppearanceSettings;
+  versions: VersionSettings;
+  templates: TemplateSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -279,6 +308,14 @@ export function defaultSettings(): AppSettings {
       corner_radius: "standard",
       animations: "full",
     },
+    versions: {
+      enabled: true,
+      keep_days: 30,
+      max_mb: 1024,
+    },
+    templates: {
+      my_folder: "",
+    },
   };
 }
 
@@ -288,6 +325,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function pick<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return typeof value === "string" && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : fallback;
+}
+
+function pickNumber<T extends number>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === "number" && (allowed as readonly number[]).includes(value)
     ? (value as T)
     : fallback;
 }
@@ -310,6 +353,17 @@ function normalizeOpenWith(value: unknown): Record<string, OpenWith> {
     }
   }
   return result;
+}
+
+/** A drive path (`C:\`) or a UNC path (`\\server`), like the Rust check. */
+const TEMPLATE_FOLDER_RE = /^(?:[A-Za-z]:\\|\\\\)/;
+
+/** An empty folder or an absolute Windows path of at most
+ * `MAX_TEMPLATE_FOLDER_CHARS` characters; anything else is no folder. */
+function normalizeTemplateFolder(value: unknown): string {
+  if (typeof value !== "string" || value === "") return "";
+  if (Array.from(value).length > MAX_TEMPLATE_FOLDER_CHARS) return "";
+  return TEMPLATE_FOLDER_RE.test(value) ? value : "";
 }
 
 /** The first `MAX_LAYOUT_NAME` code points of a name, trimmed at both ends. */
@@ -370,6 +424,8 @@ export function normalizeSettings(input: unknown): AppSettings {
   const filesInput = isRecord(input.files) ? input.files : {};
   const openInput = isRecord(input.open) ? input.open : {};
   const appearanceInput = isRecord(input.appearance) ? input.appearance : {};
+  const versionsInput = isRecord(input.versions) ? input.versions : {};
+  const templatesInput = isRecord(input.templates) ? input.templates : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
@@ -421,6 +477,14 @@ export function normalizeSettings(input: unknown): AppSettings {
       density: pick(appearanceInput.density, DENSITIES, defaults.appearance.density),
       corner_radius: pick(appearanceInput.corner_radius, CORNER_RADII, defaults.appearance.corner_radius),
       animations: pick(appearanceInput.animations, ANIMATION_LEVELS, defaults.appearance.animations),
+    },
+    versions: {
+      enabled: flag(versionsInput.enabled, defaults.versions.enabled),
+      keep_days: pickNumber(versionsInput.keep_days, KEEP_DAYS, defaults.versions.keep_days),
+      max_mb: pickNumber(versionsInput.max_mb, MAX_VERSIONS_MB, defaults.versions.max_mb),
+    },
+    templates: {
+      my_folder: normalizeTemplateFolder(templatesInput.my_folder),
     },
   };
 }

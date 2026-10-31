@@ -219,6 +219,13 @@ async function measure(name, setup, action, cleanup = "true") {
   return result;
 }
 
+/** The translated "Version history…" label, read from the Details pane. */
+async function versionHistoryLabel() {
+  await page(`(() => { const row = [...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")); if (row) window.__m.click(row); return true; })()`);
+  await sleep(200);
+  return page(`document.querySelector(".adp-details-pane .adp-btn")?.textContent.trim() ?? ""`);
+}
+
 async function shot(name) {
   if (!shotDir) return;
   mkdirSync(shotDir, { recursive: true });
@@ -627,6 +634,56 @@ if (mode === "full") {
     console.log(`step 06a measurements failed: ${error.message ?? error}`);
   }
 
+  // Step 06b: saving now keeps a version, and the Version history window.
+  try {
+    await openFolder(demo);
+    await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("notes.txt")))`);
+    await page(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`);
+    await page(`window.__m.waitFor(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); return c != null && c.getAttribute("contenteditable") === "true"; }, 15000)`);
+    const versionUnsavedWord = await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("insertText", false, "x"); return document.querySelector(".adp-filetab-status span")?.textContent ?? ""; })()`);
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("undo"); window.__m.key(c, { key: "s", ctrlKey: true }); return true; })()`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tab-dirty") === null)`);
+    const versionSaveValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      versionSaveValues.push(
+        await page(`window.__m.timeUntil(
+          () => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("insertText", false, "x"); window.__m.key(c, { key: "s", ctrlKey: true }); },
+          () => (document.querySelector(".adp-filetab-status span")?.textContent ?? "") !== ${JSON.stringify(versionUnsavedWord)})`),
+      );
+    }
+    const savingWithVersion = { name: "save a small text file with version history (Ctrl+S)", median_ms: Math.round(median(versionSaveValues) * 10) / 10, max_ms: Math.round(Math.max(...versionSaveValues) * 10) / 10, runs: versionSaveValues.length };
+    console.log(`${savingWithVersion.name}: median ${savingWithVersion.median_ms} ms (max ${savingWithVersion.max_ms})`);
+    results.push(savingWithVersion);
+    // Undo the typing, save once, close the tab.
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); for (let i = 0; i < ${RUNS}; i += 1) window.__m.key(c, { key: "z", ctrlKey: true }); window.__m.key(c, { key: "s", ctrlKey: true }); return true; })()`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tab-dirty") === null)`);
+    await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+    await sleep(200);
+
+    const historyLabel = await versionHistoryLabel();
+    results.push(
+      await measure(
+        "open the version history (right-click menu)",
+        `(() => { const row = [...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")); window.__m.click(row); window.__m.context(row); return true; })()`,
+        `(() => { const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(historyLabel)}); item?.click(); return true; })()`,
+        `(() => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); window.__m.closeMenus(); return true; })()`,
+      ),
+    );
+  } catch (error) {
+    console.log(`step 06b measurements failed: ${error.message ?? error}`);
+  }
+  // Step 06c: the New menu, now with the Markdown, CSV, Office and template
+  // entries.
+  results.push(
+    await measure(
+      "command bar New menu (with templates)",
+      `true`,
+      `window.__m.menuButton(0).click()`,
+      `window.__m.closeMenus(); true`,
+    ),
+  );
+
   // Step 06d: the archive tab. Opening a 10,000-entry zip, changing folders
   // and searching it; the archive tab is closed again after each open.
   const archiveRows = `[...document.querySelectorAll(".adp-filetab:not([hidden]) .adp-archive [role=option]")]`;
@@ -1029,6 +1086,24 @@ if (shotDir) {
   await sleep(400);
   await shot("41-unsaved-dialog");
   await step(`document.querySelectorAll("[role=dialog] .adp-dialog-actions .adp-btn")[1]?.click()`);
+  // Step 06b: the Version history window, its changes and one version's text.
+  const historyLabel = await versionHistoryLabel();
+  await step(`window.__m.context([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
+  await step(`(() => { const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(historyLabel)}); item?.click(); return true; })()`);
+  await sleep(600);
+  await shot("42-version-history");
+  await step(`document.querySelectorAll(".adp-versions-tabs .adp-btn")[1]?.click()`);
+  await sleep(300);
+  await shot("43-version-text");
+  await step(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
+  // Step 06c: the New menu and the template window.
+  await step(`window.__m.menuButton(0).click()`);
+  await sleep(200);
+  await shot("44-new-menu");
+  await step(`[...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].pop()?.click()`);
+  await sleep(600);
+  await shot("45-template-window");
+  await step(`window.__m.key(document, { key: "Escape" })`);
   // Step 06d: the archive tab, its search, and its Extract menu.
   await openFolder(join(big, "..", "archives"));
   await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("Project files.zip")))`);

@@ -10,7 +10,8 @@
     "lint:i18n": "node scripts/check-i18n.mjs",
     "lint:ipc": "node scripts/check-ipc.mjs",
     "i18n:pseudo": "node scripts/make-pseudo.mjs",
-    "tokens": "node scripts/build-tokens.mjs"
+    "tokens": "node scripts/build-tokens.mjs",
+    "templates": "node scripts/build-templates.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",
@@ -49,7 +50,10 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "axe-core": "4.14.0",
+    "docx": "9.15.0",
+    "exceljs": "4.4.0",
     "jsdom": "^29.1.1",
+    "pptxgenjs": "4.0.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"

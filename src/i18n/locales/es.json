@@ -186,6 +186,17 @@
     "openingFiles": "Abrir archivos",
     "protectedView": "Vista protegida para archivos de Internet",
     "protectedViewNote": "Los archivos descargados de Internet se abren con una barra amarilla, y sus vínculos quedan desactivados hasta que los desbloquees.",
+    "versions": "Historial de versiones",
+    "versionsEnabled": "Conservar versiones de los archivos que cambia Adperastra",
+    "versionsKeep": "Conservar versiones durante",
+    "versionsDays": "{count, plural, one {# día} other {# días}}",
+    "versionsMax": "Espacio para versiones",
+    "versionsUsed": "Las versiones ocupan {size} ahora.",
+    "versionsDeleteAll": "Eliminar todas las versiones…",
+    "versionsDeleteTitle": "¿Eliminar todas las versiones?",
+    "versionsDeleteBody": "Se eliminan todas las versiones conservadas de todos los archivos. Esto no se puede deshacer. Tus archivos no cambian.",
+    "versionsDeleteConfirm": "Eliminar todas las versiones",
+    "versionsDeleted": "Se eliminaron todas las versiones.",
     "defaultApps": "Aplicaciones predeterminadas",
     "defaultAppsNote": "Elige dónde se abre cada tipo de archivo al hacer doble clic: en Adperastra o en su aplicación de Windows.",
     "findFileType": "Buscar un tipo de archivo (por ejemplo, txt)",
@@ -330,7 +341,8 @@
     "nothingToPaste": "No hay nada para pegar aquí.",
     "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden).",
     "extracted": "Se extrajo {name}",
-    "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}"
+    "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}",
+    "versionRestored": "Se restauró una versión de {name}"
   },
   "commands": {
     "back": "Atrás",
@@ -412,7 +424,14 @@
     "extract": "Extraer",
     "extractAll": "Extraer todo",
     "extractHere": "Extraer aquí",
-    "extractTo": "Extraer en…"
+    "extractTo": "Extraer en…",
+    "newMarkdown": "Nota de Markdown",
+    "newCsv": "Tabla CSV",
+    "newDocument": "Documento",
+    "newSpreadsheet": "Hoja de cálculo",
+    "newPresentation": "Presentación",
+    "newFromTemplate": "Desde plantilla…",
+    "versionHistory": "Historial de versiones…"
   },
   "errors": {
     "archive": {
@@ -567,12 +586,33 @@
       "in_use": "Otro programa está usando el archivo. Ciérralo allí y vuelve a guardar.",
       "not_found": "La carpeta de este archivo ya no existe. Usa Guardar como…",
       "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
-      "write_failed": "No se pudo escribir el archivo. Tu texto sigue aquí; vuelve a intentarlo o usa Guardar como…"
+      "write_failed": "No se pudo escribir el archivo. Tu texto sigue aquí; vuelve a intentarlo o usa Guardar como…",
+      "version_failed": "No se pudo conservar la versión anterior, así que el archivo no se guardó. Libera espacio o desactiva el historial de versiones en Configuración."
     },
     "recovery": {
       "other": "No se pudo guardar una copia de recuperación de tus cambios.",
       "bad_request": "Esa copia de recuperación no es válida.",
       "too_large": "El texto es demasiado grande para una copia de recuperación. Guárdalo pronto."
+    },
+    "templates": {
+      "other": "No se pudo crear el archivo. Vuelve a intentarlo.",
+      "bad_request": "Esa plantilla no se puede usar.",
+      "not_allowed": "Solo se pueden usar como plantillas los archivos de las carpetas de plantillas.",
+      "not_found": "La plantilla o la carpeta ya no existe.",
+      "invalid_name": "Ese nombre no se puede usar para un archivo.",
+      "access_denied": "No tienes permiso para crear archivos en esta carpeta.",
+      "cancelled": "Se canceló la creación del archivo."
+    },
+    "versions": {
+      "other": "Algo salió mal con el historial de versiones. Vuelve a intentarlo.",
+      "bad_request": "Esa versión no se puede usar.",
+      "not_found": "Esa versión ya no existe.",
+      "snapshot_failed": "No se pudo conservar primero el contenido actual, así que no se cambió nada.",
+      "read_only": "El archivo es de solo lectura, así que no se puede restaurar. Guarda una copia en su lugar.",
+      "in_use": "Otro programa está usando el archivo. Ciérralo allí y vuelve a intentarlo.",
+      "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
+      "preview_too_large": "Este archivo es demasiado grande para mostrarlo aquí. Ábrelo para verlo.",
+      "replace_unavailable": "Por ahora no se puede reemplazar un archivo. Elige otro nombre."
     }
   },
   "keys": {
@@ -593,6 +633,11 @@
   "files": {
     "newFolderName": "Nueva carpeta",
     "newTextFileName": "Nuevo documento de texto.txt",
+    "newMarkdownName": "Nueva nota.md",
+    "newCsvName": "Nueva tabla.csv",
+    "newDocumentName": "Nuevo documento.docx",
+    "newSpreadsheetName": "Nueva hoja de cálculo.xlsx",
+    "newPresentationName": "Nueva presentación.pptx",
     "pastedImageName": "Imagen pegada {stamp}",
     "pastedTextName": "Texto pegado {stamp}",
     "shortcutName": "{name} - Acceso directo",
@@ -827,5 +872,128 @@
     "dark": "Adperastra oscuro",
     "amoled": "Negro AMOLED",
     "highContrast": "Contraste alto"
+  },
+  "templates": {
+    "title": "Nuevo desde plantilla",
+    "builtin": "Plantillas integradas",
+    "mine": "Mis plantillas",
+    "mineEmpty": "Elige una carpeta: cada archivo que guardes en ella será una plantilla.",
+    "mineMissing": "No se encuentra la carpeta {folder}. Elige otra.",
+    "mineNone": "La carpeta {folder} todavía no tiene archivos. Guarda un archivo allí para usarlo como plantilla.",
+    "chooseFolder": "Elegir carpeta…",
+    "changeFolder": "Cambiar carpeta…",
+    "openFolder": "Abrir carpeta",
+    "folderTitle": "Elige la carpeta de tus plantillas",
+    "create": "Crear",
+    "letter": {
+      "name": "Carta",
+      "description": "Una carta sencilla con tu dirección y la del destinatario.",
+      "yourName": "[Tu nombre]",
+      "yourAddress": "[Tu dirección]",
+      "date": "[Fecha]",
+      "recipientName": "[Nombre del destinatario]",
+      "recipientAddress": "[Dirección del destinatario]",
+      "greeting": "Estimado/a [nombre]:",
+      "body": "Escribe tu carta aquí.",
+      "closing": "Saludos cordiales,"
+    },
+    "report": {
+      "name": "Informe",
+      "description": "Un informe con título y cuatro secciones.",
+      "title": "Título del informe",
+      "byline": "[Autor] · [Fecha]",
+      "summary": "Resumen",
+      "introduction": "Introducción",
+      "findings": "Resultados",
+      "conclusions": "Conclusiones",
+      "placeholder": "Escribe aquí."
+    },
+    "budget": {
+      "name": "Presupuesto",
+      "description": "Gastos previstos y reales por categoría, con totales.",
+      "sheet": "Presupuesto",
+      "category": "Categoría",
+      "planned": "Previsto",
+      "actual": "Real",
+      "difference": "Diferencia",
+      "total": "Total",
+      "housing": "Vivienda",
+      "food": "Comida",
+      "transport": "Transporte",
+      "utilities": "Servicios",
+      "other": "Otros"
+    },
+    "invoice": {
+      "name": "Factura",
+      "description": "Una factura que suma sus líneas, el impuesto y el total.",
+      "sheet": "Factura",
+      "title": "Factura",
+      "number": "Número de factura",
+      "date": "Fecha",
+      "billTo": "Facturar a",
+      "description2": "Descripción",
+      "quantity": "Cantidad",
+      "unitPrice": "Precio unitario",
+      "amount": "Importe",
+      "subtotal": "Subtotal",
+      "tax": "Impuesto",
+      "total": "Total"
+    },
+    "meeting": {
+      "name": "Notas de reunión",
+      "description": "Fecha, participantes, temas, notas y tareas.",
+      "title": "Notas de la reunión",
+      "date": "Fecha",
+      "attendees": "Participantes",
+      "agenda": "Temas",
+      "notes": "Notas",
+      "actions": "Tareas",
+      "actionItem": "Tarea, persona, fecha límite"
+    },
+    "presentation": {
+      "name": "Presentación sencilla",
+      "description": "Una diapositiva de título, una de temas y una de cierre.",
+      "title": "Título de la presentación",
+      "byline": "[Tu nombre] · [Fecha]",
+      "agenda": "Temas",
+      "topic1": "Primer tema",
+      "topic2": "Segundo tema",
+      "topic3": "Tercer tema",
+      "thanks": "Gracias",
+      "questions": "¿Preguntas?"
+    },
+    "creating": "Creando {name}…",
+    "copyProgress": "{done} de {total}",
+    "someUnreadable": "{count, plural, one {No se pudo leer # plantilla.} other {No se pudieron leer # plantillas.}}"
+  },
+  "versions": {
+    "title": "Historial de versiones de {name}",
+    "current": "Archivo actual",
+    "reason": {
+      "save": "Guardado en Adperastra",
+      "saveAs": "Reemplazado con Guardar como",
+      "restore": "Antes de restaurar una versión",
+      "other": "Cambiado por Adperastra"
+    },
+    "empty": "Todavía no hay versiones. Se conserva una versión cada vez que Adperastra cambia este archivo.",
+    "tooLarge": "Los archivos de más de 256 MB no tienen versiones.",
+    "off": "El historial de versiones está desactivado. Las versiones existentes se conservan.",
+    "changes": "Cambios",
+    "thisVersion": "Esta versión",
+    "noChanges": "Esta versión es igual al archivo actual.",
+    "tooManyChanges": "Hay demasiados cambios para mostrarlos. Abre la versión para verla.",
+    "noPreview": "Este tipo de archivo no se puede mostrar aquí. Ábrelo para verlo.",
+    "unchanged": "{count, plural, one {# línea sin cambios} other {# líneas sin cambios}}",
+    "open": "Abrir",
+    "saveCopy": "Guardar una copia…",
+    "saveCopyTitle": "Guardar una copia de esta versión",
+    "restore": "Restaurar esta versión",
+    "restoreTitle": "¿Restaurar esta versión?",
+    "restoreBody": "El archivo vuelve a la versión del {date}. Su contenido actual se conserva en el historial, así que puedes deshacerlo.",
+    "restoreUnsaved": "Se perderán los cambios sin guardar de esta pestaña.",
+    "restored": "Se restauró la versión del {date}.",
+    "windowsVersions": "Versiones anteriores de Windows…",
+    "allFiles": "Todos los archivos",
+    "loadMore": "Cargar más"
   }
 }

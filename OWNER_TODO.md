@@ -42,3 +42,10 @@ instructions. In English and Spanish, and in light and dark themes:
 - [ ] Review the Step 03b screenshots and the accessibility/setup-font design
   deviations referenced in the report; check the setup window remains readable
   with its payload font absent.
+
+## Version history and templates (06b/06c)
+
+- [ ] Use the isolated disposable-file instructions in `docs/step-reports/step-06b.md` and `step-06c.md` for the remaining Windows dialogs, Office formulas/app opening, personal-template folder persistence and crash-recovery checks. The automated release checks cover only a subset.
+- [ ] Decide when to repair the existing Save/Save as safety issues KI-068/KI-069. They are documented, not silently changed in this batch; use disposable files until repaired. No release may ship with them open.
+- [ ] Existing editor style violations KI-075 and stale byte-size display KI-078 need a later repair. The current CSP and CodeMirror setup are unchanged from the earlier baseline; no CSP relaxation or warning suppression was applied.
+- [ ] Earlier-step speed regressions and missing owner checks remain pending; the new JSON records are scoped to 06b/06c. No local tag was advanced.
