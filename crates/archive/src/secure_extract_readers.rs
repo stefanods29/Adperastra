@@ -236,45 +236,96 @@ impl<'a> SecureWriter<'a> {
                 self.progress(&root, false);
                 Ok(())
             }
-            WriteEnd::Done => {
-                if let Some(time) = unix_time(planned.modified_unix) {
-                    let times = fs::FileTimes::new().set_modified(time);
-                    let _ = output.file_mut().set_times(times);
+            WriteEnd::Done => self.finish_owned_output(planned, &mut output, pin),
+        }
+    }
+
+    /// Stream an external tool's output into owned staging (RAR).
+    pub(crate) fn write_rar(
+        &mut self,
+        planned: &PlannedEntry,
+        stream: &mut dyn FnMut(&mut dyn Write, &CancellationToken) -> Result<(), ArchiveError>,
+    ) -> Result<(), ArchiveError> {
+        if self.token.load(Ordering::Relaxed) {
+            self.cancel();
+            return Err(ArchiveError::Cancelled);
+        }
+        let hint = crate::path::name_of(&planned.inner).to_string();
+        let (mut output, pin) = match self.tree.open_output(&planned.relative, &hint) {
+            Ok(pair) => pair,
+            Err(reason) => {
+                self.skip(planned.inner.clone(), reason);
+                let root = self.tree.root().to_path_buf();
+                self.progress(&root, false);
+                return Ok(());
+            }
+        };
+        match stream(output.file_mut(), self.token) {
+            Ok(()) => self.finish_owned_output(planned, &mut output, pin),
+            Err(ArchiveError::Cancelled) => {
+                self.cancel();
+                Err(ArchiveError::Cancelled)
+            }
+            Err(error @ ArchiveError::BadPassword)
+            | Err(error @ ArchiveError::PasswordRequired) => {
+                let missing = matches!(error, ArchiveError::PasswordRequired);
+                self.fail_password(planned, missing)?;
+                Ok(())
+            }
+            Err(error) => {
+                if !self.has_created() {
+                    return Err(error);
                 }
-                if output.flush_sync().is_err() {
-                    self.skip(planned.inner.clone(), "other");
-                    return Ok(());
-                }
-                if let Some(zone) = &self.zone {
-                    if self.zone_writer.write(output.staging_path(), zone).is_err() {
-                        // A required mark that cannot be preserved is never
-                        // silently dropped: the file is not published.
-                        self.skip(planned.inner.clone(), "other");
-                        return Ok(());
-                    }
-                }
-                let published = match self.publish(&mut output, planned) {
-                    Ok(path) => path,
-                    Err(reason) => {
-                        self.skip(planned.inner.clone(), reason);
-                        return Ok(());
-                    }
-                };
-                drop(pin);
-                self.report.files_written += 1;
-                self.items_done += 1;
-                if self.single_file {
-                    self.report.opened = Some(published.to_string_lossy().into_owned());
-                }
-                if planned.relative.len() == 1 {
-                    self.note_created(&published);
-                } else if let Some(first) = planned.relative.first() {
-                    self.note_created(&self.tree.top_path(first));
-                }
-                self.progress(&published, false);
+                self.set_error("archive.corrupt");
+                self.skip(planned.inner.clone(), "damaged");
                 Ok(())
             }
         }
+    }
+
+    /// Timestamps, the internet mark, flush and no-replace publication.
+    fn finish_owned_output(
+        &mut self,
+        planned: &PlannedEntry,
+        output: &mut OwnedOutput,
+        pin: fs_service::owned_io::PinnedDirectory,
+    ) -> Result<(), ArchiveError> {
+        if let Some(time) = unix_time(planned.modified_unix) {
+            let times = fs::FileTimes::new().set_modified(time);
+            let _ = output.file_mut().set_times(times);
+        }
+        if output.flush_sync().is_err() {
+            self.skip(planned.inner.clone(), "other");
+            return Ok(());
+        }
+        if let Some(zone) = &self.zone {
+            if self.zone_writer.write(output.staging_path(), zone).is_err() {
+                // A required mark that cannot be preserved is never silently
+                // dropped: the file is not published.
+                self.skip(planned.inner.clone(), "other");
+                return Ok(());
+            }
+        }
+        let published = match self.publish(output, planned) {
+            Ok(path) => path,
+            Err(reason) => {
+                self.skip(planned.inner.clone(), reason);
+                return Ok(());
+            }
+        };
+        drop(pin);
+        self.report.files_written += 1;
+        self.items_done += 1;
+        if self.single_file {
+            self.report.opened = Some(published.to_string_lossy().into_owned());
+        }
+        if planned.relative.len() == 1 {
+            self.note_created(&published);
+        } else if let Some(first) = planned.relative.first() {
+            self.note_created(&self.tree.top_path(first));
+        }
+        self.progress(&published, false);
+        Ok(())
     }
 
     /// Publish under the planned name. Only a top-level file takes the next
@@ -400,8 +451,42 @@ pub(crate) fn extract_files(
         ArchiveFormat::SevenZ => {
             crate::secure_extract_7z::extract_7z(path, plan, writer, options, limits)
         }
+        ArchiveFormat::Rar => extract_rar(path, plan, writer, options, limits),
         _ => Err(ArchiveError::Unsupported),
     }
+}
+
+fn extract_rar(
+    path: &Path,
+    plan: &ExtractPlan,
+    writer: &mut SecureWriter<'_>,
+    options: &crate::read_options::ArchiveReadOptions,
+    limits: &Limits,
+) -> Result<(), ArchiveError> {
+    let runner = crate::rar::runner(options)?;
+    let (listing, records) =
+        crate::rar::rar_records(path, limits, writer.token(), options, &runner)?;
+    if records.len() != listing.entries.len() {
+        return Err(ArchiveError::AmbiguousRar);
+    }
+    for planned in &plan.files {
+        if writer.stop_requested() {
+            writer.cancel();
+            return Ok(());
+        }
+        let Some(record) = records.get(planned.index as usize) else {
+            writer.skip(planned.inner.clone(), "damaged");
+            continue;
+        };
+        if record.is_folder {
+            writer.skip(planned.inner.clone(), "damaged");
+            continue;
+        }
+        writer.write_rar(planned, &mut |out, token| {
+            crate::rar::extract_rar_file(path, record, options, &runner, token, out).map(|_| ())
+        })?;
+    }
+    Ok(())
 }
 
 fn extract_bz2(

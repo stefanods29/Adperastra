@@ -21,6 +21,7 @@ use thiserror::Error;
 mod appearance;
 mod archive;
 mod archive_helper;
+mod archive_rar;
 mod classic_menu;
 mod clipboard;
 #[cfg(windows)]
@@ -3066,6 +3067,7 @@ fn main() {
             archive::archive_open_entry_start,
             archive::archive_extract_start,
             archive::archive_pick_folder,
+            archive_rar::archive_rar_status,
             templates::templates_list,
             templates::template_create,
             template_jobs::template_create_start,

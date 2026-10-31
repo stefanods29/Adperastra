@@ -40,6 +40,8 @@ pub enum HelperRequest {
         path: String,
         request: ExtractRequest,
     },
+    /// Ask for the separately installed 7-Zip's version (Step 06e).
+    RarStatus,
 }
 
 /// What the helper tells the app.
@@ -61,6 +63,10 @@ pub enum HelperMessage {
     },
     Extracted {
         report: ExtractReport,
+    },
+    /// The installed 7-Zip status (Step 06e).
+    RarStatus {
+        status: archive::RarToolStatus,
     },
     Failed {
         code: String,
@@ -125,8 +131,18 @@ pub fn run_helper() -> i32 {
     match request {
         HelperRequest::List { path } => list(&path, &token, &mut reporter),
         HelperRequest::Extract { path, request } => extract(&path, &request, &token, &mut reporter),
+        HelperRequest::RarStatus => rar_status(),
     }
     0
+}
+
+/// Probe the separately installed 7-Zip; the app never learns its path.
+fn rar_status() {
+    let status = match archive::InstalledSevenZip::discover() {
+        Ok(runner) => archive::rar::rar_status(&runner),
+        Err(_) => archive::RarToolStatus::default(),
+    };
+    send(&HelperMessage::RarStatus { status });
 }
 
 fn list(path: &str, token: &CancellationToken, reporter: &mut Reporter) {

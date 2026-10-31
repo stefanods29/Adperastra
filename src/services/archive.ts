@@ -190,6 +190,18 @@ export async function archiveExtract(
   };
 }
 
+/** The separately installed 7-Zip used for RAR. Never its raw path. */
+export interface RarToolStatus {
+  available: boolean;
+  version: string | null;
+}
+
+/** Ask the archive helper whether a usable 7-Zip is installed. */
+export async function archiveRarStatus(): Promise<RarToolStatus> {
+  if (!isTauriRuntime()) return { available: false, version: null };
+  return (await invoke("archive_rar_status")) as RarToolStatus;
+}
+
 /** Ask where to extract; null when the user cancels the dialog. */
 export async function archivePickFolder(title: string): Promise<string | null> {
   if (!isTauriRuntime()) return null;

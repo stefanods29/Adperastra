@@ -135,7 +135,10 @@ pub fn list_with_options(
         ArchiveFormat::Gz | ArchiveFormat::Xz | ArchiveFormat::Bz2 => {
             (list_stream(path, format, limits, token)?, size)
         }
-        ArchiveFormat::Rar => return Err(ArchiveError::Unsupported),
+        ArchiveFormat::Rar => {
+            let runner = crate::rar::runner(options)?;
+            return crate::rar::list_rar(path, limits, token, options, &runner);
+        }
     };
     meter.force(done);
     Ok(listing)

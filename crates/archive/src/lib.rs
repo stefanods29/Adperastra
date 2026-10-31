@@ -17,6 +17,10 @@ pub mod limits;
 pub mod list;
 pub mod path;
 pub mod plan;
+pub mod rar;
+mod rar_listing;
+mod rar_probe;
+mod rar_process;
 mod read_7z;
 mod read_bzip2;
 pub mod read_options;
@@ -52,6 +56,11 @@ pub use plan::{
     plan_extract, plan_extract_with_options, top_level_names, ArchiveFacts, ExtractPlan,
     ExtractRequest, PlannedEntry, SkippedEntry, MAX_EXTRACT_PATHS,
 };
+pub use rar::{
+    extract_rar_file, list_rar, parse_listing, verify_candidate, RarListing, RarRecord,
+    RarToolStatus,
+};
+pub use rar_process::{Captured, InstalledSevenZip, SevenZipRunner, Streamed};
 pub use read_options::ArchiveReadOptions;
 pub use secure_extract::{extract_with_zone, needs_secure_route, FileZoneWriter, ZoneWriter};
 pub use time::{dos_local_to_unix, unix_to_dos_local};
