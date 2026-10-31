@@ -63,7 +63,9 @@ pub fn check_budget(base: &Path, needed: u64, budget: SpoolBudget) -> Result<(),
         return Err("archive.create_too_large".to_string());
     }
     let stored = stored_bytes(base);
-    if stored.saturating_add(needed) > budget.max_total {
+    // The cap is shared: a store already at the cap refuses new work even
+    // before its next spool size is known.
+    if stored >= budget.max_total || stored.saturating_add(needed) > budget.max_total {
         return Err("archive.create_busy".to_string());
     }
     if let Some(free) = free_bytes(base) {

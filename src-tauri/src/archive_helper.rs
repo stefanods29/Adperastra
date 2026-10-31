@@ -181,7 +181,18 @@ pub fn run_helper() -> i32 {
 
 /// Plan the sources and write the spool; the helper never publishes.
 fn create(request: &HelperCreate, token: &CancellationToken, reporter: &mut Reporter) {
-    let limits = archive::CreateLimits::default();
+    let mut limits = archive::CreateLimits::default();
+    // The spool budget is shared across creations: this one may only add
+    // what still fits under the data folder's cap.
+    if let Some(base) = Path::new(&request.spool)
+        .parent()
+        .and_then(std::path::Path::parent)
+    {
+        let stored = crate::archive_create_spool::stored_bytes(base);
+        limits.max_output_bytes = limits
+            .max_output_bytes
+            .min(crate::archive_create_spool::MAX_SPOOL_TOTAL.saturating_sub(stored));
+    }
     let mut sink = |progress: &OpProgress| reporter.progress(progress);
     let plan = match archive::plan_create(
         &request.sources,
