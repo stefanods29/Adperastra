@@ -11,6 +11,14 @@ import { saveText } from "../services/textFiles";
 
 vi.mock("../services/textFiles", () => ({ saveText: vi.fn(), pickSavePath: vi.fn() }));
 vi.mock("../services/recovery", () => ({ readDraft: vi.fn(), writeDraft: vi.fn(), deleteDraft: vi.fn() }));
+vi.mock("../services/versions", () => ({
+  versionsList: vi.fn(),
+  versionsExtract: vi.fn(),
+  versionsRestore: vi.fn(),
+  versionsSaveCopy: vi.fn(),
+}));
+
+import { versionsExtract, versionsList, versionsRestore, versionsSaveCopy } from "../services/versions";
 
 const INFO: FileTypeInfo = {
   path: "C:\\A\\a.txt",
@@ -96,6 +104,16 @@ beforeEach(() => {
   vi.mocked(readDraft).mockResolvedValue(null);
   vi.mocked(writeDraft).mockResolvedValue(undefined);
   vi.mocked(deleteDraft).mockResolvedValue(undefined);
+  vi.mocked(versionsList).mockReset().mockResolvedValue({
+    versions: [{ id: 1, created_unix: 150, reason: "save", size: 10, file_modified_unix: 150 }],
+    too_large: false,
+  });
+  vi.mocked(versionsExtract).mockReset().mockResolvedValue("C:\\V\\open\\1-a.txt");
+  vi.mocked(versionsRestore).mockReset().mockResolvedValue({
+    previous_id: 9,
+    saved: { path: INFO.path, size: 12, modified_unix: 300 },
+  });
+  vi.mocked(versionsSaveCopy).mockReset().mockResolvedValue(null);
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => ({ ok: true, arrayBuffer: async () => BYTES.slice().buffer })),
@@ -161,5 +179,42 @@ describe("editing in the text viewer", () => {
     const handle = registerSave.mock.calls[0][0];
     expect(typeof handle.save).toBe("function");
     expect(typeof handle.discard).toBe("function");
+  });
+
+  it("the ribbon opens the version history", async () => {
+    await render();
+    act(() => button(i18n.t("commands.versionHistory"))!.click());
+    await flush();
+    expect(container!.textContent).toContain(i18n.t("versions.title", { name: "a.txt" }));
+  });
+
+  it("a restore reloads the text", async () => {
+    await render();
+    type("x");
+    await flush();
+    const restoredBytes = new TextEncoder().encode("new text\r\n");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, arrayBuffer: async () => restoredBytes.slice().buffer })),
+    );
+
+    act(() => button(i18n.t("commands.versionHistory"))!.click());
+    await flush();
+    const byText = (label: string) =>
+      [...container!.querySelectorAll("button")].filter((entry) => entry.textContent === label);
+    act(() => byText(i18n.t("versions.restore"))[0].click());
+    const confirm = byText(i18n.t("versions.restore"));
+    expect(confirm).toHaveLength(2);
+    await act(async () => {
+      confirm[1].click();
+      await Promise.resolve();
+    });
+    await flush();
+    await flush();
+
+    expect(versionsRestore).toHaveBeenCalledWith(INFO.path, 1);
+    expect(deleteDraft).toHaveBeenCalledWith(INFO.path);
+    expect(view().state.doc.toString()).toBe("new text\r\n");
+    expect(status.items).not.toContain(i18n.t("editor.unsaved"));
   });
 });
