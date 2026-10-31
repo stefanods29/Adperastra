@@ -923,7 +923,19 @@
   },
   "hex": {
     "label": "Bytes de {name}",
-    "loadError": "No se pudieron leer los bytes de este archivo."
+    "loadError": "No se pudieron leer los bytes de este archivo.",
+    "searchText": "Buscar como texto",
+    "searchBytes": "Buscar como bytes",
+    "searching": "Buscando… {percent} %",
+    "notFound": "No se encontró.",
+    "foundAt": "Encontrado en {offset}",
+    "badPattern": "Escribe pares de dígitos hexadecimales, como 4D 5A.",
+    "searchFailed": "No se pudo leer el archivo hasta el final.",
+    "goToOffset": "Ir al desplazamiento…",
+    "goToTitle": "Ir al desplazamiento",
+    "goToLabel": "Desplazamiento (hexadecimal, o decimal con #)",
+    "goToConfirm": "Ir",
+    "goToBad": "Escribe un desplazamiento entre 0 y {last}."
   },
   "links": {
     "openTitle": "¿Abrir este vínculo?",

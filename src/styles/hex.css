@@ -6,3 +6,5 @@
 .adp-hex-offset { color: var(--adp-color-text-tertiary); }
 .adp-hex-bytes { width: 48ch; color: var(--adp-color-text-primary); }
 .adp-hex-text { color: var(--adp-color-text-secondary); }
+.adp-hex-match { background: var(--adp-syntax-match); color: var(--adp-color-text-primary); }
+.adp-hex-note { padding: var(--adp-space-2) var(--adp-space-5); color: var(--adp-color-text-secondary); background: var(--adp-color-surface-pane); }

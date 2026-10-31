@@ -923,7 +923,19 @@
   },
   "hex": {
     "label": "[Bÿtës øf {name} ~~~]",
-    "loadError": "[Thë bÿtës øf thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~~~~~]"
+    "loadError": "[Thë bÿtës øf thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~~~~~]",
+    "searchText": "[Sëärçh äs tëxt ~~~~~]",
+    "searchBytes": "[Sëärçh äs bÿtës ~~~~~~]",
+    "searching": "[Sëärçhïñg… {percent}% ~~~~]",
+    "notFound": "[Ñøt føüñd. ~~~~]",
+    "foundAt": "[Føüñd ät {offset} ~~~]",
+    "badPattern": "[Ëñtër päïrs øf hëx dïgïts, lïkë 4D 5Ä. ~~~~~~~~~~~]",
+    "searchFailed": "[Thë fïlë çøüldñ't bë rëäd tø thë ëñd. ~~~~~~~~~~~~]",
+    "goToOffset": "[Gø tø øffsët… ~~~~]",
+    "goToTitle": "[Gø tø øffsët ~~~~]",
+    "goToLabel": "[Øffsët (hëxädëçïmäl, ør dëçïmäl wïth #) ~~~~~~~~~~~~]",
+    "goToConfirm": "[Gø ~~]",
+    "goToBad": "[Ëñtër äñ øffsët bëtwëëñ 0 äñd {last}. ~~~~~~~~~~]"
   },
   "links": {
     "openTitle": "[Øpëñ thïs lïñk? ~~~~~]",

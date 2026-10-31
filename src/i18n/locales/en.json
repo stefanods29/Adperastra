@@ -923,7 +923,19 @@
   },
   "hex": {
     "label": "Bytes of {name}",
-    "loadError": "The bytes of this file couldn't be read."
+    "loadError": "The bytes of this file couldn't be read.",
+    "searchText": "Search as text",
+    "searchBytes": "Search as bytes",
+    "searching": "Searching… {percent}%",
+    "notFound": "Not found.",
+    "foundAt": "Found at {offset}",
+    "badPattern": "Enter pairs of hex digits, like 4D 5A.",
+    "searchFailed": "The file couldn't be read to the end.",
+    "goToOffset": "Go to offset…",
+    "goToTitle": "Go to offset",
+    "goToLabel": "Offset (hexadecimal, or decimal with #)",
+    "goToConfirm": "Go",
+    "goToBad": "Enter an offset between 0 and {last}."
   },
   "links": {
     "openTitle": "Open this link?",
