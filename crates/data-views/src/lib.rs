@@ -6,7 +6,9 @@ pub mod decode;
 pub mod error;
 pub mod limits;
 pub mod table;
+pub mod table_view;
 
 pub use decode::{decode_text, TextEncodingId};
 pub use error::DataError;
 pub use table::{detect_delimiter, first_row_is_header, parse_table, Table, TableLimits};
+pub use table_view::{build_order, page_rows, SortDirection, TableViewRequest};
