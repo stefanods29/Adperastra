@@ -82,6 +82,12 @@ impl OwnedOutput {
         Ok(())
     }
 
+    /// Keep the staging file after this value is dropped. The helper uses
+    /// this for its verified spool, which the parent reads next.
+    pub fn keep(&mut self) {
+        self.published = true;
+    }
+
     /// Rename the still-owned file to `name` inside the pinned folder. The
     /// target must not exist; a name that arrived meanwhile is left alone.
     pub fn publish_name(&mut self, name: &str) -> OwnedIoResult<PathBuf> {

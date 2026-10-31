@@ -2,9 +2,13 @@
 //! the browsing tree, extraction plans and safe extraction. Pure Rust, no
 //! Tauri. Runs inside the archive helper process, never in the app itself.
 
+pub mod create;
+mod create_7z;
 pub mod create_plan;
+mod create_stream;
 pub mod create_types;
 mod create_walk;
+mod create_zip;
 pub mod entry;
 pub mod error;
 pub mod extract;
@@ -28,6 +32,7 @@ pub mod time;
 pub mod tree;
 pub mod write;
 
+pub use create::create_spool;
 pub use create_plan::{plan_create, plan_create_with_exclusion, CreateEntry, CreatePlan};
 pub use create_types::{
     validate_password, CreateEncryption, CreateFormat, CreateLimits, CreateOptions,
@@ -49,6 +54,6 @@ pub use plan::{
 };
 pub use read_options::ArchiveReadOptions;
 pub use secure_extract::{extract_with_zone, needs_secure_route, FileZoneWriter, ZoneWriter};
-pub use time::dos_local_to_unix;
+pub use time::{dos_local_to_unix, unix_to_dos_local};
 pub use tree::{ArchiveTree, TreeStats};
 pub use write::{write_entry, WriteFailure};

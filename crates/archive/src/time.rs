@@ -1,6 +1,44 @@
-//! Dates from archives (Step 06d D10). Zip stores a "DOS time" in local
-//! time with no zone; Windows' own zone rules turn it into a real moment,
-//! exactly as the Explorer does for the same file. 7z and tar store UTC.
+//! Dates from archives (Step 06d D10, Step 06e T6). Zip stores a "DOS time"
+//! in local time with no zone; Windows' own zone rules turn it into a real
+//! moment, exactly as the Explorer does for the same file. 7z and tar store
+//! UTC. The reverse conversion is used when a new zip is written.
+
+/// The local `(year, month, day, hour, minute, second)` a created zip
+/// entry records for `unix`, or `None` when the moment cannot be written.
+pub fn unix_to_dos_local(unix: u64) -> Option<(u16, u8, u8, u8, u8, u8)> {
+    if unix == 0 {
+        return None;
+    }
+    #[cfg(windows)]
+    {
+        use windows::Win32::Foundation::{FILETIME, SYSTEMTIME};
+        use windows::Win32::System::Time::{FileTimeToSystemTime, SystemTimeToTzSpecificLocalTime};
+        let ticks = unix.checked_add(11_644_473_600)?.checked_mul(10_000_000)?;
+        let file_time = FILETIME {
+            dwLowDateTime: (ticks & 0xffff_ffff) as u32,
+            dwHighDateTime: (ticks >> 32) as u32,
+        };
+        let mut utc = SYSTEMTIME::default();
+        // SAFETY: both structures are locals that outlive the calls.
+        unsafe { FileTimeToSystemTime(&file_time, &mut utc) }.ok()?;
+        let mut local = SYSTEMTIME::default();
+        // SAFETY: same; `None` asks for the current zone.
+        unsafe { SystemTimeToTzSpecificLocalTime(None, &utc, &mut local) }.ok()?;
+        Some((
+            local.wYear,
+            local.wMonth as u8,
+            local.wDay as u8,
+            local.wHour as u8,
+            local.wMinute as u8,
+            local.wSecond as u8,
+        ))
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = unix;
+        None
+    }
+}
 
 /// A zip entry's `(year, month, day, hour, minute, second)` in the PC's own
 /// time zone, as seconds since 1970. 0 when the values are impossible (a
