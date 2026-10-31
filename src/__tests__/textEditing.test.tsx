@@ -207,7 +207,7 @@ describe("editing in the text viewer", () => {
     expect(confirm).toHaveLength(2);
     await act(async () => {
       confirm[1].click();
-      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
     await flush();
     await flush();
