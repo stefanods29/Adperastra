@@ -32,6 +32,8 @@ export interface TabStripProps {
   onClose: (id: string) => void;
   onNewTab: (kind: "help" | "settings" | "gallery") => void;
   onToggleCollapsed: () => void;
+  /** Tabs with unsaved changes show a dot (Step 06a). */
+  dirtyIds?: ReadonlySet<string>;
 }
 
 export default function TabStrip({
@@ -44,6 +46,7 @@ export default function TabStrip({
   onClose,
   onNewTab,
   onToggleCollapsed,
+  dirtyIds,
 }: TabStripProps) {
   const { t } = useTranslation();
   const vertical = side === "left" || side === "right";
@@ -84,6 +87,7 @@ export default function TabStrip({
         role="tab"
         aria-selected={tab.id === activeId}
         aria-label={label(tab)}
+        aria-description={dirtyIds?.has(tab.id) ? t("editor.unsaved") : undefined}
         title={title}
         tabIndex={tab.id === activeId ? 0 : -1}
         onKeyDown={(event) => {
@@ -109,6 +113,9 @@ export default function TabStrip({
           style={handler ? { color: `var(--adp-accent-${handler.accent})` } : undefined}
         />
         {iconOnly ? null : <span className="adp-tab-label">{label(tab)}</span>}
+        {tab.kind !== "explorer" && dirtyIds?.has(tab.id) ? (
+          <span className="adp-tab-dirty" aria-hidden="true" />
+        ) : null}
         {tab.kind !== "explorer" && !iconsOnly ? (
           // A mouse target only: a tab may not contain another control.
           // The keyboard closes the current tab with Ctrl+W.

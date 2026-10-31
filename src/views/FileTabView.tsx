@@ -12,7 +12,7 @@ import Slider from "../components/Slider";
 import Switch from "../components/Switch";
 import TextInput from "../components/TextInput";
 import { handlers } from "../handlers";
-import type { FileTabStatus, FindRequest } from "../handlers/types";
+import type { FileTabStatus, FindRequest, SaveHandle } from "../handlers/types";
 import { errorCode, errorText } from "../services/errors";
 import { displayPath, openItem, parentPathOf, pathSegments } from "../services/explorer";
 import { fileDetect, fileGrant, fileRevoke, fileUnblock, fileUrl, type FileTypeInfo } from "../services/files";
@@ -31,6 +31,14 @@ export interface FileTabViewProps {
   onOpenHelp: (slug: string) => void;
   /** Settings > Opening files > Protected view (Step 04c). */
   protectedViewEnabled: boolean;
+  /** The tab has unsaved changes (Step 06a). */
+  isDirty?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
+  registerSave?: (handle: SaveHandle | null) => void;
+  /** The file was saved under a new name (Step 06a). */
+  onPathChange?: (path: string) => void;
+  /** Asked before a reload throws unsaved changes away (Step 06a). */
+  onConfirmDiscard?: () => Promise<boolean>;
 }
 
 type Phase =
@@ -42,7 +50,21 @@ type Phase =
 /** One file tab (Step 04a): navigation row, the handler's view, and the
  * file tab's own status bar. Gets a file token when it mounts and gives it
  * back when it unmounts (plan/pitfalls.md P-28). */
-export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder, onClose, onViewState, onOpenHelp, protectedViewEnabled }: FileTabViewProps) {
+export default function FileTabView({
+  tab,
+  active,
+  onShowInFolder,
+  onOpenFolder,
+  onClose,
+  onViewState,
+  onOpenHelp,
+  protectedViewEnabled,
+  isDirty = false,
+  onDirtyChange,
+  registerSave,
+  onPathChange,
+  onConfirmDiscard,
+}: FileTabViewProps) {
   const { t } = useTranslation();
   const path = tab.path ?? "";
   const handler = tab.handler ? handlers.get(tab.handler) : undefined;
@@ -70,10 +92,25 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
     setReplaceRequest({ request: replaceCount.current, all });
   }, []);
 
-  // Ctrl+F focuses the search box; F3 / Shift+F3 find the next / previous match.
+  // F5 reloads (asking first when there are unsaved changes); Ctrl+F focuses
+  // the search box; F3 / Shift+F3 find the next / previous match.
+  const reload = useCallback(async () => {
+    if (isDirty && onConfirmDiscard) {
+      const proceed = await onConfirmDiscard();
+      if (!proceed) return;
+    }
+    setReloadKey((value) => value + 1);
+  }, [isDirty, onConfirmDiscard]);
+
   useEffect(() => {
-    if (!active || !canFind) return;
+    if (!active) return;
     const onKey = (event: KeyboardEvent) => {
+      if (event.key === "F5") {
+        event.preventDefault();
+        void reload();
+        return;
+      }
+      if (!canFind) return;
       if ((event.ctrlKey || event.metaKey) && !event.altKey && (event.key === "f" || event.key === "F")) {
         event.preventDefault();
         const input = searchRef.current?.querySelector("input");
@@ -90,7 +127,7 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, canFind, findAgain, supportsReplace]);
+  }, [active, canFind, findAgain, supportsReplace, reload]);
 
   // The replace row's text box takes the focus when it opens (Ctrl+H).
   useEffect(() => {
@@ -159,7 +196,7 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
     <div className="adp-filetab" hidden={!active}>
       <div className="adp-filetab-nav">
         <IconButton icon={ArrowUp} labelKey="fileTab.showInFolder" shortcut="Alt+Up" onClick={() => onShowInFolder(path)} />
-        <IconButton icon={RotateCw} labelKey="fileTab.reload" shortcut="F5" onClick={() => setReloadKey((value) => value + 1)} />
+        <IconButton icon={RotateCw} labelKey="fileTab.reload" shortcut="F5" onClick={() => void reload()} />
         <div className="adp-filetab-address">
           <Breadcrumb segments={segments} onNavigate={(id) => (id ? onOpenFolder(id) : undefined)} />
         </div>
@@ -268,6 +305,9 @@ export default function FileTabView({ tab, active, onShowInFolder, onOpenFolder,
               onOpenInWindowsApp={openInWindowsApp}
               find={viewFind}
               protectedView={protectedView}
+              onDirtyChange={onDirtyChange}
+              registerSave={registerSave}
+              onPathChange={onPathChange}
             />
           </Suspense>
         ) : null}
