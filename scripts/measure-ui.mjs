@@ -587,6 +587,45 @@ if (mode === "full") {
   await page(`${themeMode(rememberedMode)}; ${density("comfortable")}; true`);
   await page(`window.__m.openExplorer()`);
   await sleep(300);
+
+  // Step 06a: typing in the text editor and saving a small file.
+  try {
+    await openFolder(demo);
+    await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("notes.txt")))`);
+    await page(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`);
+    await page(`window.__m.waitFor(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); return c != null && c.getAttribute("contenteditable") === "true"; }, 15000)`);
+    results.push(
+      await measure(
+        "type a character in the text editor",
+        `document.querySelector(".adp-filetab:not([hidden]) .cm-content").focus()`,
+        `document.execCommand("insertText", false, "x")`,
+        `document.execCommand("undo")`,
+      ),
+    );
+    // The status bar starts with this word while there are unsaved changes
+    // (in whichever language the run uses).
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("insertText", false, "x"); return true; })()`);
+    const unsavedWord = await page(`(document.querySelector(".adp-filetab-status span")?.textContent ?? "")`);
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("undo"); window.__m.key(c, { key: "s", ctrlKey: true }); return true; })()`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tab-dirty") === null)`);
+    const saveValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      saveValues.push(
+        await page(`window.__m.timeUntil(
+          () => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("insertText", false, "x"); window.__m.key(c, { key: "s", ctrlKey: true }); },
+          () => (document.querySelector(".adp-filetab-status span")?.textContent ?? "") !== ${JSON.stringify(unsavedWord)})`),
+      );
+    }
+    const saving = { name: "save a small text file (Ctrl+S)", median_ms: Math.round(median(saveValues) * 10) / 10, max_ms: Math.round(Math.max(...saveValues) * 10) / 10, runs: saveValues.length };
+    console.log(`${saving.name}: median ${saving.median_ms} ms (max ${saving.max_ms})`);
+    results.push(saving);
+    // Undo every typed character and save once more: notes.txt is unchanged.
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); for (let i = 0; i < ${RUNS}; i += 1) window.__m.key(c, { key: "z", ctrlKey: true }); window.__m.key(c, { key: "s", ctrlKey: true }); return true; })()`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tab-dirty") === null)`);
+    await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+  } catch (error) {
+    console.log(`step 06a measurements failed: ${error.message ?? error}`);
+  }
 }
 
 if (outFile && results.length > 0) {
@@ -905,6 +944,30 @@ if (shotDir) {
   await shot("38-settings-search");
   await step(typeSearch(""));
   await step(`window.__m.openExplorer()`);
+
+  // Step 06a: editing, find and replace, and the unsaved question.
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("notes.txt")))`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); return c != null && c.getAttribute("contenteditable") === "true"; }, 15000)`);
+  await step(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); return document.execCommand("insertText", false, "Hello"); })()`);
+  await sleep(300);
+  await shot("39-text-editing");
+  await step(`window.__m.key(window, { key: "h", ctrlKey: true })`);
+  await step(`(() => {
+    const set = (input, value) => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    set(document.querySelector(".adp-filetab-search input"), "Hello");
+    set(document.querySelector(".adp-filetab-replace input"), "Hi");
+    return true;
+  })()`);
+  await sleep(300);
+  await shot("40-find-replace");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await sleep(400);
+  await shot("41-unsaved-dialog");
+  await step(`document.querySelectorAll("[role=dialog] .adp-dialog-actions .adp-btn")[1]?.click()`);
 }
 
 cdp.close();
