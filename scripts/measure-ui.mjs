@@ -627,6 +627,18 @@ if (mode === "full") {
     console.log(`step 06a measurements failed: ${error.message ?? error}`);
   }
 
+  // Step 06c: the New menu, now with the Markdown, CSV, Office and template
+  // entries. (Step 06b has no measurements in this baseline, so this sits
+  // after Step 06a's.)
+  results.push(
+    await measure(
+      "command bar New menu (with templates)",
+      `true`,
+      `window.__m.menuButton(0).click()`,
+      `window.__m.closeMenus(); true`,
+    ),
+  );
+
   // Step 06d: the archive tab. Opening a 10,000-entry zip, changing folders
   // and searching it; the archive tab is closed again after each open.
   const archiveRows = `[...document.querySelectorAll(".adp-filetab:not([hidden]) .adp-archive [role=option]")]`;
@@ -1029,6 +1041,15 @@ if (shotDir) {
   await sleep(400);
   await shot("41-unsaved-dialog");
   await step(`document.querySelectorAll("[role=dialog] .adp-dialog-actions .adp-btn")[1]?.click()`);
+  // Step 06c: the New menu and the template window. (Step 06b has no
+  // screenshots in this baseline, so these follow Step 06a's.)
+  await step(`window.__m.menuButton(0).click()`);
+  await sleep(200);
+  await shot("44-new-menu");
+  await step(`[...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].pop()?.click()`);
+  await sleep(600);
+  await shot("45-template-window");
+  await step(`window.__m.key(document, { key: "Escape" })`);
   // Step 06d: the archive tab, its search, and its Extract menu.
   await openFolder(join(big, "..", "archives"));
   await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("Project files.zip")))`);
