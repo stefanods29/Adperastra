@@ -332,6 +332,35 @@
     "extracted": "Extracted {name}",
     "extractedMany": "{count, plural, one {Extracted # archive} other {Extracted # archives}}"
   },
+  "versions": {
+    "title": "Version history of {name}",
+    "current": "Current file",
+    "reason": {
+      "save": "Saved in Adperastra",
+      "saveAs": "Replaced with Save as",
+      "restore": "Before restoring a version",
+      "other": "Changed by Adperastra"
+    },
+    "empty": "No versions yet. A version is kept each time Adperastra changes this file.",
+    "tooLarge": "Files over 256 MB don't get versions.",
+    "off": "Version history is off. Existing versions are kept.",
+    "changes": "Changes",
+    "thisVersion": "This version",
+    "noChanges": "This version is the same as the current file.",
+    "tooManyChanges": "There are too many changes to show. Open the version to look at it.",
+    "noPreview": "This kind of file can't be shown here. Open it to look at it.",
+    "unchanged": "{count, plural, one {# unchanged line} other {# unchanged lines}}",
+    "open": "Open",
+    "saveCopy": "Save a copy…",
+    "saveCopyTitle": "Save a copy of this version",
+    "restore": "Restore this version",
+    "restoreTitle": "Restore this version?",
+    "restoreBody": "The file goes back to the version from {date}. Its current content is kept in the history, so you can undo this.",
+    "restoreUnsaved": "Your unsaved changes in this tab will be lost.",
+    "restored": "Restored the version from {date}.",
+    "windowsVersions": "Previous versions from Windows…",
+    "allFiles": "All files"
+  },
   "commands": {
     "back": "Back",
     "forward": "Forward",

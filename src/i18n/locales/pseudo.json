@@ -332,6 +332,35 @@
     "extracted": "[Ëxträçtëd {name} ~~~~]",
     "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]"
   },
+  "versions": {
+    "title": "[Vërsïøñ hïstørÿ øf {name} ~~~~~~~]",
+    "current": "[Çürrëñt fïlë ~~~~~]",
+    "reason": {
+      "save": "[Sävëd ïñ Ädpërästrä ~~~~~~~]",
+      "saveAs": "[Rëpläçëd wïth Sävë äs ~~~~~~~~]",
+      "restore": "[Bëførë rëstørïñg ä vërsïøñ ~~~~~~~~~~]",
+      "other": "[Çhäñgëd bÿ Ädpërästrä ~~~~~~~~]"
+    },
+    "empty": "[Ñø vërsïøñs ÿët. Ä vërsïøñ ïs këpt ëäçh tïmë Ädpërästrä çhäñgës thïs fïlë. ~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "tooLarge": "[Fïlës øvër 256 MB døñ't gët vërsïøñs. ~~~~~~~~~~~]",
+    "off": "[Vërsïøñ hïstørÿ ïs øff. Ëxïstïñg vërsïøñs ärë këpt. ~~~~~~~~~~~~~~~~~]",
+    "changes": "[Çhäñgës ~~~]",
+    "thisVersion": "[Thïs vërsïøñ ~~~~~]",
+    "noChanges": "[Thïs vërsïøñ ïs thë sämë äs thë çürrëñt fïlë. ~~~~~~~~~~~~~~~]",
+    "tooManyChanges": "[Thërë ärë tøø mäñÿ çhäñgës tø shøw. Øpëñ thë vërsïøñ tø løøk ät ït. ~~~~~~~~~~~~~~~~~~~~~]",
+    "noPreview": "[Thïs kïñd øf fïlë çäñ't bë shøwñ hërë. Øpëñ ït tø løøk ät ït. ~~~~~~~~~~~~~~~~~~]",
+    "unchanged": "[{count, plural, one {# üñçhäñgëd lïñë} other {# üñçhäñgëd lïñës}} ~~~~~~]",
+    "open": "[Øpëñ ~~]",
+    "saveCopy": "[Sävë ä çøpÿ… ~~~~]",
+    "saveCopyTitle": "[Sävë ä çøpÿ øf thïs vërsïøñ ~~~~~~~~~]",
+    "restore": "[Rëstørë thïs vërsïøñ ~~~~~~~~]",
+    "restoreTitle": "[Rëstørë thïs vërsïøñ? ~~~~~~~~]",
+    "restoreBody": "[Thë fïlë gøës bäçk tø thë vërsïøñ frøm {date}. Ïts çürrëñt çøñtëñt ïs këpt ïñ thë hïstørÿ, sø ÿøü çäñ üñdø thïs. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "restoreUnsaved": "[Ÿøür üñsävëd çhäñgës ïñ thïs täb wïll bë løst. ~~~~~~~~~~~~~~~]",
+    "restored": "[Rëstørëd thë vërsïøñ frøm {date}. ~~~~~~~~~]",
+    "windowsVersions": "[Prëvïøüs vërsïøñs frøm Wïñdøws… ~~~~~~~~~~~]",
+    "allFiles": "[Äll fïlës ~~~~]"
+  },
   "commands": {
     "back": "[Bäçk ~~]",
     "forward": "[Førwärd ~~~]",

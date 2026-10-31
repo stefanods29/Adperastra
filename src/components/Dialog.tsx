@@ -6,9 +6,11 @@ export interface DialogProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Extra class on the dialog box (Step 06b widens the version history). */
+  className?: string;
 }
 
-export default function Dialog({ title, onClose, children }: DialogProps) {
+export default function Dialog({ title, onClose, children, className }: DialogProps) {
   const { t } = useTranslation();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -25,7 +27,12 @@ export default function Dialog({ title, onClose, children }: DialogProps) {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="adp-dialog" role="dialog" aria-modal="true" aria-label={title}>
+      <div
+        className={["adp-dialog", className].filter(Boolean).join(" ")}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
         <div className="adp-dialog-header">
           <span className="adp-dialog-title">{title}</span>
           <button

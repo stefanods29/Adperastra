@@ -332,6 +332,35 @@
     "extracted": "Se extrajo {name}",
     "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}"
   },
+  "versions": {
+    "title": "Historial de versiones de {name}",
+    "current": "Archivo actual",
+    "reason": {
+      "save": "Guardado en Adperastra",
+      "saveAs": "Reemplazado con Guardar como",
+      "restore": "Antes de restaurar una versión",
+      "other": "Cambiado por Adperastra"
+    },
+    "empty": "Todavía no hay versiones. Se conserva una versión cada vez que Adperastra cambia este archivo.",
+    "tooLarge": "Los archivos de más de 256 MB no tienen versiones.",
+    "off": "El historial de versiones está desactivado. Las versiones existentes se conservan.",
+    "changes": "Cambios",
+    "thisVersion": "Esta versión",
+    "noChanges": "Esta versión es igual al archivo actual.",
+    "tooManyChanges": "Hay demasiados cambios para mostrarlos. Abre la versión para verla.",
+    "noPreview": "Este tipo de archivo no se puede mostrar aquí. Ábrelo para verlo.",
+    "unchanged": "{count, plural, one {# línea sin cambios} other {# líneas sin cambios}}",
+    "open": "Abrir",
+    "saveCopy": "Guardar una copia…",
+    "saveCopyTitle": "Guardar una copia de esta versión",
+    "restore": "Restaurar esta versión",
+    "restoreTitle": "¿Restaurar esta versión?",
+    "restoreBody": "El archivo vuelve a la versión del {date}. Su contenido actual se conserva en el historial, así que puedes deshacerlo.",
+    "restoreUnsaved": "Se perderán los cambios sin guardar de esta pestaña.",
+    "restored": "Se restauró la versión del {date}.",
+    "windowsVersions": "Versiones anteriores de Windows…",
+    "allFiles": "Todos los archivos"
+  },
   "commands": {
     "back": "Atrás",
     "forward": "Adelante",
