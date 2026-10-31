@@ -35,6 +35,56 @@ Contracts are the plug-in points every feature builds on. They were designed in 
 | 29-36 | Index, search modes, tags, packs, engine adapters, AI runtime, AI evaluation, assistant tools | (outline) | 11a-17a | See `ARCHITECTURE.md` section 3 for the original sketches |
 | 37 | Home and navigation-pane sections | (outline) | 09b, 10e, 11b | |
 
+## Version-history safety and bounded reads (contract 19, review of 06b)
+
+Store operations use an OS lock, with a borrowed `VersionSession` for a whole
+read/snapshot/restore sequence. A live `VersionStore` does not itself retain the
+lock: the standalone snapshot API remains usable while a store object exists.
+Pending copies become importable only after a complete, flushed copy and its
+expected length are published. Pending copies have a separate fixed 1 GiB
+budget; exhaustion stops the user write with a snapshot error, never the
+skippable oversized-source error. Pending publication has its own OS lock so
+small saves do not wait for background compression. Lock order is store then
+pending. Version identifiers are never reused after
+deletion; restore binds an identifier to its original normalized file path.
+Restore preserves its exact bounded undo snapshot even when ordinary version
+history is off; an existing file too large to preserve is refused safely.
+Delete-all includes pending copies under the same lock.
+
+Extracted open copies have an explicit 1 GiB cache budget and bounded
+decompression. `stored_bytes` retains its compressed-blob meaning; the additional
+`disk_bytes` operation measures physical store usage for the Settings command.
+Editor dialogs add optional `allowUndo` and may await `onRestored`; previews use
+a 1 MiB range/stream cap and revoke grants on failure or cancellation.
+
+History listing pages contain at most 2,000 rows. `versions_list` accepts an
+optional `before_id` cursor, and `VersionList` adds optional `next_before_id`.
+The cursor names the last row on the page; the next page follows the existing
+date/id sort order. The window offers a translated Load more button and never
+silently presents a truncated page as the entire history.
+
+Saving a version copy to an existing destination remains unavailable under the
+approved Replace contract below (`versions.replace_unavailable`). A new copy
+is fully staged and flushed before atomic publication without replacement.
+
+## Template creation and diagnostics (contracts 8 and 10, review of 06c)
+
+The original `template_create` remains available. The UI uses the additive
+`template_create_start(request_id, request)` command and shared job polling and
+cancellation. `TemplateCreateRequest` contains `template_path`, `dest_dir` and
+`name` (snake_case). The service keeps its `Promise<string>` result and adds
+optional `TemplateCreateOptions` with `signal` and `onProgress`.
+
+The same opened source handle is authorized and copied. The destination and
+allowed roots remain pinned; temporary files are exclusively created, flushed,
+published without replacement and cleaned up through their owned handles. Copy
+work reports bytes and checks cancellation between 1 MiB chunks and before
+publication. Numbered destination names start at one and have a bounded search.
+
+`TemplateList` adds optional/defaulted `user_error` and `user_skipped` diagnostics.
+The picker reports errors and incomplete listings, follows keyboard focus,
+awaits successful file creation and folder persistence, and cancels on unmount.
+
 ## Rules for every contract
 
 1. A feature registers itself (a handler in `src/handlers/index.ts`, a command in its commands factory, a converter in the converter registry). It does not edit the code of other features.

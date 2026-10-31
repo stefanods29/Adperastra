@@ -31,16 +31,17 @@ Every time the app is about to change a file (today: saving in the text and Mark
 ## Decisions (already made)
 
 - D1. A new crate `crates/version-store` (contract 19) holds the store; it uses rusqlite 0.41 (feature `bundled`, MIT, needs Rust 1.89), blake3 1.8 (CC0-1.0 OR Apache-2.0) and zstd 0.14 (BSD-3-Clause), all checked on docs.rs at these versions. The store lives in `<data>/versions/`: `index.sqlite3`, `blobs/<first two hex digits>/<hash>.zst`, `pending/` (copies waiting to be stored) and `open/` (versions extracted to look at).
-- D2. **Snapshot without waiting**: `versions::before_modify` copies the current file into `pending/` (a plain copy plus a small JSON sidecar) and wakes a background worker; it does not hash or compress. A missing file or a folder is skipped; a file over 256 MiB is skipped (its change goes on; a line in the history window says large files are not kept). If the copy fails, the change stops (`<area>.version_failed`): the old content is never lost silently.
+- D2. **Snapshot without compression**: `versions::before_modify` holds `pending.lock`, opens the current file against writes and renames, copies at most 256 MiB into an exclusively created pending staging file, checks the source metadata, flushes it, publishes the raw copy, then atomically publishes a JSON completion record with its exact `size`. Only then notify the worker. Missing files and folders are skipped; an oversized source is skipped. Pending data is capped at 1 GiB; a full queue or any copy error stops the change (`<area>.version_failed`) and preserves the original. This path never waits for background hashing or compression under `store.lock`.
 - D3. **Background worker** (one thread, below-normal priority, R-BG-1): for each pending copy, hash it (BLAKE3 of the original bytes), store it compressed (zstd level 3) unless that hash is already stored, add a version row, delete the pending files; then trim to the limits. It also runs once at start (copies left by a crash are stored then). Background work never touches user files (R-SAFE-7).
 - D4. **Deduplication**: identical content is stored once (a reference count per blob); a snapshot equal to the file's newest version adds no row.
 - D5. **Limits** (settings schema 10, section `versions`): `enabled` (on), `keep_days` (30; 7, 30, 90 or 365), `max_mb` (1024; 256, 512, 1024, 2048 or 5120). Trimming deletes versions older than `keep_days`, then the oldest versions overall until the stored size is within `max_mb`. Turning versions off stops new snapshots and keeps the existing ones.
 - D6. **Looking at a version**: Rust extracts it to `open/<id>-<file name>` with the Read-only attribute; the UI reads it through the existing file access (`fileGrant`, `fileUrl`) and decodes text with Step 04b's encoding detection, so no file bytes travel as JSON (P-10). Text-like files up to 1 MiB show **Changes** (a line diff with the current file) and **This version**; other files offer **Open** (the read-only copy in a tab; the editor treats it as read-only, Step 06a D1).
-- D7. **Restore**: the current content is snapshotted first (reason `restore`), then the version's content replaces the file through `fs_service::replace_contents` (partial file, then replace). Rust returns the id of that snapshot, so the restore is undoable: in the Explorer through a new undo action `restoreVersion` (contract 11) with a toast; in an editor tab, through an Undo button in the window, after which the editor reloads the file.
-- D8. **Save a copy**: the Windows save dialog (shared helpers of Step 06a); an existing chosen file goes to the Recycle Bin first (R-SAFE-2); then the version is written as a new file (partial file, then rename).
+- D7. **Restore**: in one exclusive store session, verify that the selected ID belongs to the requested path, stage and flush its bytes in an exclusively owned file, and snapshot the current file (reason `restore`) even when ordinary history is off. Return that snapshot's exact ID, including deduplication. A missing, unreadable or oversized current file fails untouched. Hold a read guard through staging, snapshot and identity revalidation; then use the existing explicit content-save `ReplaceFileW` contract. The close-to-replace path race remains a limitation of that contract and must be reported, not described as an atomic identity check. Explorer uses `restoreVersion` Undo; editor dialogs expose Undo and await the disk reload.
+- D8. **Save a copy**: use Windows' save dialog, exclusively stage and flush bytes, and publish through the owned file handle with replacement disabled. Existing destinations fail with `versions.replace_unavailable`; do not recycle them. Identity-bound recycling is deferred by the owner's KI-030 decision. A file arriving during publication remains untouched.
 - D9. **Entry points**: the Explorer command **Version history…** (right-click menu of one file, after Properties; also the Details pane), and the text and Markdown ribbons' File group. The window is a dialog over the place it was opened from.
 - D10. **Line diff**: our own Myers diff on lines in TypeScript (no library), stopped after 4,000 changed lines ("too many changes to show"); unchanged runs collapse to 3 lines of context around each change.
-- D11. Settings > **Version history** (new section, after Opening files): the switch, the two limits, the store's current size, and **Delete all versions…** (asks first and says it cannot be undone; it deletes only the app's stored copies, never a user file).
+- D11. Settings > **Version history** (new section, after Opening files): the switch, the two limits, the store's current disk size (including index, pending and extracted files), and **Delete all versions…** (asks first; deletes stored copies and pending data under both locks, never a user file). Extracted open copies have a separate 1 GiB cap; evict only owned old copies, and fail rather than exceed the cap if copies in use prevent reclamation.
+- D12. All store/index/blob operations use a per-operation cross-process `store.lock`; pending publication/budget uses `pending.lock`. Composite restore holds an explicit `VersionSession`. Never hold locks for an opened store's lifetime. Lock order is store then pending. Version IDs use a durable `meta.next_version_id` high-water mark that survives trim and deletion. List responses contain at most 2,000 rows with a same-file date/ID cursor and **Load more**.
 
 ## Data shapes
 
@@ -55,25 +56,26 @@ Every time the app is about to change a file (today: saving in the text and Mark
 | `blobs` | `hash TEXT PRIMARY KEY` (64 hex digits), `stored_size INTEGER NOT NULL` (compressed bytes), `refs INTEGER NOT NULL` |
 | `versions` | `id INTEGER PRIMARY KEY`, `file_id INTEGER NOT NULL`, `created_unix INTEGER NOT NULL`, `reason TEXT NOT NULL`, `size INTEGER NOT NULL` (original bytes), `hash TEXT NOT NULL`, `file_modified_unix INTEGER NOT NULL`; index `versions_by_file` on (`file_id`, `created_unix`) |
 
-`pending/<name>.raw` (the copy) and `pending/<name>.json` (sidecar: `path`, `reason`, `created_unix`, `file_modified_unix`), where `<name>` = the snapshot time in nanoseconds since 1970 (decimal) + `-` + a process-wide counter. The sidecar is written first (crash-safe), the copy second; the importer ignores a sidecar without its copy for 60 s and then deletes it.
+`pending/<name>.raw` (the flushed copy) and `pending/<name>.json` (completion record: `path`, `reason`, `created_unix`, `file_modified_unix`, required `size`), where `<name>` = time in nanoseconds plus a process-wide counter. Stage and flush the raw bytes first, then publish the completion record. Import only pairs whose sizes match and are at most 256 MiB. Legacy records without completion evidence remain available for recovery and are never silently accepted as complete. Clean abandoned staging/orphan files older than 60 seconds while holding the pending lock.
 
 ### `version-store` crate API (`crates/version-store/src/lib.rs`, re-exported)
 
 | Item | Kind | Behavior |
 |---|---|---|
 | `MAX_SNAPSHOT_BYTES` | `u64` | 268,435,456 |
+| `MAX_PENDING_BYTES`, `MAX_OPEN_BYTES` | `u64` | 1,073,741,824 each |
 | `STORE_SCHEMA` | `u32` | 1 |
 | `StoreError` | enum (`Debug`, `PartialEq`, `Eq`) | `Sql(String)`, `Io(String)`, `NotFound`, `TooLarge` |
 | `VersionInfo` | struct (`Debug`, `Clone`, `PartialEq`, `Eq`, `Serialize`, `Deserialize`) | `id: i64`, `created_unix: u64`, `reason: String`, `size: u64`, `file_modified_unix: u64` |
 | `path_key` | fn (`path: &str`) returns `String` | the display path (no `\\?\`), trailing backslashes removed, lower case |
-| `snapshot_to_pending` | fn (`dir: &Path`, `path: &Path`, `reason: &str`, `now_unix: u64`) returns `Result<bool, StoreError>` | false (nothing done) when `path` is missing or not a regular file; `TooLarge` when it is over `MAX_SNAPSHOT_BYTES`; otherwise write the sidecar (with `crate`'s own atomic write: partial then rename) and then copy the file to the `.raw` name (`std::fs::copy`), and return true. A failed copy removes both pending files and gives `Io` |
+| `snapshot_to_pending` | fn (`dir: &Path`, `path: &Path`, `reason: &str`, `now_unix: u64`) returns `Result<bool, StoreError>` | false for a missing/non-file source; `TooLarge` above 256 MiB; otherwise publish a flushed, consistent raw copy then its required-size completion record under the pending lock. A 1 GiB pending quota failure is `Io`, never skippable `TooLarge` |
 | `VersionStore::open` | (`dir: &Path`) returns `Result<VersionStore, StoreError>` | create `dir`, `blobs`, `pending`, `open`; open `index.sqlite3` (`Connection::open`), set `journal_mode` to WAL (`pragma_update`), create the tables and the index when missing (`execute_batch`), insert `schema_version` when missing |
-| `VersionStore::import_pending` | (`&mut self`, `now_unix`) returns `Result<usize, StoreError>` | for each `.json` sidecar in `pending/` (oldest name first) whose `.raw` exists: hash the copy (a `blake3::Hasher` fed with `std::io::copy`; the hex text is `finalize().to_string()`); when `blobs` has no row for the hash: compress the copy with `zstd::stream::copy_encode` (level 3) into `blobs/<aa>/<hash>.zst.partial`, rename it to `.zst`, insert the blob with `refs` 0; in one transaction: find or insert the `files` row (update its `path`), and unless the file's newest version has the same hash, insert the version and add 1 to the blob's `refs`; then delete both pending files. A sidecar without a copy older than 60 s is deleted. Returns how many versions were added |
+| `VersionStore::import_pending` | (`&mut self`, `now_unix`) returns `Result<usize, StoreError>` | Under the store lock, scan completed pending records under the short pending lock, then hash/compress/import outside that pending lock. Accept exact-size complete pairs only. Transactionally allocate a never-reused ID, deduplicate and update refs; remove only imported pending pairs. Return inserted count |
 | `VersionStore::list` | (`&self`, `path: &str`) returns `Result<Vec<VersionInfo>, StoreError>` | the file's versions, newest first (none for an unknown file) |
-| `VersionStore::extract` | (`&self`, `id: i64`, `dest: &Path`) returns `Result<(), StoreError>` | `NotFound` for an unknown id; decompress the blob with `zstd::stream::copy_decode` into `dest` + `.partial`, then rename to `dest` |
-| `VersionStore::read_bytes` | (`&self`, `id`) returns `Result<Vec<u8>, StoreError>` | `zstd::decode_all` of the blob |
+| `VersionStore::extract` | (`&self`, `id: i64`, `dest: &Path`) returns `Result<(), StoreError>` | Under the store lock, stream-decompress to exclusive staging, bound output to the recorded size and 256 MiB, verify BLAKE3, flush, publish without replacing |
+| `VersionStore::read_bytes` | (`&self`, `id`) returns `Result<Vec<u8>, StoreError>` | Bound decompression to the recorded size and 256 MiB, set a bounded zstd window, verify size and BLAKE3 under the store lock |
 | `VersionStore::trim` | (`&mut self`, `keep_days: u32`, `max_bytes: u64`, `now_unix: u64`) returns `Result<usize, StoreError>` | delete versions with `created_unix` < `now_unix - keep_days × 86,400`; then, while the sum of `stored_size` of blobs with `refs` > 0 is above `max_bytes`, delete the oldest version overall; each deleted version lowers its blob's `refs`; blobs at 0 are deleted with their `.zst` file; returns how many versions were deleted |
-| `VersionStore::delete_all` | (`&mut self`) | delete every row of `versions`, `blobs` and `files`, and every file under `blobs/` and `open/` |
+| `VersionStore::delete_all` | (`&mut self`) | Under store then pending locks, remove all version/file/blob rows, blobs, owned open copies and pending data. Preserve the durable next-ID high-water mark |
 | `VersionStore::stored_bytes` | (`&self`) returns `Result<u64, StoreError>` | the sum of `stored_size` of all blobs |
 
 Use the APIs exactly as verified for these versions: `Connection::open`, `execute`, `execute_batch`, `query_row` (with `OptionalExtension::optional`), `prepare` + `Statement::query_map` (the statement is `mut`), `transaction` (needs `&mut`), `pragma_update`, `params!`; `blake3::Hasher` implements `std::io::Write`; `Hash::to_hex` returns a fixed-size string, so use `to_string()`; `zstd::stream::copy_encode(source, destination, level)` and `copy_decode(source, destination)`.
@@ -242,16 +244,16 @@ This is `plan/recipes/add-settings-field.md` with N = 10 and a new section `vers
 3. `before_modify(app, path, reason)`: when `versions.enabled` is off in the settings, `Ok(())`; otherwise `version_store::snapshot_to_pending(<data>/versions, path, reason_text(reason), unix_now())`: `Ok(_)` and `Err(TooLarge)` give `Ok(())` (after `notify` when a copy was made), other errors give `versions.snapshot_failed`.
 4. Pure `check_id(id: i64) -> Result<(), String>`: above 0, else `versions.bad_request`.
 5. Commands (async, `ensure_main`, arguments checked first, work in `spawn_blocking`, each opens its own `VersionStore`, which first imports pending copies so the list is complete):
-   - `versions_list(path)`: `validate_absolute_path`; returns the list and `too_large` (the file's size over `MAX_SNAPSHOT_BYTES`).
-   - `versions_extract(id, file_name)`: `check_id`; the file name at most 255 characters and passing `fs_service::validate_new_name`; destination `<data>/versions/open/<id>-<file_name>`; when it already exists, return it as is; otherwise `extract`, then set the Read-only attribute on it; return its path.
-   - `versions_restore(path, id)`: `validate_absolute_path`, `check_id`; read the version's bytes (`NotFound` gives `versions.not_found`); `before_modify(app, path, Restore)` (an error stops); import pending at once so the snapshot has an id: `previous_id` = the newest version id of the file after the import when its reason is `restore`, else `None`; `fs_service::replace_contents(path, bytes, None)` (errors: `ReadOnly` gives `versions.read_only`, `InUse` gives `versions.in_use`, others `versions.other`); return `RestoreResult`.
-   - `versions_save_copy(id, title, file_name, filter_name)`: `check_id`; dialog texts checked with `crate::text_save::check_dialog_texts` (make that function `pub(crate)` if it is private; its error codes stay `textSave.bad_request`, so map them to `versions.bad_request`); owner window handle taken before spawning; `file_dialogs::pick_save_path` (pattern `*.*`, default extension from the file name); `None` returns `Ok(None)`; read the bytes; `fs_service::recycle_target` (`versions.recycle_failed`, nothing written); `fs_service::write_new_file`; return the path without `\\?\`.
-   - `versions_delete_all()` and `versions_store_size()`.
+   - `versions_list(path, before_id?)`: validate the path and optional positive cursor. Import pending; fetch at most 2,001 rows, return at most 2,000 plus optional `next_before_id` and `too_large`. Cursor must belong to this file and uses descending date/ID order. TypeScript `versionsList(path, beforeId?)` sends `beforeId: null` for the first page.
+   - `versions_extract(id, file_name)`: validate ID/name; use `extract_open`, reclaiming old owned copies within the 1 GiB cap before extracting. Refuse links/non-owned destinations. Return a read-only display path.
+   - `versions_restore(path, id)`: validate arguments; use `version_files::restore_version` under a borrowed store session. Verify ID/path binding; exclusively stage bytes, hold the target guard, keep the exact current snapshot even with history disabled, revalidate and replace through the explicit content-save contract. Return `Some(previous_id)` on success, never guess by the newest row reason.
+   - `versions_save_copy(id, title, file_name, filter_name)`: validate arguments and dialog texts, pick a path, return `None` on cancellation. Existing paths fail `versions.replace_unavailable`. Use `version_files::save_copy` with exclusive staging and no-replace handle publication. Never call `recycle_target` here.
+   - `versions_delete_all()` clears pending data as well as the index/blobs/open cache. `versions_store_size()` returns `disk_bytes()` (all store files), retaining the pure compressed `stored_bytes()` API unchanged.
 6. Register the six commands and add them to `ALLOWED`.
 
 **Do this (`text_save.rs`):** the call becomes `crate::versions::before_modify(&app, path, reason)` (take the app handle from the window before spawning), and any error from it becomes `textSave.version_failed`.
 
-**Do this (TypeScript, `src/services/versions.ts`):** interfaces `VersionInfo`, `VersionList`, `RestoreResult` (snake_case; `RestoreResult.saved` is Step 06a's `SavedFile`) and functions `versionsList(path)`, `versionsExtract(id, fileName)`, `versionsRestore(path, id)`, `versionsSaveCopy(id, title, fileName, filterName)`, `versionsDeleteAll()`, `versionsStoreSize()`; outside Tauri: an empty list (`too_large` false), `null` for save copy, 0 for the size; the others reject with `versions.other`.
+**Do this (TypeScript, `src/services/versions.ts`):** interfaces `VersionInfo`, `VersionList`, `RestoreResult` (snake_case; `RestoreResult.saved` is Step 06a's `SavedFile`; `VersionList.next_before_id?: number | null` is optional) and functions `versionsList(path, beforeId?)`, `versionsExtract(id, fileName)`, `versionsRestore(path, id)`, `versionsSaveCopy(id, title, fileName, filterName)`, `versionsDeleteAll()`, `versionsStoreSize()`; outside Tauri: an empty list (`too_large` false), `null` for save copy, 0 for the size; the others reject with `versions.other`.
 
 **Tests:**
 - Rust (bottom of `versions.rs`): `check_id_refuses_zero_and_negative` (1 ok; 0 and -5 give `versions.bad_request`); `reasons_have_stable_names` (`Save`, `SaveAs`, `Restore` give `save`, `saveAs`, `restore`).
@@ -296,6 +298,8 @@ This is `plan/recipes/add-settings-field.md` with N = 10 and a new section `vers
 
 ### T7 - The Version history window
 
+Review module split: `readVersionText.ts` owns bounded reads; `useVersionRestore.ts` owns serialized restore/Undo, keeps the exact recovery ID before awaiting callbacks, reports the successful disk change even if a later refresh fails, and awaits callbacks. The Rust store is split into `cache`, `coordination`, `disk`, `extraction`, `listing`, `pending`, `retention`, `session`, and `store`; `version_files.rs` owns user-file staging. `fs-service::clear_owned_readonly` changes Windows cache attributes through a pinned handle without suppressing lints. No new external library is needed.
+
 **Files:** create `src/versions/VersionHistoryDialog.tsx`, `src/styles/versions.css`, `src/__tests__/versionHistoryDialog.test.tsx`; modify `src/main.tsx` (import `./styles/versions.css` after `./styles/layout.css`), `src/i18n/locales/en.json`, `src/i18n/locales/es.json` (then `npm run i18n:pseudo`).
 
 **Translation keys:** every `versions.*` key.
@@ -310,22 +314,23 @@ This is `plan/recipes/add-settings-field.md` with N = 10 and a new section `vers
 | `versionsEnabled` | boolean | settings' `versions.enabled` |
 | `hasUnsavedChanges` | boolean (optional) | opened from an editor with unsaved changes |
 | `onOpenCopy` | function (`path: string`) | opens an extracted copy (in a tab) |
-| `onRestored` | function (`result: RestoreResult`, `version: VersionInfo`) | after a restore |
+| `onRestored` | function (`result: RestoreResult`, `version: VersionInfo`) returning void or Promise<void> | await editor reload after restore |
+| `allowUndo` | optional boolean, default false | editor dialogs enable their local Undo button |
 | `onShowWindowsVersions` | function | opens Windows Properties |
 | `onClose` | function | |
 
 Behavior:
-1. On mount: `versionsList(path)`; a skeleton (rows, 4) while waiting more than 0.1 s; errors show `errorText(t, error, "versions")`.
+1. On mount: `versionsList(path)`; store optional `next_before_id`, append older same-file pages through Load more without dropping the first page; a skeleton (rows, 4) while waiting more than 0.1 s; errors show `errorText(t, error, "versions")`.
 2. Layout (inside `Dialog` with the title `versions.title` and `name`; the dialog gets the extra class `adp-versions-dialog`): a `div.adp-versions` with a list on the left (`ul` with `role="listbox"`, `aria-label` = the title) and a detail area on the right.
    - The list: first a non-selectable row `versions.current` with `formatDate(currentModified)` and `formatSize(currentSize)`; then one `li` (`role="option"`, `aria-selected`) per version: the date (`formatDate(created_unix)`), the size, and the reason text (`versions.reason.<reason>`, `versions.reason.other` for unknown reasons). Arrow keys move the selection; the first version starts selected.
    - Notes under the list: `versions.empty` when there are none; `versions.tooLarge` when `too_large`; `versions.off` when `versionsEnabled` is false.
 3. Detail area for the selected version:
-   - When the file's extension is one of the text handler's or the Markdown handler's extensions and the version's size and `currentSize` are both at most 1,048,576: a segmented pair of buttons `versions.changes` / `versions.thisVersion` (`aria-pressed`). The texts: `versionsExtract(id, name)` gives a path; `fileGrant` it, `fetch` its `fileUrl`, decode with `detectEncoding` + `decodeText`, `fileRevoke`; the current file the same way from `path`. Changes: `withContext(diffLines(splitLines(old), splitLines(current)))` drawn as rows (`div.adp-diff-row` with `adp-diff-row--added`, `--removed`, `--same`, `--skip`; `skip` rows show `versions.unchanged` with `count`); `null` shows `versions.tooManyChanges`; no rows shows `versions.noChanges`. This version: the old text in a `pre` with class `adp-versions-text`.
+   - When the file's extension is one of the text handler's or the Markdown handler's extensions and the version's size and `currentSize` are both at most 1,048,576: a segmented pair of buttons `versions.changes` / `versions.thisVersion` (`aria-pressed`). The texts: `versionsExtract(id, name)` gives a path; `readVersionText` grants it, fetches a bounded Range through `fileUrl`, streams at most 1 MiB, decodes with `detectEncoding` + `decodeText`, and revokes the grant even on failure. The current file uses the same bounded reader. Abort pending reads on selection change/unmount; stale metadata never authorizes an unbounded fetch. Changes: `withContext(diffLines(splitLines(old), splitLines(current)))` drawn as rows (`div.adp-diff-row` with `adp-diff-row--added`, `--removed`, `--same`, `--skip`; `skip` rows show `versions.unchanged` with `count`); `null` shows `versions.tooManyChanges`; no rows shows `versions.noChanges`. This version: the old text in a `pre` with class `adp-versions-text`.
    - Otherwise: the note `versions.noPreview`.
    - Buttons (`div.adp-dialog-actions`): `versions.open` (extract, then `onOpenCopy(extracted path)`), `versions.saveCopy` (`versionsSaveCopy(id, t("versions.saveCopyTitle"), name, t("versions.allFiles"))`; a path shows nothing more, `null` nothing), `versions.restore` (primary; opens the confirmation), and at the left `versions.windowsVersions` (subtle; calls `onShowWindowsVersions`).
 4. Restore confirmation (a second `Dialog`): title `versions.restoreTitle`, the text `versions.restoreBody` with `date`, plus `versions.restoreUnsaved` when `hasUnsavedChanges`; buttons `versions.restore` (primary) and `common.cancel`. Confirming calls `versionsRestore(path, id)`; success calls `onRestored(result, version)`, reloads the list and shows `versions.restored` with `date` in a `p` with `role="status"`; failure shows the error text.
 
-**Do this (`versions.css`):** comment "Version history window (Step 06b). Colors only through tokens."; `.adp-versions-dialog` (width min(880 px, 92 vw)); `.adp-versions` (grid with columns 280 px and the rest; gap `--adp-space-5`; height min(520 px, 70 vh)); the list (vertical overflow auto; border 1 px `--adp-color-border-panel`; corner radius `--adp-radius-md`); list rows (padding `--adp-space-2` `--adp-space-4`; flex column; gap 2 px; selected: background `--adp-color-surface-selected-row`; secondary texts `--adp-color-text-secondary`, `--adp-font-small`); the detail area (flex column; min-height 0; gap `--adp-space-3`); `.adp-diff-row` (monospace like the editor; white-space pre-wrap; padding 0 `--adp-space-3`; font size `--adp-font-small`); `--added` (background `--adp-accent-light-excel`, and a left border 3 px `--adp-accent-excel`); `--removed` (background `--adp-color-status-caution-background`, left border 3 px `--adp-accent-pdf`, text decoration line-through); `--skip` (text `--adp-color-text-tertiary`, italic); `.adp-versions-text` (the same monospace; overflow auto; margin 0).
+**Do this (`versions.css`):** comment "Version history window (Step 06b). Colors only through tokens."; `.adp-versions-dialog` (width min(880 px, 92 vw)); `.adp-versions` (grid with columns 280 px and the rest; gap `--adp-space-5`; height min(520 px, 70 vh)); the list (vertical overflow auto; border 1 px `--adp-color-border-panel`; corner radius `--adp-radius-md`); list rows (padding `--adp-space-2` `--adp-space-4`; flex column; gap 2 px; selected: background `--adp-color-surface-selected-row`; secondary texts `--adp-color-text-secondary`, `--adp-font-small`); the detail area (flex column; min-height 0; gap `--adp-space-3`); `.adp-diff-row` (monospace like the editor; white-space pre-wrap; padding 0 `--adp-space-3`; font size `--adp-font-small`); `--added` (background mixed from 15% `--adp-accent-excel` and 85% `--adp-color-surface-window`, primary text color, and a left border 3 px `--adp-accent-excel` (the old fixed pale background failed dark-theme contrast)); `--removed` (background `--adp-color-status-caution-background`, left border 3 px `--adp-accent-pdf`, text decoration line-through); `--skip` (text `--adp-color-text-tertiary`, italic); `.adp-versions-text` (the same monospace; overflow auto; margin 0).
 
 **Tests** (`src/__tests__/versionHistoryDialog.test.tsx`; mock `../services/versions` and `../services/files`; `fetch` returns per URL the text the test sets):
 
@@ -387,10 +392,12 @@ Behavior:
 
 ### T11 - Speed and screenshots
 
-**Files:** modify `scripts/measure-ui.mjs`.
+**Files:** modify `scripts/measure-ui.mjs`, `scripts/measure-ui.ps1`; add `scripts/check-06bc-ui.mjs`.
+
+For the local batch review use `measure-ui.ps1 -Review06bc`: fresh retained data/fixtures, only 06b/06c interactions, explicit pass/failure JSON, English light/Spanish dark/pseudo screenshots. It never invokes legacy permanent cleanup. This scoped run does not replace the earlier-step regression speed suite or owner checks.
 
 **Do this:**
-1. The step value `06a` becomes `06b`.
+1. The step ID comes from the ninth argument, filled by `measure-ui.ps1 -Step`; do not hard-code it in the JavaScript runner.
 2. In the full mode, after Step 06a's measurements: a loop of `RUNS` runs like "details pane filled": in each run open `notes.txt` (double-click, wait until editable), type one character, then `timeUntil` sends Ctrl+S and is done when the status bar no longer shows `editor.unsaved` — named `save a small text file with version history (Ctrl+S)`; after the loop, undo the typing, save once, close the tab. Then `measure` named `open the version history (right-click menu)`: setup selects the `notes.txt` row and opens its right-click menu; action clicks the menu item whose text is the translated `commands.versionHistory`; cleanup presses Escape.
 3. Screenshots, after Step 06a's last action: select `notes.txt`, open its right-click menu, click Version history…, wait 600 ms, shot `42-version-history`; click "This version", shot `43-version-text`; Escape.
 
@@ -418,8 +425,8 @@ Each time Adperastra is about to change a file (for example when you save it in 
 
 ## Bring a version back
 
-- **Restore this version** puts the file back the way it was then. The current content is kept in the history first, so you can undo the restore with **Ctrl+Z** (in the Explorer) or restore the newer version again.
-- **Save a copy…** saves that version as a separate file and leaves the file as it is.
+- **Restore this version** puts the file back the way it was then. The current content is kept in the history first, even when ordinary history is off. Undo with **Ctrl+Z** in the Explorer or **Undo** in the editor's history window. A missing, unreadable or larger-than-256-MB current file cannot be restored safely and is left untouched.
+- **Save a copy…** saves that version as a separate file and leaves the file as it is. Choose a new name: replacing an existing file is unavailable.
 - **Previous versions from Windows…** opens the file's Windows properties, where Windows shows its own older copies, if it keeps any.
 
 ## How long versions are kept
@@ -431,6 +438,8 @@ In **Settings** > **Version history** you can turn versions off, choose how long
 - Versions are kept only for changes made by Adperastra, not by other programs.
 - The same content is stored only once, and compressed, so versions take little space.
 - Files bigger than 256 MB don't get versions.
+- **Load more** shows older versions when the history spans several pages.
+- Temporary copies waiting to be stored and read-only open copies each have a 1 GB limit. If pending copies fill their limit, saving stops and leaves the original file untouched. The size in Settings includes these copies and the version index.
 - Versions stay on this PC, in the app's own folder. Nothing is sent anywhere.
 
 See also: "Editing text and code" and "The Settings page".
@@ -456,8 +465,8 @@ Cada vez que Adperastra está por cambiar un archivo (por ejemplo, cuando lo gua
 
 ## Recuperar una versión
 
-- **Restaurar esta versión** deja el archivo como estaba en ese momento. Antes se conserva el contenido actual en el historial, así que puedes deshacer la restauración con **Ctrl+Z** (en el Explorador) o volver a restaurar la versión más reciente.
-- **Guardar una copia…** guarda esa versión como un archivo aparte y deja el archivo como está.
+- **Restaurar esta versión** deja el archivo como estaba en ese momento. Antes se conserva el contenido actual, aunque el historial esté desactivado. Deshaz la restauración con **Ctrl+Z** en el Explorador o **Deshacer** en la ventana del historial del editor. Si el archivo actual falta, no se puede leer o supera los 256 MB, se deja intacto.
+- **Guardar una copia…** guarda esa versión como un archivo aparte y deja el archivo como está. Elige un nombre nuevo: reemplazar un archivo existente no está disponible.
 - **Versiones anteriores de Windows…** abre las propiedades de Windows del archivo, donde Windows muestra sus propias copias anteriores, si las conserva.
 
 ## Cuánto tiempo se conservan las versiones
@@ -469,6 +478,8 @@ En **Configuración** > **Historial de versiones** puedes desactivar las version
 - Solo se conservan versiones de los cambios que hace Adperastra, no de los que hacen otros programas.
 - El mismo contenido se guarda una sola vez y comprimido, así que las versiones ocupan poco espacio.
 - Los archivos de más de 256 MB no tienen versiones.
+- **Cargar más** muestra las versiones antiguas cuando el historial ocupa varias páginas.
+- Las copias pendientes de almacenar y las copias de solo lectura tienen un límite de 1 GB cada una. Si las pendientes llenan su límite, se detiene el guardado y el archivo original queda intacto. El tamaño en Configuración incluye estas copias y el índice de versiones.
 - Las versiones se quedan en esta computadora, en la carpeta de la aplicación. No se envía nada a ningún lado.
 
 Consulta también: «Editar texto y código» y «La página de configuración».
@@ -482,7 +493,7 @@ Use `%TEMP%\adp-06a` from Step 06a (create it again as described there if it is 
 2. **This version** shows the old text. **Open** on a version of `readme.md` opens a read-only tab.
 3. **Restore this version** (confirm): the file goes back; a toast offers Undo; Ctrl+Z brings the newer content back. The history now also lists "Before restoring a version".
 4. From the editor's ribbon with unsaved changes: Restore warns about them; after restoring, the tab shows the restored text with no dot.
-5. **Save a copy…** to the Desktop; onto an existing file: Windows asks, the old file is in the Recycle Bin.
+5. **Save a copy…** to a new Desktop filename; choose an existing test file and verify the translated refusal and that its bytes remain unchanged.
 6. Save the same content twice: only one new version appears.
 7. Settings > **Version history**: the used space shows; set 7 days; turn versions off, save a file: no new version, and the window says versions are off; turn them on again. **Delete all versions…**: asks first, then the list is empty.
 8. End the app with Task Manager right after saving; start it again: the version is in the list (stored at start).
