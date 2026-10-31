@@ -342,7 +342,8 @@
     "undoNewerFirst": "[Üñdø thë ñëwër äçtïøñs fïrst (Rëçëñt äçtïøñs shøws thë ørdër). ~~~~~~~~~~~~~~~~~~~~]",
     "extracted": "[Ëxträçtëd {name} ~~~~]",
     "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]",
-    "versionRestored": "[Rëstørëd ä vërsïøñ øf {name} ~~~~~~~~]"
+    "versionRestored": "[Rëstørëd ä vërsïøñ øf {name} ~~~~~~~~]",
+    "archiveCreated": "[Çrëätëd {name} ~~~]"
   },
   "commands": {
     "back": "[Bäçk ~~]",
@@ -425,6 +426,7 @@
     "extractAll": "[Ëxträçt äll ~~~~]",
     "extractHere": "[Ëxträçt hërë ~~~~~]",
     "extractTo": "[Ëxträçt tø… ~~~~]",
+    "compressTo": "[Çømprëss tø… ~~~~]",
     "newMarkdown": "[Märkdøwñ ñøtë ~~~~~]",
     "newCsv": "[ÇSV täblë ~~~~]",
     "newDocument": "[Døçümëñt ~~~~]",
@@ -655,7 +657,8 @@
     "pastedImageName": "[Pästëd ïmägë {stamp} ~~~~~]",
     "pastedTextName": "[Pästëd tëxt {stamp} ~~~~]",
     "shortcutName": "[{name} - Shørtçüt ~~~~]",
-    "extractedFolderName": "[Ëxträçtëd fïlës ~~~~~~]"
+    "extractedFolderName": "[Ëxträçtëd fïlës ~~~~~~]",
+    "newArchiveName": "[Ärçhïvë ~~~]"
   },
   "jobs": {
     "title": "[Fïlë øpërätïøñs ~~~~~~]",
@@ -667,7 +670,8 @@
     "skippedItems": "[{count, plural, one {# ïtëm wäs skïppëd} other {# ïtëms wërë skïppëd}} ~~~~~~~]",
     "done": "[Døñë ~~]",
     "cancelled": "[Çäñçëllëd ~~~~]",
-    "extracting": "[{count, plural, one {Ëxträçtïñg # ärçhïvë} other {Ëxträçtïñg # ärçhïvës}} ~~~~~~~~]"
+    "extracting": "[{count, plural, one {Ëxträçtïñg # ärçhïvë} other {Ëxträçtïñg # ärçhïvës}} ~~~~~~~~]",
+    "compressing": "[{count, plural, one {Çrëätïñg # ärçhïvë} other {Çrëätïñg # ärçhïvës}} ~~~~~~~]"
   },
   "dialogs": {
     "conflictTitle": "[Äñ ïtëm wïth thïs ñämë ïs älrëädÿ hërë ~~~~~~~~~~~~~]",
@@ -859,6 +863,23 @@
     "passwordFair": "[Fäïr ~~]",
     "passwordStrong": "[Strøñg ~~~]",
     "passwordHint": "[Üsë ä løñg, üñïqüë pässphräsë. Thïs ëstïmätë ïs øñlÿ ä güïdë. ~~~~~~~~~~~~~~~~~~~~]",
+    "createTitle": "[Çrëätë äñ ärçhïvë ~~~~~~]",
+    "create": "[Çrëätë ~~~]",
+    "fileName": "[Fïlë ñämë ~~~~]",
+    "destination": "[Sävë ïñ ~~~]",
+    "chooseDestination": "[Çhøøsë føldër… ~~~~~]",
+    "chooseDestinationTitle": "[Çhøøsë whërë tø sävë thë ärçhïvë ~~~~~~~~~~~]",
+    "createSelection": "[{count, plural, one {# sëlëçtëd ïtëm} other {# sëlëçtëd ïtëms}} ~~~~~~]",
+    "createFormat": "[Førmät ~~~]",
+    "encryption": "[Ëñçrÿptïøñ ~~~~]",
+    "encryptionNone": "[Ñøñë ~~]",
+    "encryptionAes": "[ÄËS-256 ~~]",
+    "encryptionZipCrypto": "[ZïpÇrÿptø (çømpätïbïlïtÿ øñlÿ) ~~~~~~~~~~~]",
+    "zipCryptoWarning": "[ZïpÇrÿptø ïs wëäk. Üsë ït øñlÿ whëñ thë rëçëïvïñg äpp çäññøt øpëñ ÄËS-256 ärçhïvës. ~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "encryptNames": "[Ëñçrÿpt fïlë ñämës ~~~~~~~]",
+    "zipNamesVisible": "[ZÏP fïlë ñämës rëmäïñ vïsïblë, ëvëñ wïth ä pässwørd. ~~~~~~~~~~~~~~~~~]",
+    "keepBothNote": "[Ëxïstïñg ïtëms ärë këpt. Ä ñümbër ïs äddëd ïf thïs ñämë ïs täkëñ. ~~~~~~~~~~~~~~~~~~~~~]",
+    "extensionRequired": "[Thë ñämë müst ëñd ïñ {extension}. ~~~~~~~]",
     "partialNote": "[Thïs ärçhïvë sëëms dämägëd: øñlÿ pärt øf ït çøüld bë rëäd. ~~~~~~~~~~~~~~~~~~~]",
     "opening": "[Øpëñïñg {name}… ~~~]",
     "linkCannotOpen": "[Lïñks ïñsïdë ärçhïvës çäñ't bë øpëñëd. ~~~~~~~~~~~~~]",

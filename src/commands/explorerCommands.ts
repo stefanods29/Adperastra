@@ -129,6 +129,8 @@ export interface ExplorerActions {
   openAsHex: () => void;
   /** Extract the selected archives (Step 06d). */
   extractArchives: (mode: ExtractMode) => void;
+  /** Open the Compress to… window for the live selection (Step 06e). */
+  compressTo: () => void;
   copyPath: () => void;
   toggleFavorite: () => void;
   showInFolder: () => void;
@@ -544,6 +546,16 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       visibleWhen: archivesOnly,
       enabledWhen: archivesOnly,
       run: () => actions.extractArchives("to"),
+    },
+    {
+      id: "explorer.compressTo",
+      labelKey: "commands.compressTo",
+      icon: PackageOpen,
+      risk: "change",
+      helpSlug: "creating-archives",
+      visibleWhen: (ctx) => ctx.location === "folder" && ctx.currentPath !== null,
+      enabledWhen: (ctx) => ctx.location === "folder" && ctx.selection.count > 0,
+      run: () => actions.compressTo(),
     },
     {
       id: "explorer.copyPath",

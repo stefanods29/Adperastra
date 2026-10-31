@@ -111,6 +111,8 @@ import {
 import JobsPanel, { type JobView, type TrackJob } from "./explorer/JobsPanel";
 import { useArchiveExtract, type ExplorerExtractRequest } from "./explorer/useArchiveExtract";
 import { useArchivePasswordPrompt } from "../archive/useArchivePasswordPrompt";
+import CompressDialog from "../archive/CompressDialog";
+import { useArchiveCreate } from "./explorer/useArchiveCreate";
 import DetailsPane from "./explorer/DetailsPane";
 import DriveList, { type DriveLoadState } from "./explorer/DriveList";
 import FileList from "./explorer/FileList";
@@ -296,6 +298,9 @@ export default function ExplorerHome({
   const [skeletonVisible, setSkeletonVisible] = useState(false);
   const [selection, setSelection] = useState<SelectionState>(EMPTY_SELECTION);
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
+  const [compressRequest, setCompressRequest] = useState<{ sources: string[]; folder: string } | null>(
+    null,
+  );
   const [menu, setMenu] = useState<OpenMenu | null>(null);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [busyNote, setBusyNote] = useState<string | null>(null);
@@ -713,6 +718,20 @@ export default function ExplorerHome({
     askPassword: archivePrompts.ask,
   });
 
+  /** Creating archives (Step 06e T11). */
+  const archiveCreate = useArchiveCreate({
+    t,
+    trackJob,
+    undoStack: undoStack.current,
+    touchUndo,
+    notify,
+    notifyAction,
+    notifyError,
+    showResult,
+    currentFolder: () =>
+      live.current.location.type === "folder" ? live.current.location.path : null,
+  });
+
   // An archive tab asked for an extraction; the App already shows the
   // destination folder (Step 06d).
   useEffect(() => {
@@ -1041,6 +1060,13 @@ export default function ExplorerHome({
       extractArchives: (mode) => {
         void archive.extractItems(live.current.selectedPaths, mode);
       },
+      compressTo: () => {
+        const current = live.current.location;
+        const sources = live.current.selectedPaths;
+        if (current.type !== "folder" || sources.length === 0 || !isTauriRuntime()) return;
+        // The dialog only plans; opening it reads no source bytes.
+        setCompressRequest({ sources: [...sources], folder: current.path });
+      },
       openWith: () => {
         const paths = live.current.selectedPaths;
         if (paths.length === 1 && isTauriRuntime()) void openWithDialog(paths[0]).catch((error: unknown) => notifyError(error, "openWith"));
@@ -1184,7 +1210,7 @@ export default function ExplorerHome({
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [archive, goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat],
+    [archive, archiveCreate, goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);
@@ -2167,6 +2193,15 @@ export default function ExplorerHome({
         onUndo={undoFromToast}
       />
       {archivePrompts.dialog}
+      {compressRequest ? (
+        <CompressDialog
+          sources={compressRequest.sources}
+          initialFolder={compressRequest.folder}
+          onCreate={(request) => archiveCreate.create(request)}
+          onClose={() => setCompressRequest(null)}
+          onOpenHelp={() => onOpenHelp("creating-archives")}
+        />
+      ) : null}
     </div>
   );
 }

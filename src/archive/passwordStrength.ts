@@ -15,6 +15,20 @@ export function passwordStrength(value: string): PasswordStrength {
   return "fair";
 }
 
+/** The exact rules from D9: 1 to 256 characters, at most 1,024 UTF-8 bytes,
+ * no control characters; a confirmation must match exactly. */
+export function passwordProblem(
+  value: string,
+  confirmation?: string,
+): "invalid" | "mismatch" | null {
+  const characters = Array.from(value).length;
+  if (characters === 0 || characters > 256) return "invalid";
+  if (new TextEncoder().encode(value).length > 1_024) return "invalid";
+  if (/[\u0000-\u001f\u007f]/.test(value)) return "invalid";
+  if (confirmation !== undefined && value !== confirmation) return "mismatch";
+  return null;
+}
+
 /** A stable 0 to 3 value for the meter (weak 1, fair 2, strong 3). */
 export function passwordStrengthValue(value: string): number {
   switch (passwordStrength(value)) {

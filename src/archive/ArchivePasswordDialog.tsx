@@ -5,7 +5,7 @@ import Dialog from "../components/Dialog";
 import { errorText } from "../services/errors";
 import type { ArchiveAuth } from "../services/archive";
 import PasswordFields from "./PasswordFields";
-import { passwordStrength, passwordStrengthValue } from "./passwordStrength";
+import PasswordMeter from "./PasswordMeter";
 
 /** One password prompt (Step 06e T10). Escape and Cancel resolve null; the
  * value is never shown in an error, stored or measured. */
@@ -36,9 +36,6 @@ export default function ArchivePasswordDialog({
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
-
-  const strength = passwordStrength(password);
-  const value = passwordStrengthValue(password);
 
   const submit = async () => {
     if (!password || submitting) return;
@@ -81,23 +78,7 @@ export default function ArchivePasswordDialog({
           passwordRef={inputRef}
           hintId={hintId}
         />
-        {password ? (
-          <div className="adp-password-strength">
-            <div
-              className="adp-password-meter"
-              role="meter"
-              aria-label={t("archive.passwordStrength")}
-              aria-valuemin={0}
-              aria-valuemax={3}
-              aria-valuenow={value}
-            >
-              <span className={`adp-password-meter-fill adp-password-meter-${strength}`} />
-            </div>
-            <span className="adp-password-strength-label">
-              {t("archive.passwordStrength")}: {t(`archive.password${strength[0].toUpperCase()}${strength.slice(1)}`)}
-            </span>
-          </div>
-        ) : null}
+        <PasswordMeter value={password} />
         <p className="adp-field-hint" id={hintId}>
           {t("archive.passwordHint")}
         </p>

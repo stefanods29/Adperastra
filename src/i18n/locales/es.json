@@ -342,7 +342,8 @@
     "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden).",
     "extracted": "Se extrajo {name}",
     "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}",
-    "versionRestored": "Se restauró una versión de {name}"
+    "versionRestored": "Se restauró una versión de {name}",
+    "archiveCreated": "Se creó {name}"
   },
   "commands": {
     "back": "Atrás",
@@ -425,6 +426,7 @@
     "extractAll": "Extraer todo",
     "extractHere": "Extraer aquí",
     "extractTo": "Extraer en…",
+    "compressTo": "Comprimir en…",
     "newMarkdown": "Nota de Markdown",
     "newCsv": "Tabla CSV",
     "newDocument": "Documento",
@@ -655,7 +657,8 @@
     "pastedImageName": "Imagen pegada {stamp}",
     "pastedTextName": "Texto pegado {stamp}",
     "shortcutName": "{name} - Acceso directo",
-    "extractedFolderName": "Archivos extraídos"
+    "extractedFolderName": "Archivos extraídos",
+    "newArchiveName": "Archivo comprimido"
   },
   "jobs": {
     "title": "Operaciones de archivo",
@@ -667,7 +670,8 @@
     "skippedItems": "{count, plural, one {Se omitió # elemento} other {Se omitieron # elementos}}",
     "done": "Listo",
     "cancelled": "Cancelado",
-    "extracting": "{count, plural, one {Extrayendo # archivo comprimido} other {Extrayendo # archivos comprimidos}}"
+    "extracting": "{count, plural, one {Extrayendo # archivo comprimido} other {Extrayendo # archivos comprimidos}}",
+    "compressing": "{count, plural, one {Creando # archivo comprimido} other {Creando # archivos comprimidos}}"
   },
   "dialogs": {
     "conflictTitle": "Ya hay un elemento con este nombre aquí",
@@ -859,6 +863,23 @@
     "passwordFair": "Media",
     "passwordStrong": "Alta",
     "passwordHint": "Usa una frase larga y única. Esta estimación es solo una guía.",
+    "createTitle": "Crear un archivo comprimido",
+    "create": "Crear",
+    "fileName": "Nombre del archivo",
+    "destination": "Guardar en",
+    "chooseDestination": "Elegir carpeta…",
+    "chooseDestinationTitle": "Elegir dónde guardar el archivo comprimido",
+    "createSelection": "{count, plural, one {# elemento seleccionado} other {# elementos seleccionados}}",
+    "createFormat": "Formato",
+    "encryption": "Cifrado",
+    "encryptionNone": "Ninguno",
+    "encryptionAes": "AES-256",
+    "encryptionZipCrypto": "ZipCrypto (solo por compatibilidad)",
+    "zipCryptoWarning": "ZipCrypto es débil. Úsalo solo si la aplicación de destino no puede abrir archivos con AES-256.",
+    "encryptNames": "Cifrar los nombres de archivo",
+    "zipNamesVisible": "Los nombres de los archivos ZIP siguen visibles, incluso con contraseña.",
+    "keepBothNote": "Se conservan los elementos existentes. Se agrega un número si el nombre ya existe.",
+    "extensionRequired": "El nombre debe terminar en {extension}.",
     "partialNote": "Este archivo comprimido parece dañado: solo se pudo leer una parte.",
     "opening": "Abriendo {name}…",
     "linkCannotOpen": "Los vínculos dentro de los archivos comprimidos no se pueden abrir.",
