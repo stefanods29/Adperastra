@@ -84,7 +84,10 @@ fn export_to_chosen_file(
     filter_name: &str,
     settings: &Settings,
 ) -> Result<Option<String>, String> {
-    let Some(path) = show_save_dialog(owner, title, file_name, filter_name)? else {
+    let Some(path) =
+        crate::file_dialogs::pick_save_path(owner, title, file_name, filter_name, "*.json", "json")
+            .map_err(|_| "settingsFile.other".to_string())?
+    else {
         return Ok(None);
     };
     check_export_path(&path)?;
@@ -101,7 +104,9 @@ fn import_from_chosen_file(
     title: &str,
     filter_name: &str,
 ) -> Result<Option<Settings>, String> {
-    let Some(path) = show_open_dialog(owner, title, filter_name)? else {
+    let Some(path) = crate::file_dialogs::pick_open_path(owner, title, filter_name, "*.json")
+        .map_err(|_| "settingsFile.other".to_string())?
+    else {
         return Ok(None);
     };
     let invalid = || "settingsFile.invalid".to_string();
@@ -150,158 +155,6 @@ pub async fn settings_import(
     })
     .await
     .map_err(|_| "settingsFile.other".to_string())?
-}
-
-#[cfg(windows)]
-fn show_save_dialog(
-    owner: isize,
-    title: &str,
-    file_name: &str,
-    filter_name: &str,
-) -> Result<Option<String>, String> {
-    use windows::core::HSTRING;
-    use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
-    use windows::Win32::UI::Shell::{
-        FileSaveDialog, IFileSaveDialog, FOS_FORCEFILESYSTEM, FOS_OVERWRITEPROMPT,
-        FOS_PATHMUSTEXIST,
-    };
-
-    let _com = ComApartment::enter();
-    // SAFETY: COM is initialized on this thread by `_com`; the dialog and the
-    // strings passed to it stay alive for the whole call.
-    let shown = unsafe {
-        CoCreateInstance::<_, IFileSaveDialog>(&FileSaveDialog, None, CLSCTX_INPROC_SERVER)
-            .and_then(|dialog| {
-                dialog.SetFileName(&HSTRING::from(file_name))?;
-                run_dialog(
-                    &dialog,
-                    owner,
-                    title,
-                    filter_name,
-                    FOS_OVERWRITEPROMPT | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST,
-                )
-            })
-    };
-    dialog_result(shown)
-}
-
-#[cfg(windows)]
-fn show_open_dialog(
-    owner: isize,
-    title: &str,
-    filter_name: &str,
-) -> Result<Option<String>, String> {
-    use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
-    use windows::Win32::UI::Shell::{
-        FileOpenDialog, IFileOpenDialog, FOS_FILEMUSTEXIST, FOS_FORCEFILESYSTEM,
-    };
-
-    let _com = ComApartment::enter();
-    // SAFETY: COM is initialized on this thread by `_com`; the dialog and the
-    // strings passed to it stay alive for the whole call.
-    let shown = unsafe {
-        CoCreateInstance::<_, IFileOpenDialog>(&FileOpenDialog, None, CLSCTX_INPROC_SERVER)
-            .and_then(|dialog| {
-                run_dialog(
-                    &dialog,
-                    owner,
-                    title,
-                    filter_name,
-                    FOS_FILEMUSTEXIST | FOS_FORCEFILESYSTEM,
-                )
-            })
-    };
-    dialog_result(shown)
-}
-
-/// A cancelled dialog is `None`; any other COM error is a code for the UI.
-#[cfg(windows)]
-fn dialog_result(shown: windows::core::Result<String>) -> Result<Option<String>, String> {
-    match shown {
-        Ok(path) => Ok(Some(path)),
-        Err(error) if crate::shell::is_cancelled(&error) => Ok(None),
-        Err(_) => Err("settingsFile.other".to_string()),
-    }
-}
-
-/// Sets up a save or open dialog, shows it, and returns the chosen path.
-///
-/// # Safety
-/// COM must be initialized on the calling thread.
-#[cfg(windows)]
-unsafe fn run_dialog(
-    dialog: &windows::Win32::UI::Shell::IFileDialog,
-    owner: isize,
-    title: &str,
-    filter_name: &str,
-    extra_options: windows::Win32::UI::Shell::FILEOPENDIALOGOPTIONS,
-) -> windows::core::Result<String> {
-    use windows::core::{HSTRING, PCWSTR};
-    use windows::Win32::System::Com::CoTaskMemFree;
-    use windows::Win32::UI::Shell::Common::COMDLG_FILTERSPEC;
-    use windows::Win32::UI::Shell::SIGDN_FILESYSPATH;
-
-    dialog.SetTitle(&HSTRING::from(title))?;
-    let filter_name = HSTRING::from(filter_name);
-    let pattern = HSTRING::from("*.json");
-    dialog.SetFileTypes(&[COMDLG_FILTERSPEC {
-        pszName: PCWSTR(filter_name.as_ptr()),
-        pszSpec: PCWSTR(pattern.as_ptr()),
-    }])?;
-    dialog.SetDefaultExtension(&HSTRING::from("json"))?;
-    dialog.SetOptions(dialog.GetOptions()? | extra_options)?;
-    dialog.Show(Some(crate::shell::hwnd_from(owner)))?;
-    let raw = dialog.GetResult()?.GetDisplayName(SIGDN_FILESYSPATH)?;
-    let path = raw.to_string();
-    CoTaskMemFree(Some(raw.0 as *const _));
-    path.map_err(|_| windows::core::Error::from(windows::Win32::Foundation::E_FAIL))
-}
-
-/// COM for one dialog call: uninitialized at the end only when it succeeded.
-#[cfg(windows)]
-struct ComApartment {
-    initialized: bool,
-}
-
-#[cfg(windows)]
-impl ComApartment {
-    fn enter() -> Self {
-        use windows::Win32::System::Com::{CoInitializeEx, COINIT_APARTMENTTHREADED};
-        // SAFETY: called on this blocking thread, and paired with
-        // `CoUninitialize` in `drop` when it succeeds.
-        let initialized = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }.is_ok();
-        Self { initialized }
-    }
-}
-
-#[cfg(windows)]
-impl Drop for ComApartment {
-    fn drop(&mut self) {
-        if self.initialized {
-            // SAFETY: pairs with the successful `CoInitializeEx` in `enter`,
-            // on the same thread.
-            unsafe { windows::Win32::System::Com::CoUninitialize() };
-        }
-    }
-}
-
-#[cfg(not(windows))]
-fn show_save_dialog(
-    _owner: isize,
-    _title: &str,
-    _file_name: &str,
-    _filter_name: &str,
-) -> Result<Option<String>, String> {
-    Err("settingsFile.other".to_string())
-}
-
-#[cfg(not(windows))]
-fn show_open_dialog(
-    _owner: isize,
-    _title: &str,
-    _filter_name: &str,
-) -> Result<Option<String>, String> {
-    Err("settingsFile.other".to_string())
 }
 
 #[cfg(test)]

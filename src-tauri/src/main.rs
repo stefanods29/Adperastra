@@ -25,6 +25,7 @@ mod clipboard;
 mod clipboard_image_helper;
 mod drag;
 mod explorer;
+mod file_dialogs;
 mod files;
 mod folder_views;
 mod links;
@@ -2928,6 +2929,7 @@ fn main() {
             settings_file::settings_export,
             settings_file::settings_import,
             text_save::text_save,
+            text_save::text_pick_save_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

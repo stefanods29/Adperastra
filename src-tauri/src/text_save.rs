@@ -198,6 +198,56 @@ fn save_now(request: TextSaveRequest) -> Result<SavedFile, String> {
     })
 }
 
+/// The texts of a Save as dialog: at most 200 characters, and a valid name.
+pub fn check_dialog_texts(title: &str, file_name: &str, filter_name: &str) -> Result<(), String> {
+    let bad = || "textSave.bad_request".to_string();
+    for text in [title, filter_name] {
+        if text.is_empty() || text.chars().count() > 200 {
+            return Err(bad());
+        }
+    }
+    if file_name.chars().count() > 255 || fs_service::validate_new_name(file_name).is_err() {
+        return Err(bad());
+    }
+    Ok(())
+}
+
+/// Windows' save dialog for Save as, with the file's own extension.
+#[tauri::command]
+pub async fn text_pick_save_path(
+    window: WebviewWindow,
+    title: String,
+    file_name: String,
+    filter_name: String,
+) -> Result<Option<String>, String> {
+    ensure_main(window.label())?;
+    check_dialog_texts(&title, &file_name, &filter_name)?;
+    let owner = crate::window_handle(&window);
+    tauri::async_runtime::spawn_blocking(move || {
+        let extension = Path::new(&file_name)
+            .extension()
+            .map(|value| value.to_string_lossy().to_string())
+            .unwrap_or_default();
+        crate::file_dialogs::pick_save_path(
+            owner,
+            &title,
+            &file_name,
+            &filter_name,
+            "*.*",
+            &extension,
+        )
+        .map_err(|code| {
+            if code == "dialog.failed" {
+                "textSave.other".to_string()
+            } else {
+                code
+            }
+        })
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -283,5 +333,18 @@ mod tests {
             check_request(&request(r"C:\x\a.txt", "utf-8", "save")),
             Ok(())
         );
+    }
+
+    #[test]
+    fn checks_save_dialog_texts() {
+        assert_eq!(
+            check_dialog_texts("Save as", "notes.txt", "All files"),
+            Ok(())
+        );
+        let bad = Err("textSave.bad_request".to_string());
+        assert_eq!(check_dialog_texts("", "notes.txt", "All files"), bad);
+        assert_eq!(check_dialog_texts("Save as", "CON", "All files"), bad);
+        let long = "a".repeat(256);
+        assert_eq!(check_dialog_texts("Save as", &long, "All files"), bad);
     }
 }

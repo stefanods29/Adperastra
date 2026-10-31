@@ -27,3 +27,12 @@ export interface SavedFile {
 export async function saveText(request: TextSaveRequest): Promise<SavedFile> {
   return (await invoke("text_save", { request })) as SavedFile;
 }
+
+/** Windows' save dialog for Save as; null when the user cancels. */
+export async function pickSavePath(
+  title: string,
+  fileName: string,
+  filterName: string,
+): Promise<string | null> {
+  return (await invoke("text_pick_save_path", { title, fileName, filterName })) as string | null;
+}
