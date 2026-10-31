@@ -11,6 +11,12 @@ that fixed it.
 
 ## Open
 
+### KI-080 - Hex view stays on its error after a later read recovers (Minor)
+- **Found in:** the owner's earlier review note, confirmed during 06f planning, 2026-10-31.
+- **What:** the existing HexView read effect sets failed on rejection but never resets it when another read starts or succeeds. A later valid range can load bytes while the view still renders the old error.
+- **Workaround:** close and reopen the file tab.
+- **Target:** later owner-approved repair of existing reader error state; not silently bundled into the new search/offset work under the existing-error policy.
+
 ### KI-079 - Existing archive extraction may delete a partial file it did not create (Blocker)
 - **Found in:** Step 06e guide research, 2026-10-31; verified in the existing Step 06d `crates/archive/src/write.rs`.
 - **What:** `write_partial` uses create_new, but `write_entry` unconditionally removes the predictable partial path after any failure, including failure to create it. A pre-existing foreign partial can therefore be deleted. The writer flushes its buffer but does not sync the file before publication. Its path-based cleanup/publication also releases staging ownership too early.
