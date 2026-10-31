@@ -69,8 +69,9 @@ import {
   type OpReport,
 } from "../services/fileops";
 import { classifyClipboardText, pastedStamp, pastedTextExtension } from "../services/paste";
-import { createBlank } from "../templates/createNew";
+import { createBlank, createFromTemplate } from "../templates/createNew";
 import type { BlankKind } from "../templates/catalog";
+import TemplatePickerDialog from "../templates/TemplatePickerDialog";
 import { formatShortcut } from "../services/shortcuts";
 import { UndoStack, type UndoEntry } from "../services/undo";
 import { groupItems } from "../services/grouping";
@@ -164,6 +165,9 @@ export interface ExplorerHomeProps {
   pasteImageFormat?: "png" | "jpg";
   /** An extraction an archive tab asked for (Step 06d). */
   extractRequest?: ExplorerExtractRequest | null;
+  /** The My templates folder from settings (schema 11, Step 06c). */
+  templatesFolder?: string;
+  onTemplatesFolderChange?: (folder: string) => void;
 }
 
 const DEFAULT_VIEW: ExplorerViewSettings = defaultSettings().explorer;
@@ -249,6 +253,8 @@ export default function ExplorerHome({
   onViewChange,
   pasteImageFormat = "png",
   extractRequest = null,
+  templatesFolder = "",
+  onTemplatesFolderChange,
 }: ExplorerHomeProps) {
   const { t, i18n } = useTranslation();
   const { layout } = useLayout();
@@ -2043,6 +2049,22 @@ export default function ExplorerHome({
             else notify(t("toast.undoNewerFirst"));
           }}
           onClose={() => setRecentOpen(false)}
+        />
+      ) : null}
+      {templatePickerOpen ? (
+        <TemplatePickerDialog
+          key={templatesFolder}
+          lang={i18n.language}
+          onCreate={(templatePath, name) => {
+            const current = live.current.location;
+            if (current.type !== "folder" || !isTauriRuntime()) return;
+            void createFromTemplate(templatePath, current.path, name)
+              .then(recordCreated)
+              .catch(notifyTemplatesError);
+          }}
+          onFolderChange={(folder) => onTemplatesFolderChange?.(folder)}
+          onOpenFolder={goToFolder}
+          onClose={() => setTemplatePickerOpen(false)}
         />
       ) : null}
       {dragBadge ? (

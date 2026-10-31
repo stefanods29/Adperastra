@@ -848,6 +848,17 @@
     "highContrast": "Contraste alto"
   },
   "templates": {
+    "title": "Nuevo desde plantilla",
+    "builtin": "Plantillas integradas",
+    "mine": "Mis plantillas",
+    "mineEmpty": "Elige una carpeta: cada archivo que guardes en ella será una plantilla.",
+    "mineMissing": "No se encuentra la carpeta {folder}. Elige otra.",
+    "mineNone": "La carpeta {folder} todavía no tiene archivos. Guarda un archivo allí para usarlo como plantilla.",
+    "chooseFolder": "Elegir carpeta…",
+    "changeFolder": "Cambiar carpeta…",
+    "openFolder": "Abrir carpeta",
+    "folderTitle": "Elige la carpeta de tus plantillas",
+    "create": "Crear",
     "letter": {
       "name": "Carta",
       "description": "Una carta sencilla con tu dirección y la del destinatario.",

@@ -848,6 +848,17 @@
     "highContrast": "[Hïgh çøñträst ~~~~~]"
   },
   "templates": {
+    "title": "[Ñëw frøm tëmplätë ~~~~~~]",
+    "builtin": "[Büïlt-ïñ tëmplätës ~~~~~~~]",
+    "mine": "[Mÿ tëmplätës ~~~~~]",
+    "mineEmpty": "[Çhøøsë ä føldër: ëvërÿ fïlë ÿøü këëp ïñ ït bëçømës ä tëmplätë. ~~~~~~~~~~~~~~~~~~~~]",
+    "mineMissing": "[Thë føldër {folder} çäñ't bë føüñd. Çhøøsë äñøthër øñë. ~~~~~~~~~~~~~~~]",
+    "mineNone": "[Thë føldër {folder} häs ñø fïlës ÿët. Sävë ä fïlë thërë tø üsë ït äs ä tëmplätë. ~~~~~~~~~~~~~~~~~~~~~~]",
+    "chooseFolder": "[Çhøøsë føldër… ~~~~~]",
+    "changeFolder": "[Çhäñgë føldër… ~~~~~]",
+    "openFolder": "[Øpëñ føldër ~~~~]",
+    "folderTitle": "[Çhøøsë thë føldër før ÿøür tëmplätës ~~~~~~~~~~~~~]",
+    "create": "[Çrëätë ~~~]",
     "letter": {
       "name": "[Lëttër ~~~]",
       "description": "[Ä sïmplë lëttër wïth ÿøür äddrëss äñd thë rëçïpïëñt's. ~~~~~~~~~~~~~~~~~~]",

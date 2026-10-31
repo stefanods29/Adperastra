@@ -848,6 +848,17 @@
     "highContrast": "High contrast"
   },
   "templates": {
+    "title": "New from template",
+    "builtin": "Built-in templates",
+    "mine": "My templates",
+    "mineEmpty": "Choose a folder: every file you keep in it becomes a template.",
+    "mineMissing": "The folder {folder} can't be found. Choose another one.",
+    "mineNone": "The folder {folder} has no files yet. Save a file there to use it as a template.",
+    "chooseFolder": "Choose folder…",
+    "changeFolder": "Change folder…",
+    "openFolder": "Open folder",
+    "folderTitle": "Choose the folder for your templates",
+    "create": "Create",
     "letter": {
       "name": "Letter",
       "description": "A simple letter with your address and the recipient's.",
