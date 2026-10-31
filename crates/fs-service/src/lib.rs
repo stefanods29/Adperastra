@@ -57,7 +57,7 @@ pub use ops::{
     recycle_items, restore_bin_items, restore_items, unique_destination, CompletedItem, Conflict,
     ConflictPolicy, CreateKind, OpProgress, OpReport, ReplacedItem, SkippedItem,
 };
-pub use rename::{rename_error_reason, rename_in_place};
+pub use rename::{move_without_replacing, rename_error_reason, rename_in_place};
 pub use save::{
     partial_path, recycle_target, replace_contents, write_new_file, SaveError, SaveExpect,
     SavedInfo,

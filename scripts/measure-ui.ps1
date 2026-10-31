@@ -47,6 +47,45 @@ if (-not (Test-Path $demo)) {
   (Get-Item $hidden -Force).Attributes = "Hidden"
 }
 
+# Step 06d: archives for the archive tab (a small one for screenshots, a
+# 10,000-entry one for the speed runs), made with .NET's zip writer.
+$archives = Join-Path $env:TEMP "adperastra-corpus\archives"
+if (-not (Test-Path $archives)) {
+  New-Item -ItemType Directory -Force $archives | Out-Null
+  Add-Type -AssemblyName System.IO.Compression
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $utf8 = New-Object Text.UTF8Encoding($false)
+  $projectZip = Join-Path $archives "Project files.zip"
+  $zip = [System.IO.Compression.ZipFile]::Open($projectZip, [System.IO.Compression.ZipArchiveMode]::Create)
+  try {
+    $entries = [ordered]@{
+      "README.txt" = "This archive holds the project files."
+      "docs/plan.md" = "# Plan"
+      "docs/notes.txt" = "Notes"
+      "docs/meeting notes.txt" = "Meeting"
+      "data/table.csv" = "a,b`r`n1,2"
+    }
+    foreach ($name in $entries.Keys) {
+      $writer = New-Object IO.StreamWriter($zip.CreateEntry($name).Open(), $utf8)
+      $writer.Write($entries[$name])
+      $writer.Dispose()
+    }
+    $zip.CreateEntry("images/") | Out-Null
+  } finally { $zip.Dispose() }
+  $bigZip = Join-Path $archives "Big archive.zip"
+  $zip = [System.IO.Compression.ZipFile]::Open($bigZip, [System.IO.Compression.ZipArchiveMode]::Create)
+  try {
+    for ($folder = 1; $folder -le 10; $folder += 1) {
+      for ($file = 1; $file -le 1000; $file += 1) {
+        $name = "folder {0:D2}/file {1:D4}.txt" -f $folder, $file
+        $writer = New-Object IO.StreamWriter($zip.CreateEntry($name).Open(), $utf8)
+        $writer.Write("file $file")
+        $writer.Dispose()
+      }
+    }
+  } finally { $zip.Dispose() }
+}
+
 $dataDir = Join-Path $env:TEMP ("adperastra-ui-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force $dataDir | Out-Null
 $settings = @{

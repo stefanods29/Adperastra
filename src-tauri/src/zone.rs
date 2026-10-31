@@ -51,6 +51,19 @@ pub fn is_from_internet(path: &Path) -> bool {
     zone_id(path).is_some_and(|zone| zone >= INTERNET_ZONE)
 }
 
+/// The whole `Zone.Identifier` text of a file from the internet, so files
+/// extracted from it (Step 06d) carry the same mark.
+pub fn internet_zone_text(path: &Path) -> Option<String> {
+    if !is_from_internet(path) {
+        return None;
+    }
+    let stream = zone_stream_path(path)?;
+    let file = fs::File::open(stream).ok()?;
+    let mut bytes = Vec::new();
+    file.take(ZONE_STREAM_MAX).read_to_end(&mut bytes).ok()?;
+    Some(String::from_utf8_lossy(&bytes).into_owned())
+}
+
 /// Remove the mark. Only the `Zone.Identifier` stream is removed; the
 /// file's content is never touched. This is the one `remove_file` that
 /// plan/rules.md R-SAFE allows outside the Recycle Bin path, because it

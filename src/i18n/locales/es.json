@@ -139,7 +139,8 @@
     "openedFirst": "Se abrieron los primeros {count} archivos. Abre el resto de a pocos.",
     "sortedAscending": "{name}, en orden ascendente. Selecciona para ordenar en forma descendente.",
     "sortedDescending": "{name}, en orden descendente. Selecciona para ordenar en forma ascendente.",
-    "columnsLabel": "Columnas"
+    "columnsLabel": "Columnas",
+    "extractFirst": "Solo se extrajeron los primeros {count} archivos comprimidos."
   },
   "help": {
     "title": "Ayuda",
@@ -327,7 +328,9 @@
     "actionUndone": "Acción deshecha.",
     "actionRedone": "Acción rehecha.",
     "nothingToPaste": "No hay nada para pegar aquí.",
-    "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden)."
+    "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden).",
+    "extracted": "Se extrajo {name}",
+    "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}"
   },
   "commands": {
     "back": "Atrás",
@@ -405,9 +408,39 @@
     "toolbarAutoHide": "Ocultar hasta señalarla",
     "presetStandard": "Estándar",
     "presetMinimal": "Mínimo",
-    "presetClassic": "Clásico"
+    "presetClassic": "Clásico",
+    "extract": "Extraer",
+    "extractAll": "Extraer todo",
+    "extractHere": "Extraer aquí",
+    "extractTo": "Extraer en…"
   },
   "errors": {
+    "archive": {
+      "other": "Algo salió mal con este archivo comprimido. Vuelve a intentarlo.",
+      "bad_request": "Eso no se puede hacer con este archivo comprimido.",
+      "not_found": "No se encuentra el archivo comprimido. Puede que se haya movido o eliminado.",
+      "unsupported": "Este tipo de archivo comprimido no se puede abrir aquí. Prueba a abrirlo en otra aplicación.",
+      "corrupt": "Este archivo comprimido está dañado y no se puede leer.",
+      "password_required": "Este elemento está protegido con contraseña, algo que todavía no es compatible.",
+      "too_many_entries": "Este archivo comprimido tiene más de 200 000 elementos, demasiados para abrirlo de forma segura.",
+      "bomb": "Este archivo comprimido ocuparía muchísimo más espacio que su tamaño. No se extrajo, para proteger tu disco.",
+      "no_space": "No hay suficiente espacio libre en la unidad para extraer esto.",
+      "changed": "El archivo comprimido cambió desde que se abrió. Actualiza y vuelve a intentarlo.",
+      "cancelled": "Cancelado.",
+      "not_a_file": "Solo se pueden abrir archivos.",
+      "access_denied": "No tienes permiso para escribir en esa carpeta.",
+      "dest_missing": "La carpeta donde extraer ya no existe.",
+      "helper_failed": "No se pudo leer el archivo comprimido. Puede estar dañado o necesitar más memoria de la que permite la aplicación.",
+      "timeout": "La lectura del archivo comprimido dejó de responder.",
+      "no_session": "Este archivo comprimido ya no está abierto. Actualiza para volver a abrirlo.",
+      "unsafe_path": "Omitido: su nombre podría escribir fuera de la carpeta.",
+      "invalid_name": "Omitido: su nombre no se puede usar en Windows.",
+      "link_entry": "Omitido: los vínculos nunca se extraen.",
+      "unsupported_method": "Omitido: está comprimido de una forma que la aplicación no puede leer.",
+      "size_mismatch": "Omitido: su tamaño no coincide con lo que indica el archivo comprimido.",
+      "name_taken": "Omitido: ya había un elemento con este nombre.",
+      "damaged": "Omitido: este elemento está dañado."
+    },
     "rename": {
       "exists": "Ya hay un elemento con este nombre aquí.",
       "invalid_name": "Windows no permite este nombre.",
@@ -554,14 +587,16 @@
     "down": "Flecha abajo",
     "space": "Espacio",
     "pageUp": "Re Pág",
-    "pageDown": "Av Pág"
+    "pageDown": "Av Pág",
+    "backspace": "Retroceso"
   },
   "files": {
     "newFolderName": "Nueva carpeta",
     "newTextFileName": "Nuevo documento de texto.txt",
     "pastedImageName": "Imagen pegada {stamp}",
     "pastedTextName": "Texto pegado {stamp}",
-    "shortcutName": "{name} - Acceso directo"
+    "shortcutName": "{name} - Acceso directo",
+    "extractedFolderName": "Archivos extraídos"
   },
   "jobs": {
     "title": "Operaciones de archivo",
@@ -572,7 +607,8 @@
     "restoring": "{count, plural, one {Restaurando # elemento} other {Restaurando # elementos}}",
     "skippedItems": "{count, plural, one {Se omitió # elemento} other {Se omitieron # elementos}}",
     "done": "Listo",
-    "cancelled": "Cancelado"
+    "cancelled": "Cancelado",
+    "extracting": "{count, plural, one {Extrayendo # archivo comprimido} other {Extrayendo # archivos comprimidos}}"
   },
   "dialogs": {
     "conflictTitle": "Ya hay un elemento con este nombre aquí",
@@ -601,7 +637,8 @@
     "text": "Texto",
     "markdown": "Markdown",
     "media": "Audio y video",
-    "hex": "Hexadecimal"
+    "hex": "Hexadecimal",
+    "archive": "Archivo comprimido"
   },
   "protected": {
     "message": "Este archivo proviene de Internet, así que se abrió en vista protegida.",
@@ -726,6 +763,47 @@
     "audio": "Audio",
     "cantPlay": "Este archivo no se puede reproducir aquí: el reproductor integrado no admite su formato.",
     "noPicture": "No hay imagen para mostrar. Si este video debería tener una, su formato no se admite aquí."
+  },
+  "archive": {
+    "ribbonTab": "Archivo comprimido",
+    "groupExtract": "Extraer",
+    "groupNavigate": "Navegar",
+    "extractAll": "Extraer todo",
+    "extractSelected": "Extraer lo seleccionado…",
+    "openEntry": "Abrir",
+    "openLocation": "Abrir ubicación del elemento",
+    "up": "Subir un nivel",
+    "refresh": "Actualizar",
+    "listLabel": "Contenido de {name}",
+    "pathLabel": "Carpeta del archivo comprimido",
+    "reading": "Leyendo el archivo comprimido…",
+    "readingPercent": "Leyendo el archivo comprimido… {percent}%",
+    "readCancelled": "Se canceló la lectura.",
+    "tryAgain": "Volver a intentar",
+    "emptyFolder": "Esta carpeta está vacía.",
+    "emptyArchive": "Este archivo comprimido está vacío.",
+    "noMatches": "Ningún elemento coincide con «{text}».",
+    "searchNote": "Coincidencias en todo el archivo comprimido",
+    "truncated": "Se muestran los primeros {count, number} elementos. Usa el cuadro de búsqueda para encontrar los demás.",
+    "searchTruncated": "Se muestran las primeras {count, number} coincidencias.",
+    "hiddenNote": "{count, plural, one {# elemento está oculto porque su nombre no se puede usar de forma segura en Windows.} other {# elementos están ocultos porque sus nombres no se pueden usar de forma segura en Windows.}}",
+    "encryptedNote": "{count, plural, one {# elemento está protegido con contraseña y todavía no se puede abrir.} other {# elementos están protegidos con contraseña y todavía no se pueden abrir.}}",
+    "partialNote": "Este archivo comprimido parece dañado: solo se pudo leer una parte.",
+    "opening": "Abriendo {name}…",
+    "linkCannotOpen": "Los vínculos dentro de los archivos comprimidos no se pueden abrir.",
+    "statusItems": "{count, plural, one {# elemento} other {# elementos}}",
+    "statusFiles": "{count, plural, one {# archivo} other {# archivos}}, {size} al extraer",
+    "linkType": "Vínculo",
+    "pickFolderTitle": "Elige dónde extraer",
+    "format": {
+      "zip": "Archivo comprimido ZIP",
+      "seven_z": "Archivo comprimido 7z",
+      "tar": "Archivo TAR",
+      "tar_gz": "Archivo TAR (gzip)",
+      "tar_xz": "Archivo TAR (xz)",
+      "gz": "Archivo gzip",
+      "xz": "Archivo xz"
+    }
   },
   "hex": {
     "label": "Bytes de {name}",

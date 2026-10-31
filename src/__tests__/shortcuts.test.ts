@@ -11,6 +11,7 @@ describe("shortcut hints", () => {
     expect(formatShortcut("Ctrl+Shift+C", t)).toBe("Ctrl+Mayús+C");
     expect(formatShortcut("Alt+Left", t)).toBe("Alt+Flecha izquierda");
     expect(formatShortcut("Alt+PageDown", t)).toBe("Alt+Av Pág");
+    expect(formatShortcut("Backspace", t)).toBe("Retroceso");
     await i18n.changeLanguage("en");
     expect(formatShortcut("Alt+Enter", (key) => i18n.t(key))).toBe("Alt+Enter");
   });

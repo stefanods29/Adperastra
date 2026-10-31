@@ -201,6 +201,36 @@ describe("explorer commands", () => {
     expect(resolveMenu(BACKGROUND_MENU, baseCtx, (id) => byId[id]).flatMap((e) => (e.type === "command" ? [e.id] : []))).toContain("explorer.pasteAsFile");
   });
 
+  it("extract commands appear only for archives", () => {
+    const actions = makeActions();
+    const byId = Object.fromEntries(createExplorerCommands(actions).map((c) => [c.id, c]));
+    const archives = ["explorer.extractToFolder", "explorer.extractHere", "explorer.extractTo"];
+    const zip = { paths: ["C:\\D\\a.zip"], count: 1, files: 1, folders: 0 };
+    for (const id of archives) {
+      expect(isCommandVisible(byId[id], { ...baseCtx, selection: zip }), id).toBe(true);
+      expect(isCommandEnabled(byId[id], { ...baseCtx, selection: zip }), id).toBe(true);
+    }
+    const text = { paths: ["C:\\D\\a.txt"], count: 1, files: 1, folders: 0 };
+    const withFolder = { paths: ["C:\\D\\a.zip", "C:\\D\\docs"], count: 2, files: 1, folders: 1 };
+    for (const id of archives) {
+      expect(isCommandVisible(byId[id], { ...baseCtx, selection: text }), id).toBe(false);
+      expect(isCommandVisible(byId[id], { ...baseCtx, selection: withFolder }), id).toBe(false);
+    }
+    byId["explorer.extractHere"].run({ ...baseCtx, selection: zip });
+    expect(actions.extractArchives).toHaveBeenCalledWith("here");
+
+    const menu = ITEM_MENU.find((entry) => entry.type === "submenu" && entry.id === "extract");
+    expect(menu && menu.type === "submenu" ? menu.entries : null).toEqual([
+      { type: "command", id: "explorer.extractToFolder" },
+      { type: "command", id: "explorer.extractHere" },
+      { type: "command", id: "explorer.extractTo" },
+    ]);
+    // The command bar offers "Extract all" right after Delete.
+    const bar = COMMAND_BAR.map((entry) => (entry.type === "command" ? entry.id : entry.type));
+    const deleteAt = bar.indexOf("explorer.delete");
+    expect(bar[deleteAt + 1]).toBe("explorer.extractToFolder");
+  });
+
   it("labels and checks follow the context", () => {
     const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
     expect(commandLabelKey(byId["explorer.toggleFavorite"], baseCtx)).toBe("commands.addFavorite");

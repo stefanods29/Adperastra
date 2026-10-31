@@ -13,6 +13,7 @@ import Switch from "../components/Switch";
 import TextInput from "../components/TextInput";
 import { handlers } from "../handlers";
 import type { FileTabStatus, FindRequest, SaveHandle } from "../handlers/types";
+import type { ArchiveExtractRequest } from "../services/archive";
 import { errorCode, errorText } from "../services/errors";
 import { displayPath, openItem, parentPathOf, pathSegments } from "../services/explorer";
 import { fileDetect, fileGrant, fileRevoke, fileUnblock, fileUrl, type FileTypeInfo } from "../services/files";
@@ -39,6 +40,11 @@ export interface FileTabViewProps {
   onPathChange?: (path: string) => void;
   /** Asked before a reload throws unsaved changes away (Step 06a). */
   onConfirmDiscard?: () => Promise<boolean>;
+  /** Open another file in a new tab; the archive tab opens a file that lives
+   * inside it this way (Step 06d). Rejects with a `files.*` code. */
+  onOpenFile?: (path: string) => Promise<void>;
+  /** Extract through the Explorer's jobs panel (Step 06d). */
+  onExtractArchive?: (request: ArchiveExtractRequest) => void;
 }
 
 type Phase =
@@ -64,6 +70,8 @@ export default function FileTabView({
   registerSave,
   onPathChange,
   onConfirmDiscard,
+  onOpenFile,
+  onExtractArchive,
 }: FileTabViewProps) {
   const { t } = useTranslation();
   const path = tab.path ?? "";
@@ -308,6 +316,8 @@ export default function FileTabView({
               onDirtyChange={onDirtyChange}
               registerSave={registerSave}
               onPathChange={onPathChange}
+              onOpenFile={onOpenFile}
+              onExtractArchive={onExtractArchive}
             />
           </Suspense>
         ) : null}

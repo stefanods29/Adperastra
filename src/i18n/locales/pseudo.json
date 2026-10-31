@@ -139,7 +139,8 @@
     "openedFirst": "[Øpëñëd thë fïrst {count} fïlës. Øpëñ thë rëst ä fëw ät ä tïmë. ~~~~~~~~~~~~~~~~~]",
     "sortedAscending": "[{name}, sørtëd äsçëñdïñg. Sëlëçt tø sørt dësçëñdïñg. ~~~~~~~~~~~~~~~]",
     "sortedDescending": "[{name}, sørtëd dësçëñdïñg. Sëlëçt tø sørt äsçëñdïñg. ~~~~~~~~~~~~~~~]",
-    "columnsLabel": "[Çølümñs ~~~]"
+    "columnsLabel": "[Çølümñs ~~~]",
+    "extractFirst": "[Øñlÿ thë fïrst {count} ärçhïvës wërë ëxträçtëd. ~~~~~~~~~~~~~~]"
   },
   "help": {
     "title": "[Hëlp ~~]",
@@ -327,7 +328,9 @@
     "actionUndone": "[Äçtïøñ üñdøñë. ~~~~~]",
     "actionRedone": "[Äçtïøñ rëdøñë. ~~~~~]",
     "nothingToPaste": "[Thërë's ñøthïñg tø pästë hërë. ~~~~~~~~~~]",
-    "undoNewerFirst": "[Üñdø thë ñëwër äçtïøñs fïrst (Rëçëñt äçtïøñs shøws thë ørdër). ~~~~~~~~~~~~~~~~~~~~]"
+    "undoNewerFirst": "[Üñdø thë ñëwër äçtïøñs fïrst (Rëçëñt äçtïøñs shøws thë ørdër). ~~~~~~~~~~~~~~~~~~~~]",
+    "extracted": "[Ëxträçtëd {name} ~~~~]",
+    "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]"
   },
   "commands": {
     "back": "[Bäçk ~~]",
@@ -405,9 +408,39 @@
     "toolbarAutoHide": "[Hïdë üñtïl pøïñtëd ät ~~~~~~~~]",
     "presetStandard": "[Stäñdärd ~~~~]",
     "presetMinimal": "[Mïñïmäl ~~~]",
-    "presetClassic": "[Çlässïç ~~~]"
+    "presetClassic": "[Çlässïç ~~~]",
+    "extract": "[Ëxträçt ~~~]",
+    "extractAll": "[Ëxträçt äll ~~~~]",
+    "extractHere": "[Ëxträçt hërë ~~~~~]",
+    "extractTo": "[Ëxträçt tø… ~~~~]"
   },
   "errors": {
+    "archive": {
+      "other": "[Sømëthïñg wëñt wrøñg wïth thïs ärçhïvë. Trÿ ägäïñ. ~~~~~~~~~~~~~~~~~]",
+      "bad_request": "[Thät çäñ't bë døñë wïth thïs ärçhïvë. ~~~~~~~~~~~~]",
+      "not_found": "[Thë ärçhïvë çäñ't bë føüñd. Ït mäÿ hävë bëëñ møvëd ør dëlëtëd. ~~~~~~~~~~~~~~~~~~~~]",
+      "unsupported": "[Thïs kïñd øf ärçhïvë çäñ't bë øpëñëd hërë. Trÿ øpëñïñg ït ïñ äñøthër äpp. ~~~~~~~~~~~~~~~~~~~~~~~]",
+      "corrupt": "[Thïs ärçhïvë ïs dämägëd äñd çäñ't bë rëäd. ~~~~~~~~~~~~~~]",
+      "password_required": "[Thïs ïtëm ïs prøtëçtëd wïth ä pässwørd, whïçh ïsñ't süppørtëd ÿët. ~~~~~~~~~~~~~~~~~~~~~~]",
+      "too_many_entries": "[Thïs ärçhïvë häs mørë thäñ 200,000 ïtëms, tøø mäñÿ tø øpëñ säfëlÿ. ~~~~~~~~~~~~~~~~~~~]",
+      "bomb": "[Thïs ärçhïvë wøüld ëxpäñd tø fär mørë dätä thäñ ït hølds. Ït wäsñ't ëxträçtëd, tø prøtëçt ÿøür dïsk. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "no_space": "[Thërë ïsñ't ëñøügh frëë späçë øñ thë drïvë tø ëxträçt thïs. ~~~~~~~~~~~~~~~~~~~]",
+      "changed": "[Thë ärçhïvë çhäñgëd sïñçë ït wäs øpëñëd. Rëfrësh äñd trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~~~~]",
+      "cancelled": "[Çäñçëllëd. ~~~~]",
+      "not_a_file": "[Øñlÿ fïlës çäñ bë øpëñëd. ~~~~~~~~]",
+      "access_denied": "[Ÿøü døñ't hävë përmïssïøñ tø wrïtë ïñ thät føldër. ~~~~~~~~~~~~~~~~]",
+      "dest_missing": "[Thë føldër tø ëxträçt tø døësñ't ëxïst äñÿmørë. ~~~~~~~~~~~~~~~~]",
+      "helper_failed": "[Thë ärçhïvë çøüldñ't bë rëäd. Ït mäÿ bë dämägëd, ør ït ñëëds mørë mëmørÿ thäñ thë äpp älløws. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "timeout": "[Rëädïñg thë ärçhïvë støppëd rëspøñdïñg. ~~~~~~~~~~~~~~]",
+      "no_session": "[Thïs ärçhïvë ïs ñø løñgër øpëñ. Rëfrësh tø øpëñ ït ägäïñ. ~~~~~~~~~~~~~~~~~~]",
+      "unsafe_path": "[Skïppëd: ïts ñämë çøüld wrïtë øütsïdë thë føldër. ~~~~~~~~~~~~~~~~]",
+      "invalid_name": "[Skïppëd: ïts ñämë çäñ't bë üsëd øñ Wïñdøws. ~~~~~~~~~~~~~~]",
+      "link_entry": "[Skïppëd: lïñks ärë ñëvër ëxträçtëd. ~~~~~~~~~~~~]",
+      "unsupported_method": "[Skïppëd: ït's çømprëssëd ïñ ä wäÿ thë äpp çäñ't rëäd. ~~~~~~~~~~~~~~~~]",
+      "size_mismatch": "[Skïppëd: ïts sïzë døësñ't mätçh whät thë ärçhïvë säÿs. ~~~~~~~~~~~~~~~~~~]",
+      "name_taken": "[Skïppëd: äñ ïtëm wïth thïs ñämë wäs älrëädÿ thërë. ~~~~~~~~~~~~~~~~]",
+      "damaged": "[Skïppëd: thïs ïtëm ïs dämägëd. ~~~~~~~~~~]"
+    },
     "rename": {
       "exists": "[Thërë's älrëädÿ äñ ïtëm wïth thïs ñämë hërë. ~~~~~~~~~~~~~~]",
       "invalid_name": "[Wïñdøws døësñ't älløw thïs ñämë. ~~~~~~~~~~~]",
@@ -554,14 +587,16 @@
     "down": "[Døwñ ~~]",
     "space": "[Späçë ~~]",
     "pageUp": "[Pägë Üp ~~~]",
-    "pageDown": "[Pägë Døwñ ~~~~]"
+    "pageDown": "[Pägë Døwñ ~~~~]",
+    "backspace": "[Bäçkspäçë ~~~~]"
   },
   "files": {
     "newFolderName": "[Ñëw føldër ~~~~]",
     "newTextFileName": "[Ñëw tëxt døçümëñt.txt ~~~~~~~~]",
     "pastedImageName": "[Pästëd ïmägë {stamp} ~~~~~]",
     "pastedTextName": "[Pästëd tëxt {stamp} ~~~~]",
-    "shortcutName": "[{name} - Shørtçüt ~~~~]"
+    "shortcutName": "[{name} - Shørtçüt ~~~~]",
+    "extractedFolderName": "[Ëxträçtëd fïlës ~~~~~~]"
   },
   "jobs": {
     "title": "[Fïlë øpërätïøñs ~~~~~~]",
@@ -572,7 +607,8 @@
     "restoring": "[{count, plural, one {Rëstørïñg # ïtëm} other {Rëstørïñg # ïtëms}} ~~~~~~]",
     "skippedItems": "[{count, plural, one {# ïtëm wäs skïppëd} other {# ïtëms wërë skïppëd}} ~~~~~~~]",
     "done": "[Døñë ~~]",
-    "cancelled": "[Çäñçëllëd ~~~~]"
+    "cancelled": "[Çäñçëllëd ~~~~]",
+    "extracting": "[{count, plural, one {Ëxträçtïñg # ärçhïvë} other {Ëxträçtïñg # ärçhïvës}} ~~~~~~~~]"
   },
   "dialogs": {
     "conflictTitle": "[Äñ ïtëm wïth thïs ñämë ïs älrëädÿ hërë ~~~~~~~~~~~~~]",
@@ -601,7 +637,8 @@
     "text": "[Tëxt ~~]",
     "markdown": "[Märkdøwñ ~~~~]",
     "media": "[Äüdïø äñd vïdëø ~~~~~~]",
-    "hex": "[Hëx ~~]"
+    "hex": "[Hëx ~~]",
+    "archive": "[Ärçhïvë ~~~]"
   },
   "protected": {
     "message": "[Thïs fïlë çämë frøm thë ïñtërñët, sø ït øpëñëd ïñ prøtëçtëd vïëw. ~~~~~~~~~~~~~~~~~~~~~]",
@@ -726,6 +763,47 @@
     "audio": "[Äüdïø ~~]",
     "cantPlay": "[Thïs fïlë çäñ't bë pläÿëd hërë: thë büïlt-ïñ pläÿër døësñ't süppørt ïts førmät. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
     "noPicture": "[Thërë ïs ñø pïçtürë tø shøw. Ïf thïs vïdëø shøüld hävë øñë, ïts førmät ïsñ't süppørtëd hërë. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
+  },
+  "archive": {
+    "ribbonTab": "[Ärçhïvë ~~~]",
+    "groupExtract": "[Ëxträçt ~~~]",
+    "groupNavigate": "[Ñävïgätë ~~~~]",
+    "extractAll": "[Ëxträçt äll ~~~~]",
+    "extractSelected": "[Ëxträçt sëlëçtëd… ~~~~~~]",
+    "openEntry": "[Øpëñ ~~]",
+    "openLocation": "[Øpëñ ïtëm løçätïøñ ~~~~~~~]",
+    "up": "[Üp øñë lëvël ~~~~]",
+    "refresh": "[Rëfrësh ~~~]",
+    "listLabel": "[Çøñtëñts øf {name} ~~~~]",
+    "pathLabel": "[Føldër ïñ thë ärçhïvë ~~~~~~~~]",
+    "reading": "[Rëädïñg thë ärçhïvë… ~~~~~~~]",
+    "readingPercent": "[Rëädïñg thë ärçhïvë… {percent}% ~~~~~~~]",
+    "readCancelled": "[Rëädïñg wäs çäñçëllëd. ~~~~~~~~]",
+    "tryAgain": "[Trÿ ägäïñ ~~~~]",
+    "emptyFolder": "[Thïs føldër ïs ëmptÿ. ~~~~~~~]",
+    "emptyArchive": "[Thïs ärçhïvë ïs ëmptÿ. ~~~~~~~~]",
+    "noMatches": "[Ñø ïtëms mätçh “{text}”. ~~~~~]",
+    "searchNote": "[Mätçhës ïñ thë whølë ärçhïvë ~~~~~~~~~~]",
+    "truncated": "[Shøwïñg thë fïrst {count, number} ïtëms. Üsë thë sëärçh bøx tø fïñd thë øthërs. ~~~~~~~~~~~~~~~~~~~~]",
+    "searchTruncated": "[Shøwïñg thë fïrst {count, number} mätçhës. ~~~~~~~~~]",
+    "hiddenNote": "[{count, plural, one {# ïtëm ïs hïddëñ bëçäüsë ïts ñämë çäñ't bë üsëd säfëlÿ øñ Wïñdøws.} other {# ïtëms ärë hïddëñ bëçäüsë thëïr ñämës çäñ't bë üsëd säfëlÿ øñ Wïñdøws.}} ~~~~~~~~~~~~~~~~~~~~~~~]",
+    "encryptedNote": "[{count, plural, one {# ïtëm ïs prøtëçtëd wïth ä pässwørd äñd çäñ't bë øpëñëd ÿët.} other {# ïtëms ärë prøtëçtëd wïth ä pässwørd äñd çäñ't bë øpëñëd ÿët.}} ~~~~~~~~~~~~~~~~~~~~]",
+    "partialNote": "[Thïs ärçhïvë sëëms dämägëd: øñlÿ pärt øf ït çøüld bë rëäd. ~~~~~~~~~~~~~~~~~~~]",
+    "opening": "[Øpëñïñg {name}… ~~~]",
+    "linkCannotOpen": "[Lïñks ïñsïdë ärçhïvës çäñ't bë øpëñëd. ~~~~~~~~~~~~~]",
+    "statusItems": "[{count, plural, one {# ïtëm} other {# ïtëms}} ~~]",
+    "statusFiles": "[{count, plural, one {# fïlë} other {# fïlës}}, {size} whëñ ëxträçtëd ~~~~~~~~]",
+    "linkType": "[Lïñk ~~]",
+    "pickFolderTitle": "[Çhøøsë whërë tø ëxträçt ~~~~~~~~]",
+    "format": {
+      "zip": "[ZÏP ärçhïvë ~~~~]",
+      "seven_z": "[7z ärçhïvë ~~~~]",
+      "tar": "[TÄR ärçhïvë ~~~~]",
+      "tar_gz": "[TÄR ärçhïvë (gzïp) ~~~~~~]",
+      "tar_xz": "[TÄR ärçhïvë (xz) ~~~~~]",
+      "gz": "[gzïp fïlë ~~~~]",
+      "xz": "[xz fïlë ~~~]"
+    }
   },
   "hex": {
     "label": "[Bÿtës øf {name} ~~~]",

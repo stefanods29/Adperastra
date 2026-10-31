@@ -626,6 +626,67 @@ if (mode === "full") {
   } catch (error) {
     console.log(`step 06a measurements failed: ${error.message ?? error}`);
   }
+
+  // Step 06d: the archive tab. Opening a 10,000-entry zip, changing folders
+  // and searching it; the archive tab is closed again after each open.
+  const archiveRows = `[...document.querySelectorAll(".adp-filetab:not([hidden]) .adp-archive [role=option]")]`;
+  const archiveReady = `document.querySelector(".adp-filetab:not([hidden]) .adp-archive [role=option]") != null`;
+  const openInTab = (name) =>
+    `[...window.__m.rows()].find((r) => r.textContent.includes(${JSON.stringify(name)})).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`;
+  const closeTab = `window.__m.key(window, { key: "w", ctrlKey: true }); true`;
+  try {
+    await openFolder(join(big, "..", "archives"));
+    const openValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      openValues.push(await page(`window.__m.timeUntil(() => ${openInTab("Big archive.zip")}, () => (${archiveReady}))`));
+      await page(closeTab);
+      await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+      await sleep(200);
+    }
+    const openedArchive = { name: "archive open (10,000 entries)", median_ms: Math.round(median(openValues) * 10) / 10, max_ms: Math.round(Math.max(...openValues) * 10) / 10, runs: openValues.length };
+    console.log(`${openedArchive.name}: median ${openedArchive.median_ms} ms (max ${openedArchive.max_ms})`);
+    results.push(openedArchive);
+
+    // Folder change: the big archive is opened once, then folder 05 opens.
+    await page(`${openInTab("Big archive.zip")}; true`);
+    await page(`window.__m.waitFor(() => (${archiveReady}))`);
+    const folderValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      folderValues.push(
+        await page(`window.__m.timeUntil(
+          () => ${archiveRows}.find((r) => r.textContent.includes("folder 05")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+          () => (${archiveRows}[0]?.textContent ?? "").includes("file 0001"))`),
+      );
+      await page(`document.querySelector(".adp-filetab:not([hidden]) .adp-archive .adp-breadcrumb button")?.click(); true`);
+      await page(`window.__m.waitFor(() => ${archiveRows}.some((r) => r.textContent.includes("folder 05")))`);
+      await sleep(100);
+    }
+    const folderChange = { name: "archive folder change", median_ms: Math.round(median(folderValues) * 10) / 10, max_ms: Math.round(Math.max(...folderValues) * 10) / 10, runs: folderValues.length };
+    console.log(`${folderChange.name}: median ${folderChange.median_ms} ms (max ${folderChange.max_ms})`);
+    results.push(folderChange);
+
+    // Search: the text goes in at once; ten rows mean it is done.
+    const searchBox = `document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input")`;
+    const typeSearch = (text) =>
+      `(() => { const input = ${searchBox}; Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`;
+    const searchValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      searchValues.push(
+        await page(`window.__m.timeUntil(
+          () => { ${typeSearch("file 0500")} },
+          () => document.querySelectorAll(".adp-filetab:not([hidden]) .adp-archive [role=option]").length === 10)`),
+      );
+      await page(typeSearch(""));
+      await sleep(200);
+    }
+    const search = { name: "archive search (10,000 entries)", median_ms: Math.round(median(searchValues) * 10) / 10, max_ms: Math.round(Math.max(...searchValues) * 10) / 10, runs: searchValues.length };
+    console.log(`${search.name}: median ${search.median_ms} ms (max ${search.max_ms})`);
+    results.push(search);
+    await page(closeTab);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+  } catch (error) {
+    console.log(`step 06d measurements failed: ${error.message ?? error}`);
+  }
 }
 
 if (outFile && results.length > 0) {
@@ -968,6 +1029,27 @@ if (shotDir) {
   await sleep(400);
   await shot("41-unsaved-dialog");
   await step(`document.querySelectorAll("[role=dialog] .adp-dialog-actions .adp-btn")[1]?.click()`);
+  // Step 06d: the archive tab, its search, and its Extract menu.
+  await openFolder(join(big, "..", "archives"));
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("Project files.zip")))`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Project files.zip"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-archive [role=option]") !== null, 15000)`);
+  await sleep(400);
+  await shot("46-archive-tab");
+  await page(`(() => { const input = document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input"); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "notes"); input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`);
+  await sleep(500);
+  await shot("47-archive-search");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+  await page(`document.querySelector(".adp-tabbar [role=tab]").click(); true`);
+  await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
+  await step(`window.__m.context([...window.__m.rows()].find((r) => r.textContent.includes("Project files.zip")))`);
+  // The item menu's submenus: "Open as" first, "Extract" second.
+  await step(`document.querySelectorAll(".adp-ctxmenu [role=menuitem][aria-haspopup=menu]")[1]?.click()`);
+  await sleep(300);
+  await shot("48-extract-menu");
+  await step(`for (const menu of [...document.querySelectorAll(".adp-ctxmenu")].reverse()) menu.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
+  await page(`window.__m.closeMenus(); true`);
 }
 
 cdp.close();

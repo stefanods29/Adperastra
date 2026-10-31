@@ -39,11 +39,13 @@ import {
   type TabsState,
 } from "./services/tabs";
 import { viewModeShortcut } from "./commands/explorerCommands";
+import type { ArchiveExtractRequest } from "./services/archive";
 import ExplorerHome, {
   type ExplorerNavigateRequest,
   type ExplorerStats,
   type ExplorerViewModeRequest,
 } from "./views/ExplorerHome";
+import type { ExplorerExtractRequest } from "./views/explorer/useArchiveExtract";
 import FileTabView from "./views/FileTabView";
 import { useUnsavedChanges } from "./views/useUnsavedChanges";
 const GalleryView = lazy(() => import("./views/GalleryView"));
@@ -89,6 +91,7 @@ export default function App() {
   const { tabs, activeId } = tabsState;
   const [navigateRequest, setNavigateRequest] = useState<ExplorerNavigateRequest | null>(null);
   const [viewModeRequest, setViewModeRequest] = useState<ExplorerViewModeRequest | null>(null);
+  const [extractRequest, setExtractRequest] = useState<ExplorerExtractRequest | null>(null);
   const [helpSlug, setHelpSlug] = useState("getting-started");
   const [showKeyTips, setShowKeyTips] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -300,6 +303,16 @@ export default function App() {
     setNavigateRequest((previous) => ({ folder, select, nonce: (previous?.nonce ?? 0) + 1 }));
     setTabsState((current) => activateTab(current, "explorer"));
   }, []);
+
+  /** An archive tab asked for an extraction (Step 06d): show the folder in
+   * the Explorer, then let it run the job and select what it made. */
+  const extractArchive = useCallback(
+    (request: ArchiveExtractRequest) => {
+      showInExplorer(request.dest_dir, null);
+      setExtractRequest((previous) => ({ request, nonce: (previous?.nonce ?? 0) + 1 }));
+    },
+    [showInExplorer],
+  );
 
   const mounted = useMemo(() => mountedFileTabs(tabsState), [tabsState]);
 
@@ -533,6 +546,7 @@ export default function App() {
             onOpenFileWith={openFileWith}
             navigateRequest={navigateRequest}
             viewModeRequest={viewModeRequest}
+            extractRequest={extractRequest}
             view={settings.explorer}
             onViewChange={onViewChange}
             pasteImageFormat={settings.files?.paste_image_format ?? "png"}
@@ -560,6 +574,8 @@ export default function App() {
                 )
               }
               onConfirmDiscard={() => unsaved.confirmClose([tab.id])}
+              onOpenFile={(path) => openFile(path, false)}
+              onExtractArchive={extractArchive}
             />
           ))}
         {activeTab.kind === "help" ? (
