@@ -1,6 +1,6 @@
 # Step 06c report - Templates in the New menu
 
-Dates: 2026-10-30 to 2026-10-31. Status: all 7 implementation tasks saved, combined with 06b and reviewed locally on `step-06c-templates`; local integration is in progress. No tag or publication. Owner checks and the shared safety/runtime issues remain pending.
+Dates: 2026-10-30 to 2026-10-31. Status: all 7 implementation tasks saved, combined with 06b and reviewed locally on `step-06c-templates`; merged into local `testing` at `4bacad9`. No tag or publication. Owner checks and the shared safety/runtime issues remain pending.
 
 ## How to try it
 
@@ -119,7 +119,7 @@ b459878 feat(settings): My templates folder (schema 11) [step-06c/T2]
 
 (`git log testing..HEAD` also lists Step 06b's T1 to T4: those are this branch's baseline, not part of this step.)
 
-The combined local safety correction is identified by `[step-06b/F2]` and `[step-06c/F1]`; plan corrections have their own `docs(plan)` commit.
+Combined safety correction: `6e3522f` (`[step-06b/F2]`, `[step-06c/F1]`); plan corrections: `26af829`; local testing merge: `4bacad9`. The merged app tree matches the tested branch exactly; no redundant post-merge suite was run.
 
 ## Next step
 

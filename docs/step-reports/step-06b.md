@@ -1,6 +1,6 @@
 # Step 06b report - Version history
 
-Dates: 2026-10-30 to 2026-10-31. Status: all 11 implementation tasks saved on `step-06b-version-history`, combined with 06c and reviewed locally on `step-06c-templates`; local integration is in progress. No tag or publication. Owner checks and the open shared safety/runtime issues below remain pending.
+Dates: 2026-10-30 to 2026-10-31. Status: all 11 implementation tasks saved on `step-06b-version-history`, combined with 06c and reviewed locally on `step-06c-templates`; merged into local `testing` at `4bacad9`. No tag or publication. Owner checks and the open shared safety/runtime issues below remain pending.
 
 ## How to try it
 
@@ -126,7 +126,7 @@ ccf79ff feat(versions): keep a version before every change, background storing, 
 414b07b deps: add rusqlite 0.41 (MIT), blake3 1.8 (CC0-1.0 OR Apache-2.0), zstd 0.14 (BSD-3-Clause) [step-06b/T1]
 ```
 
-The combined local safety correction is identified by `[step-06b/F2]` and `[step-06c/F1]`; plan corrections have their own `docs(plan)` commit.
+Combined safety correction: `6e3522f` (`[step-06b/F2]`, `[step-06c/F1]`); plan corrections: `26af829`; local testing merge: `4bacad9`. The merged app tree matches the tested branch exactly; no redundant post-merge suite was run.
 
 ## Next step
 

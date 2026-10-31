@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `06b`, then `06c`. Steps 04a to 06a and 06d are merged into local `testing`; their local tags wait for the speed runs, screenshots and hand checks listed in their reports.
+**Current step:** `06e` (outline; guide preparation next). Steps 06b and 06c are merged into local `testing` at `4bacad9`, with 349 Rust/462 UI tests passing and scoped release screenshots/speeds recorded. Owner checks, earlier-step speed regressions and the documented shared safety/runtime issues remain pending; tags stay at 03b.
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
@@ -29,8 +29,8 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 05c | Movable toolbars and panels, layout presets | in progress (speed, pseudo-locale screenshots, hand checks left) | v0.0.12-step05c |
 | 05d | Appearance, built-in themes, Settings page | in progress (speed, pseudo-locale screenshots, hand checks left) | v0.0.13-step05d |
 | 06a | Text editing | in progress (speed, screenshots, hand checks left) | v0.0.14-step06a |
-| 06b | Version history | in progress | v0.0.15-step06b |
-| 06c | Templates in the New menu | guide | v0.0.16-step06c |
+| 06b | Version history | in progress (local integration checked; owner checks, full speed comparison and shared issues left) | v0.0.15-step06b |
+| 06c | Templates in the New menu | in progress (local integration checked; owner checks and full speed comparison left) | v0.0.16-step06c |
 | 06d | Archives: open, browse, extract | in progress (speed, screenshots, hand checks left) | v0.0.17-step06d |
 | 06e | Archives: create, passwords, RAR | outline | v0.0.18-step06e |
 | 06f | Tables (CSV), JSON, fonts, hex search | outline | v0.0.19-step06f |
