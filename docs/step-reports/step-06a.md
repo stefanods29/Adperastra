@@ -65,6 +65,7 @@ Before checking, create the test folder `%TEMP%\adp-06a` with these files (plain
 - **Encoding select:** the existing "read as" select got an `aria-label` (needed for the T8 test and for screen readers).
 - **Measurements:** the guide's "the step value `05d` becomes `06a`" could not be applied: `scripts/measure-ui.mjs` has no hardcoded step value; the record takes it from the runner (`-Step`, else the branch name). Left as is.
 - **F1 after a self-review:** a failed Markdown pane is now really hidden (an author `display: flex` overrode `hidden`), and the text viewer shows the line-ending item only once the file is loaded.
+- **F2 after a self-review:** Save and Save as do nothing until the text has loaded (the ribbon is visible before the file's bytes arrive, and saving earlier could have written an empty document over the file). Save as is also disabled on the ribbon until the file is ready.
 
 ## Speed (development PC, packaged release build)
 
@@ -110,6 +111,7 @@ Pending: `docs/screenshots/step-06a/` is to receive `39-text-editing`, `40-find-
 ## Commits
 
 ```
+8086db3 fix(editor): saving waits until the text has loaded [step-06a/F2]
 8b1b18a fix(editor): hide a failed Markdown pane and show line endings once loaded [step-06a/F1]
 7b8277a docs(help): editing text, unsaved changes and recovery; speed and screenshots [step-06a/T12]
 47fb0d1 feat(editor): ask before losing unsaved changes [step-06a/T11]
