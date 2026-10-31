@@ -629,6 +629,19 @@
       "recycle_failed": "The file you chose couldn't be moved to the Recycle Bin, so nothing was saved.",
       "preview_too_large": "This file is too large to preview here. Open it to look at it.",
       "replace_unavailable": "Replacing an existing file is not available yet. Choose a new name."
+    },
+    "data": {
+      "other": "Couldn't read this file.",
+      "too_large": "This file is too large for this view. Use Open as text.",
+      "too_deep": "This JSON is nested too deeply to show as a tree. Use Open as text.",
+      "invalid": "This isn't valid JSON. Use Open as text to see it.",
+      "read_failed": "Couldn't read this file."
+    },
+    "table": {
+      "other": "Couldn't show this table."
+    },
+    "json": {
+      "other": "Couldn't show this JSON file."
     }
   },
   "keys": {

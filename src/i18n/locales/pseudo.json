@@ -629,6 +629,19 @@
       "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
       "preview_too_large": "[Thïs fïlë ïs tøø lärgë tø prëvïëw hërë. Øpëñ ït tø løøk ät ït. ~~~~~~~~~~~~~~~~~~~]",
       "replace_unavailable": "[Rëpläçïñg äñ ëxïstïñg fïlë ïs ñøt äväïläblë ÿët. Çhøøsë ä ñëw ñämë. ~~~~~~~~~~~~~~~~~~~~~~]"
+    },
+    "data": {
+      "other": "[Çøüldñ't rëäd thïs fïlë. ~~~~~~~~]",
+      "too_large": "[Thïs fïlë ïs tøø lärgë før thïs vïëw. Üsë Øpëñ äs tëxt. ~~~~~~~~~~~~~~~~~]",
+      "too_deep": "[Thïs JSØÑ ïs ñëstëd tøø dëëplÿ tø shøw äs ä trëë. Üsë Øpëñ äs tëxt. ~~~~~~~~~~~~~~~~~~~~~]",
+      "invalid": "[Thïs ïsñ't välïd JSØÑ. Üsë Øpëñ äs tëxt tø sëë ït. ~~~~~~~~~~~~~~~]",
+      "read_failed": "[Çøüldñ't rëäd thïs fïlë. ~~~~~~~~]"
+    },
+    "table": {
+      "other": "[Çøüldñ't shøw thïs täblë. ~~~~~~~~]"
+    },
+    "json": {
+      "other": "[Çøüldñ't shøw thïs JSØÑ fïlë. ~~~~~~~~~~]"
     }
   },
   "keys": {

@@ -57,7 +57,7 @@ pub struct JsonNodeInfo {
 }
 
 /// Where a search found something, with the containers around it (root first).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct JsonMatch {
     pub id: u32,
     pub ancestors: Vec<u32>,

@@ -629,6 +629,19 @@
       "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
       "preview_too_large": "Este archivo es demasiado grande para mostrarlo aquí. Ábrelo para verlo.",
       "replace_unavailable": "Por ahora no se puede reemplazar un archivo. Elige otro nombre."
+    },
+    "data": {
+      "other": "No se pudo leer este archivo.",
+      "too_large": "Este archivo es demasiado grande para esta vista. Usa Abrir como texto.",
+      "too_deep": "Este JSON tiene demasiados niveles para mostrarlo como árbol. Usa Abrir como texto.",
+      "invalid": "Este JSON no es válido. Usa Abrir como texto para verlo.",
+      "read_failed": "No se pudo leer este archivo."
+    },
+    "table": {
+      "other": "No se pudo mostrar esta tabla."
+    },
+    "json": {
+      "other": "No se pudo mostrar este archivo JSON."
     }
   },
   "keys": {

@@ -31,6 +31,7 @@ mod classic_menu;
 mod clipboard;
 #[cfg(windows)]
 mod clipboard_image_helper;
+mod data_views;
 mod drag;
 mod explorer;
 mod file_dialogs;
@@ -2957,6 +2958,7 @@ fn main() {
         .manage(jobs::Jobs::default())
         .manage(archive::ArchiveSessions::default())
         .manage(archive_passwords::ArchivePasswords::default())
+        .manage(data_views::DataSessions::default())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -3079,6 +3081,15 @@ fn main() {
             templates::template_create,
             template_jobs::template_create_start,
             templates::templates_pick_folder,
+            data_views::table_open_start,
+            data_views::table_view_start,
+            data_views::table_rows,
+            data_views::table_close,
+            data_views::json_open_start,
+            data_views::json_children,
+            data_views::json_find,
+            data_views::json_copy,
+            data_views::json_close,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

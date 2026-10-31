@@ -137,7 +137,7 @@ pub fn page_rows(table: &Table, order: &[u32], start: usize, count: usize) -> Ve
 }
 
 /// At most `MAX_CELL_CHARS` characters, with `…` when text was left out.
-fn cut_cell(text: &str) -> String {
+pub fn cut_cell(text: &str) -> String {
     if text.chars().count() <= MAX_CELL_CHARS {
         return text.to_string();
     }
