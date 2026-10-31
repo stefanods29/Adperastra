@@ -5,6 +5,7 @@ import {
   archiveFolder,
   archiveOpen,
   archiveSearch,
+  type ArchiveAuth,
   type ArchiveFolderPage,
   type ArchiveSummary,
 } from "../../services/archive";
@@ -46,7 +47,21 @@ export interface ArchiveSession {
 /** How long typing must pause before the archive is searched. */
 export const SEARCH_DELAY_MS = 150;
 
-export function useArchiveSession(path: string): ArchiveSession {
+/** How a view asks for one password and retries the work. */
+export type AskArchivePassword = (
+  name: string,
+  code: string | null,
+  attempt: (auth: ArchiveAuth) => Promise<void>,
+) => Promise<boolean>;
+
+function baseName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
+}
+
+export function useArchiveSession(
+  path: string,
+  askPassword?: AskArchivePassword,
+): ArchiveSession {
   const [phase, setPhase] = useState<ArchivePhase>({ kind: "loading", progress: null });
   const [folder, setFolderState] = useState("");
   const [sort, setSort] = useState<ArchiveSort>({ key: "name", direction: "ascending" });
@@ -76,25 +91,44 @@ export function useArchiveSession(path: string): ArchiveSession {
     setFolderState("");
     setPage(null);
     setResults(null);
+    const openOnce = async (auth?: ArchiveAuth) => {
+      const job = await archiveOpen(
+        path,
+        (progress) => {
+          if (!cancelled) setPhase({ kind: "loading", progress });
+        },
+        auth,
+      );
+      openJobRef.current = job;
+      if (cancelled) {
+        void job.cancel();
+        return;
+      }
+      const summary = await job.completion;
+      openJobRef.current = null;
+      if (cancelled) return;
+      sessionRef.current = summary.session;
+      setPhase({ kind: "ready", summary });
+    };
     void (async () => {
       try {
-        const job = await archiveOpen(path, (progress) => {
-          if (!cancelled) setPhase({ kind: "loading", progress });
-        });
-        openJobRef.current = job;
-        if (cancelled) {
-          void job.cancel();
-          return;
-        }
-        const summary = await job.completion;
-        openJobRef.current = null;
-        if (cancelled) return;
-        sessionRef.current = summary.session;
-        setPhase({ kind: "ready", summary });
+        await openOnce();
       } catch (error) {
         openJobRef.current = null;
         if (cancelled) return;
-        if (errorCode(error) === "archive.cancelled") setPhase({ kind: "cancelled" });
+        const code = errorCode(error);
+        if (
+          (code === "archive.password_required" || code === "archive.bad_password") &&
+          askPassword
+        ) {
+          const opened = await askPassword(baseName(path), code, async (auth) => {
+            await openOnce(auth);
+          });
+          if (cancelled) return;
+          if (!opened) setPhase({ kind: "cancelled" });
+          return;
+        }
+        if (code === "archive.cancelled") setPhase({ kind: "cancelled" });
         else setPhase({ kind: "error", error });
       }
     })();
@@ -102,7 +136,7 @@ export function useArchiveSession(path: string): ArchiveSession {
       cancelled = true;
       void openJobRef.current?.cancel();
     };
-  }, [path, reloadNonce]);
+  }, [path, reloadNonce, askPassword]);
 
   const session = phase.kind === "ready" ? phase.summary.session : null;
 

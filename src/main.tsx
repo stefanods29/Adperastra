@@ -17,6 +17,7 @@ import "./styles/settings.css";
 import "./styles/layout.css";
 import "./styles/versions.css";
 import "./styles/archive.css";
+import "./styles/archive-create.css";
 import "./styles/templates.css";
 
 const container = document.getElementById("root");

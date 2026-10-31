@@ -110,6 +110,7 @@ import {
 } from "./explorer/FileOpDialogs";
 import JobsPanel, { type JobView, type TrackJob } from "./explorer/JobsPanel";
 import { useArchiveExtract, type ExplorerExtractRequest } from "./explorer/useArchiveExtract";
+import { useArchivePasswordPrompt } from "../archive/useArchivePasswordPrompt";
 import DetailsPane from "./explorer/DetailsPane";
 import DriveList, { type DriveLoadState } from "./explorer/DriveList";
 import FileList from "./explorer/FileList";
@@ -687,6 +688,14 @@ export default function ExplorerHome({
     }
   };
 
+  /** Asking for archive passwords (Step 06e T10). */
+  const archivePrompts = useArchivePasswordPrompt();
+  useEffect(() => {
+    // Navigating away cancels a prompt for what is no longer shown.
+    archivePrompts.cancelAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.type, location.type === "folder" ? location.path : ""]);
+
   /** Extracting archives (Step 06d): a job per archive, one Undo entry for
    * a group. */
   const archive = useArchiveExtract({
@@ -701,6 +710,7 @@ export default function ExplorerHome({
       live.current.location.type === "folder" ? live.current.location.path : null,
     showResult,
     itemFor: (path) => live.current.itemByPath.get(path),
+    askPassword: archivePrompts.ask,
   });
 
   // An archive tab asked for an extraction; the App already shows the
@@ -2156,6 +2166,7 @@ export default function ExplorerHome({
         onDismiss={(id) => setToasts((list) => list.filter((toast) => toast.id !== id))}
         onUndo={undoFromToast}
       />
+      {archivePrompts.dialog}
     </div>
   );
 }

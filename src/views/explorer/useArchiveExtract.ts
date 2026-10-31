@@ -1,6 +1,14 @@
 import type { TFunction } from "i18next";
+import type { AskArchivePassword } from "../../handlers/archive/useArchiveSession";
 import { extractRequestFor, isArchivePath, type ExtractMode } from "../../archive/archiveFiles";
-import { archiveExtract, archivePickFolder, type ArchiveExtractReport, type ArchiveExtractRequest } from "../../services/archive";
+import {
+  archiveExtract,
+  archivePickFolder,
+  type ArchiveAuth,
+  type ArchiveExtractReport,
+  type ArchiveExtractRequest,
+} from "../../services/archive";
+import { errorCode } from "../../services/errors";
 import { displayPath, type ExplorerItem } from "../../services/explorer";
 import type { UndoEntry, UndoStack } from "../../services/undo";
 import type { TrackJob } from "./JobsPanel";
@@ -27,6 +35,8 @@ export interface ArchiveExtractDeps {
   /** Select the new items, and go to the destination when asked. */
   showResult: (destDir: string, select: string | null, navigate: boolean) => void;
   itemFor: (path: string) => ExplorerItem | undefined;
+  /** Asks for a password and retries once per submitted value. */
+  askPassword?: AskArchivePassword;
 }
 
 export interface ArchiveExtract {
@@ -45,22 +55,34 @@ function baseName(path: string): string {
 }
 
 export function useArchiveExtract(deps: ArchiveExtractDeps): ArchiveExtract {
-  const { t, trackJob, undoStack, touchUndo, notify, notifyAction, notifyError, showResult, itemFor } = deps;
+  const { t, trackJob, undoStack, touchUndo, notify, notifyAction, notifyError, showResult, itemFor, askPassword } = deps;
 
   const runOne = async (request: ArchiveExtractRequest, navigate: boolean): Promise<UndoEntry | null> => {
-    let report: ArchiveExtractReport;
-    try {
-      report = await trackJob<ArchiveExtractReport>({
+    const start = (auth?: ArchiveAuth) =>
+      trackJob<ArchiveExtractReport>({
         verbKey: "extracting",
         count: 1,
         reasonArea: "archive",
-        start: (onProgress) => archiveExtract(request, onProgress),
+        start: (onProgress) => archiveExtract(request, onProgress, auth),
         outcome: (result) => ({ cancelled: result.cancelled, skipped: result.skipped }),
       });
+    let report: ArchiveExtractReport | null = null;
+    try {
+      report = await start();
     } catch (error) {
-      notifyError(error, "archive");
-      return null;
+      const code = errorCode(error);
+      const asksForPassword = code === "archive.password_required" || code === "archive.bad_password";
+      if (!asksForPassword || !askPassword) {
+        notifyError(error, "archive");
+        return null;
+      }
+      // Nothing was published: the user may supply a password and retry.
+      const done = await askPassword(baseName(request.archive), code, async (auth) => {
+        report = await start(auth);
+      });
+      if (!done || !report) return null;
     }
+    if (!report) return null;
     let entry: UndoEntry | null = null;
     if (report.created.length > 0) {
       undoStack.push({
