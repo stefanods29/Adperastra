@@ -27,6 +27,9 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | PDF (07b/14a) | PDFium via pdfium-render (Apache-2.0) + PDF.js (Apache-2.0) | qpdf (Apache-2.0) | Never MuPDF/Ghostscript/Poppler (GPL/AGPL) |
 | OCR (07b) | Windows.Media.Ocr (OS) | Tesseract pack (Apache-2.0) | OS first |
 | Archives (Step 06d) | zip 9.1 (MIT), sevenz-rust2 0.24 (Apache-2.0), tar 0.4 (MIT OR Apache-2.0), flate2 1.1 (MIT OR Apache-2.0), lzma-rust2 0.22 (Apache-2.0), all adopted in Step 06d with default features off (no bzip2 before 06e), plus what they bring in: zstd, zstd-safe, zstd-sys (BSD-3-Clause), typed-path, cbc, aes, sha2, cipher, block-padding, const-oid, cpubits, hybrid-array, xattr, filetime (MIT OR Apache-2.0), nix (MIT); libarchive not adopted | libarchive (BSD-2); 7-Zip program (LGPL, separate process only, Step 06e for RAR) | Read in the archive helper process only (R-SEC-9). Never bundle UnRAR code |
+| Version history (06b) | rusqlite 0.41 (MIT) with bundled SQLite (public domain), adopted in Step 06b for the version store index | plain JSON + files | Needs Rust 1.89 or newer |
+| Version history (06b) | blake3 1.8 (CC0-1.0 OR Apache-2.0), adopted in Step 06b to recognize identical versions and store them once | sha2 | `Hasher` implements `std::io::Write` |
+| Version history (06b) | zstd 0.14 (BSD-3-Clause), adopted in Step 06b to compress kept versions | - | 0.13 was MIT; 0.14 is BSD-3-Clause |
 | PDF edit (14a) | pdf-lib (MIT) | lopdf (MIT); qpdf external | Standard annotations |
 | Image editing (14b/18) | Fabric.js or Konva (MIT) + image crate | PixiJS (MIT); miniPaint (MIT, reference) | 18a needs tiled/GPU path |
 | PSD (07c/18b) | ag-psd (MIT) | flattened composite only | - |
