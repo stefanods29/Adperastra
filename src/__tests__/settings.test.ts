@@ -31,6 +31,7 @@ describe("normalizeSettings", () => {
       open: defaultSettings().open,
       layout: defaultSettings().layout,
       appearance: defaultSettings().appearance,
+      versions: defaultSettings().versions,
     });
   });
 
@@ -52,7 +53,8 @@ describe("normalizeSettings", () => {
       column_preview: true,
     });
     expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
-    expect(defaultSettings().schema_version).toBe(9);
+    expect(defaultSettings().schema_version).toBe(10);
+    expect(defaultSettings().versions).toEqual({ enabled: true, keep_days: 30, max_mb: 1024 });
     expect(defaultSettings().files.paste_image_format).toBe("png");
     expect(normalizeSettings({ files: { paste_image_format: "jpg" } }).files.paste_image_format).toBe("jpg");
     expect(normalizeSettings({ files: { paste_image_format: "gif" } }).files.paste_image_format).toBe("png");
@@ -203,6 +205,17 @@ describe("normalizeSettings", () => {
     expect(appearance({ corner_radius: "round" }).corner_radius).toBe("round");
     expect(appearance({ animations: "off" }).animations).toBe("off");
     expect(appearance({ animations: "none" }).animations).toBe("full");
+  });
+
+  it("normalizes the version settings (schema 10)", () => {
+    const versions = (input: Record<string, unknown>) => normalizeSettings({ versions: input }).versions;
+    expect(versions({})).toEqual({ enabled: true, keep_days: 30, max_mb: 1024 });
+    expect(versions({ enabled: false }).enabled).toBe(false);
+    expect(versions({ enabled: "no" }).enabled).toBe(true);
+    expect(versions({ keep_days: 90 }).keep_days).toBe(90);
+    expect(versions({ keep_days: 14 }).keep_days).toBe(30);
+    expect(versions({ max_mb: 256 }).max_mb).toBe(256);
+    expect(versions({ max_mb: 3000 }).max_mb).toBe(1024);
   });
 
   it("clampColumnWidth rounds and keeps the limits", () => {

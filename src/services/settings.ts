@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 9;
+export const SETTINGS_SCHEMA_VERSION = 10;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -221,6 +221,23 @@ export interface AppearanceSettings {
   animations: AnimationLevel;
 }
 
+/** How long versions are kept, in days (schema 10, Step 06b). */
+export type KeepDays = 7 | 30 | 90 | 365;
+/** Every keep length, in the order the settings select shows it. */
+export const KEEP_DAYS: readonly KeepDays[] = [7, 30, 90, 365];
+
+/** How much space versions may use, in megabytes (schema 10, Step 06b). */
+export type MaxVersionsMb = 256 | 512 | 1024 | 2048 | 5120;
+/** Every space choice, in the order the settings select shows it. */
+export const MAX_VERSIONS_MB: readonly MaxVersionsMb[] = [256, 512, 1024, 2048, 5120];
+
+/** The versions kept of files the app changes (schema 10, Step 06b). */
+export interface VersionSettings {
+  enabled: boolean;
+  keep_days: KeepDays;
+  max_mb: MaxVersionsMb;
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
@@ -230,6 +247,7 @@ export interface AppSettings {
   open: OpenSettings;
   layout: LayoutSettings;
   appearance: AppearanceSettings;
+  versions: VersionSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -279,6 +297,11 @@ export function defaultSettings(): AppSettings {
       corner_radius: "standard",
       animations: "full",
     },
+    versions: {
+      enabled: true,
+      keep_days: 30,
+      max_mb: 1024,
+    },
   };
 }
 
@@ -288,6 +311,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function pick<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return typeof value === "string" && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : fallback;
+}
+
+function pickNumber<T extends number>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === "number" && (allowed as readonly number[]).includes(value)
     ? (value as T)
     : fallback;
 }
@@ -370,6 +399,7 @@ export function normalizeSettings(input: unknown): AppSettings {
   const filesInput = isRecord(input.files) ? input.files : {};
   const openInput = isRecord(input.open) ? input.open : {};
   const appearanceInput = isRecord(input.appearance) ? input.appearance : {};
+  const versionsInput = isRecord(input.versions) ? input.versions : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
@@ -421,6 +451,11 @@ export function normalizeSettings(input: unknown): AppSettings {
       density: pick(appearanceInput.density, DENSITIES, defaults.appearance.density),
       corner_radius: pick(appearanceInput.corner_radius, CORNER_RADII, defaults.appearance.corner_radius),
       animations: pick(appearanceInput.animations, ANIMATION_LEVELS, defaults.appearance.animations),
+    },
+    versions: {
+      enabled: flag(versionsInput.enabled, defaults.versions.enabled),
+      keep_days: pickNumber(versionsInput.keep_days, KEEP_DAYS, defaults.versions.keep_days),
+      max_mb: pickNumber(versionsInput.max_mb, MAX_VERSIONS_MB, defaults.versions.max_mb),
     },
   };
 }
