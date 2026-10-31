@@ -119,6 +119,7 @@ name = "adperastra-app"
 version = "0.1.0"
 dependencies = [
  "archive",
+ "blake3",
  "fs-service",
  "infer",
  "serde",
