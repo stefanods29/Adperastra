@@ -709,7 +709,8 @@
   },
   "markdown": {
     "renderedMode": "[Rëädïñg vïëw ~~~~~]",
-    "sourceMode": "[Søürçë ~~~]"
+    "sourceMode": "[Søürçë ~~~]",
+    "splitMode": "[Splït ~~]"
   },
   "media": {
     "play": "[Pläÿ ~~]",

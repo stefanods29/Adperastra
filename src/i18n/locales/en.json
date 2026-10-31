@@ -709,7 +709,8 @@
   },
   "markdown": {
     "renderedMode": "Reading view",
-    "sourceMode": "Source"
+    "sourceMode": "Source",
+    "splitMode": "Split"
   },
   "media": {
     "play": "Play",
