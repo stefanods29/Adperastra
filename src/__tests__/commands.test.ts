@@ -4,6 +4,7 @@ import {
   BACKGROUND_MENU,
   COMMAND_BAR,
   ITEM_MENU,
+  NEW_MENU,
   VIEW_MENU,
   backgroundMenuFor,
   commandBarFor,
@@ -199,6 +200,40 @@ describe("explorer commands", () => {
     expect(isCommandEnabled(byId["explorer.redo"], { ...baseCtx, canRedo: true })).toBe(true);
     // Menu data names only registered commands (checked for all menus above).
     expect(resolveMenu(BACKGROUND_MENU, baseCtx, (id) => byId[id]).flatMap((e) => (e.type === "command" ? [e.id] : []))).toContain("explorer.pasteAsFile");
+  });
+
+  it("the New menu creates files", () => {
+    const actions = makeActions();
+    const byId = Object.fromEntries(createExplorerCommands(actions).map((c) => [c.id, c]));
+    const ids = [
+      "explorer.newMarkdown",
+      "explorer.newCsv",
+      "explorer.newDocument",
+      "explorer.newSpreadsheet",
+      "explorer.newPresentation",
+      "explorer.newFromTemplate",
+    ];
+    for (const id of ids) {
+      expect(byId[id], id).toBeDefined();
+      expect(byId[id].helpSlug, id).toBe("templates");
+      expect(isCommandEnabled(byId[id], baseCtx), id).toBe(true);
+      expect(isCommandEnabled(byId[id], { ...baseCtx, location: "home", currentPath: null }), id).toBe(false);
+    }
+    byId["explorer.newDocument"].run(baseCtx);
+    expect(actions.newBlank).toHaveBeenCalledWith("document");
+    byId["explorer.newFromTemplate"].run(baseCtx);
+    expect(actions.newFromTemplate).toHaveBeenCalled();
+    expect(NEW_MENU.map((entry) => (entry.type === "command" ? entry.id : entry.type))).toEqual([
+      "explorer.newFolder",
+      "explorer.newTextFile",
+      "explorer.newMarkdown",
+      "explorer.newCsv",
+      "explorer.newDocument",
+      "explorer.newSpreadsheet",
+      "explorer.newPresentation",
+      "separator",
+      "explorer.newFromTemplate",
+    ]);
   });
 
   it("extract commands appear only for archives", () => {

@@ -27,7 +27,17 @@ export type MenuEntry =
 const cmd = (id: string): MenuEntry => ({ type: "command", id });
 const separator: MenuEntry = { type: "separator" };
 
-export const NEW_MENU: MenuEntry[] = [cmd("explorer.newFolder"), cmd("explorer.newTextFile")];
+export const NEW_MENU: MenuEntry[] = [
+  cmd("explorer.newFolder"),
+  cmd("explorer.newTextFile"),
+  cmd("explorer.newMarkdown"),
+  cmd("explorer.newCsv"),
+  cmd("explorer.newDocument"),
+  cmd("explorer.newSpreadsheet"),
+  cmd("explorer.newPresentation"),
+  separator,
+  cmd("explorer.newFromTemplate"),
+];
 
 export const GROUP_MENU: MenuEntry[] = [
   cmd("explorer.groupByNone"),

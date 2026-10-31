@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Eye,
   FilePlus,
+  FileSpreadsheet,
   FileText,
   FileType,
   FolderInput,
@@ -31,12 +32,15 @@ import {
   Info,
   LayoutGrid,
   LayoutList,
+  LayoutTemplate,
   Link,
   List,
   ListChecks,
+  NotebookPen,
   PackageOpen,
   PanelRight,
   Pin,
+  Presentation,
   Redo2,
   RefreshCw,
   Rows3,
@@ -48,6 +52,7 @@ import {
   SquareCheck,
   SquareTerminal,
   Star,
+  Table,
   TextCursorInput,
   Trash2,
   Undo2,
@@ -56,6 +61,7 @@ import { isArchivePath, type ExtractMode } from "../archive/archiveFiles";
 import type { SortDirection, SortKey } from "../services/explorer";
 import type { GroupBy } from "../services/grouping";
 import { VIEW_MODE_IDS, type ViewModeId } from "../services/settings";
+import type { BlankKind } from "../templates/catalog";
 import type { Command, CommandContext } from "./registry";
 
 export type ViewToggle = "detailsPane" | "showHidden" | "showExtensions" | "itemCheckboxes";
@@ -140,6 +146,10 @@ export interface ExplorerActions {
   showMoreOptions: () => void;
   newFolder: () => void;
   newTextFile: () => void;
+  /** Step 06c: a blank Markdown, CSV or Office file. */
+  newBlank: (kind: BlankKind) => void;
+  /** Step 06c: the template window. */
+  newFromTemplate: () => void;
   cut: () => void;
   copy: () => void;
   paste: () => void;
@@ -300,6 +310,60 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       helpSlug: "copying-and-moving",
       enabledWhen: inFolder,
       run: () => actions.newTextFile(),
+    },
+    {
+      id: "explorer.newMarkdown",
+      labelKey: "commands.newMarkdown",
+      icon: NotebookPen,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("markdown"),
+    },
+    {
+      id: "explorer.newCsv",
+      labelKey: "commands.newCsv",
+      icon: Table,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("csv"),
+    },
+    {
+      id: "explorer.newDocument",
+      labelKey: "commands.newDocument",
+      icon: FileText,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("document"),
+    },
+    {
+      id: "explorer.newSpreadsheet",
+      labelKey: "commands.newSpreadsheet",
+      icon: FileSpreadsheet,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("spreadsheet"),
+    },
+    {
+      id: "explorer.newPresentation",
+      labelKey: "commands.newPresentation",
+      icon: Presentation,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("presentation"),
+    },
+    {
+      id: "explorer.newFromTemplate",
+      labelKey: "commands.newFromTemplate",
+      icon: LayoutTemplate,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newFromTemplate(),
     },
     {
       id: "explorer.cut",

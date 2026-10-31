@@ -69,6 +69,8 @@ import {
   type OpReport,
 } from "../services/fileops";
 import { classifyClipboardText, pastedStamp, pastedTextExtension } from "../services/paste";
+import { createBlank } from "../templates/createNew";
+import type { BlankKind } from "../templates/catalog";
 import { formatShortcut } from "../services/shortcuts";
 import { UndoStack, type UndoEntry } from "../services/undo";
 import { groupItems } from "../services/grouping";
@@ -308,6 +310,8 @@ export default function ExplorerHome({
   const systemQueue = useRef<((confirmed: boolean) => void)[]>([]);
   const [systemAsk, setSystemAsk] = useState<((confirmed: boolean) => void) | null>(null);
   const [recentOpen, setRecentOpen] = useState(false);
+  // The template window (Step 06c).
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const pendingRenameRef = useRef<string | null>(null);
   const [dragBadge, setDragBadge] = useState<{ x: number; y: number; key: string; name: string } | null>(null);
   const loadModeRef = useRef<"hard" | "soft">("hard");
@@ -845,24 +849,47 @@ export default function ExplorerHome({
     refreshAfterOp();
   };
 
+  /** Every new item ends the same way (Step 06c): an undo entry, the
+   * "Created" toast, the rename box open and a refreshed list. */
+  const recordCreated = (path: string) => {
+    undoStack.current.push({
+      labelKey: "toast.created",
+      labelArgs: { name: baseNameOf(path) },
+      undo: { type: "recycle", paths: [path] },
+      redo: { type: "restore", originals: [path] },
+    });
+    touchUndo();
+    notifyAction(t("toast.created", { name: baseNameOf(path) }), undoStack.current.peekUndo());
+    pendingRenameRef.current = path;
+    refreshAfterOp();
+  };
+
+  /** Template errors carry `templates.*`; file-operation ones `ops.*`. */
+  const notifyTemplatesError = (error: unknown) => {
+    const raw = typeof error === "string" ? error : error instanceof Error ? error.message : "";
+    if (raw.startsWith("templates.")) notifyError(error, "templates");
+    else notifyOpError(error);
+  };
+
   const createNew = async (kind: "folder" | "file") => {
     const current = live.current.location;
     if (current.type !== "folder" || !isTauriRuntime()) return;
     try {
       const wanted = kind === "folder" ? t("files.newFolderName") : t("files.newTextFileName");
-      const path = await createItem(current.path, wanted, kind);
-      undoStack.current.push({
-        labelKey: "toast.created",
-        labelArgs: { name: baseNameOf(path) },
-        undo: { type: "recycle", paths: [path] },
-        redo: { type: "restore", originals: [path] },
-      });
-      touchUndo();
-      notifyAction(t("toast.created", { name: baseNameOf(path) }), undoStack.current.peekUndo());
-      pendingRenameRef.current = path;
-      refreshAfterOp();
+      recordCreated(await createItem(current.path, wanted, kind));
     } catch (error) {
       notifyOpError(error);
+    }
+  };
+
+  /** A blank Markdown, CSV or Office file (Step 06c). */
+  const createBlankFile = async (kind: BlankKind) => {
+    const current = live.current.location;
+    if (current.type !== "folder" || !isTauriRuntime()) return;
+    try {
+      recordCreated(await createBlank(kind, current.path, t, i18n.language));
+    } catch (error) {
+      notifyTemplatesError(error);
     }
   };
 
@@ -1059,6 +1086,8 @@ export default function ExplorerHome({
       setViewMode: (mode: ViewModeId) => viewModeRef.current.setMode(mode),
       newFolder: () => void createNew("folder"),
       newTextFile: () => void createNew("file"),
+      newBlank: (kind: BlankKind) => void createBlankFile(kind),
+      newFromTemplate: () => setTemplatePickerOpen(true),
       cut: () => {
         const paths = live.current.selectedPaths;
         if (paths.length > 0 && isTauriRuntime())
