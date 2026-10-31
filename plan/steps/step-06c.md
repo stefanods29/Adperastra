@@ -309,9 +309,9 @@ It also writes `templates/blank/blank.docx` (a document with one empty paragraph
 **Files:** modify `scripts/measure-ui.mjs`.
 
 **Do this:**
-1. The step value `06b` becomes `06c`.
-2. In the full mode, after Step 06b's measurements, a `measure` named `command bar New menu (with templates)`: setup nothing; action clicks `window.__m.menuButton(0)`; cleanup closes the menus. (The existing "command bar New menu" measurement stays; both must stay Instant.)
-3. Screenshots, after Step 06b's last action: click `window.__m.menuButton(0)`, wait 200 ms, shot `44-new-menu`; click the last menu item (From template…), wait 600 ms, shot `45-template-window`; press Escape.
+1. The step value `06b` becomes `06c`. (There is no step value inside `measure-ui.mjs`: the script takes the step id as its ninth argument, which `measure-ui.ps1` fills from `-Step` or from the branch name, so this task has nothing to change here.)
+2. In the full mode, after Step 06b's measurements, a `measure` named `command bar New menu (with templates)`: setup nothing; action clicks `window.__m.menuButton(0)`; cleanup closes the menus. (The existing "command bar New menu" measurement stays; both must stay Instant.) When Step 06b's measurement block is not in the branch yet (parallel work), put it after Step 06a's measurements instead.
+3. Screenshots, after Step 06b's last action: click `window.__m.menuButton(0)`, wait 200 ms, shot `44-new-menu`; click the last menu item (From template…), wait 600 ms, shot `45-template-window`; press Escape. When Step 06b has no screenshots in the branch yet (parallel work), put them after Step 06a's screenshots instead.
 
 **Commit:** `test(speed): New menu and template window screenshots [step-06c/T7]`
 
