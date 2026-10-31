@@ -45,7 +45,7 @@ describe("hex search", () => {
   });
 
   it("encodeTextPattern uses UTF-8", () => {
-    expect(encodeTextPattern("ñ")).toEqual(new Uint8Array([195, 177]));
+    expect(Array.from(encodeTextPattern("ñ") ?? [])).toEqual([195, 177]);
     expect(encodeTextPattern("x".repeat(1025))).toBeNull();
   });
 

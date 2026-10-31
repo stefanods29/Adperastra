@@ -184,6 +184,7 @@ export default function HexView({
     lastText.current = find.text;
     searchRef.current?.abort();
     setSearching(false);
+    setMatch(null);
   }, [find.text]);
 
   // Going inactive stops the search too.

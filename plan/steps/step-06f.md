@@ -440,7 +440,7 @@ Sessions: `DataSessions` is `.manage`d state with at most 4 tables plus 4 JSON d
 | Test | Input | Expected |
 |---|---|---|
 | "closed containers hide children" | root open, child array closed | rows: child only |
-| "partly loaded containers get a more row" | array with `child_count` 2,500, 1,000 loaded | 1,000 rows and one `more` row with 1,500 left |
+| "partly loaded containers get a more row" | array with `child_count` 2,500, 1,000 loaded | the root row, 1,000 child rows and one `more` row with 1,500 left: 1,002 rows |
 | "depth follows nesting" | root > a > b, all open | depths 0, 1 under the root's children, as listed |
 
 `jsonView.test.tsx`: "root opens with its children"; "Right opens and Left closes"; "Show more loads the next page"; "find expands to the match"; "invalid JSON shows the place and Open as text"; "Ctrl+C copies the selected value"; "closes the session when the tab closes".
@@ -691,7 +691,7 @@ Before telling the owner, create this folder and give the owner its path.
 8. `bad.json`: says line 1 and the column, with **Open as text**. `long.json`: **Show more** adds the next 1,000.
 9. Copy a font from `C:\Windows\Fonts` into the folder and open it: sample lines at six sizes, details, and a character map. Type your name in **Sample text**. Select a character and paste it elsewhere.
 10. On the font, **Install** then **Cancel** does nothing. Don't install unless you want it.
-11. Right-click `sample.bin` > **Open as** > **Open as hex**. Ctrl+F, type `FINDME`, Enter: it moves to part 3, highlights across the row and shows the offset. Shift+F3 wraps and finds it again.
+11. Right-click `sample.bin` > **Open as** > **Open as hex**. Ctrl+F, type `FINDME`, Enter: it moves to part 2, highlights the match and shows the offset. The word crosses into part 3, so part 2 shows its start. Shift+F3 wraps and finds it again.
 12. Choose **Search as bytes**, type `46 49 4E`: found. Type `4`: the message about pairs.
 13. Ctrl+G, type `0x10`: it goes there. Type `ZZ`: the message, and the window stays open.
 14. Repeat 1, 7, 9 and 11 in Spanish and in the dark theme. Everything can be reached by keyboard, and focus is visible.

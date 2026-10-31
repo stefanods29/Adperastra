@@ -5,6 +5,21 @@ import "../i18n";
 import HexView from "../handlers/hex/HexView";
 import type { FileTypeInfo } from "../services/files";
 
+// jsdom has no layout: show the first rows, as a real viewport would.
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: (opts: { count: number; estimateSize: (index: number) => number }) => ({
+    getTotalSize: () => opts.count * opts.estimateSize(0),
+    getVirtualItems: () =>
+      Array.from({ length: Math.min(opts.count, 64) }, (_, index) => ({
+        index,
+        start: index * opts.estimateSize(index),
+        key: index,
+      })),
+    measure: () => undefined,
+    scrollToIndex: () => undefined,
+  }),
+}));
+
 const statuses: string[][] = [];
 
 function fileInfo(size: number): FileTypeInfo {
@@ -77,6 +92,15 @@ function allStatus(): string {
   return statuses.flat().join(" ");
 }
 
+/** A search reads chunk by chunk, so give it real time to finish. */
+async function waitForStatus(text: string): Promise<void> {
+  for (let attempt = 0; attempt < 500 && !allStatus().includes(text); attempt += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+  }
+}
+
 beforeEach(() => {
   statuses.length = 0;
   container = document.createElement("div");
@@ -99,6 +123,7 @@ describe("hex find", () => {
     vi.stubGlobal("fetch", rangeFetch(data));
     await render({ size: 64 });
     await render({ size: 64, find: { text: "FINDME", request: 1 } });
+    await waitForStatus("Found at");
     await flush();
     expect(allStatus()).toContain("Found at 0000000A");
     expect(container!.querySelector('[aria-current="true"]')).not.toBeNull();
@@ -112,11 +137,12 @@ describe("hex find", () => {
     vi.stubGlobal("fetch", fetchMock);
     await render({ size });
     await render({ size, find: { text: "FINDME", request: 1 } });
+    await waitForStatus("Found at");
     await flush();
-    expect(allStatus()).toContain("Part 3 of 3");
+    expect(allStatus()).toContain("Part 2 of 3");
     expect(allStatus()).toContain("Found at 001FFFFE");
     expect(fetchMock).toHaveBeenCalledWith(expect.any(String), {
-      headers: { Range: "bytes=2097152-3145727" },
+      headers: { Range: "bytes=1048576-2097151" },
     });
   });
 

@@ -46,6 +46,10 @@ Still to do (the coordinator runs the hand checks later). The list is the step f
 - No font subsetting, comparison or uninstalling; no character map for WOFF/WOFF2; no settings changes (schema stays 11).
 - KI-068, KI-069, KI-079 and KI-080 are not repaired (owner's existing-error policy).
 
+## Checked with the full gate after the worker finished
+
+Rust passed first time. Four UI tests failed; none was a fault in the viewers. Fixed: `HexView` now clears the old match when the search word changes (found while reading the code). Corrected tests, each still checking its rule: `hexFind.test.tsx` uses a stand-in virtualizer, as `hexView.test.tsx` does, and waits for a search to finish; `hexSearch.test.ts` compares bytes, because jsdom's `Uint8Array` is a different class; `jsonTree.test.ts` counts the root row, which the guide's table had left out and now states.
+
 ## Decisions and plan changes made during the step
 
 - No `docs(plan)` correction was needed: the guide's "See also" titles match the real help titles. One guide trap remains unverified by design: the T4 trap asks to run the invalid-JSON test and correct the expected column if serde_json reports another one. Tests are not run in this batch, so the guide's column 8 is kept as written; the coordinator should check `invalid_reports_the_place` when the suite runs.

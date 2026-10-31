@@ -32,7 +32,7 @@ describe("json tree", () => {
       node({ id: index + 1, kind: "number", index, preview: String(index) }),
     );
     const rows = flattenTree(root, new Set([0]), pages([[0, [[0, loaded]]]]));
-    expect(rows).toHaveLength(1_001);
+    expect(rows).toHaveLength(1_002);
     expect(rows.at(-1)).toMatchObject({ kind: "more", remaining: 1_500, parentId: 0 });
   });
 
