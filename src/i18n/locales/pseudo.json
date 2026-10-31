@@ -601,7 +601,7 @@
       "read_only": "[Thë fïlë ïs rëäd-øñlÿ. Üsë Sävë äs… tø sävë ä çøpÿ. ~~~~~~~~~~~~~~~]",
       "in_use": "[Äñøthër prøgräm ïs üsïñg thë fïlë. Çløsë ït thërë äñd sävë ägäïñ. ~~~~~~~~~~~~~~~~~~~~~]",
       "not_found": "[Thë føldër øf thïs fïlë ñø løñgër ëxïsts. Üsë Sävë äs… ~~~~~~~~~~~~~~~~~]",
-      "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "replace_unavailable": "[Ä fïlë wïth thïs ñämë älrëädÿ ëxïsts, äñd ït wäs lëft äs ït wäs. Çhøøsë ä ñëw ñämë. ~~~~~~~~~~~~~~~~~~~~~~~~~~]",
       "write_failed": "[Çøüldñ't wrïtë thë fïlë. Ÿøür tëxt ïs stïll hërë; trÿ ägäïñ ør üsë Sävë äs… ~~~~~~~~~~~~~~~~~~~~~~~]",
       "version_failed": "[Çøüldñ't këëp thë prëvïøüs vërsïøñ, sø thë fïlë wäsñ't sävëd. Frëë sømë späçë, ør türñ øff vërsïøñ hïstørÿ ïñ Sëttïñgs. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
     },

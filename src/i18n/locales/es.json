@@ -601,7 +601,7 @@
       "read_only": "El archivo es de solo lectura. Usa Guardar como… para guardar una copia.",
       "in_use": "Otro programa está usando el archivo. Ciérralo allí y vuelve a guardar.",
       "not_found": "La carpeta de este archivo ya no existe. Usa Guardar como…",
-      "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
+      "replace_unavailable": "Ya existe un archivo con este nombre, y no se modificó. Elige otro nombre.",
       "write_failed": "No se pudo escribir el archivo. Tu texto sigue aquí; vuelve a intentarlo o usa Guardar como…",
       "version_failed": "No se pudo conservar la versión anterior, así que el archivo no se guardó. Libera espacio o desactiva el historial de versiones en Configuración."
     },

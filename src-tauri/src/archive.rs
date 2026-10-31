@@ -578,16 +578,13 @@ pub fn check_extract_args(args: &ExtractArgs) -> Result<(), String> {
     Ok(())
 }
 
-/// Remove the unfinished write the helper named last: our own partial file
-/// next to the target, never a user file.
+/// Remove the unfinished write of the file the helper named last: only our
+/// own randomly named staging file next to it, never a user file.
 fn remove_partial(target: &str) {
     if target.is_empty() {
         return;
     }
-    let partial = fs_service::partial_path(Path::new(target));
-    if partial.symlink_metadata().is_ok() {
-        let _ = std::fs::remove_file(&partial);
-    }
+    fs_service::owned_io::dispose_orphaned_staging(Path::new(target));
 }
 
 /// Extract as a job in the Explorer's jobs panel.

@@ -6,7 +6,7 @@ Text files, code and Markdown files can be changed right in their tab, and saved
 
 - Click in the text and type. **Ctrl+Z** undoes and **Ctrl+Y** redoes.
 - **Ctrl+S** (or **Save** on the ribbon) saves. A dot on the tab means there are unsaved changes.
-- **Ctrl+Shift+S** (or **Save as…**) saves under another name or in another folder. If a file with that name exists, Windows asks first, and the old file goes to the Recycle Bin.
+- **Ctrl+Shift+S** (or **Save as…**) saves under another name or in another folder. It only creates new files: if a file with that name already exists, it stays as it is and you choose a new name.
 - **Tab** leaves the text, so you can reach the ribbon with the keyboard. To indent lines, use **Ctrl+]**, and **Ctrl+[** to undo the indent.
 
 ## Find and replace

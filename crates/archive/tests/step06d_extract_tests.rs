@@ -465,6 +465,52 @@ fn a_changed_archive_is_refused() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// No staging file of any name is left in the folder.
+fn assert_no_staging_left(dir: &Path) {
+    let left: Vec<_> = fs::read_dir(dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .filter(|name| name.ends_with(".partial"))
+        .collect();
+    assert!(left.is_empty(), "left behind: {left:?}");
+}
+
+#[test]
+fn write_entry_never_touches_a_foreign_partial_file() {
+    let dir = temp_dir("foreign-partial");
+    let token = new_cancellation_token();
+    let foreign = dir.join("~report.txt.partial");
+    fs::write(&foreign, "someone else's").unwrap();
+
+    // A failed write and a good write both leave it alone.
+    let target = dir.join("report.txt");
+    let result = write_entry(
+        &target,
+        &mut Cursor::new(vec![b'x'; 10]),
+        5,
+        0,
+        None,
+        &token,
+        &mut |_| {},
+    );
+    assert_eq!(result, Err(WriteFailure::Skip("size_mismatch")));
+    assert_eq!(fs::read_to_string(&foreign).unwrap(), "someone else's");
+
+    write_entry(
+        &target,
+        &mut Cursor::new(b"hello".to_vec()),
+        5,
+        0,
+        None,
+        &token,
+        &mut |_| {},
+    )
+    .unwrap();
+    assert_eq!(fs::read_to_string(&target).unwrap(), "hello");
+    assert_eq!(fs::read_to_string(&foreign).unwrap(), "someone else's");
+    let _ = fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn write_entry_counts_bytes() {
     let dir = temp_dir("write-entry");
@@ -496,7 +542,7 @@ fn write_entry_counts_bytes() {
     );
     assert_eq!(result, Err(WriteFailure::Skip("size_mismatch")));
     assert!(!too_big.exists());
-    assert!(!fs_service::partial_path(&too_big).exists());
+    assert_no_staging_left(&dir);
 
     // Three bytes for a five-byte entry: stopped, nothing left behind.
     let short = dir.join("short.txt");
@@ -511,7 +557,7 @@ fn write_entry_counts_bytes() {
     );
     assert_eq!(result, Err(WriteFailure::Skip("size_mismatch")));
     assert!(!short.exists());
-    assert!(!fs_service::partial_path(&short).exists());
+    assert_no_staging_left(&dir);
 
     // An existing file is never replaced.
     let taken = dir.join("taken.txt");
@@ -543,7 +589,7 @@ fn write_entry_counts_bytes() {
     );
     assert_eq!(result, Err(WriteFailure::Cancelled));
     assert!(!cancelled.exists());
-    assert!(!fs_service::partial_path(&cancelled).exists());
+    assert_no_staging_left(&dir);
 
     // The entry's date is kept.
     let dated = dir.join("dated.txt");

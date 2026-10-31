@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Archive extraction and text saves no longer touch a file that merely has a name like their temporary file, flush to the disk before the file gets its final name, and never replace a file that arrives during the write. A failed save no longer deletes the new content when Windows has already removed the old file.
 - Reviewed version-history storage: completed bounded pending copies, serialized import/cleanup, never-reused IDs, exact restore Undo, bounded history pages/previews/open copies and complete storage accounting. Save a copy refuses existing targets under the approved Replace deferral.
 - Reviewed template copies: pinned authorized source and destination handles, exclusive staging, no-replace publication, progress/cancellation, visible listing failures, focused keyboard selection and awaited folder persistence/creation.
 - Readable version differences in dark mode, Undo retained after a failed editor refresh, and the template window at its planned width. Release checks cover English light, Spanish dark and pseudo-locale; existing CSP violations remain open (KI-075).
@@ -68,6 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Save as only creates new files: choosing an existing file leaves it as it was and asks for a new name, until replacing can be tied to the exact file you approved.
 - The dark theme writes black on its accent color instead of white, so the text on accent-colored buttons and rows is easy to read (Step 05d).
 - File tab viewers share a ribbon: the picture viewer's zoom, fit, actual size and rotate controls moved there, and the new text and Markdown viewers use the same frame.
 - The setup window no longer bundles fonts with a license outside the allowed list, and its downloads trust the certificates in the Windows certificate store.

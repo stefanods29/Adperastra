@@ -6,7 +6,7 @@ These rules apply to every task in every step. A recipe never overrides them. Ru
 
 1. Deleting goes to the Recycle Bin. Permanent delete exists only as the explicit "Delete permanently" command (Shift+Delete), after a warning that says it cannot be undone.
 2. Never overwrite an existing file or folder unless the user chose "Replace" for it before the operation started. A replaced item goes to the Recycle Bin first (ADR 0007), never deleted.
-3. Write new content to a temporary file next to the target (`~<name>.partial`), flush it, then rename it into place. A cancelled or failed write deletes only the temporary file.
+3. Write new content to a temporary file with a random name next to the target (`fs_service::owned_io`: `~adp-<name>-<uuid>.partial`), flush it, then rename it into place without replacing. A cancelled or failed write deletes only that temporary file, through its own handle.
 4. A move between drives removes a source only after its copy is complete and the copy's size matches (same-drive moves are renames).
 5. Every change to an existing file's content (save, convert over, clean, AI edit) first calls the version hook (`before_modify`, contract 19; a no-op until Step 06b).
 6. Every action that changes files or tabs pushes an undo entry (contract 11) and shows an undo toast; actions that cannot be undone say so before they run.

@@ -13,7 +13,7 @@ mod output;
 mod source;
 
 pub use directory::PinnedDirectory;
-pub use output::OwnedOutput;
+pub use output::{dispose_orphaned_staging, ClosedOutput, OwnedOutput};
 pub use source::{PinnedSource, SourceIdentity};
 
 /// The most directory components one pinned chain may hold.
