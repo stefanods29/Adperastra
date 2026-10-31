@@ -11,6 +11,12 @@ that fixed it.
 
 ## Open
 
+### KI-079 - Existing archive extraction may delete a partial file it did not create (Blocker)
+- **Found in:** Step 06e guide research, 2026-10-31; verified in the existing Step 06d `crates/archive/src/write.rs`.
+- **What:** `write_partial` uses create_new, but `write_entry` unconditionally removes the predictable partial path after any failure, including failure to create it. A pre-existing foreign partial can therefore be deleted. The writer flushes its buffer but does not sync the file before publication. Its path-based cleanup/publication also releases staging ownership too early.
+- **Workaround:** use only disposable extraction folders. New 06e mutation paths must use an additive owned-staging writer rather than inherit this behavior.
+- **Target:** existing 06d repair remains an owner decision under the no-existing-fixes policy. This open Blocker prevents release/main publication; it is not marked fixed or silently deferred. Independent planning and new safe paths may continue locally.
+
 ### KI-078 - The editor status keeps the file's opening byte size after saving (Minor)
 - **Found in:** release screenshots during the 06b/06c review, 2026-10-31. **Severity:** Minor.
 - **What:** after seven saves the real file and history show 107 bytes, while the editor status still shows its original 45 bytes. The status reads the original file metadata in the existing editor path; no save data was lost. This existing display issue is documented under the owner's no-existing-fixes policy.

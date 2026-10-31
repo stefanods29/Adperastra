@@ -135,3 +135,7 @@ c5ca935 deps: add zip 9.1, sevenz-rust2 0.24, tar 0.4, flate2 1.1, lzma-rust2 0.
 ## Next step
 
 Step 06e: archives: create, passwords, RAR (from `plan/STATUS.md`; its state is `outline`).
+
+## Later safety review (2026-10-31)
+
+KI-079 remains open: the existing entry writer can remove an unrelated predictable partial when CREATE_NEW fails and does not sync completed output before publication. This was found during 06e planning, documented without changing the old code under the owner's existing-error policy. Use disposable extraction folders. New 06e formats/password operations must use separately owned safe staging. The earlier report does not constitute release safety clearance.
