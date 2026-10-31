@@ -277,6 +277,93 @@ impl VersionStore {
         Ok(zstd::decode_all(file)?)
     }
 
+    /// Keep the store within its limits: first versions older than
+    /// `keep_days`, then the oldest until the stored size fits `max_bytes`.
+    /// Returns how many versions were deleted.
+    pub fn trim(
+        &mut self,
+        keep_days: u32,
+        max_bytes: u64,
+        now_unix: u64,
+    ) -> Result<usize, StoreError> {
+        let cutoff = now_unix.saturating_sub(u64::from(keep_days) * 86_400);
+        let mut freed: Vec<String> = Vec::new();
+        let mut deleted = 0usize;
+        {
+            let tx = self.conn.transaction()?;
+            let old: Vec<(i64, String)> = {
+                let mut statement =
+                    tx.prepare("SELECT id, hash FROM versions WHERE created_unix < ?1")?;
+                let rows = statement.query_map(params![cutoff as i64], |row| {
+                    Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+                })?;
+                let mut collected = Vec::new();
+                for row in rows {
+                    collected.push(row?);
+                }
+                collected
+            };
+            for (id, hash) in old {
+                deleted += 1;
+                if delete_version(&tx, id, &hash)? && !freed.contains(&hash) {
+                    freed.push(hash);
+                }
+            }
+            loop {
+                let total: i64 = tx.query_row(
+                    "SELECT COALESCE(SUM(stored_size), 0) FROM blobs WHERE refs > 0",
+                    [],
+                    |row| row.get(0),
+                )?;
+                if total as u64 <= max_bytes {
+                    break;
+                }
+                let oldest: Option<(i64, String)> = tx
+                    .query_row(
+                        "SELECT id, hash FROM versions
+                         ORDER BY created_unix ASC, id ASC LIMIT 1",
+                        [],
+                        |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)),
+                    )
+                    .optional()?;
+                let Some((id, hash)) = oldest else {
+                    break;
+                };
+                deleted += 1;
+                if delete_version(&tx, id, &hash)? && !freed.contains(&hash) {
+                    freed.push(hash);
+                }
+            }
+            tx.commit()?;
+        }
+        for hash in freed {
+            let _ = std::fs::remove_file(self.blob_path(&hash));
+        }
+        Ok(deleted)
+    }
+
+    /// Remove every kept version and blob. User files are never touched.
+    pub fn delete_all(&mut self) -> Result<(), StoreError> {
+        let tx = self.conn.transaction()?;
+        tx.execute("DELETE FROM versions", [])?;
+        tx.execute("DELETE FROM blobs", [])?;
+        tx.execute("DELETE FROM files", [])?;
+        tx.commit()?;
+        clear_dir(&self.dir.join("blobs"))?;
+        clear_dir(&self.dir.join("open"))?;
+        Ok(())
+    }
+
+    /// The compressed size of everything the store keeps, in bytes.
+    pub fn stored_bytes(&self) -> Result<u64, StoreError> {
+        let total: i64 = self.conn.query_row(
+            "SELECT COALESCE(SUM(stored_size), 0) FROM blobs",
+            [],
+            |row| row.get(0),
+        )?;
+        Ok(total as u64)
+    }
+
     fn hash_for(&self, id: i64) -> Result<String, StoreError> {
         self.conn
             .query_row(
@@ -295,6 +382,39 @@ impl VersionStore {
             .join(first_two)
             .join(format!("{hash}.zst"))
     }
+}
+
+/// Delete one version and lower its blob's references. `true` when the blob
+/// reached zero and its file is to be removed after the commit.
+fn delete_version(tx: &rusqlite::Transaction<'_>, id: i64, hash: &str) -> Result<bool, StoreError> {
+    tx.execute("DELETE FROM versions WHERE id = ?1", params![id])?;
+    tx.execute(
+        "UPDATE blobs SET refs = refs - 1 WHERE hash = ?1",
+        params![hash],
+    )?;
+    let refs: Option<i64> = tx
+        .query_row(
+            "SELECT refs FROM blobs WHERE hash = ?1",
+            params![hash],
+            |row| row.get(0),
+        )
+        .optional()?;
+    if refs.is_some_and(|value| value <= 0) {
+        tx.execute("DELETE FROM blobs WHERE hash = ?1", params![hash])?;
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+/// Remove everything inside `dir` and leave the folder in place.
+fn clear_dir(dir: &Path) -> Result<(), StoreError> {
+    match std::fs::remove_dir_all(dir) {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(StoreError::Io(error.to_string())),
+    }
+    std::fs::create_dir_all(dir)?;
+    Ok(())
 }
 
 fn hash_file(path: &Path) -> Result<String, StoreError> {
