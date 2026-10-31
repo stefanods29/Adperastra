@@ -93,6 +93,7 @@ fn write_partial(
             Ok(read) => read,
             Err(_) => return Err(WriteFailure::Skip("damaged")),
         };
+        crate::list::note_activity(read);
         total += read as u64;
         if total > declared {
             return Err(WriteFailure::Skip("size_mismatch"));

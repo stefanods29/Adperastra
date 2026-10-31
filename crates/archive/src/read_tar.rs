@@ -21,6 +21,7 @@ impl<R: Read> Read for CountingReader<R> {
     fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
         let read = self.inner.read(buffer)?;
         self.counter.fetch_add(read as u64, Ordering::Relaxed);
+        crate::list::note_activity(read);
         Ok(read)
     }
 }

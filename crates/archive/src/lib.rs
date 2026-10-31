@@ -23,7 +23,7 @@ pub use error::ArchiveError;
 pub use extract::{extract, ExtractEvents, ExtractReport};
 pub use format::detect_format;
 pub use limits::{check_bomb, check_space, free_bytes, Limits, CHUNK_BYTES, MAX_SKIPPED_REPORT};
-pub use list::list;
+pub use list::{activity, list};
 pub use path::{
     first_component, is_root_entry, name_of, normalize_inner_path, parent_of, relative_to,
 };

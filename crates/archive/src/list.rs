@@ -13,7 +13,7 @@ use crate::read_tar::list_tar;
 use crate::read_zip::list_zip;
 use fs_service::{CancellationToken, OpProgress};
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Read};
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -23,6 +23,32 @@ use std::time::{Duration, Instant};
 pub(crate) const PROGRESS_EVERY: Duration = Duration::from_millis(100);
 /// How many entries pass between two cancel checks.
 pub(crate) const CANCEL_CHECK_EVERY: u32 = 256;
+
+/// Bytes this process has read from an archive so far. The app stops a helper
+/// that stays silent for 30 s; the helper reports that it is alive only while
+/// this number moves, so one long file is not taken for a hang and a real hang
+/// is still stopped.
+static ACTIVITY: AtomicU64 = AtomicU64::new(0);
+
+/// How many bytes this process has read from an archive so far.
+pub fn activity() -> u64 {
+    ACTIVITY.load(Ordering::Relaxed)
+}
+
+pub(crate) fn note_activity(bytes: usize) {
+    ACTIVITY.fetch_add(bytes as u64, Ordering::Relaxed);
+}
+
+/// Counts what passes through it as activity.
+pub(crate) struct ActivityReader<R>(pub(crate) R);
+
+impl<R: Read> Read for ActivityReader<R> {
+    fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+        let read = self.0.read(buffer)?;
+        note_activity(read);
+        Ok(read)
+    }
+}
 
 /// Read everything the format says about an archive. `progress` is called
 /// with the compressed bytes read so far, at most every 100 ms.

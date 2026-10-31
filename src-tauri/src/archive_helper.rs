@@ -25,6 +25,9 @@ pub const MAX_REQUEST_LINE: usize = 1_048_576;
 pub const ENTRY_BATCH: usize = 2_000;
 /// How often a progress message is sent at most.
 pub const PROGRESS_INTERVAL: Duration = Duration::from_millis(100);
+/// How often the helper checks that it is still reading archive data. Well
+/// under the 30 s the app waits for a silent helper.
+pub const ALIVE_INTERVAL: Duration = Duration::from_secs(5);
 
 /// What the app asks the helper to do.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -62,6 +65,8 @@ pub enum HelperMessage {
     Failed {
         code: String,
     },
+    /// Still reading archive data, with nothing else to say yet.
+    Alive,
 }
 
 /// Entry point of the helper process; returns its exit code.
@@ -98,6 +103,19 @@ pub fn run_helper() -> i32 {
             _ => {
                 stop.store(true, Ordering::Relaxed);
                 return;
+            }
+        }
+    });
+    // A long read of one file sends nothing else; a real hang stops the count,
+    // so the app still stops the helper.
+    std::thread::spawn(|| {
+        let mut seen = archive::activity();
+        loop {
+            std::thread::sleep(ALIVE_INTERVAL);
+            let now = archive::activity();
+            if now != seen {
+                seen = now;
+                send(&HelperMessage::Alive);
             }
         }
     });

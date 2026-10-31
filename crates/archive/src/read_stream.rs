@@ -47,6 +47,7 @@ pub(crate) fn list_stream(
         if read == 0 {
             break;
         }
+        crate::list::note_activity(read);
         size += read as u64;
         if size > limits.max_total_bytes {
             return Err(ArchiveError::Bomb);

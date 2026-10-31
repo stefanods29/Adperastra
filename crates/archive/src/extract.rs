@@ -6,7 +6,7 @@
 use crate::entry::ArchiveFormat;
 use crate::error::ArchiveError;
 use crate::limits::{check_space, free_bytes, Limits, CHUNK_BYTES, MAX_SKIPPED_REPORT};
-use crate::list::list;
+use crate::list::{list, note_activity, ActivityReader};
 use crate::plan::{
     plan_extract, top_level_names, ArchiveFacts, ExtractPlan, ExtractRequest, PlannedEntry,
     SkippedEntry,
@@ -288,15 +288,23 @@ impl Extractor<'_> {
             return Err(ArchiveError::Cancelled);
         }
         let target = self.map(&planned.relative);
+        self.progress(&target, false);
+        let started = self.bytes_done;
+        let zone = self.zone.clone();
+        let token = self.token;
         let result = write_entry(
             &target,
             reader,
             planned.size,
             planned.modified_unix,
-            self.zone.as_deref(),
-            self.token,
-            &mut |_| {},
+            zone.as_deref(),
+            token,
+            &mut |read| {
+                self.bytes_done += read;
+                self.progress(&target, false);
+            },
         );
+        self.bytes_done = started;
         match result {
             Ok(()) => {
                 self.report.files_written += 1;
@@ -474,7 +482,7 @@ fn drain(data: &mut dyn Read, token: &CancellationToken) -> Result<bool, sevenz_
         }
         match data.read(&mut sink) {
             Ok(0) => return Ok(true),
-            Ok(_) => {}
+            Ok(read) => note_activity(read),
             Err(error) => return Err(sevenz_rust2::Error::from(error)),
         }
     }
@@ -497,7 +505,8 @@ fn extract_tar(
         )),
         _ => Box::new(file),
     };
-    let mut archive = tar::Archive::new(reader);
+    // Moving past an entry nobody wants reads it too.
+    let mut archive = tar::Archive::new(ActivityReader(reader));
     let planned_by_index: HashMap<u32, usize> = plan
         .files
         .iter()

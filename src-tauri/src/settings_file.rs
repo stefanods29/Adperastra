@@ -59,6 +59,14 @@ pub fn parse_import(text: &str) -> Result<Settings, String> {
     if version > u64::from(crate::CURRENT_SCHEMA) {
         return Err("settingsFile.newer".to_string());
     }
+    // `migrate` falls back to the defaults so that a damaged settings file can
+    // never stop the app from starting. An import must refuse the file instead.
+    // Version 1 files have a different, flat shape that `migrate` reads itself.
+    if version >= 2 {
+        let mut parsed: Settings = serde_json::from_value(value.clone()).map_err(|_| invalid())?;
+        parsed.schema_version = crate::CURRENT_SCHEMA;
+        crate::validate(&parsed).map_err(|_| invalid())?;
+    }
     crate::migrate(value).map_err(|_| invalid())
 }
 
@@ -191,6 +199,24 @@ mod tests {
         );
         let newer = format!(r#"{{"schema_version":{}}}"#, crate::CURRENT_SCHEMA + 1);
         assert_eq!(code(parse_import(&newer)), "settingsFile.newer");
+    }
+
+    #[test]
+    fn parse_import_refuses_bad_values_instead_of_using_defaults() {
+        let wrong_language = format!(
+            r#"{{"schema_version":{},"language":"xx"}}"#,
+            crate::CURRENT_SCHEMA
+        );
+        assert_eq!(code(parse_import(&wrong_language)), "settingsFile.invalid");
+        assert_eq!(
+            code(parse_import(r#"{"schema_version":4,"language":"xx"}"#)),
+            "settingsFile.invalid"
+        );
+        let wrong_type = format!(
+            r#"{{"schema_version":{},"theme":"dark"}}"#,
+            crate::CURRENT_SCHEMA
+        );
+        assert_eq!(code(parse_import(&wrong_type)), "settingsFile.invalid");
     }
 
     #[test]

@@ -231,6 +231,8 @@ fn run_helper_job(
                     failure = Some(code.clone());
                     Ok(true)
                 }
+                // Its line already reset the idle clock.
+                HelperMessage::Alive => Ok(false),
                 other => on_message(other),
             }
         },

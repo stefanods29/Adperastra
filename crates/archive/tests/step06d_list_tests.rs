@@ -85,6 +85,17 @@ fn lists_a_7z() {
 }
 
 #[test]
+fn reading_an_archive_counts_as_activity() {
+    let dir = temp_dir("activity");
+    for path in [common::sample_tar_gz(&dir), common::sample_gz(&dir)] {
+        let before = archive::activity();
+        list_file(&path, &Limits::default()).unwrap();
+        assert!(archive::activity() > before, "{}", path.display());
+    }
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn lists_tar_tar_gz_and_tar_xz_alike() {
     let dir = temp_dir("tar");
     let files = [
