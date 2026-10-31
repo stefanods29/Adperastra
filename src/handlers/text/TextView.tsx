@@ -173,8 +173,10 @@ export default function TextView({
     const items: string[] = [];
     if (dirty) items.push(t("editor.unsaved"));
     items.push(t("text.position", { line: cursor.line, column: cursor.column }), t("text.lines", { count: cursor.lines }));
-    if (encoding) items.push(ENCODING_LABELS[encoding]);
-    if (doc.lineEnding) items.push(t(`editor.lineEnding${doc.lineEnding === "crlf" ? "Crlf" : "Lf"}`));
+    if (encoding) {
+      items.push(ENCODING_LABELS[encoding]);
+      items.push(t(`editor.lineEnding${doc.lineEnding === "crlf" ? "Crlf" : "Lf"}`));
+    }
     if (paged) items.push(t("text.part", { part: part + 1, parts }));
     items.push(formatSize(info.size, i18n.language));
     onStatus({ items });
