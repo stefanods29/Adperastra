@@ -535,6 +535,11 @@
       "not_found": "La carpeta de este archivo ya no existe. Usa Guardar como…",
       "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
       "write_failed": "No se pudo escribir el archivo. Tu texto sigue aquí; vuelve a intentarlo o usa Guardar como…"
+    },
+    "recovery": {
+      "other": "No se pudo guardar una copia de recuperación de tus cambios.",
+      "bad_request": "Esa copia de recuperación no es válida.",
+      "too_large": "El texto es demasiado grande para una copia de recuperación. Guárdalo pronto."
     }
   },
   "keys": {

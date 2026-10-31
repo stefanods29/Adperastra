@@ -535,6 +535,11 @@
       "not_found": "[Thë føldër øf thïs fïlë ñø løñgër ëxïsts. Üsë Sävë äs… ~~~~~~~~~~~~~~~~~]",
       "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
       "write_failed": "[Çøüldñ't wrïtë thë fïlë. Ÿøür tëxt ïs stïll hërë; trÿ ägäïñ ør üsë Sävë äs… ~~~~~~~~~~~~~~~~~~~~~~~]"
+    },
+    "recovery": {
+      "other": "[Çøüldñ't këëp ä rëçøvërÿ çøpÿ øf ÿøür çhäñgës. ~~~~~~~~~~~~~~~]",
+      "bad_request": "[Thät rëçøvërÿ çøpÿ ïsñ't välïd. ~~~~~~~~~~]",
+      "too_large": "[Thë tëxt ïs tøø lärgë før ä rëçøvërÿ çøpÿ. Sävë ït søøñ. ~~~~~~~~~~~~~~~~~~]"
     }
   },
   "keys": {

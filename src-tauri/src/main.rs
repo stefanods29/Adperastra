@@ -31,6 +31,7 @@ mod folder_views;
 mod links;
 mod media;
 mod operation_safety;
+mod recovery;
 mod settings_file;
 mod shell;
 mod text_save;
@@ -2930,6 +2931,9 @@ fn main() {
             settings_file::settings_import,
             text_save::text_save,
             text_save::text_pick_save_path,
+            recovery::recovery_write,
+            recovery::recovery_read,
+            recovery::recovery_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
