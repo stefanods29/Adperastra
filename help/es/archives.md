@@ -1,6 +1,6 @@
 # Abrir y extraer archivos comprimidos
 
-Los archivos comprimidos guardan muchos archivos y carpetas en uno solo: archivos ZIP, 7z, TAR (también .tar.gz y .tar.xz), gzip (.gz) y xz (.xz). Adperastra los abre como carpetas y los extrae de forma segura.
+Los archivos comprimidos guardan muchos archivos y carpetas en uno solo: archivos ZIP, 7z, TAR (también .tar.gz, .tar.xz y .tar.bz2), gzip (.gz), xz (.xz), bzip2 (.bz2, .tbz, .tbz2) y RAR. Adperastra los abre como carpetas y los extrae de forma segura.
 
 ## Ver el contenido de un archivo comprimido
 
@@ -26,8 +26,9 @@ La extracción se hace en segundo plano: el panel Operaciones de archivo muestra
 - Extraer nunca reemplaza nada. Si ya hay un archivo o una carpeta con el mismo nombre, el nuevo recibe un número, como «informe (1).txt».
 - Los elementos cuyo nombre podría escribir fuera de la carpeta, o que Windows no permite, se ocultan y nunca se extraen. Los vínculos dentro de los archivos comprimidos se muestran, pero nunca se extraen.
 - Un archivo comprimido que ocuparía muchísimo más espacio que su tamaño (una «bomba zip»), o que no cabe en la unidad, se rechaza antes de escribir nada.
-- Todavía no se pueden abrir los archivos comprimidos protegidos con contraseña, los archivos RAR ni los bzip2. Los archivos RAR se abren en la aplicación que Windows usa para ellos.
+- Los archivos ZIP y 7z protegidos con contraseña la piden y pueden recordarla hasta que se cierre la aplicación. Consulta «Contraseñas de archivos comprimidos».
+- RAR usa un 7-Zip que instalas tú desde 7-zip.org; no se incluye. Se rechazan los archivos RAR divididos en partes, autoextraíbles, con enlaces o ambiguos, y no se ofrece crear RAR.
 - Si el archivo comprimido vino de Internet, los archivos que extraigas o abras conservan esa marca y se abren en vista protegida.
 - Los archivos comprimidos se leen en un proceso aparte y limitado, así que uno dañado no puede bloquear Adperastra.
 
-Consulta también: «Abrir archivos en pestañas», «Copiar y mover archivos» y «Deshacer».
+Consulta también: «Crear archivos comprimidos», «Contraseñas de archivos comprimidos», «Abrir archivos en pestañas», «Copiar y mover archivos» y «Deshacer».

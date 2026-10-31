@@ -17,18 +17,22 @@ param(
   [int]$Port = 9333,
   [string]$Step = "",
   [switch]$ScreenshotsOnly,
-  [switch]$Review06bc
+  [switch]$Review06bc,
+  [switch]$Review06e
 )
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot 'test-process-job.ps1')
 $root = Split-Path -Parent $PSScriptRoot
 # The step names the results: from -Step, else the branch (step-<id>-...).
 if (-not $Step) { $Step = if ((git -C $root branch --show-current) -match '^step-([0-9a-zA-Z]+)-') { $Matches[1] } else { "unknown" } }
+if ($Review06e) { $Step = "06e" }
+$scopedReview = $Review06bc -or $Review06e
 if (-not (Test-Path $Exe)) { throw "Build the app first: $Exe not found" }
-if (-not $Review06bc -and -not (Test-Path $BigFolder)) { throw "Run scripts\generate-corpus.ps1 first: $BigFolder not found" }
+if (-not $scopedReview -and -not (Test-Path $BigFolder)) { throw "Run scripts\generate-corpus.ps1 first: $BigFolder not found" }
 
-# A small folder that looks like the Figma example (zero-filled files).
-$demo = if ($Review06bc) { Join-Path $env:TEMP ("adperastra-review-06bc-" + [guid]::NewGuid().ToString("N")) } else { Join-Path $env:TEMP "adperastra-demo" }
+# A small folder that looks like the Figma example (zero-filled files). A
+# scoped review always gets its own fresh folder.
+$demo = if ($scopedReview) { Join-Path $env:TEMP ("adperastra-review-" + $(if ($Review06e) { "06e" } else { "06bc" }) + "-" + [guid]::NewGuid().ToString("N")) } else { Join-Path $env:TEMP "adperastra-demo" }
 if (-not (Test-Path $demo)) {
   New-Item -ItemType Directory -Force $demo | Out-Null
   $files = @(
@@ -51,7 +55,7 @@ if (-not (Test-Path $demo)) {
 # Step 06d: archives for the archive tab (a small one for screenshots, a
 # 10,000-entry one for the speed runs), made with .NET's zip writer.
 $archives = Join-Path $env:TEMP "adperastra-corpus\archives"
-if (-not $Review06bc -and -not (Test-Path $archives)) {
+if (-not $scopedReview -and -not (Test-Path $archives)) {
   New-Item -ItemType Directory -Force $archives | Out-Null
   Add-Type -AssemblyName System.IO.Compression
   Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -124,8 +128,10 @@ try {
   # PowerShell drops empty arguments, so "-" stands for "none".
   $outPath = if ($Out) { $Out } else { "-" }
   $shotPath = if (-not $Shots) { "-" } elseif ([IO.Path]::IsPathRooted($Shots)) { $Shots } else { Join-Path $root $Shots }
-  if ($Review06bc) {
+  if ($Review06e) {
     # Fresh fixtures, no legacy file-operation checks, and no folder cleanup.
+    node (Join-Path $PSScriptRoot "check-06e-ui.mjs") $Port $demo $outPath $shotPath $Language $Theme
+  } elseif ($Review06bc) {
     node (Join-Path $PSScriptRoot "check-06bc-ui.mjs") $Port $demo $outPath $shotPath $Language $Theme
   } else {
     node (Join-Path $PSScriptRoot "measure-ui.mjs") $Port $demo $BigFolder $mode $outPath $shotPath $Language $Theme $Step
@@ -139,7 +145,7 @@ try {
     $resolvedTemp = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
     $resolvedData = [IO.Path]::GetFullPath($dataDir)
     if (-not $resolvedData.StartsWith($resolvedTemp, [StringComparison]::OrdinalIgnoreCase) -or (Split-Path -Leaf $resolvedData) -notlike 'adperastra-ui-*') { throw 'Refusing cleanup outside the generated test folder' }
-    if ($Review06bc) {
+    if ($scopedReview) {
       Write-Host "Retained review data: $resolvedData"
       Write-Host "Retained review files: $demo"
     } else {
