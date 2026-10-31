@@ -3,6 +3,12 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-30 - The template window (Step 06c) - waiting for the owner's screenshots review
+
+- **What:** the Figma file has no template window and no New menu with templates. It was designed in this step from the measured tokens and the values in `plan/steps/step-06c.md` D7: a dialog `min(640px, 92vw)` wide, two lists with a 260 px maximum height on the panel border and `--adp-radius-md` corners, rows with `--adp-radius-sm` corners and the selected row on `--adp-color-surface-selected-row`, the description line in `--adp-color-text-secondary` at `--adp-font-small`.
+- **Added beyond the guide:** the two sections keep their heading spacing with `--adp-space-3` under each heading and `--adp-space-6` between them, so the headings do not touch the lists.
+- **Evidence:** `docs/screenshots/step-06c/` (`44-new-menu`, `45-template-window`) once the screenshots are taken.
+
 ## 2026-10-30 - Themes and appearance (Step 05d) - checked for the owner on 2026-10-30
 
 - **What:** the Figma file has only the light theme. **Bright**, **Paper**, **AMOLED black** and **High contrast** were designed in this step from the same tokens; their values live in `themes/bright.tokens.json`, `themes/paper.tokens.json`, `themes/amoled.tokens.json` and `themes/highContrast.tokens.json`, and the contrast test in `src/__tests__/themes.test.ts` checks every theme.
