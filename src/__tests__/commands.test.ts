@@ -149,6 +149,23 @@ describe("explorer commands", () => {
     expect(isCommandEnabled(byId["explorer.goToPath"], { ...baseCtx, location: "home", currentPath: null })).toBe(true);
   });
 
+  it("version history needs one file", () => {
+    const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
+    const command = byId["explorer.versionHistory"];
+    expect(isCommandEnabled(command, { ...baseCtx, selection: oneFile })).toBe(true);
+    expect(
+      isCommandVisible(command, { ...baseCtx, selection: { paths: ["d"], count: 1, files: 0, folders: 1 } }),
+    ).toBe(false);
+    expect(
+      isCommandVisible(command, {
+        ...baseCtx,
+        selection: { paths: ["a", "b"], count: 2, files: 2, folders: 0 },
+      }),
+    ).toBe(false);
+    const ids = ITEM_MENU.map((entry) => (entry.type === "command" ? entry.id : entry.type));
+    expect(ids.indexOf("explorer.versionHistory")).toBe(ids.indexOf("explorer.properties") + 1);
+  });
+
   it("view mode commands are live and follow the settings", () => {
     const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
     for (const mode of VIEW_MODE_IDS) {

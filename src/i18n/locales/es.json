@@ -330,7 +330,8 @@
     "nothingToPaste": "No hay nada para pegar aquí.",
     "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden).",
     "extracted": "Se extrajo {name}",
-    "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}"
+    "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}",
+    "versionRestored": "Se restauró una versión de {name}"
   },
   "versions": {
     "title": "Historial de versiones de {name}",
@@ -389,6 +390,7 @@
     "removeFavorite": "Quitar de favoritos",
     "showInFolder": "Mostrar en la carpeta",
     "properties": "Propiedades",
+    "versionHistory": "Historial de versiones…",
     "openInTerminal": "Abrir en Terminal",
     "selectAll": "Seleccionar todo",
     "selectNone": "No seleccionar nada",

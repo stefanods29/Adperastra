@@ -330,7 +330,8 @@
     "nothingToPaste": "There's nothing to paste here.",
     "undoNewerFirst": "Undo the newer actions first (Recent actions shows the order).",
     "extracted": "Extracted {name}",
-    "extractedMany": "{count, plural, one {Extracted # archive} other {Extracted # archives}}"
+    "extractedMany": "{count, plural, one {Extracted # archive} other {Extracted # archives}}",
+    "versionRestored": "Restored a version of {name}"
   },
   "versions": {
     "title": "Version history of {name}",
@@ -389,6 +390,7 @@
     "removeFavorite": "Remove from favorites",
     "showInFolder": "Show in folder",
     "properties": "Properties",
+    "versionHistory": "Version history…",
     "openInTerminal": "Open in Terminal",
     "selectAll": "Select all",
     "selectNone": "Select none",

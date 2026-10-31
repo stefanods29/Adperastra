@@ -330,7 +330,8 @@
     "nothingToPaste": "[Thërë's ñøthïñg tø pästë hërë. ~~~~~~~~~~]",
     "undoNewerFirst": "[Üñdø thë ñëwër äçtïøñs fïrst (Rëçëñt äçtïøñs shøws thë ørdër). ~~~~~~~~~~~~~~~~~~~~]",
     "extracted": "[Ëxträçtëd {name} ~~~~]",
-    "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]"
+    "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]",
+    "versionRestored": "[Rëstørëd ä vërsïøñ øf {name} ~~~~~~~~]"
   },
   "versions": {
     "title": "[Vërsïøñ hïstørÿ øf {name} ~~~~~~~]",
@@ -389,6 +390,7 @@
     "removeFavorite": "[Rëmøvë frøm fävørïtës ~~~~~~~~]",
     "showInFolder": "[Shøw ïñ føldër ~~~~~]",
     "properties": "[Prøpërtïës ~~~~]",
+    "versionHistory": "[Vërsïøñ hïstørÿ… ~~~~~~]",
     "openInTerminal": "[Øpëñ ïñ Tërmïñäl ~~~~~~]",
     "selectAll": "[Sëlëçt äll ~~~~]",
     "selectNone": "[Sëlëçt ñøñë ~~~~]",

@@ -550,6 +550,7 @@ export default function App() {
             view={settings.explorer}
             onViewChange={onViewChange}
             pasteImageFormat={settings.files?.paste_image_format ?? "png"}
+            versionsEnabled={settings.versions.enabled}
           />
         </div>
         {tabs

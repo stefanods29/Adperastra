@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { displayPath, itemDetails, parentPathOf, renameItem } from "./explorer";
 import { isTauriRuntime } from "./settings";
 import type { FileAction, UndoEntryInput } from "./undo";
+import { versionsRestore } from "./versions";
 
 /** Typed wrapper over the Step 03b file-operation jobs. All disk changes
  * go through here; big operations run as Rust background jobs with
@@ -237,6 +238,9 @@ export async function executeFileAction(action: FileAction, confirmSystem?: () =
       return;
     case "restore":
       await runHistoryJob("restore", action.originals, { binIds: action.binIds }, confirmSystem);
+      return;
+    case "restoreVersion":
+      await versionsRestore(action.path, action.versionId);
       return;
     case "sequence":
       for (const step of action.actions) {

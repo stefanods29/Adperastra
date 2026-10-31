@@ -27,6 +27,18 @@ describe("undo stack", () => {
     expect(stack.peekUndo()?.labelKey).toBe("toast.first");
   });
 
+  it("restoreVersion entries undo and redo", () => {
+    const stack = new UndoStack();
+    const undo: FileAction = { type: "restoreVersion", path: "C:\\notes\\a.txt", versionId: 7 };
+    const redo: FileAction = { type: "restoreVersion", path: "C:\\notes\\a.txt", versionId: 3 };
+    stack.push({ labelKey: "toast.versionRestored", labelArgs: { name: "a.txt" }, undo, redo });
+    const entry = stack.peekUndo();
+    expect(entry?.undo).toEqual(undo);
+    expect(entry?.redo).toEqual(redo);
+    stack.confirmUndo();
+    expect(stack.peekRedo()?.redo).toEqual(redo);
+  });
+
   it("a new action clears the redo history", () => {
     const stack = new UndoStack();
     pushRename(stack);
