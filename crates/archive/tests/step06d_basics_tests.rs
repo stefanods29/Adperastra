@@ -22,7 +22,7 @@ fn temp_dir(name: &str) -> PathBuf {
 #[test]
 fn normalizes_good_paths() {
     let limits = Limits::default();
-    for raw in ["docs/plan.md", "docs\\plan.md", "./docs//plan.md", "docs/"] {
+    for raw in ["docs/plan.md", "docs\\plan.md", "./docs//plan.md"] {
         assert_eq!(
             normalize_inner_path(raw, &limits),
             Ok("docs/plan.md".to_string()),

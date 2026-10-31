@@ -284,12 +284,14 @@ describe("the archive tab", () => {
 
   it("a cancelled folder choice does nothing", async () => {
     vi.mocked(archivePickFolder).mockResolvedValue(null);
-    const props = await render();
+    // Extract all only asks for a folder for the app's own temporary copy.
+    const props = await render({}, { ...summary, temporary: true });
     const button = ribbonButton("archive.extractAll");
     await act(async () => {
       button.click();
     });
     await flush();
+    expect(vi.mocked(archivePickFolder)).toHaveBeenCalled();
     expect(props.onExtractArchive).not.toHaveBeenCalled();
   });
 

@@ -185,7 +185,7 @@ fn extracts_a_zip_into_a_new_folder() {
         100
     );
     assert_eq!(report.created, [target.to_string_lossy().into_owned()]);
-    assert_eq!(events.created, [target.clone()]);
+    assert_eq!(events.created, std::slice::from_ref(&target));
     assert_eq!(report.files_written, 3);
     assert_eq!(
         skipped_reasons(&report),
@@ -226,23 +226,23 @@ fn extracting_twice_keeps_both() {
     created.sort();
     let mut expected = vec![
         canonical
-            .join("README (2).txt")
+            .join("README (1).txt")
             .to_string_lossy()
             .into_owned(),
-        canonical.join("docs (2)").to_string_lossy().into_owned(),
-        canonical.join("images (2)").to_string_lossy().into_owned(),
+        canonical.join("docs (1)").to_string_lossy().into_owned(),
+        canonical.join("images (1)").to_string_lossy().into_owned(),
     ];
     expected.sort();
     assert_eq!(created, expected);
     assert_eq!(
-        fs::read_to_string(canonical.join("README (2).txt")).unwrap(),
+        fs::read_to_string(canonical.join("README (1).txt")).unwrap(),
         "hello"
     );
     assert_eq!(
-        fs::read_to_string(canonical.join("docs (2)").join("plan.md")).unwrap(),
+        fs::read_to_string(canonical.join("docs (1)").join("plan.md")).unwrap(),
         "# Plan\n"
     );
-    assert!(canonical.join("images (2)").join("logo.png").exists());
+    assert!(canonical.join("images (1)").join("logo.png").exists());
     let _ = fs::remove_dir_all(&dir);
 }
 

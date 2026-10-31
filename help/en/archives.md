@@ -23,7 +23,7 @@ Extracting runs in the background: the File operations panel shows the progress 
 
 ## Good to know
 
-- Extracting never replaces anything. If a file or folder with the same name is already there, the new one gets a number, like "report (2).txt".
+- Extracting never replaces anything. If a file or folder with the same name is already there, the new one gets a number, like "report (1).txt".
 - Items whose names could write outside the folder, or that Windows doesn't allow, are hidden and never extracted. Links inside archives are shown but never extracted.
 - An archive that would expand to far more data than it holds (a "zip bomb"), or that doesn't fit on the drive, is refused before anything is written.
 - Archives protected with a password, RAR files and bzip2 files can't be opened yet. RAR files open in the app Windows uses for them.

@@ -23,7 +23,7 @@ const INFO: FileTypeInfo = {
   from_internet: false,
 };
 
-const BYTES = new TextEncoder().encode("# Title\n");
+const BYTES = new TextEncoder().encode("# Title");
 
 let root: Root | null = null;
 let container: HTMLDivElement | null = null;

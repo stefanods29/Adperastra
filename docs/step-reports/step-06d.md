@@ -19,8 +19,8 @@ The files are made by `scripts\measure-ui.ps1` (the archives folder) and by the 
 2. Double-click `README.txt` inside: it opens in a new tab, read-only. Close it.
 3. Type `notes` in the search box: `notes.txt` is listed with "Matches in the whole archive"; **Open item location** shows `docs\old` with it selected.
 4. Repeat 1 and 2 with `sample.7z`, `sample.tar`, `sample.tar.gz`, `sample.tar.xz` and `notes.txt.gz`. The status bar names the format.
-5. **Extract all** in the `sample.zip` tab: the Explorer shows the folder with the new `sample` selected; its contents match `src`. Click **Extract all** again: `sample (2)` appears; nothing in `sample` changed.
-6. Ctrl+Z: `sample (2)` goes to the Recycle Bin; Ctrl+Y brings it back.
+5. **Extract all** in the `sample.zip` tab: the Explorer shows the folder with the new `sample` selected; its contents match `src`. Click **Extract all** again: `sample (1)` appears; nothing in `sample` changed.
+6. Ctrl+Z: `sample (1)` goes to the Recycle Bin; Ctrl+Y brings it back.
 7. Right-click `sample.tar.gz` > **Extract** > **Extract here**; right-click `sample.7z` > **Extract** > **Extract to…** > choose a folder.
 8. Select `sample.zip` and `sample.7z` together > **Extract all** (command bar): two folders; one Ctrl+Z removes both.
 9. Open `big.zip`: rows appear in about a second. **Extract all**, then **Cancel** in the File operations panel: "Cancelled"; no file whose name starts with `~`; Ctrl+Z removes the folder.
@@ -54,6 +54,7 @@ The files are made by `scripts\measure-ui.ps1` (the archives folder) and by the 
 
 ## Decisions and plan changes made during the step
 
+- **Joined with Step 06a and checked with the full gate (2026-10-30):** 272 Rust tests and 406 UI tests pass. It fixed KI-043 and KI-044, and lint errors. It also corrected tests: the numbered names are "(1)", not the guide's "(2)", following the owner's decision that new items count from one (`plan/STATUS.md`, Step 03b entry); the help pages say the same. The tar sample's link was given a name, one test's input `docs/` was removed from a list it did not belong in (it is still checked on its own), and "a cancelled folder choice" now uses the temporary-copy case, the only one where Extract all asks for a folder.
 The guide was followed as written except where it named code that this branch does not have (06a to 06c are not merged here). All of these are small and are listed so the branches can be joined:
 
 1. **`fs_service::partial_path` (guide: `crates/fs-service/src/save.rs`).** That file arrives with Step 06a, so this step added `crates/fs-service/src/save.rs` with exactly the `partial_path` function 06a's guide specifies (same name, same doc line), plus its `pub mod save;` and re-export. When 06a lands, its `save.rs` only needs to add the rest.

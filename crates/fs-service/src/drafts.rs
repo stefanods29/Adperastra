@@ -100,7 +100,7 @@ pub fn trim_drafts(dir: &Path) {
     if files.len() <= MAX_DRAFTS {
         return;
     }
-    files.sort_by(|a, b| a.0.cmp(&b.0));
+    files.sort_by_key(|a| a.0);
     let remove = files.len() - MAX_DRAFTS;
     for (_, file) in files.into_iter().take(remove) {
         let _ = std::fs::remove_file(file);

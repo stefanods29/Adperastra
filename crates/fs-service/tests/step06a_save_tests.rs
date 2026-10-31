@@ -61,6 +61,8 @@ fn refuses_a_read_only_file() {
     let result = replace_contents(&target, b"new", None);
 
     let mut permissions = std::fs::metadata(&target).unwrap().permissions();
+    // Only undoes this test's own read-only mark on its temporary file.
+    #[allow(clippy::permissions_set_readonly_false)]
     permissions.set_readonly(false);
     std::fs::set_permissions(&target, permissions).unwrap();
 

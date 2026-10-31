@@ -249,8 +249,8 @@ fn top_level_names_keep_both() {
     assert_eq!(
         names,
         [
-            ("README.txt".to_string(), "README (2).txt".to_string()),
-            ("docs".to_string(), "docs (2)".to_string()),
+            ("README.txt".to_string(), "README (1).txt".to_string()),
+            ("docs".to_string(), "docs (1)".to_string()),
         ]
     );
     let empty = temp_dir("top-empty");

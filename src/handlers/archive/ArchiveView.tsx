@@ -56,12 +56,14 @@ export default function ArchiveView(props: HandlerViewProps) {
   const searchedText = find.text.trim();
   const searching = searchedText !== "" && searchedText !== asideSearch;
 
-  // Search the whole archive after the user stops typing.
+  // Search the whole archive after the user stops typing. Text typed while the
+  // archive was still opening is searched as soon as it is ready.
+  const session = summary?.session ?? null;
   useEffect(() => {
     archive.search(searching ? searchedText : "");
-    // `archive.search` is stable; only the text decides.
+    // `archive.search` is stable; the text and the open session decide.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchedText, searching]);
+  }, [searchedText, searching, session]);
 
   const shownPage = searching ? archive.results : archive.page;
   const items = useMemo(() => (shownPage?.items ?? []).map(toExplorerItem), [shownPage]);

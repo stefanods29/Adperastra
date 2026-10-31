@@ -23,7 +23,7 @@ La extracción se hace en segundo plano: el panel Operaciones de archivo muestra
 
 ## Para tener en cuenta
 
-- Extraer nunca reemplaza nada. Si ya hay un archivo o una carpeta con el mismo nombre, el nuevo recibe un número, como «informe (2).txt».
+- Extraer nunca reemplaza nada. Si ya hay un archivo o una carpeta con el mismo nombre, el nuevo recibe un número, como «informe (1).txt».
 - Los elementos cuyo nombre podría escribir fuera de la carpeta, o que Windows no permite, se ocultan y nunca se extraen. Los vínculos dentro de los archivos comprimidos se muestran, pero nunca se extraen.
 - Un archivo comprimido que ocuparía muchísimo más espacio que su tamaño (una «bomba zip»), o que no cabe en la unidad, se rechaza antes de escribir nada.
 - Todavía no se pueden abrir los archivos comprimidos protegidos con contraseña, los archivos RAR ni los bzip2. Los archivos RAR se abren en la aplicación que Windows usa para ellos.

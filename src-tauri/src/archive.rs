@@ -728,6 +728,8 @@ fn clear_read_only(folder: &Path) {
         if let Ok(metadata) = entry.metadata() {
             let mut permissions = metadata.permissions();
             if permissions.readonly() {
+                // Windows only, and only the app's own temporary copies.
+                #[allow(clippy::permissions_set_readonly_false)]
                 permissions.set_readonly(false);
                 let _ = std::fs::set_permissions(&path, permissions);
             }

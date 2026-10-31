@@ -145,6 +145,16 @@ that fixed it.
 
 ## Fixed
 
+### KI-044 - Extraction did not report what it skipped (Major, fixed in Step 06d)
+- **Found in:** the full gate after joining Steps 06a and 06d, 2026-10-30.
+- **What:** Unsafe names, links and protected items were correctly never written, but the final report left them out, so the user was not told.
+- **Fix:** the plan's skipped list now starts the report (`crates/archive/src/extract.rs`).
+
+### KI-043 - A search typed while an archive was opening was dropped (Minor, fixed in Step 06d)
+- **Found in:** the same gate, 2026-10-30.
+- **What:** Text typed in the archive tab's search box before the archive had opened was never searched.
+- **Fix:** the search runs again once the archive is open (`ArchiveView.tsx`).
+
 ### KI-035 - The toolbar did not fill its row and could hide its buttons (Major, fixed in Step 05d)
 - **Found in:** Step 05c screenshots; its worse effect in the Step 05d density screenshots, 2026-10-30.
 - **What:** Since Step 05c the command bar was only as wide as its buttons, so the line under it stopped partway. When it measured itself again, as after a density change, it decided there was no room and moved nearly every button into the overflow menu.

@@ -61,7 +61,7 @@ pub fn replace_contents(
 ) -> Result<SavedInfo, SaveError> {
     let exists = target.try_exists().unwrap_or(false);
     if exists {
-        let meta = std::fs::metadata(target).map_err(|error| io_error(error))?;
+        let meta = std::fs::metadata(target).map_err(io_error)?;
         if meta.permissions().readonly() {
             return Err(SaveError::ReadOnly);
         }
@@ -119,7 +119,7 @@ fn write_partial(partial: &Path, bytes: &[u8]) -> Result<(), SaveError> {
 }
 
 fn saved_info(target: &Path) -> Result<SavedInfo, SaveError> {
-    let meta = std::fs::metadata(target).map_err(|error| io_error(error))?;
+    let meta = std::fs::metadata(target).map_err(io_error)?;
     Ok(SavedInfo {
         size: meta.len(),
         modified_unix: modified_unix(&meta),

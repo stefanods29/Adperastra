@@ -65,7 +65,13 @@ pub fn extract(
     }
     check_space(plan.bytes_total, free_bytes(&dest), limits)?;
 
-    let mut report = ExtractReport::default();
+    // What the plan left out (unsafe names, links, passwords) is reported too.
+    let listed = plan.skipped.len().min(MAX_SKIPPED_REPORT);
+    let mut report = ExtractReport {
+        skipped: plan.skipped[..listed].to_vec(),
+        skipped_more: (plan.skipped.len() - listed) as u64,
+        ..ExtractReport::default()
+    };
     let mut names: Vec<(String, String)> = Vec::new();
     let root = match &request.new_folder {
         Some(name) => {

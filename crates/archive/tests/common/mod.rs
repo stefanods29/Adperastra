@@ -92,6 +92,7 @@ pub fn sample_tar_bytes() -> Vec<u8> {
     link.set_size(0);
     link.set_mode(0o777);
     link.set_entry_type(tar::EntryType::symlink());
+    link.set_path("link").unwrap();
     link.set_link_name("README.txt").unwrap();
     link.set_cksum();
     builder.append(&link, std::io::empty()).unwrap();

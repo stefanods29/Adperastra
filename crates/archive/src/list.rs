@@ -129,7 +129,7 @@ impl CancelCheck {
     }
 
     pub(crate) fn tick(&mut self, token: &CancellationToken) -> Result<(), ArchiveError> {
-        if self.seen % CANCEL_CHECK_EVERY == 0 && token.load(Ordering::Relaxed) {
+        if self.seen.is_multiple_of(CANCEL_CHECK_EVERY) && token.load(Ordering::Relaxed) {
             return Err(ArchiveError::Cancelled);
         }
         self.seen = self.seen.wrapping_add(1);
@@ -153,6 +153,7 @@ impl<'a> Collector<'a> {
 
     /// Add one entry the reader yielded. `index` is the format's own
     /// position; root markers are left out (their index still counts).
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn add(
         &mut self,
         index: u32,

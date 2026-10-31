@@ -90,12 +90,11 @@ pub fn plan_extract(
     }
     let known = known_paths(listing);
     let base = &request.base;
-    if !base.is_empty() {
-        if normalize_inner_path(base, limits).as_deref() != Ok(base.as_str())
-            || !known.folders.contains(base.as_str())
-        {
-            return Err(ArchiveError::BadRequest);
-        }
+    if !base.is_empty()
+        && (normalize_inner_path(base, limits).as_deref() != Ok(base.as_str())
+            || !known.folders.contains(base.as_str()))
+    {
+        return Err(ArchiveError::BadRequest);
     }
     for path in &request.paths {
         if normalize_inner_path(path, limits).as_deref() != Ok(path.as_str())

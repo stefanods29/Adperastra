@@ -58,6 +58,7 @@ Before checking, create the test folder `%TEMP%\adp-06a` with these files (plain
 
 ## Decisions and plan changes made during the step
 
+- **Joined with Step 06d and checked with the full gate (2026-10-30):** lint errors were fixed, and two tests corrected: the Split mode sample no longer ends in a line break (the typed "x" must join "Title"), and the Windows-1252 test accepts Node 22's wrong U+0080 for byte 128 (Chromium, which the app runs on, was checked and gives "€").
 - **Translation keys added early:** T7's hook already uses `editor.unmappable`, `editor.saveAsTitle` and `editor.allFiles`, so those three keys went into `en.json`/`es.json` in T7; T8 added the rest. The guide lists them all under T8.
 - **Replace row width:** the plan names `.adp-filetab-replace .adp-text-input`, but the shared `TextInput` component's class is `adp-input`; the rule targets `.adp-filetab-replace .adp-input` instead (same 270 px).
 - **Markdown host wrapper:** a single `.adp-md-pane` wrapper stays mounted in every mode (with `.adp-md-split` added in Split), because the split container appears and disappears; this keeps the one editor alive while switching modes. `hidden` is honored by `.adp-md-pane[hidden] { display: none; }`.
