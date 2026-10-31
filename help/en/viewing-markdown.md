@@ -4,7 +4,7 @@ Markdown files (.md) open in a tab in **Reading view**: headings, lists, tables,
 
 ## Reading view and source
 
-- **View** > **Reading view** shows the formatted page. **View** > **Source** shows the text the page is made from, with colors.
+- **View** > **Reading view** shows the formatted page. **View** > **Source** shows the text the page is made from, where you can edit it. **View** > **Split** shows both side by side.
 - **Ctrl++**, **Ctrl+-** and **Ctrl+0** change the text size.
 - Use the search box (or **Ctrl+F**) to find text in either view; **Enter** goes to the next match and **Shift+Enter** to the previous one.
 
@@ -18,4 +18,4 @@ Clicking a web or email link asks first, then opens it in your browser or mail a
 - Pictures stored next to the file are not shown in Reading view yet.
 - Markdown files bigger than 5 MB open as text.
 
-See also: "Viewing text and code".
+See also: "Editing text and code" and "Viewing text and code".

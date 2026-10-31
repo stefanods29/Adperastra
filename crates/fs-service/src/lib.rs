@@ -6,11 +6,13 @@
 //! same `Item` shape through `BackingKind`.
 
 pub mod details;
+pub mod drafts;
 pub mod folder_views;
 pub mod item;
 pub mod list;
 pub mod ops;
 pub mod rename;
+pub mod save;
 pub mod sort;
 pub mod state;
 pub mod watch;
@@ -37,6 +39,10 @@ pub enum FsError {
 pub type Result<T> = std::result::Result<T, FsError>;
 
 pub use details::{attribute_names, filetime_to_unix, item_details, ItemDetails};
+pub use drafts::{
+    delete_draft, draft_key, read_draft, trim_drafts, write_draft, Draft, DRAFTS_SCHEMA,
+    MAX_DRAFTS, MAX_DRAFT_BYTES,
+};
 pub use folder_views::{
     is_view_mode, FolderView, FolderViews, MAX_FOLDER_VIEWS, MAX_FOLDER_VIEW_PATH, VIEW_MODES,
 };
@@ -52,6 +58,10 @@ pub use ops::{
     ConflictPolicy, CreateKind, OpProgress, OpReport, ReplacedItem, SkippedItem,
 };
 pub use rename::{rename_error_reason, rename_in_place};
+pub use save::{
+    partial_path, recycle_target, replace_contents, write_new_file, SaveError, SaveExpect,
+    SavedInfo,
+};
 pub use sort::{natural_cmp, sort_items, SortDirection, SortKey, SortSpec};
 pub use state::{atomic_write, ExplorerState};
 pub use watch::{coalesce_events, FsEvent, FsEventKind, FsWatcher, MAX_WATCH_BATCH};

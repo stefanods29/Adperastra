@@ -8,6 +8,7 @@ import {
   openFileTab,
   openSingleTab,
   sessionFromTabs,
+  setTabPath,
   tabsFromSession,
 } from "../services/tabs";
 
@@ -93,6 +94,16 @@ describe("tab model", () => {
     expect(session.tabs[1]).toMatchObject({ kind: "file", path: "C:\\a.png", handler: "image" });
     expect(session.active_tab).toBe(state.activeId);
     expect(session.saved_unix).toBe(42);
+  });
+
+  it("setTabPath renames a file tab", () => {
+    let state = openFileTab(initialTabs(), file("C:\\a.png"), false);
+    const id = state.activeId;
+    state = openSingleTab(state, "help");
+    const renamed = setTabPath(state, id, "C:\\b.png", "b.png");
+    expect(renamed.tabs.find((tab) => tab.id === id)).toMatchObject({ path: "C:\\b.png", title: "b.png" });
+    expect(renamed.tabs.find((tab) => tab.kind === "help")).toEqual(state.tabs.find((tab) => tab.kind === "help"));
+    expect(setTabPath(state, "unknown", "C:\\c.png", "c.png")).toEqual(state);
   });
 
   it("keeps the active and the most recent file tabs mounted", () => {

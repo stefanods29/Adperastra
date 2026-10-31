@@ -82,6 +82,7 @@
 .adp-tabrail--left .adp-tab--active { box-shadow:inset 3px 0 0 var(--adp-accent-current); }
 .adp-tabrail--right .adp-tab--active { box-shadow:inset -3px 0 0 var(--adp-accent-current); }
 .adp-tabrail .adp-tab-close { margin-left:auto; }
+.adp-tab-dirty { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--adp-color-text-secondary); flex:none; }
 .adp-tabrail-toggle { align-self:flex-start; }
 
 /* Settings > Layout (Step 05c). */

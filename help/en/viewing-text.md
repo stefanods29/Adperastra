@@ -24,7 +24,7 @@ Files bigger than 10 MB open in parts of 1 MB, read-only, so they show at once. 
 
 ## Good to know
 
-- The viewer never changes the file. Editing arrives in a later update.
+- You can edit and save the file in the same tab (see "Editing text and code").
 - Web pages (.html) open in your browser; scripts (.bat, .ps1, .js...) open here as text, so they never run by accident. To run one, right-click it and choose **Open in Windows app**.
 
-See also: "Viewing Markdown" and "The ribbon".
+See also: "Editing text and code", "Viewing Markdown" and "The ribbon".

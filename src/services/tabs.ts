@@ -98,6 +98,11 @@ export function setTabView(state: TabsState, id: string, view: unknown): TabsSta
   return { ...state, tabs: state.tabs.map((tab) => (tab.id === id ? { ...tab, view } : tab)) };
 }
 
+/** Save as (Step 06a): the file tab shows its new path and name. */
+export function setTabPath(state: TabsState, id: string, path: string, title: string): TabsState {
+  return { ...state, tabs: state.tabs.map((tab) => (tab.id === id ? { ...tab, path, title } : tab)) };
+}
+
 /** Rebuild tabs from a stored session. Unknown or broken entries are
  * dropped; the Explorer tab always comes first and exactly once. */
 export function tabsFromSession(input: unknown, knownHandlers: readonly string[]): TabsState {

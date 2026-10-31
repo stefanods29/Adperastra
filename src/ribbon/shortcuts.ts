@@ -23,13 +23,15 @@ export function matchesShortcut(event: KeyboardEvent, shortcut: string): boolean
 
 /** Run commands from their `shortcut` while `active` is true. Keys without
  * Ctrl or Alt are ignored while typing in a text field or an editable area,
- * so typing is never taken over. */
+ * so typing is never taken over. A key a focused control already handled is
+ * never acted on twice. */
 export function useCommandShortcuts<C>(commands: readonly Command<C>[], ctx: C, active: boolean): void {
   const live = useRef({ commands, ctx });
   live.current = { commands, ctx };
   useEffect(() => {
     if (!active) return;
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       const target = event.target as HTMLElement | null;
       const typing =
         target !== null &&

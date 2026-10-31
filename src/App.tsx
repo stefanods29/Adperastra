@@ -31,6 +31,7 @@ import {
   openFileTab,
   openSingleTab,
   sessionFromTabs,
+  setTabPath,
   setTabView,
   tabsFromSession,
   type TabKind,
@@ -44,6 +45,7 @@ import ExplorerHome, {
   type ExplorerViewModeRequest,
 } from "./views/ExplorerHome";
 import FileTabView from "./views/FileTabView";
+import { useUnsavedChanges } from "./views/useUnsavedChanges";
 const GalleryView = lazy(() => import("./views/GalleryView"));
 const HelpCenter = lazy(() => import("./views/HelpCenter"));
 const SettingsView = lazy(() => import("./views/SettingsView"));
@@ -95,6 +97,8 @@ export default function App() {
   const readyRef = useRef(false);
   const tabsRef = useRef(tabsState);
   tabsRef.current = tabsState;
+  // Unsaved changes in file tabs (Step 06a): the dots and the close questions.
+  const unsaved = useUnsavedChanges(tabs);
 
   const applyVisual = useCallback(async (next: AppSettings) => {
     applyThemeAttributes(
@@ -234,7 +238,39 @@ export default function App() {
   }, []);
 
   const closeTab = useCallback((id: string) => {
-    setTabsState((current) => closeTabIn(current, id));
+    void unsaved.confirmClose([id]).then((proceed) => {
+      if (proceed) setTabsState((current) => closeTabIn(current, id));
+    });
+  }, [unsaved.confirmClose]);
+
+  /** The title bar's close button and Windows' close request ask once for
+   * every file tab with unsaved changes (Step 06a). */
+  const closeWindow = useCallback(async () => {
+    const ids = tabsRef.current.tabs.filter((tab) => tab.kind === "file").map((tab) => tab.id);
+    const proceed = await unsaved.confirmClose(ids);
+    if (!proceed || !isTauriRuntime()) return;
+    try {
+      await getCurrentWindow().destroy();
+    } catch {
+      // No Tauri window in a plain browser.
+    }
+  }, [unsaved.confirmClose]);
+  const closeWindowRef = useRef(closeWindow);
+  closeWindowRef.current = closeWindow;
+
+  useEffect(() => {
+    if (!isTauriRuntime()) return;
+    let unlisten: (() => void) | undefined;
+    void getCurrentWindow()
+      .onCloseRequested((event) => {
+        event.preventDefault();
+        void closeWindowRef.current();
+      })
+      .then((fn) => {
+        unlisten = fn;
+      })
+      .catch(() => undefined);
+    return () => unlisten?.();
   }, []);
 
   /** The open pipeline (contract 13): a built-in handler opens the file in
@@ -362,7 +398,7 @@ export default function App() {
           void win.isMaximized().then(setIsMaximized).catch(() => undefined);
         });
       }
-      if (action === "close") void win.close();
+      if (action === "close") void closeWindow();
     } catch {
       // No Tauri window in a plain browser.
     }
@@ -405,6 +441,7 @@ export default function App() {
             onToggleCollapsed={() =>
               onLayoutChange({ ...settings.layout, tab_bar_collapsed: !settings.layout.tab_bar_collapsed })
             }
+            dirtyIds={unsaved.dirtyIds}
           />
         ) : (
           <span className="adp-titlebar-title" data-tauri-drag-region="">
@@ -480,6 +517,7 @@ export default function App() {
             onToggleCollapsed={() =>
               onLayoutChange({ ...settings.layout, tab_bar_collapsed: !settings.layout.tab_bar_collapsed })
             }
+            dirtyIds={unsaved.dirtyIds}
           />
         )}
       <KeyTipsContext.Provider value={showKeyTips}>
@@ -513,6 +551,15 @@ export default function App() {
               onViewState={(view) => setTabsState((current) => setTabView(current, tab.id, view))}
               onOpenHelp={(slug) => openTab("help", slug)}
               protectedViewEnabled={settings.open.protected_view}
+              isDirty={unsaved.dirtyIds.has(tab.id)}
+              onDirtyChange={(dirty) => unsaved.onDirtyChange(tab.id, dirty)}
+              registerSave={(handle) => unsaved.registerSave(tab.id, handle)}
+              onPathChange={(newPath) =>
+                setTabsState((current) =>
+                  setTabPath(current, tab.id, newPath, newPath.split(/[\\/]/).pop() ?? tab.title ?? ""),
+                )
+              }
+              onConfirmDiscard={() => unsaved.confirmClose([tab.id])}
             />
           ))}
         {activeTab.kind === "help" ? (
@@ -580,6 +627,7 @@ export default function App() {
           <TabIcon size={12} aria-hidden="true" />
         </span>
       </footer>
+      {unsaved.dialog}
     </div>
     </LayoutContext.Provider>
     </AppearanceContext.Provider>

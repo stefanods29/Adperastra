@@ -107,6 +107,33 @@ describe("TabStrip", () => {
     expect(buttonWith(i18n.t("tabs.expand"))).toBeDefined();
   });
 
+  it("unsaved tabs show a dot", async () => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () => {
+      root?.render(
+        <TabStrip
+          tabs={TABS}
+          activeId="explorer"
+          side="top"
+          collapsed={false}
+          label={label}
+          onActivate={() => undefined}
+          onClose={() => undefined}
+          onNewTab={() => undefined}
+          onToggleCollapsed={() => undefined}
+          dirtyIds={new Set(["f1"])}
+        />,
+      );
+    });
+    const tabs = tabNodes();
+    expect(tabs[0].querySelector(".adp-tab-dirty")).toBeNull();
+    expect(tabs[1].querySelector(".adp-tab-dirty")).not.toBeNull();
+    expect(tabs[1].getAttribute("aria-description")).toBe(i18n.t("editor.unsaved"));
+    expect(tabs[0].getAttribute("aria-description")).toBeNull();
+  });
+
   it("tabs activate on click and close on middle-click", async () => {
     const { draw, onActivate, onClose } = setup();
     await draw("right");

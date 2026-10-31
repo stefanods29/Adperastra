@@ -24,7 +24,7 @@ Los archivos de más de 10 MB se abren en partes de 1 MB, en modo de solo lectur
 
 ## Para tener en cuenta
 
-- El visor nunca cambia el archivo. La edición llegará en una actualización posterior.
+- Puedes editar y guardar el archivo en la misma pestaña (consulta «Editar texto y código»).
 - Las páginas web (.html) se abren en tu navegador; los scripts (.bat, .ps1, .js...) se abren aquí como texto, así que nunca se ejecutan por accidente. Para ejecutar uno, haz clic con el botón derecho y elige **Abrir en la aplicación de Windows**.
 
-Consulta también: «Ver Markdown» y «La cinta de opciones».
+Consulta también: «Editar texto y código», «Ver Markdown» y «La cinta de opciones».

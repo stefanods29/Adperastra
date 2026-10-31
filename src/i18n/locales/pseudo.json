@@ -522,6 +522,24 @@
       "too_large": "[Thïs fïlë ïs tøø lärgë tø bë ä sëttïñgs fïlë. ~~~~~~~~~~~~~~]",
       "invalid": "[Thïs fïlë ïsñ't äñ Ädpërästrä sëttïñgs fïlë. ~~~~~~~~~~~~~~~]",
       "newer": "[Thïs fïlë çømës frøm ä ñëwër vërsïøñ øf Ädpërästrä. Üpdätë thë äpp tø üsë ït. ~~~~~~~~~~~~~~~~~~~~~~~~~]"
+    },
+    "textSave": {
+      "other": "[Çøüldñ't sävë thë fïlë. Trÿ ägäïñ. ~~~~~~~~~~~]",
+      "bad_request": "[Thïs fïlë çäñ't bë sävëd hërë. ~~~~~~~~~~]",
+      "too_large": "[Thë tëxt ïs tøø lärgë tø sävë. ~~~~~~~~~~]",
+      "unmappable": "[Sømë çhäräçtërs çäñ't bë sävëd ïñ thïs ëñçødïñg. Çhøøsë ÜTF-8 ïñ Sävë wïth. ~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "cannot_encode": "[Thïs ëñçødïñg çäñ't bë sävëd. Üsë Sävë äs… tø sävë ä çøpÿ ïñ ÜTF-8. ~~~~~~~~~~~~~~~~~~~~]",
+      "changed_on_disk": "[Thë fïlë çhäñgëd øñ dïsk. ~~~~~~~~]",
+      "read_only": "[Thë fïlë ïs rëäd-øñlÿ. Üsë Sävë äs… tø sävë ä çøpÿ. ~~~~~~~~~~~~~~~]",
+      "in_use": "[Äñøthër prøgräm ïs üsïñg thë fïlë. Çløsë ït thërë äñd sävë ägäïñ. ~~~~~~~~~~~~~~~~~~~~~]",
+      "not_found": "[Thë føldër øf thïs fïlë ñø løñgër ëxïsts. Üsë Sävë äs… ~~~~~~~~~~~~~~~~~]",
+      "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
+      "write_failed": "[Çøüldñ't wrïtë thë fïlë. Ÿøür tëxt ïs stïll hërë; trÿ ägäïñ ør üsë Sävë äs… ~~~~~~~~~~~~~~~~~~~~~~~]"
+    },
+    "recovery": {
+      "other": "[Çøüldñ't këëp ä rëçøvërÿ çøpÿ øf ÿøür çhäñgës. ~~~~~~~~~~~~~~~]",
+      "bad_request": "[Thät rëçøvërÿ çøpÿ ïsñ't välïd. ~~~~~~~~~~]",
+      "too_large": "[Thë tëxt ïs tøø lärgë før ä rëçøvërÿ çøpÿ. Sävë ït søøñ. ~~~~~~~~~~~~~~~~~~]"
     }
   },
   "keys": {
@@ -647,9 +665,52 @@
       "controlCharacter": "[Çøñtrøl çhäräçtër ~~~~~~~]"
     }
   },
+  "editor": {
+    "save": "[Sävë ~~]",
+    "saveAs": "[Sävë äs… ~~~]",
+    "undoHint": "[Üñdø (Çtrl+Z) ~~~~]",
+    "redoHint": "[Rëdø (Çtrl+Ÿ) ~~~~]",
+    "spellcheck": "[Çhëçk spëllïñg ~~~~~~]",
+    "saveWith": "[Sävë wïth ~~~~]",
+    "lineEndings": "[Lïñë ëñdïñgs ~~~~~]",
+    "lineEndingCrlf": "[Wïñdøws (ÇRLF) ~~~~~]",
+    "lineEndingLf": "[Üñïx (LF) ~~~]",
+    "file": "[Fïlë ~~]",
+    "edit": "[Ëdït ~~]",
+    "unsaved": "[Üñsävëd çhäñgës ~~~~~~]",
+    "saved": "[Sävëd ~~]",
+    "readOnlyLarge": "[Thïs fïlë ïs tøø lärgë tø ëdït hërë. Ït øpëñs rëäd-øñlÿ, ïñ pärts. ~~~~~~~~~~~~~~~~~~~~]",
+    "readOnlyProtected": "[Ëdïtïñg ïs øff før fïlës frøm thë ïñtërñët. Üñbløçk thë fïlë tø ëdït ït. ~~~~~~~~~~~~~~~~~~~~~~~]",
+    "readOnlyAttribute": "[Thïs fïlë ïs rëäd-øñlÿ. Üsë Sävë äs… tø sävë ä çøpÿ. ~~~~~~~~~~~~~~~~]",
+    "readOnlyEncoding": "[Fïlës ïñ {encoding} çäñ bë rëäd büt ñøt sävëd. Üsë Sävë äs… tø sävë ä çøpÿ ïñ ÜTF-8. ~~~~~~~~~~~~~~~~~~~~~]",
+    "unmappable": "[“{char}” øñ lïñë {line}, çølümñ {column} çäñ't bë sävëd ïñ {encoding}. Çhøøsë ÜTF-8 ïñ Sävë wïth. ~~~~~~~~~~~~~~~~~~]",
+    "changedTitle": "[Thïs fïlë çhäñgëd øñ dïsk ~~~~~~~~~]",
+    "changedBody": "[Äñøthër prøgräm çhäñgëd {name} äftër ÿøü øpëñëd ït. ~~~~~~~~~~~~~~~]",
+    "overwrite": "[Øvërwrïtë ~~~~]",
+    "reload": "[Rëløäd ~~~]",
+    "saveAsTitle": "[Sävë äs ~~~]",
+    "allFiles": "[Äll fïlës ~~~~]",
+    "unsavedTitle": "[Sävë çhäñgës tø {name}? ~~~~~~]",
+    "unsavedBody": "[Ÿøür çhäñgës wïll bë løst ïf ÿøü døñ't sävë thëm. ~~~~~~~~~~~~~~~~]",
+    "unsavedManyTitle": "[Sävë ÿøür çhäñgës? ~~~~~~]",
+    "unsavedManyBody": "[{count, plural, one {# fïlë häs üñsävëd çhäñgës:} other {# fïlës hävë üñsävëd çhäñgës:}} ~~~~~~~~~~]",
+    "saveAll": "[Sävë äll ~~~]",
+    "dontSave": "[Døñ't sävë ~~~~]",
+    "recovered": "[Üñsävëd çhäñgës frøm {time} wërë këpt før thïs fïlë. ~~~~~~~~~~~~~~~]",
+    "recoveredChanged": "[Üñsävëd çhäñgës frøm {time} wërë këpt før thïs fïlë, büt thë fïlë çhäñgëd äftër thät. ~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "restore": "[Rëstørë ~~~]",
+    "discard": "[Dïsçärd ~~~]",
+    "replaceWith": "[Rëpläçë wïth ~~~~~]",
+    "replace": "[Rëpläçë ~~~]",
+    "replaceAll": "[Rëpläçë äll ~~~~]",
+    "matchCase": "[Mätçh çäsë ~~~~]",
+    "wholeWord": "[Whølë wørd ~~~~]",
+    "closeReplace": "[Çløsë rëpläçë ~~~~~]"
+  },
   "markdown": {
     "renderedMode": "[Rëädïñg vïëw ~~~~~]",
-    "sourceMode": "[Søürçë ~~~]"
+    "sourceMode": "[Søürçë ~~~]",
+    "splitMode": "[Splït ~~]"
   },
   "media": {
     "play": "[Pläÿ ~~]",

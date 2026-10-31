@@ -11,6 +11,16 @@ that fixed it.
 
 ## Open
 
+### KI-039 - The speed record's step name comes only from the runner (Minor)
+- **Found in:** Step 06a, while applying the guide's "the step value `05d` becomes `06a`" (2026-10-30). **Severity:** Minor (tooling; nothing the user sees, and no measuring result is wrong).
+- **What:** `scripts/measure-ui.mjs` has no hardcoded step value: the JSON record's `step` comes from the 9th argument, which `scripts/measure-ui.ps1` fills from `-Step` or the branch name. A run outside a step branch, without `-Step`, records `"unknown"`, and the guide's instruction has nothing to change. The same instruction in Step 05d's guide was not applied for the same reason.
+- **Workaround:** pass `-Step 06a` (or run on the step's branch) so the record is named correctly.
+- **Target:** reviewed at the next milestone.
+
+### KI-035 - The line under the toolbar stops partway across the window (Minor)
+- **Found in:** Step 05c screenshots, 2026-10-30. **Severity:** Minor (cosmetic).
+- **What:** With the toolbar on top in the moved-pane, tabs-on-the-left and Classic layouts, the thin line under the command bar ends before the right edge of the window.
+- **Target:** reviewed at the next milestone.
 ### KI-037 - The Undo history can report no room after only a few file operations (Major)
 - **Found in:** Step 05d screenshot runs, 2026-10-30; the code dates from Step 03b. **Severity:** Major until explained (a file operation is refused, though no file changes).
 - **What:** The Spanish dark screenshot run twice showed `ops.undo_limit` ("Not enough room in the Undo history") after a handful of file operations in a fresh session. The English run showed no such message, but its panel keeps a "Copying 1 item" row with no progress bar. Each running transfer reserves 32 MiB of a 128 MiB budget, so four unfinished reservations are enough to cause this; a reservation that is never released is the first thing to check. In one other run, `notes.txt` also did not come back within 15 s after Delete and Undo; that run was not repeated.

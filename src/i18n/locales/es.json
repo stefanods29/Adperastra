@@ -522,6 +522,24 @@
       "too_large": "Este archivo es demasiado grande para ser un archivo de configuración.",
       "invalid": "Este archivo no es un archivo de configuración de Adperastra.",
       "newer": "Este archivo es de una versión más reciente de Adperastra. Actualiza la aplicación para usarlo."
+    },
+    "textSave": {
+      "other": "No se pudo guardar el archivo. Vuelve a intentarlo.",
+      "bad_request": "Este archivo no se puede guardar aquí.",
+      "too_large": "El texto es demasiado grande para guardarlo.",
+      "unmappable": "Algunos caracteres no se pueden guardar con esta codificación. Elige UTF-8 en Guardar con.",
+      "cannot_encode": "Esta codificación no se puede guardar. Usa Guardar como… para guardar una copia en UTF-8.",
+      "changed_on_disk": "El archivo cambió en el disco.",
+      "read_only": "El archivo es de solo lectura. Usa Guardar como… para guardar una copia.",
+      "in_use": "Otro programa está usando el archivo. Ciérralo allí y vuelve a guardar.",
+      "not_found": "La carpeta de este archivo ya no existe. Usa Guardar como…",
+      "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
+      "write_failed": "No se pudo escribir el archivo. Tu texto sigue aquí; vuelve a intentarlo o usa Guardar como…"
+    },
+    "recovery": {
+      "other": "No se pudo guardar una copia de recuperación de tus cambios.",
+      "bad_request": "Esa copia de recuperación no es válida.",
+      "too_large": "El texto es demasiado grande para una copia de recuperación. Guárdalo pronto."
     }
   },
   "keys": {
@@ -647,9 +665,52 @@
       "controlCharacter": "Carácter de control"
     }
   },
+  "editor": {
+    "save": "Guardar",
+    "saveAs": "Guardar como…",
+    "undoHint": "Deshacer (Ctrl+Z)",
+    "redoHint": "Rehacer (Ctrl+Y)",
+    "spellcheck": "Revisar ortografía",
+    "saveWith": "Guardar con",
+    "lineEndings": "Finales de línea",
+    "lineEndingCrlf": "Windows (CRLF)",
+    "lineEndingLf": "Unix (LF)",
+    "file": "Archivo",
+    "edit": "Edición",
+    "unsaved": "Cambios sin guardar",
+    "saved": "Guardado",
+    "readOnlyLarge": "Este archivo es demasiado grande para editarlo aquí. Se abre en modo de solo lectura, por partes.",
+    "readOnlyProtected": "La edición está desactivada para los archivos de Internet. Desbloquea el archivo para editarlo.",
+    "readOnlyAttribute": "Este archivo es de solo lectura. Usa Guardar como… para guardar una copia.",
+    "readOnlyEncoding": "Los archivos en {encoding} se pueden leer, pero no guardar. Usa Guardar como… para guardar una copia en UTF-8.",
+    "unmappable": "“{char}” en la línea {line}, columna {column}, no se puede guardar en {encoding}. Elige UTF-8 en Guardar con.",
+    "changedTitle": "Este archivo cambió en el disco",
+    "changedBody": "Otro programa cambió {name} después de que lo abriste.",
+    "overwrite": "Sobrescribir",
+    "reload": "Volver a cargar",
+    "saveAsTitle": "Guardar como",
+    "allFiles": "Todos los archivos",
+    "unsavedTitle": "¿Guardar los cambios en {name}?",
+    "unsavedBody": "Tus cambios se perderán si no los guardas.",
+    "unsavedManyTitle": "¿Guardar los cambios?",
+    "unsavedManyBody": "{count, plural, one {# archivo tiene cambios sin guardar:} other {# archivos tienen cambios sin guardar:}}",
+    "saveAll": "Guardar todo",
+    "dontSave": "No guardar",
+    "recovered": "Se conservaron los cambios sin guardar de {time} para este archivo.",
+    "recoveredChanged": "Se conservaron los cambios sin guardar de {time} para este archivo, pero el archivo cambió después.",
+    "restore": "Restaurar",
+    "discard": "Descartar",
+    "replaceWith": "Reemplazar con",
+    "replace": "Reemplazar",
+    "replaceAll": "Reemplazar todo",
+    "matchCase": "Coincidir mayúsculas y minúsculas",
+    "wholeWord": "Palabra completa",
+    "closeReplace": "Cerrar reemplazar"
+  },
   "markdown": {
     "renderedMode": "Vista de lectura",
-    "sourceMode": "Código fuente"
+    "sourceMode": "Código fuente",
+    "splitMode": "Dividida"
   },
   "media": {
     "play": "Reproducir",

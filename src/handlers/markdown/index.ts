@@ -16,5 +16,7 @@ export const markdownHandler: Handler = {
   helpSlug: "viewing-markdown",
   speedTier: "fast",
   supportsFind: true,
+  editable: true,
+  supportsReplace: true,
   view: lazy(() => import("./MarkdownView")),
 };
