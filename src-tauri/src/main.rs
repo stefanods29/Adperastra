@@ -27,6 +27,7 @@ mod drag;
 mod explorer;
 mod files;
 mod folder_views;
+mod jobs;
 mod links;
 mod media;
 mod operation_safety;
@@ -2832,6 +2833,7 @@ fn main() {
         })
         .manage(files::FileGrants::default())
         .manage(folder_views::FolderViewsLock::default())
+        .manage(jobs::Jobs::default())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -2925,6 +2927,8 @@ fn main() {
             appearance::appearance_set_zoom,
             settings_file::settings_export,
             settings_file::settings_import,
+            jobs::job_poll,
+            jobs::job_cancel,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
