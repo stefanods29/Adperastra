@@ -104,7 +104,8 @@ import {
   SystemItemsDialog,
   type ConflictAnswer,
 } from "./explorer/FileOpDialogs";
-import JobsPanel, { type JobView } from "./explorer/JobsPanel";
+import JobsPanel, { type JobView, type TrackJob } from "./explorer/JobsPanel";
+import { useArchiveExtract, type ExplorerExtractRequest } from "./explorer/useArchiveExtract";
 import DetailsPane from "./explorer/DetailsPane";
 import DriveList, { type DriveLoadState } from "./explorer/DriveList";
 import FileList from "./explorer/FileList";
@@ -159,6 +160,8 @@ export interface ExplorerHomeProps {
   onViewChange?: (patch: Partial<ExplorerViewSettings>) => void;
   /** Pasted-image format from settings (schema 4). */
   pasteImageFormat?: "png" | "jpg";
+  /** An extraction an archive tab asked for (Step 06d). */
+  extractRequest?: ExplorerExtractRequest | null;
 }
 
 const DEFAULT_VIEW: ExplorerViewSettings = defaultSettings().explorer;
@@ -243,6 +246,7 @@ export default function ExplorerHome({
   view: viewProp,
   onViewChange,
   pasteImageFormat = "png",
+  extractRequest = null,
 }: ExplorerHomeProps) {
   const { t, i18n } = useTranslation();
   const { layout } = useLayout();
@@ -572,13 +576,23 @@ export default function ExplorerHome({
 
   const baseNameOf = (path: string) => displayPath(path).split("\\").filter(Boolean).pop() ?? path;
 
-  /** Run one job in the panel; resolves with its report. */
-  const runTracked = async (
-    verbKey: string,
-    kind: "copy" | "move" | "recycle" | "restore" | "permanent",
-    sources: string[],
-    options: { destDir?: string; conflict?: ConflictPolicy } = {},
-  ): Promise<OpReport> => {
+  /** Select the items an extraction made, and go to their folder when the
+   * user asked for a folder (Step 06d). */
+  const showResult = (destDir: string, select: string | null, navigate: boolean) => {
+    const current = live.current.location;
+    if (navigate) {
+      pendingSelectRef.current = select;
+      goToFolder(destDir);
+      return;
+    }
+    if (current.type === "folder" && samePath(current.path, destDir)) {
+      pendingSelectRef.current = select;
+      refreshAfterOp();
+    }
+  };
+
+  /** Run one job in the panel; resolves with its result. */
+  const trackJob: TrackJob = async ({ verbKey, count, reasonArea = "ops", start, outcome }) => {
     jobIdRef.current += 1;
     const id = `job-${jobIdRef.current}`;
     const openTimer = window.setTimeout(() => setJobsOpen(true), 400);
@@ -587,49 +601,37 @@ export default function ExplorerHome({
         {
           id,
           verbKey,
-          count: sources.length,
+          count,
           progress: null,
           status: "running" as const,
           skipped: [],
+          reasonArea,
           onCancel: () => jobCancelRef.current.get(id)?.(),
         },
         ...list,
       ].slice(0, 6),
     );
     try {
-      let allowSystem = false;
-      for (;;) {
-        try {
-          const job = await startFileJob(kind, sources, {
-            ...options,
-            allowSystem,
-            onProgress: (progress) =>
-              setJobs((list) => list.map((entry) => (entry.id === id ? { ...entry, progress } : entry))),
-          });
-          jobCancelRef.current.set(id, () => void job.cancel());
-          const report = await job.completion;
-          window.clearTimeout(openTimer);
-          setJobs((list) =>
-            list.map((entry) =>
-              entry.id === id
-                ? { ...entry, status: report.cancelled ? ("cancelled" as const) : ("done" as const), skipped: report.skipped }
-                : entry,
-            ),
-          );
-          if (report.cancelled) setJobsOpen(true);
-          return report;
-        } catch (error) {
-          const code = error instanceof Error ? error.message : String(error);
-          if (code !== "ops.system_confirmation_required" || allowSystem) throw error;
-          jobCancelRef.current.delete(id);
-          if (!(await askSystemItems())) {
-            window.clearTimeout(openTimer);
-            setJobs((list) => list.map((entry) => entry.id === id ? { ...entry, status: "cancelled" as const } : entry));
-            return { completed: [], skipped: [], replaced: [], created: [], cancelled: true };
-          }
-          allowSystem = true;
-        }
-      }
+      const job = await start((progress) =>
+        setJobs((list) => list.map((entry) => (entry.id === id ? { ...entry, progress } : entry))),
+      );
+      jobCancelRef.current.set(id, () => void job.cancel());
+      const result = await job.completion;
+      window.clearTimeout(openTimer);
+      const finished = outcome(result);
+      setJobs((list) =>
+        list.map((entry) =>
+          entry.id === id
+            ? {
+                ...entry,
+                status: finished.cancelled ? ("cancelled" as const) : ("done" as const),
+                skipped: finished.skipped,
+              }
+            : entry,
+        ),
+      );
+      if (finished.cancelled) setJobsOpen(true);
+      return result;
     } catch (error) {
       window.clearTimeout(openTimer);
       setJobs((list) =>
@@ -640,6 +642,59 @@ export default function ExplorerHome({
       jobCancelRef.current.delete(id);
     }
   };
+
+  /** Run one file operation in the panel; resolves with its report. */
+  const runTracked = async (
+    verbKey: string,
+    kind: "copy" | "move" | "recycle" | "restore" | "permanent",
+    sources: string[],
+    options: { destDir?: string; conflict?: ConflictPolicy } = {},
+  ): Promise<OpReport> => {
+    let allowSystem = false;
+    for (;;) {
+      try {
+        return await trackJob<OpReport>({
+          verbKey,
+          count: sources.length,
+          start: (onProgress) =>
+            startFileJob(kind, sources, { ...options, allowSystem, onProgress }),
+          outcome: (report) => ({ cancelled: report.cancelled, skipped: report.skipped }),
+        });
+      } catch (error) {
+        const code = error instanceof Error ? error.message : String(error);
+        if (code !== "ops.system_confirmation_required" || allowSystem) throw error;
+        if (!(await askSystemItems())) {
+          return { completed: [], skipped: [], replaced: [], created: [], cancelled: true };
+        }
+        allowSystem = true;
+      }
+    }
+  };
+
+  /** Extracting archives (Step 06d): a job per archive, one Undo entry for
+   * a group. */
+  const archive = useArchiveExtract({
+    t,
+    trackJob,
+    undoStack: undoStack.current,
+    touchUndo,
+    notify,
+    notifyAction,
+    notifyError,
+    currentFolder: () =>
+      live.current.location.type === "folder" ? live.current.location.path : null,
+    showResult,
+    itemFor: (path) => live.current.itemByPath.get(path),
+  });
+
+  // An archive tab asked for an extraction; the App already shows the
+  // destination folder (Step 06d).
+  useEffect(() => {
+    if (!extractRequest) return;
+    void archive.runRequest(extractRequest.request);
+    // Only a new request (new nonce) runs it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extractRequest?.nonce]);
 
   /** Record a finished copy/move/recycle in the undo stack; returns the
    * entry to offer in the toast, or null when nothing changed. */
@@ -934,6 +989,9 @@ export default function ExplorerHome({
         for (const path of files.slice(0, OPEN_LIMIT)) onOpenFileWith?.(path, "hex");
         if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
       },
+      extractArchives: (mode) => {
+        void archive.extractItems(live.current.selectedPaths, mode);
+      },
       openWith: () => {
         const paths = live.current.selectedPaths;
         if (paths.length === 1 && isTauriRuntime()) void openWithDialog(paths[0]).catch((error: unknown) => notifyError(error, "openWith"));
@@ -1069,7 +1127,7 @@ export default function ExplorerHome({
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat],
+    [archive, goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);

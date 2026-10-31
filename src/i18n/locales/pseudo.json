@@ -139,7 +139,8 @@
     "openedFirst": "[Øpëñëd thë fïrst {count} fïlës. Øpëñ thë rëst ä fëw ät ä tïmë. ~~~~~~~~~~~~~~~~~]",
     "sortedAscending": "[{name}, sørtëd äsçëñdïñg. Sëlëçt tø sørt dësçëñdïñg. ~~~~~~~~~~~~~~~]",
     "sortedDescending": "[{name}, sørtëd dësçëñdïñg. Sëlëçt tø sørt äsçëñdïñg. ~~~~~~~~~~~~~~~]",
-    "columnsLabel": "[Çølümñs ~~~]"
+    "columnsLabel": "[Çølümñs ~~~]",
+    "extractFirst": "[Øñlÿ thë fïrst {count} ärçhïvës wërë ëxträçtëd. ~~~~~~~~~~~~~~]"
   },
   "help": {
     "title": "[Hëlp ~~]",
@@ -327,7 +328,9 @@
     "actionUndone": "[Äçtïøñ üñdøñë. ~~~~~]",
     "actionRedone": "[Äçtïøñ rëdøñë. ~~~~~]",
     "nothingToPaste": "[Thërë's ñøthïñg tø pästë hërë. ~~~~~~~~~~]",
-    "undoNewerFirst": "[Üñdø thë ñëwër äçtïøñs fïrst (Rëçëñt äçtïøñs shøws thë ørdër). ~~~~~~~~~~~~~~~~~~~~]"
+    "undoNewerFirst": "[Üñdø thë ñëwër äçtïøñs fïrst (Rëçëñt äçtïøñs shøws thë ørdër). ~~~~~~~~~~~~~~~~~~~~]",
+    "extracted": "[Ëxträçtëd {name} ~~~~]",
+    "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]"
   },
   "commands": {
     "back": "[Bäçk ~~]",
@@ -405,7 +408,11 @@
     "toolbarAutoHide": "[Hïdë üñtïl pøïñtëd ät ~~~~~~~~]",
     "presetStandard": "[Stäñdärd ~~~~]",
     "presetMinimal": "[Mïñïmäl ~~~]",
-    "presetClassic": "[Çlässïç ~~~]"
+    "presetClassic": "[Çlässïç ~~~]",
+    "extract": "[Ëxträçt ~~~]",
+    "extractAll": "[Ëxträçt äll ~~~~]",
+    "extractHere": "[Ëxträçt hërë ~~~~~]",
+    "extractTo": "[Ëxträçt tø… ~~~~]"
   },
   "errors": {
     "archive": {
@@ -582,7 +589,8 @@
     "restoring": "[{count, plural, one {Rëstørïñg # ïtëm} other {Rëstørïñg # ïtëms}} ~~~~~~]",
     "skippedItems": "[{count, plural, one {# ïtëm wäs skïppëd} other {# ïtëms wërë skïppëd}} ~~~~~~~]",
     "done": "[Døñë ~~]",
-    "cancelled": "[Çäñçëllëd ~~~~]"
+    "cancelled": "[Çäñçëllëd ~~~~]",
+    "extracting": "[{count, plural, one {Ëxträçtïñg # ärçhïvë} other {Ëxträçtïñg # ärçhïvës}} ~~~~~~~~]"
   },
   "dialogs": {
     "conflictTitle": "[Äñ ïtëm wïth thïs ñämë ïs älrëädÿ hërë ~~~~~~~~~~~~~]",

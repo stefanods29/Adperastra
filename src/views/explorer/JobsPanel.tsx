@@ -4,17 +4,22 @@ import { useTranslation } from "react-i18next";
 import ProgressBar from "../../components/ProgressBar";
 import { displayPath } from "../../services/explorer";
 import type { OpProgress, SkippedItem } from "../../services/fileops";
+import type { JobReasonArea } from "./jobsTypes";
+
+export type { JobReasonArea, TrackJob, TrackJobOptions } from "./jobsTypes";
 
 export type JobStatus = "running" | "done" | "cancelled" | "failed";
 
 export interface JobView {
   id: string;
-  /** i18n verb key under `jobs` (copying, moving, ...). */
+  /** i18n verb key under `jobs` (copying, moving, extracting, ...). */
   verbKey: string;
   count: number;
   progress: OpProgress | null;
   status: JobStatus;
   skipped: SkippedItem[];
+  /** Where `SkippedItem.reason` is translated (defaults to "ops"). */
+  reasonArea?: JobReasonArea;
   onCancel: () => void;
 }
 
@@ -64,6 +69,7 @@ export default function JobsPanel({ jobs, onDismiss, onClose }: JobsPanelProps) 
       {jobs.map((job) => {
         const value = job.status === "done" ? 100 : percent(job.progress);
         const isOpen = expanded === job.id;
+        const area = job.reasonArea ?? "ops";
         return (
           <div key={job.id} className="adp-job-row">
             <div className="adp-job-main">
@@ -111,7 +117,9 @@ export default function JobsPanel({ jobs, onDismiss, onClose }: JobsPanelProps) 
                   <li key={item.path}>
                     <span>{baseName(item.path)}</span>
                     <span className="adp-job-reason">
-                      {t(`errors.ops.${item.reason}`, { defaultValue: t("errors.ops.other") })}
+                      {t(`errors.${area}.${item.reason}`, {
+                        defaultValue: t(`errors.${area}.other`),
+                      })}
                     </span>
                   </li>
                 ))}

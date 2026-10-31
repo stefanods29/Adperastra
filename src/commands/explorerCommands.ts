@@ -19,7 +19,9 @@ import {
   FilePlus,
   FileText,
   FileType,
+  FolderInput,
   FolderOpen,
+  FolderOutput,
   FolderPlus,
   FolderSearch,
   Grid2x2,
@@ -32,6 +34,7 @@ import {
   Link,
   List,
   ListChecks,
+  PackageOpen,
   PanelRight,
   Pin,
   Redo2,
@@ -49,6 +52,7 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
+import { isArchivePath, type ExtractMode } from "../archive/archiveFiles";
 import type { SortDirection, SortKey } from "../services/explorer";
 import type { GroupBy } from "../services/grouping";
 import { VIEW_MODE_IDS, type ViewModeId } from "../services/settings";
@@ -117,6 +121,8 @@ export interface ExplorerActions {
   /** Open the selected files in the text or hex viewer (Step 04c). */
   openAsText: () => void;
   openAsHex: () => void;
+  /** Extract the selected archives (Step 06d). */
+  extractArchives: (mode: ExtractMode) => void;
   copyPath: () => void;
   toggleFavorite: () => void;
   showInFolder: () => void;
@@ -147,6 +153,11 @@ export interface ExplorerActions {
 
 const inList = (ctx: CommandContext) => ctx.location === "folder" || ctx.location === "home";
 const hasSelection = (ctx: CommandContext) => ctx.selection.count > 0;
+/** Only archives can be extracted, and only when no folder is selected. */
+const archivesOnly = (ctx: CommandContext) =>
+  ctx.selection.count > 0 &&
+  ctx.selection.folders === 0 &&
+  ctx.selection.paths.every((path) => isArchivePath(path));
 
 export function createExplorerCommands(actions: ExplorerActions): Command[] {
   const sortBy = (id: string, key: SortKey, labelKey: string, icon: Command["icon"]): Command => ({
@@ -437,6 +448,36 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       visibleWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
       enabledWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
       run: () => actions.openAsHex(),
+    },
+    {
+      id: "explorer.extractToFolder",
+      labelKey: "commands.extractAll",
+      icon: PackageOpen,
+      risk: "change",
+      helpSlug: "archives",
+      visibleWhen: archivesOnly,
+      enabledWhen: archivesOnly,
+      run: () => actions.extractArchives("newFolder"),
+    },
+    {
+      id: "explorer.extractHere",
+      labelKey: "commands.extractHere",
+      icon: FolderInput,
+      risk: "change",
+      helpSlug: "archives",
+      visibleWhen: archivesOnly,
+      enabledWhen: archivesOnly,
+      run: () => actions.extractArchives("here"),
+    },
+    {
+      id: "explorer.extractTo",
+      labelKey: "commands.extractTo",
+      icon: FolderOutput,
+      risk: "change",
+      helpSlug: "archives",
+      visibleWhen: archivesOnly,
+      enabledWhen: archivesOnly,
+      run: () => actions.extractArchives("to"),
     },
     {
       id: "explorer.copyPath",

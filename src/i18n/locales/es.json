@@ -139,7 +139,8 @@
     "openedFirst": "Se abrieron los primeros {count} archivos. Abre el resto de a pocos.",
     "sortedAscending": "{name}, en orden ascendente. Selecciona para ordenar en forma descendente.",
     "sortedDescending": "{name}, en orden descendente. Selecciona para ordenar en forma ascendente.",
-    "columnsLabel": "Columnas"
+    "columnsLabel": "Columnas",
+    "extractFirst": "Solo se extrajeron los primeros {count} archivos comprimidos."
   },
   "help": {
     "title": "Ayuda",
@@ -327,7 +328,9 @@
     "actionUndone": "Acción deshecha.",
     "actionRedone": "Acción rehecha.",
     "nothingToPaste": "No hay nada para pegar aquí.",
-    "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden)."
+    "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden).",
+    "extracted": "Se extrajo {name}",
+    "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}"
   },
   "commands": {
     "back": "Atrás",
@@ -405,7 +408,11 @@
     "toolbarAutoHide": "Ocultar hasta señalarla",
     "presetStandard": "Estándar",
     "presetMinimal": "Mínimo",
-    "presetClassic": "Clásico"
+    "presetClassic": "Clásico",
+    "extract": "Extraer",
+    "extractAll": "Extraer todo",
+    "extractHere": "Extraer aquí",
+    "extractTo": "Extraer en…"
   },
   "errors": {
     "archive": {
@@ -582,7 +589,8 @@
     "restoring": "{count, plural, one {Restaurando # elemento} other {Restaurando # elementos}}",
     "skippedItems": "{count, plural, one {Se omitió # elemento} other {Se omitieron # elementos}}",
     "done": "Listo",
-    "cancelled": "Cancelado"
+    "cancelled": "Cancelado",
+    "extracting": "{count, plural, one {Extrayendo # archivo comprimido} other {Extrayendo # archivos comprimidos}}"
   },
   "dialogs": {
     "conflictTitle": "Ya hay un elemento con este nombre aquí",
