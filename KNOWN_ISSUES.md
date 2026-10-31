@@ -11,6 +11,22 @@ that fixed it.
 
 ## Open
 
+### KI-047 - Some libraries the archive crate pulls in are missing from the license notices (Major)
+- **Found in:** the review of Step 06d, 2026-10-30. **Severity:** Major (R-LIC-4 requires every library to be listed).
+- **What:** `THIRD_PARTY_LICENSES.md` lists the main archive libraries but not `typed-path`, `cbc`, `aes`, `sha2` or `nix`, which are in `Cargo.lock`.
+- **Target:** before the v0.1 release at the latest.
+
+### KI-046 - A settings file with bad values imports as all defaults, with no error (Major)
+- **Found in:** the review of Step 05d, 2026-10-30.
+- **What:** `parse_import` relies on `migrate`, which returns the default settings for a file that fails validation instead of an error. The import dialog then replaces the user's settings with defaults, including the language, instead of saying the file is invalid.
+- **Workaround:** Undo right after importing.
+- **Target:** not fixed yet; the owner decides when.
+
+### KI-045 - Very large archives can stop with a timeout (Major)
+- **Found in:** the review of Step 06d, 2026-10-30. Found by reading the code; not yet reproduced.
+- **What:** The helper process is stopped after 30 s with no message. Extraction sends progress only when a whole file finishes, and `.gz`/`.xz` listing sends none while it decompresses. A single file that takes over 30 s, such as a multi-GB `.gz` or `.tar.gz`, would end with `archive.timeout`. No data is lost: existing files are untouched, but in the kill path a `~name.partial` file may stay behind.
+- **Target:** not fixed yet; the owner decides when.
+
 ### KI-042 - Archives compressed with bzip2 are not read yet (Minor, deferral)
 - **Found in:** Step 06d. **Severity:** Minor (deliberate deferral named in the step file; the owner allowed the bzip2 library for Step 06e).
 - **What:** `.bz2`, `.tbz`, `.tbz2` and `.tar.bz2` files open in their Windows app instead of a tab, and a zip or 7z entry compressed with bzip2 is skipped with "Skipped: it's compressed in a way the app can't read".
