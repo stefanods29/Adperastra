@@ -35,11 +35,47 @@ pub const ALIVE_INTERVAL: Duration = Duration::from_secs(5);
 pub enum HelperRequest {
     List {
         path: String,
+        #[serde(default)]
+        options: archive::ArchiveReadOptions,
     },
     Extract {
         path: String,
         request: ExtractRequest,
+        #[serde(default)]
+        options: archive::ArchiveReadOptions,
     },
+    /// Ask for the separately installed 7-Zip's version (Step 06e).
+    RarStatus,
+    /// Build a new archive in the app-owned spool (Step 06e).
+    Create { request: HelperCreate },
+}
+
+/// Everything the helper needs to plan and write one archive. The password
+/// is never Debug-printed.
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct HelperCreate {
+    pub sources: Vec<String>,
+    pub include_hidden: bool,
+    pub format: archive::CreateFormat,
+    pub encryption: archive::CreateEncryption,
+    pub password: Option<String>,
+    pub encrypt_names: bool,
+    pub spool: String,
+}
+
+impl std::fmt::Debug for HelperCreate {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("HelperCreate")
+            .field("sources", &self.sources)
+            .field("include_hidden", &self.include_hidden)
+            .field("format", &self.format)
+            .field("encryption", &self.encryption)
+            .field("password", &self.password.as_ref().map(|_| "<redacted>"))
+            .field("encrypt_names", &self.encrypt_names)
+            .field("spool", &self.spool)
+            .finish()
+    }
 }
 
 /// What the helper tells the app.
@@ -61,6 +97,14 @@ pub enum HelperMessage {
     },
     Extracted {
         report: ExtractReport,
+    },
+    /// The installed 7-Zip status (Step 06e).
+    RarStatus {
+        status: archive::RarToolStatus,
+    },
+    /// A verified spool written by the helper (Step 06e).
+    SpoolCreated {
+        report: archive::CreateSpoolReport,
     },
     Failed {
         code: String,
@@ -123,16 +167,94 @@ pub fn run_helper() -> i32 {
         last_progress: Instant::now(),
     };
     match request {
-        HelperRequest::List { path } => list(&path, &token, &mut reporter),
-        HelperRequest::Extract { path, request } => extract(&path, &request, &token, &mut reporter),
+        HelperRequest::List { path, options } => list(&path, &options, &token, &mut reporter),
+        HelperRequest::Extract {
+            path,
+            request,
+            options,
+        } => extract(&path, &request, &options, &token, &mut reporter),
+        HelperRequest::RarStatus => rar_status(),
+        HelperRequest::Create { request } => create(&request, &token, &mut reporter),
     }
     0
 }
 
-fn list(path: &str, token: &CancellationToken, reporter: &mut Reporter) {
+/// Plan the sources and write the spool; the helper never publishes.
+fn create(request: &HelperCreate, token: &CancellationToken, reporter: &mut Reporter) {
+    let mut limits = archive::CreateLimits::default();
+    // The spool budget is shared across creations: this one may only add
+    // what still fits under the data folder's cap.
+    if let Some(base) = Path::new(&request.spool)
+        .parent()
+        .and_then(std::path::Path::parent)
+    {
+        let stored = crate::archive_create_spool::stored_bytes(base);
+        limits.max_output_bytes = limits
+            .max_output_bytes
+            .min(crate::archive_create_spool::MAX_SPOOL_TOTAL.saturating_sub(stored));
+    }
+    let mut sink = |progress: &OpProgress| reporter.progress(progress);
+    let plan = match archive::plan_create(
+        &request.sources,
+        request.include_hidden,
+        &limits,
+        token,
+        &mut sink,
+    ) {
+        Ok(plan) => plan,
+        Err(error) => {
+            send(&HelperMessage::Failed {
+                code: error.code().to_string(),
+            });
+            return;
+        }
+    };
+    let options = archive::CreateOptions {
+        format: request.format,
+        encryption: request.encryption,
+        password: request.password.clone(),
+        encrypt_names: request.encrypt_names,
+        include_hidden: request.include_hidden,
+    };
+    match archive::create_spool(
+        &plan,
+        &options,
+        Path::new(&request.spool),
+        &limits,
+        token,
+        &mut sink,
+    ) {
+        Ok(report) => send(&HelperMessage::SpoolCreated { report }),
+        Err(error) => send(&HelperMessage::Failed {
+            code: error.code().to_string(),
+        }),
+    }
+}
+
+/// Probe the separately installed 7-Zip; the app never learns its path.
+fn rar_status() {
+    let status = match archive::InstalledSevenZip::discover() {
+        Ok(runner) => archive::rar::rar_status(&runner),
+        Err(_) => archive::RarToolStatus::default(),
+    };
+    send(&HelperMessage::RarStatus { status });
+}
+
+fn list(
+    path: &str,
+    options: &archive::ArchiveReadOptions,
+    token: &CancellationToken,
+    reporter: &mut Reporter,
+) {
     let listing = {
         let mut sink = |progress: &OpProgress| reporter.progress(progress);
-        archive::list(Path::new(path), &Limits::default(), token, &mut sink)
+        archive::list_with_options(
+            Path::new(path),
+            &Limits::default(),
+            token,
+            &mut sink,
+            options,
+        )
     };
     match listing {
         Ok(listing) => {
@@ -155,15 +277,17 @@ fn list(path: &str, token: &CancellationToken, reporter: &mut Reporter) {
 fn extract(
     path: &str,
     request: &ExtractRequest,
+    options: &archive::ArchiveReadOptions,
     token: &CancellationToken,
     reporter: &mut Reporter,
 ) {
-    match archive::extract(
+    match archive::extract_with_options(
         Path::new(path),
         request,
         &Limits::default(),
         token,
         reporter,
+        options,
     ) {
         Ok(report) => send(&HelperMessage::Extracted { report }),
         Err(error) => send(&HelperMessage::Failed {
@@ -245,6 +369,7 @@ mod tests {
     fn requests_round_trip() {
         let list = HelperRequest::List {
             path: "C:\\a.zip".to_string(),
+            options: archive::ArchiveReadOptions::default(),
         };
         let json = serde_json::to_string(&list).unwrap();
         assert!(json.contains("\"op\":\"list\""));
@@ -254,6 +379,7 @@ mod tests {
         let extract = HelperRequest::Extract {
             path: "C:\\a.zip".to_string(),
             request: extract_request(),
+            options: archive::ArchiveReadOptions::default(),
         };
         let json = serde_json::to_string(&extract).unwrap();
         assert!(json.contains("\"op\":\"extract\""));

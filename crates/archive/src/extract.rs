@@ -145,6 +145,10 @@ pub fn extract(
             ArchiveFormat::Gz | ArchiveFormat::Xz => {
                 extract_stream(path, format, &plan, &mut extractor, limits)?
             }
+            // These formats always take the owned route above.
+            ArchiveFormat::Bz2 | ArchiveFormat::TarBz2 | ArchiveFormat::Rar => {
+                return Err(ArchiveError::Unsupported)
+            }
         }
     }
     if token.load(Ordering::Relaxed) {
@@ -152,6 +156,31 @@ pub fn extract(
     }
     extractor.progress(&root, true);
     Ok(extractor.finish())
+}
+
+/// Extract with read options (Step 06e). Bzip2, RAR and password-protected
+/// work use the owned safe route; ordinary unencrypted extraction keeps the
+/// old one exactly as it was (KI-079).
+pub fn extract_with_options(
+    path: &Path,
+    request: &ExtractRequest,
+    limits: &Limits,
+    token: &CancellationToken,
+    events: &mut dyn ExtractEvents,
+    options: &crate::read_options::ArchiveReadOptions,
+) -> Result<ExtractReport, ArchiveError> {
+    let format = crate::format::detect_format(path)?;
+    if options.password.is_none() && matches!(format, ArchiveFormat::Zip | ArchiveFormat::SevenZ) {
+        let listing = crate::list::list_with_options(path, limits, token, &mut |_| {}, options)?;
+        if crate::secure_extract::has_selected_encrypted(&listing, request) {
+            return Err(ArchiveError::PasswordRequired);
+        }
+    }
+    if crate::secure_extract::needs_secure_route(format, options) {
+        crate::secure_extract::extract_with_options(path, request, limits, token, events, options)
+    } else {
+        extract(path, request, limits, token, events)
+    }
 }
 
 fn facts_of(path: &Path) -> Result<ArchiveFacts, ArchiveError> {

@@ -342,7 +342,8 @@
     "undoNewerFirst": "Undo the newer actions first (Recent actions shows the order).",
     "extracted": "Extracted {name}",
     "extractedMany": "{count, plural, one {Extracted # archive} other {Extracted # archives}}",
-    "versionRestored": "Restored a version of {name}"
+    "versionRestored": "Restored a version of {name}",
+    "archiveCreated": "Created {name}"
   },
   "commands": {
     "back": "Back",
@@ -425,6 +426,7 @@
     "extractAll": "Extract all",
     "extractHere": "Extract here",
     "extractTo": "Extract to…",
+    "compressTo": "Compress to…",
     "newMarkdown": "Markdown note",
     "newCsv": "CSV table",
     "newDocument": "Document",
@@ -440,7 +442,7 @@
       "not_found": "The archive can't be found. It may have been moved or deleted.",
       "unsupported": "This kind of archive can't be opened here. Try opening it in another app.",
       "corrupt": "This archive is damaged and can't be read.",
-      "password_required": "This item is protected with a password, which isn't supported yet.",
+      "password_required": "This archive needs a password.",
       "too_many_entries": "This archive has more than 200,000 items, too many to open safely.",
       "bomb": "This archive would expand to far more data than it holds. It wasn't extracted, to protect your disk.",
       "no_space": "There isn't enough free space on the drive to extract this.",
@@ -458,7 +460,21 @@
       "unsupported_method": "Skipped: it's compressed in a way the app can't read.",
       "size_mismatch": "Skipped: its size doesn't match what the archive says.",
       "name_taken": "Skipped: an item with this name was already there.",
-      "damaged": "Skipped: this item is damaged."
+      "damaged": "Skipped: this item is damaged.",
+      "bad_password": "The password is incorrect, or the encrypted data is damaged.",
+      "invalid_password": "Enter 1–256 characters without control characters or line breaks.",
+      "password_mismatch": "The passwords do not match.",
+      "create_busy": "Another archive is being created. Wait for it or cancel that job.",
+      "create_too_large": "This archive exceeds the 8 GB creation limit. Select fewer files or use another app.",
+      "too_many_sources": "Select fewer items, or select their parent folder instead.",
+      "source_changed": "Skipped: the source changed while it was being read.",
+      "online_only": "Skipped: open this online-only file first to download it.",
+      "hidden": "Skipped: hidden and system items are off in this view.",
+      "seven_zip_missing": "Install 7-Zip from 7-zip.org to open RAR files here, or open this file in your Windows app.",
+      "seven_zip_unsupported": "This 7-Zip installation could not be used safely. Update it from 7-zip.org or use your Windows app.",
+      "ambiguous_rar": "This RAR listing cannot identify the selected file safely. Nothing was written.",
+      "multi_volume": "Multipart and self-extracting RAR files are not supported here. Use your Windows app.",
+      "output_changed": "The prepared archive could not be verified. No archive was published."
     },
     "rename": {
       "exists": "There's already an item with this name here.",
@@ -641,7 +657,8 @@
     "pastedImageName": "Pasted image {stamp}",
     "pastedTextName": "Pasted text {stamp}",
     "shortcutName": "{name} - Shortcut",
-    "extractedFolderName": "Extracted files"
+    "extractedFolderName": "Extracted files",
+    "newArchiveName": "Archive"
   },
   "jobs": {
     "title": "File operations",
@@ -653,7 +670,8 @@
     "skippedItems": "{count, plural, one {# item was skipped} other {# items were skipped}}",
     "done": "Done",
     "cancelled": "Cancelled",
-    "extracting": "{count, plural, one {Extracting # archive} other {Extracting # archives}}"
+    "extracting": "{count, plural, one {Extracting # archive} other {Extracting # archives}}",
+    "compressing": "{count, plural, one {Creating # archive} other {Creating # archives}}"
   },
   "dialogs": {
     "conflictTitle": "An item with this name is already here",
@@ -832,7 +850,36 @@
     "truncated": "Showing the first {count, number} items. Use the search box to find the others.",
     "searchTruncated": "Showing the first {count, number} matches.",
     "hiddenNote": "{count, plural, one {# item is hidden because its name can't be used safely on Windows.} other {# items are hidden because their names can't be used safely on Windows.}}",
-    "encryptedNote": "{count, plural, one {# item is protected with a password and can't be opened yet.} other {# items are protected with a password and can't be opened yet.}}",
+    "encryptedNote": "{count, plural, one {# item needs a password to open.} other {# items need a password to open.}}",
+    "passwordTitle": "Password for {name}",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "rememberPassword": "Remember until the app closes",
+    "passwordOpen": "Open",
+    "passwordStrength": "Strength estimate",
+    "passwordWeak": "Weak",
+    "passwordFair": "Fair",
+    "passwordStrong": "Strong",
+    "passwordHint": "Use a long, unique passphrase. This estimate is only a guide.",
+    "createTitle": "Create an archive",
+    "create": "Create",
+    "fileName": "File name",
+    "destination": "Save in",
+    "chooseDestination": "Choose folder…",
+    "chooseDestinationTitle": "Choose where to save the archive",
+    "createSelection": "{count, plural, one {# selected item} other {# selected items}}",
+    "createFormat": "Format",
+    "encryption": "Encryption",
+    "encryptionNone": "None",
+    "encryptionAes": "AES-256",
+    "encryptionZipCrypto": "ZipCrypto (compatibility only)",
+    "zipCryptoWarning": "ZipCrypto is weak. Use it only when the receiving app cannot open AES-256 archives.",
+    "encryptNames": "Encrypt file names",
+    "zipNamesVisible": "ZIP file names remain visible, even with a password.",
+    "keepBothNote": "Existing items are kept. A number is added if this name is taken.",
+    "extensionRequired": "The name must end in {extension}.",
     "partialNote": "This archive seems damaged: only part of it could be read.",
     "opening": "Opening {name}…",
     "linkCannotOpen": "Links inside archives can't be opened.",
@@ -847,7 +894,10 @@
       "tar_gz": "TAR archive (gzip)",
       "tar_xz": "TAR archive (xz)",
       "gz": "gzip file",
-      "xz": "xz file"
+      "xz": "xz file",
+      "bz2": "bzip2 file",
+      "tar_bz2": "TAR archive (bzip2)",
+      "rar": "RAR archive"
     }
   },
   "hex": {

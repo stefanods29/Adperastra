@@ -11,6 +11,18 @@ that fixed it.
 
 ## Open
 
+### KI-082 - App-owned spool folders are retained, not reclaimed (Minor)
+- **Found in:** Step 06e T9 implementation, 2026-10-31. **Severity:** Minor (no data loss; a full budget refuses new work instead of guessing ownership).
+- **What:** A helper that is killed leaves its `%LOCALAPPDATA%\Adperastra\archive-create\<request-id>` folder (marker plus incomplete `archive.spool`). The parent only removes spool folders it created and can still verify; it does not reclaim abandoned ones at startup. Until the App storage page exists, those bytes stay and can eventually make new creations fail with the translated "another archive is being created" or no-space message.
+- **Workaround:** close the app and delete only the `archive-create` folder under the data folder; it holds no user files.
+- **Target:** Step 12a (App storage) with a verified ownership record and the creation lock; do not delete paths by guess before that.
+
+### KI-081 - RAR runtime is unverified without a separately installed 7-Zip (Minor, pending acceptance)
+- **Found in:** Step 06e T7 implementation, 2026-10-31. **Severity:** Minor while the executable is absent; becomes Major if RAR support is called verified without it.
+- **What:** The read-only adapter, literal re-selection, stdin password transport and layout refusals are covered by fake-process tests. No 7-Zip is installed on this PC, so hidden-child startup, version/switch behavior, UTF-8 password prompting, exact empty-file identity and multipart refusal have not been exercised against the real program. The guide does not name the UTC listing switch; the parser accepts timestamps only with an explicit ` UTC` suffix and otherwise records 0.
+- **Workaround:** open RAR files in the app Windows uses; they remain readable there.
+- **Target:** owner/coordinator runtime check with a current 7-Zip from 7-zip.org before RAR is described as verified. Unknown or unprovable layouts already fail closed.
+
 ### KI-080 - Hex view stays on its error after a later read recovers (Minor)
 - **Found in:** the owner's earlier review note, confirmed during 06f planning, 2026-10-31.
 - **What:** the existing HexView read effect sets failed on rejection but never resets it when another read starts or succeeds. A later valid range can load bytes while the view still renders the old error.
@@ -209,6 +221,20 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-85 - A RAR file record with no size was treated as an empty file (Major, fixed in Step 06e)
+- **Found in:** the full gate for Step 06e, 2026-10-31.
+- **Fix:** `rar_listing.rs` refuses such a listing as ambiguous. Tested with a fake runner only; no real 7-Zip was available (KI-081).
+
+### KI-84 - A wrong or missing archive password could leave output, or only skip files (Major, fixed in Step 06e)
+- **Found in:** the full gate for Step 06e, 2026-10-31.
+- **What:** With a wrong password, folders were created before the password was tried, and the run could report success with skipped files. With no password, encrypted files were skipped instead of the request being refused (guide D11).
+- **Fix:** a selected encrypted item with no password now returns `password_required` before any write on every route. When the plan's first file is an encrypted ZIP entry, the password is tried before anything is created. When a plain file comes first, it is written and the failure is reported with what was created, as the guide's test requires.
+
+### KI-83 - The new owned-staging folder pin always failed (Blocker, fixed in Step 06e)
+- **Found in:** the full gate for Step 06e, 2026-10-31.
+- **What:** `PinnedDirectory::open` opened the bare `\\?\C:` prefix, which is the volume device and not a folder, so Windows returned "Incorrect function". Creating archives and the new password and bzip2 extraction could not work at all.
+- **Fix:** pinning starts at the volume root (`owned_io/directory.rs`).
 
 ### KI-076 - Added diff text was unreadable in the dark theme (Major)
 - **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.

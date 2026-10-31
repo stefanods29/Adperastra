@@ -11,7 +11,8 @@ import Skeleton from "../../components/Skeleton";
 import Ribbon from "../../ribbon/Ribbon";
 import { useCommandShortcuts } from "../../ribbon/shortcuts";
 import ViewerFrame from "../../ribbon/ViewerFrame";
-import { archiveOpenEntry, archivePickFolder, type ArchiveSummary } from "../../services/archive";
+import { archiveOpenEntry, archivePickFolder, type ArchiveAuth, type ArchiveSummary } from "../../services/archive";
+import { useArchivePasswordPrompt } from "../../archive/useArchivePasswordPrompt";
 import { errorCode, errorText } from "../../services/errors";
 import type { OpProgress } from "../../services/fileops";
 import { formatSize } from "../../services/format";
@@ -40,7 +41,15 @@ type Strip =
 export default function ArchiveView(props: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const { info, active, find, onStatus, onOpenInWindowsApp, onOpenFile, onExtractArchive } = props;
-  const archive = useArchiveSession(info.path);
+  const prompts = useArchivePasswordPrompt();
+  const archive = useArchiveSession(info.path, prompts.ask);
+
+  // A different file or a closed tab cancels every waiting prompt.
+  useEffect(() => {
+    prompts.cancelAll();
+    // Only a changed path cancels; the callback is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [info.path]);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const openEntryRef = useRef<{ cancel: () => Promise<void> } | null>(null);
   const [selection, setSelection] = useState<SelectionState>(EMPTY_SELECTION);
@@ -121,22 +130,15 @@ export default function ArchiveView(props: HandlerViewProps) {
         setStrip({ kind: "notice", text: t("archive.linkCannotOpen") });
         return;
       }
-      if (entry.encrypted) {
-        setStrip({
-          kind: "notice",
-          text: errorText(t, new Error("archive.password_required"), "archive"),
-        });
-        return;
-      }
-      if (!onOpenFile || busy) return;
-      setBusy(true);
-      setStrip({ kind: "opening", name: entry.name, progress: null, visible: false });
-      const reveal = window.setTimeout(() => {
-        setStrip((current) =>
-          current && current.kind === "opening" ? { ...current, visible: true } : current,
-        );
-      }, 150);
-      void (async () => {
+      if (!onOpenFile) return;
+      const attempt = async (auth?: ArchiveAuth) => {
+        setBusy(true);
+        setStrip({ kind: "opening", name: entry.name, progress: null, visible: false });
+        const reveal = window.setTimeout(() => {
+          setStrip((current) =>
+            current && current.kind === "opening" ? { ...current, visible: true } : current,
+          );
+        }, 150);
         try {
           const job = await archiveOpenEntry(
             {
@@ -149,6 +151,7 @@ export default function ArchiveView(props: HandlerViewProps) {
               setStrip((current) =>
                 current && current.kind === "opening" ? { ...current, progress } : current,
               ),
+            auth,
           );
           openEntryRef.current = job;
           const opened = await job.completion;
@@ -161,15 +164,34 @@ export default function ArchiveView(props: HandlerViewProps) {
           }
         } catch (error) {
           openEntryRef.current = null;
-          if (errorCode(error) === "archive.cancelled") setStrip(null);
-          else setStrip({ kind: "notice", text: errorText(t, error, "archive") });
+          if (errorCode(error) === "archive.cancelled") {
+            setStrip(null);
+            return;
+          }
+          throw error;
         } finally {
           window.clearTimeout(reveal);
           setBusy(false);
         }
+      };
+      void (async () => {
+        if (busy) return;
+        try {
+          await attempt();
+        } catch (error) {
+          const code = errorCode(error);
+          if (code === "archive.password_required" || code === "archive.bad_password") {
+            const opened = await prompts.ask(entry.name, code, async (auth) => {
+              await attempt(auth);
+            });
+            if (!opened) setStrip(null);
+            return;
+          }
+          setStrip({ kind: "notice", text: errorText(t, error, "archive") });
+        }
       })();
     },
-    [archive, busy, info.path, onOpenFile, searchedText, shownPage, t],
+    [archive, busy, info.path, onOpenFile, prompts.ask, searchedText, shownPage, t],
   );
 
   const actions: ArchiveActions = useMemo(
@@ -440,6 +462,7 @@ export default function ArchiveView(props: HandlerViewProps) {
           ariaLabel={t("archive.pathLabel")}
         />
       ) : null}
+      {prompts.dialog}
     </ViewerFrame>
   );
 }

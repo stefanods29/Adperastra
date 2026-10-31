@@ -342,7 +342,8 @@
     "undoNewerFirst": "Primero deshaz las acciones más recientes (Acciones recientes muestra el orden).",
     "extracted": "Se extrajo {name}",
     "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}",
-    "versionRestored": "Se restauró una versión de {name}"
+    "versionRestored": "Se restauró una versión de {name}",
+    "archiveCreated": "Se creó {name}"
   },
   "commands": {
     "back": "Atrás",
@@ -425,6 +426,7 @@
     "extractAll": "Extraer todo",
     "extractHere": "Extraer aquí",
     "extractTo": "Extraer en…",
+    "compressTo": "Comprimir en…",
     "newMarkdown": "Nota de Markdown",
     "newCsv": "Tabla CSV",
     "newDocument": "Documento",
@@ -440,7 +442,7 @@
       "not_found": "No se encuentra el archivo comprimido. Puede que se haya movido o eliminado.",
       "unsupported": "Este tipo de archivo comprimido no se puede abrir aquí. Prueba a abrirlo en otra aplicación.",
       "corrupt": "Este archivo comprimido está dañado y no se puede leer.",
-      "password_required": "Este elemento está protegido con contraseña, algo que todavía no es compatible.",
+      "password_required": "Este archivo comprimido necesita una contraseña.",
       "too_many_entries": "Este archivo comprimido tiene más de 200 000 elementos, demasiados para abrirlo de forma segura.",
       "bomb": "Este archivo comprimido ocuparía muchísimo más espacio que su tamaño. No se extrajo, para proteger tu disco.",
       "no_space": "No hay suficiente espacio libre en la unidad para extraer esto.",
@@ -458,7 +460,21 @@
       "unsupported_method": "Omitido: está comprimido de una forma que la aplicación no puede leer.",
       "size_mismatch": "Omitido: su tamaño no coincide con lo que indica el archivo comprimido.",
       "name_taken": "Omitido: ya había un elemento con este nombre.",
-      "damaged": "Omitido: este elemento está dañado."
+      "damaged": "Omitido: este elemento está dañado.",
+      "bad_password": "La contraseña es incorrecta o los datos cifrados están dañados.",
+      "invalid_password": "Escribe de 1 a 256 caracteres, sin caracteres de control ni saltos de línea.",
+      "password_mismatch": "Las contraseñas no coinciden.",
+      "create_busy": "Ya se está creando otro archivo comprimido. Espera o cancela esa tarea.",
+      "create_too_large": "Este archivo supera el límite de creación de 8 GB. Selecciona menos archivos o usa otra aplicación.",
+      "too_many_sources": "Selecciona menos elementos o selecciona su carpeta principal.",
+      "source_changed": "Omitido: el origen cambió mientras se leía.",
+      "online_only": "Omitido: abre primero este archivo solo en línea para descargarlo.",
+      "hidden": "Omitido: los elementos ocultos y del sistema no se muestran en esta vista.",
+      "seven_zip_missing": "Instala 7-Zip desde 7-zip.org para abrir archivos RAR aquí o abre este archivo en tu aplicación de Windows.",
+      "seven_zip_unsupported": "No se pudo usar esta instalación de 7-Zip de forma segura. Actualízala desde 7-zip.org o usa tu aplicación de Windows.",
+      "ambiguous_rar": "Esta lista RAR no permite identificar el archivo de forma segura. No se escribió nada.",
+      "multi_volume": "Los archivos RAR divididos en partes y los autoextraíbles no se admiten aquí. Usa tu aplicación de Windows.",
+      "output_changed": "No se pudo verificar el archivo preparado. No se publicó ningún archivo comprimido."
     },
     "rename": {
       "exists": "Ya hay un elemento con este nombre aquí.",
@@ -641,7 +657,8 @@
     "pastedImageName": "Imagen pegada {stamp}",
     "pastedTextName": "Texto pegado {stamp}",
     "shortcutName": "{name} - Acceso directo",
-    "extractedFolderName": "Archivos extraídos"
+    "extractedFolderName": "Archivos extraídos",
+    "newArchiveName": "Archivo comprimido"
   },
   "jobs": {
     "title": "Operaciones de archivo",
@@ -653,7 +670,8 @@
     "skippedItems": "{count, plural, one {Se omitió # elemento} other {Se omitieron # elementos}}",
     "done": "Listo",
     "cancelled": "Cancelado",
-    "extracting": "{count, plural, one {Extrayendo # archivo comprimido} other {Extrayendo # archivos comprimidos}}"
+    "extracting": "{count, plural, one {Extrayendo # archivo comprimido} other {Extrayendo # archivos comprimidos}}",
+    "compressing": "{count, plural, one {Creando # archivo comprimido} other {Creando # archivos comprimidos}}"
   },
   "dialogs": {
     "conflictTitle": "Ya hay un elemento con este nombre aquí",
@@ -832,7 +850,36 @@
     "truncated": "Se muestran los primeros {count, number} elementos. Usa el cuadro de búsqueda para encontrar los demás.",
     "searchTruncated": "Se muestran las primeras {count, number} coincidencias.",
     "hiddenNote": "{count, plural, one {# elemento está oculto porque su nombre no se puede usar de forma segura en Windows.} other {# elementos están ocultos porque sus nombres no se pueden usar de forma segura en Windows.}}",
-    "encryptedNote": "{count, plural, one {# elemento está protegido con contraseña y todavía no se puede abrir.} other {# elementos están protegidos con contraseña y todavía no se pueden abrir.}}",
+    "encryptedNote": "{count, plural, one {# elemento necesita una contraseña para abrirse.} other {# elementos necesitan una contraseña para abrirse.}}",
+    "passwordTitle": "Contraseña de {name}",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "rememberPassword": "Recordar hasta que se cierre la aplicación",
+    "passwordOpen": "Abrir",
+    "passwordStrength": "Estimación de seguridad",
+    "passwordWeak": "Débil",
+    "passwordFair": "Media",
+    "passwordStrong": "Alta",
+    "passwordHint": "Usa una frase larga y única. Esta estimación es solo una guía.",
+    "createTitle": "Crear un archivo comprimido",
+    "create": "Crear",
+    "fileName": "Nombre del archivo",
+    "destination": "Guardar en",
+    "chooseDestination": "Elegir carpeta…",
+    "chooseDestinationTitle": "Elegir dónde guardar el archivo comprimido",
+    "createSelection": "{count, plural, one {# elemento seleccionado} other {# elementos seleccionados}}",
+    "createFormat": "Formato",
+    "encryption": "Cifrado",
+    "encryptionNone": "Ninguno",
+    "encryptionAes": "AES-256",
+    "encryptionZipCrypto": "ZipCrypto (solo por compatibilidad)",
+    "zipCryptoWarning": "ZipCrypto es débil. Úsalo solo si la aplicación de destino no puede abrir archivos con AES-256.",
+    "encryptNames": "Cifrar los nombres de archivo",
+    "zipNamesVisible": "Los nombres de los archivos ZIP siguen visibles, incluso con contraseña.",
+    "keepBothNote": "Se conservan los elementos existentes. Se agrega un número si el nombre ya existe.",
+    "extensionRequired": "El nombre debe terminar en {extension}.",
     "partialNote": "Este archivo comprimido parece dañado: solo se pudo leer una parte.",
     "opening": "Abriendo {name}…",
     "linkCannotOpen": "Los vínculos dentro de los archivos comprimidos no se pueden abrir.",
@@ -847,7 +894,10 @@
       "tar_gz": "Archivo TAR (gzip)",
       "tar_xz": "Archivo TAR (xz)",
       "gz": "Archivo gzip",
-      "xz": "Archivo xz"
+      "xz": "Archivo xz",
+      "bz2": "Archivo bzip2",
+      "tar_bz2": "Archivo TAR (bzip2)",
+      "rar": "Archivo RAR"
     }
   },
   "hex": {

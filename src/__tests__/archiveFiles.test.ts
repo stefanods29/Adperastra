@@ -12,10 +12,29 @@ describe("archive names", () => {
       "C:\\a\\x.tgz",
       "C:\\a\\x.7z",
       "\\\\?\\C:\\a\\b.xz",
+      "C:\\a\\x.bz2",
+      "C:\\a\\x.tbz",
+      "C:\\a\\x.tbz2",
+      "C:\\a\\x.tar.bz2",
+      "C:\\a\\x.rar",
     ]) {
       expect(isArchivePath(path), path).toBe(true);
     }
-    for (const path of ["C:\\a\\x.rar", "C:\\a\\x.bz2", "C:\\a\\x.docx", "C:\\a\\zip"]) {
+    for (const path of ["C:\\a\\x.lz4", "C:\\a\\x.iso", "C:\\a\\x.txt", "C:\\a\\zip"]) {
+      expect(isArchivePath(path), path).toBe(false);
+    }
+  });
+
+  it("new archive extensions preserve office handlers", () => {
+    // Office containers are a zip by content, but their own viewers claim
+    // their names; the archive handler never steals them.
+    for (const path of ["C:\\a\\report.docx", "C:\\a\\sheet.xlsx", "C:\\a\\deck.pptx"]) {
+      expect(isArchivePath(path), path).toBe(false);
+    }
+  });
+
+  it("unknown formats still use Windows", () => {
+    for (const path of ["C:\\a\\photo.cr3", "C:\\a\\data.sqlite", "C:\\a\\setup.exe"]) {
       expect(isArchivePath(path), path).toBe(false);
     }
   });
@@ -27,12 +46,20 @@ describe("archive names", () => {
       ["Photos.TAR.XZ", "Photos"],
       ["notes.txt.gz", "notes.txt"],
       ["backup.tgz", "backup"],
+      ["backup.tar.bz2", "backup"],
+      ["backup.tbz2", "backup"],
+      ["backup.tbz", "backup"],
       [".zip", ""],
       ["archive", "archive"],
     ];
     for (const [name, expected] of cases) {
       expect(archiveBaseName(name), name).toBe(expected);
     }
+  });
+
+  it("compound bzip2 name loses the whole suffix", () => {
+    expect(archiveBaseName("photos.tar.bz2")).toBe("photos");
+    expect(extractedFolderName("photos.tar.bz2", "Fallback")).toBe("photos");
   });
 
   it("falls back when the name has nothing left", () => {

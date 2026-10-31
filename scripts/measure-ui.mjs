@@ -30,6 +30,17 @@ function writeTextSamples(folder) {
   );
 }
 
+/** Step 06e sample: one MiB that does not compress away, for creation timing. */
+function writeArchiveSamples(folder) {
+  const bytes = Buffer.alloc(1024 * 1024);
+  let state = 0x12345678;
+  for (let index = 0; index < bytes.length; index += 1) {
+    state = (Math.imul(state, 1103515245) + 12345) >>> 0;
+    bytes[index] = (state >>> 16) & 0xff;
+  }
+  writeFileSync(join(folder, "archive-source.bin"), bytes);
+}
+
 /** Step 04c samples: a 10 s tone as WAV, and a Markdown file marked as
  * downloaded from the internet (its Zone.Identifier stream). */
 function writeMediaSamples(folder) {
@@ -239,6 +250,7 @@ async function shot(name) {
 writeGradientPng(join(demo, "photo-1920.png"), 1920, 1080);
 writeTextSamples(demo);
 writeMediaSamples(demo);
+writeArchiveSamples(demo);
 await openFolder(demo);
 const results = [];
 
@@ -744,6 +756,132 @@ if (mode === "full") {
   } catch (error) {
     console.log(`step 06d measurements failed: ${error.message ?? error}`);
   }
+
+  // Step 06e: the Compress to window, its encryption choice, opening an
+  // encrypted small ZIP, and creating a small ZIP and an encrypted 7z.
+  if (stepId === "06e") {
+    try {
+      await openFolder(demo);
+      const spanish = String(lang).startsWith("es");
+      const compressLabel = spanish ? "Comprimir en…" : "Compress to…";
+      const createLabel = spanish ? "Crear" : "Create";
+      const openLabel = spanish ? "Abrir" : "Open";
+      const closeTabExpr = `window.__m.key(window, { key: "w", ctrlKey: true }); true`;
+      const dialog = `document.querySelector(".adp-archive-create-dialog") != null`;
+      const openCompress = `(() => {
+        const row = [...window.__m.rows()].find((r) => r.textContent.includes("archive-source.bin"));
+        window.__m.context(row);
+        const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(compressLabel)});
+        item?.click();
+        return true;
+      })()`;
+      const closeDialog = `document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); true`;
+      const setSelect = (selector, value) => `(() => {
+        const select = document.querySelector(${JSON.stringify(selector)});
+        select.value = ${JSON.stringify(value)};
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      })()`;
+      const setName = (value) => `(() => {
+        const input = document.querySelector("#adp-create-name");
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(value)});
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      })()`;
+      const fillPasswords = (secret) => `(() => {
+        const fields = [...document.querySelectorAll(".adp-archive-password-fields input[type=password]")];
+        for (const field of fields) {
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(field, ${JSON.stringify(secret)});
+          field.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        return true;
+      })()`;
+      const clickCreate = `(() => {
+        const button = [...document.querySelectorAll(".adp-archive-create-dialog button")].find((entry) => entry.textContent.trim() === ${JSON.stringify(createLabel)});
+        button?.click();
+        return true;
+      })()`;
+
+      const dialogValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        dialogValues.push(await page(`window.__m.timeUntil(() => { ${openCompress} }, () => (${dialog}))`));
+        await page(closeDialog);
+        await sleep(120);
+      }
+      const openDialog = { name: "open Compress to dialog", median_ms: Math.round(median(dialogValues) * 10) / 10, max_ms: Math.round(Math.max(...dialogValues) * 10) / 10, runs: dialogValues.length };
+      console.log(`${openDialog.name}: median ${openDialog.median_ms} ms (max ${openDialog.max_ms})`);
+      results.push(openDialog);
+
+      const encryptionValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        await page(openCompress);
+        await page(`window.__m.waitFor(() => (${dialog}))`);
+        encryptionValues.push(await page(`window.__m.timeUntil(() => { ${setSelect("#adp-create-encryption", "aes256")} }, () => document.querySelector("#adp-create-encryption")?.value === "aes256")`));
+        await page(closeDialog);
+        await sleep(100);
+      }
+      const switchEncryption = { name: "switch archive encryption option", median_ms: Math.round(median(encryptionValues) * 10) / 10, max_ms: Math.round(Math.max(...encryptionValues) * 10) / 10, runs: encryptionValues.length };
+      console.log(`${switchEncryption.name}: median ${switchEncryption.median_ms} ms (max ${switchEncryption.max_ms})`);
+      results.push(switchEncryption);
+
+      const rowExists = (name) => `[...window.__m.rows()].some((r) => r.textContent.includes(${JSON.stringify(name)}))`;
+      const createArchive = async (name, format, encryption, secret) => {
+        await page(openCompress);
+        await page(`window.__m.waitFor(() => (${dialog}))`);
+        await page(setSelect("#adp-create-format", format));
+        await page(setSelect("#adp-create-encryption", encryption));
+        if (secret) await page(fillPasswords(secret));
+        await page(setName(name));
+        return page(`window.__m.timeUntil(() => { ${clickCreate} }, () => (${rowExists(name)}))`);
+      };
+
+      const zipValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        zipValues.push(await createArchive(`measure-${run}.zip`, "zip", "none", ""));
+        await sleep(100);
+      }
+      const createZip = { name: "create small ZIP (one MiB)", median_ms: Math.round(median(zipValues) * 10) / 10, max_ms: Math.round(Math.max(...zipValues) * 10) / 10, runs: zipValues.length };
+      console.log(`${createZip.name}: median ${createZip.median_ms} ms (max ${createZip.max_ms})`);
+      results.push(createZip);
+
+      const sevenValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        sevenValues.push(await createArchive(`measure-${run}.7z`, "seven_z", "aes256", "synthetic measurement passphrase"));
+        await sleep(100);
+      }
+      const createSeven = { name: "create encrypted small 7z (one MiB)", median_ms: Math.round(median(sevenValues) * 10) / 10, max_ms: Math.round(Math.max(...sevenValues) * 10) / 10, runs: sevenValues.length };
+      console.log(`${createSeven.name}: median ${createSeven.median_ms} ms (max ${createSeven.max_ms})`);
+      results.push(createSeven);
+
+      // Opening an encrypted ZIP starts with its password prompt; the
+      // measurement begins when the password is submitted.
+      await createArchive("measure-encrypted.zip", "zip", "aes256", "synthetic measurement passphrase");
+      const openValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        await page(`[...window.__m.rows()].find((r) => r.textContent.includes("measure-encrypted.zip")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-archive-password-dialog"))`);
+        openValues.push(
+          await page(`window.__m.timeUntil(
+            () => {
+              const field = document.querySelector(".adp-archive-password-dialog input[type=password]");
+              Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(field, "synthetic measurement passphrase");
+              field.dispatchEvent(new Event("input", { bubbles: true }));
+              const button = [...document.querySelectorAll(".adp-archive-password-dialog button")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openLabel)});
+              button?.click();
+            },
+            () => document.querySelector(".adp-filetab:not([hidden]) .adp-archive [role=option]") != null)`),
+        );
+        await page(closeTabExpr);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+        await sleep(150);
+      }
+      const encryptedOpen = { name: "open encrypted small ZIP", median_ms: Math.round(median(openValues) * 10) / 10, max_ms: Math.round(Math.max(...openValues) * 10) / 10, runs: openValues.length };
+      console.log(`${encryptedOpen.name}: median ${encryptedOpen.median_ms} ms (max ${encryptedOpen.max_ms})`);
+      results.push(encryptedOpen);
+    } catch (error) {
+      console.log(`step 06e measurements failed: ${error.message ?? error}`);
+    }
+  }
 }
 
 if (outFile && results.length > 0) {
@@ -1125,6 +1263,54 @@ if (shotDir) {
   await shot("48-extract-menu");
   await step(`for (const menu of [...document.querySelectorAll(".adp-ctxmenu")].reverse()) menu.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
   await page(`window.__m.closeMenus(); true`);
+
+  // Step 06e: Compress to, a compression job, and the password prompt. The
+  // synthetic password stays masked in every screenshot.
+  await openFolder(demo);
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("archive-source.bin")))`);
+  const compressLabel = String(lang).startsWith("es") ? "Comprimir en…" : "Compress to…";
+  const createLabel = String(lang).startsWith("es") ? "Crear" : "Create";
+  const openLabel = String(lang).startsWith("es") ? "Abrir" : "Open";
+  await step(`(() => {
+    const row = [...window.__m.rows()].find((r) => r.textContent.includes("archive-source.bin"));
+    window.__m.context(row);
+    const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(compressLabel)});
+    item?.click();
+    return true;
+  })()`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-archive-create-dialog"))`);
+  await step(`(() => { const select = document.querySelector("#adp-create-encryption"); select.value = "aes256"; select.dispatchEvent(new Event("change", { bubbles: true })); return true; })()`);
+  await sleep(200);
+  await shot("49-compress-dialog");
+  await step(`(() => {
+    const fields = [...document.querySelectorAll(".adp-archive-password-fields input[type=password]")];
+    for (const field of fields) {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(field, "synthetic screenshot passphrase");
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    const name = document.querySelector("#adp-create-name");
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(name, "measure-shots.zip");
+    name.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  })()`);
+  await step(`(() => { const button = [...document.querySelectorAll(".adp-archive-create-dialog button")].find((entry) => entry.textContent.trim() === ${JSON.stringify(createLabel)}); button?.click(); return true; })()`);
+  await sleep(120);
+  await shot("51-compression-job");
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("measure-shots.zip")), 15000)`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("measure-shots.zip")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-archive-password-dialog"), 15000)`);
+  await shot("50-password-open");
+  await step(`(() => {
+    const field = document.querySelector(".adp-archive-password-dialog input[type=password]");
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(field, "synthetic screenshot passphrase");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    const button = [...document.querySelectorAll(".adp-archive-password-dialog button")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openLabel)});
+    button?.click();
+    return true;
+  })()`);
+  await sleep(600);
+  await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
 }
 
 cdp.close();

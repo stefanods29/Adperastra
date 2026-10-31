@@ -238,6 +238,7 @@ describe("the archive tab", () => {
         expected_modified: 50,
       },
       expect.any(Function),
+      undefined,
     );
     expect(props.onOpenFile).toHaveBeenCalledWith("C:\\Data\\archive-open\\r1\\README.txt");
   });
@@ -310,7 +311,7 @@ describe("the archive tab", () => {
   it("explains hidden and protected items", async () => {
     await render({}, { ...summary, hidden_entries: 2, encrypted_entries: 1 });
     expect(container!.textContent).toContain("2 items are hidden");
-    expect(container!.textContent).toContain("1 item is protected");
+    expect(container!.textContent).toContain("1 item needs a password to open.");
   });
 
   it("closes the session when the tab closes", async () => {

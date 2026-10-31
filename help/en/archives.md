@@ -1,6 +1,6 @@
 # Opening and extracting archives
 
-Archives are files that hold many files and folders in one, usually compressed: ZIP, 7z, TAR (also .tar.gz and .tar.xz), gzip (.gz) and xz (.xz) files. Adperastra opens them like folders and extracts them safely.
+Archives are files that hold many files and folders in one, usually compressed: ZIP, 7z, TAR (also .tar.gz, .tar.xz and .tar.bz2), gzip (.gz), xz (.xz), bzip2 (.bz2, .tbz, .tbz2) and RAR files. Adperastra opens them like folders and extracts them safely.
 
 ## Look inside an archive
 
@@ -26,8 +26,9 @@ Extracting runs in the background: the File operations panel shows the progress 
 - Extracting never replaces anything. If a file or folder with the same name is already there, the new one gets a number, like "report (1).txt".
 - Items whose names could write outside the folder, or that Windows doesn't allow, are hidden and never extracted. Links inside archives are shown but never extracted.
 - An archive that would expand to far more data than it holds (a "zip bomb"), or that doesn't fit on the drive, is refused before anything is written.
-- Archives protected with a password, RAR files and bzip2 files can't be opened yet. RAR files open in the app Windows uses for them.
+- Password-protected ZIP and 7z files ask for their password and can remember it until the app closes. See "Archive passwords".
+- RAR uses a 7-Zip you install yourself from 7-zip.org; it is not included. Multipart, self-extracting, linked or ambiguous RAR files are refused, and RAR creation is not offered.
 - If the archive came from the internet, the files you extract or open keep that mark, so they open in protected view.
 - Archives are read in a separate, limited process, so a damaged archive can't freeze Adperastra.
 
-See also: "Opening files in tabs", "Copying and moving files" and "Undo".
+See also: "Creating archives", "Archive passwords", "Opening files in tabs", "Copying and moving files" and "Undo".

@@ -1,0 +1,103 @@
+/* Archive creation and password dialogs (Step 06e T10, T11). */
+
+.adp-archive-password-dialog {
+  width: min(480px, 92vw);
+  max-width: min(480px, 92vw);
+}
+
+.adp-archive-create-dialog {
+  width: min(640px, 92vw);
+  max-width: min(640px, 92vw);
+}
+
+.adp-dialog-scroll {
+  max-height: calc(80vh - 140px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.adp-archive-password-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.adp-field-label {
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adp-field-row .adp-input {
+  flex: 1;
+}
+
+.adp-field-hint {
+  margin: 0;
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-field-error {
+  margin: 0;
+  font-size: var(--adp-font-small);
+  color: var(--adp-accent-pdf);
+}
+
+.adp-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-password-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adp-password-meter {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--adp-color-border-panel);
+  overflow: hidden;
+}
+
+.adp-password-meter-fill {
+  display: block;
+  height: 100%;
+  width: 33%;
+  background: var(--adp-accent-explorer);
+}
+
+.adp-password-meter-fair {
+  width: 66%;
+}
+
+.adp-password-meter-strong {
+  width: 100%;
+}
+
+.adp-password-strength-label {
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--adp-color-border-panel);
+}

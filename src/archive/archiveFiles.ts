@@ -1,12 +1,26 @@
 import { parentPathOf } from "../services/explorer";
 import type { ArchiveExtractRequest } from "../services/archive";
 
-/** Archive files (Step 06d): which names are archives, what a new folder is
- * called, and the extraction request the Explorer sends. Pure helpers. */
+/** Archive files (Step 06d, Step 06e): which names are archives, what a new
+ * folder is called, and the extraction request the Explorer sends. Pure
+ * helpers. */
 
-/** The extensions the archive handler opens (lower case, no dot). RAR and
- * bzip2 arrive in Step 06e. */
-export const ARCHIVE_EXTENSIONS = ["zip", "7z", "tar", "gz", "tgz", "xz", "txz"] as const;
+/** The extensions the archive handler opens (lower case, no dot). Office
+ * containers (.docx, .xlsx, .pptx) belong to their own viewers: they are a
+ * zip by content, but their extension is claimed elsewhere. */
+export const ARCHIVE_EXTENSIONS = [
+  "zip",
+  "7z",
+  "tar",
+  "gz",
+  "tgz",
+  "xz",
+  "txz",
+  "bz2",
+  "tbz",
+  "tbz2",
+  "rar",
+] as const;
 
 /** Where "Extract" puts the files. */
 export type ExtractMode = "newFolder" | "here" | "to";
@@ -24,15 +38,22 @@ export function isArchivePath(path: string): boolean {
   return (ARCHIVE_EXTENSIONS as readonly string[]).includes(extension);
 }
 
-/** The archive's own name without its archive extension: `photos.tar.gz` and
- * `photos.zip` both give `photos`. */
-export function archiveBaseName(name: string): string {
+/** The suffix that belongs to the archive format: the whole `.tar.bz2` is
+ * one suffix, so `photos.tar.bz2` gives `photos`, not `photos.tar`. */
+function archiveSuffix(name: string): string {
   const lower = name.toLowerCase();
-  for (const suffix of [".tar.gz", ".tar.xz"]) {
-    if (lower.endsWith(suffix)) return name.slice(0, name.length - suffix.length);
+  for (const suffix of [".tar.bz2", ".tar.gz", ".tar.xz"]) {
+    if (lower.endsWith(suffix)) return name.slice(name.length - suffix.length);
   }
   const dot = name.lastIndexOf(".");
-  return dot === -1 ? name : name.slice(0, dot);
+  return dot === -1 ? "" : name.slice(dot);
+}
+
+/** The archive's own name without its archive extension: `photos.tar.bz2`,
+ * `photos.tbz2` and `photos.zip` all give `photos`. */
+export function archiveBaseName(name: string): string {
+  const suffix = archiveSuffix(name);
+  return suffix ? name.slice(0, name.length - suffix.length) : name;
 }
 
 /** The name of the folder a new extraction makes; the translated default

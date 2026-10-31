@@ -22,6 +22,7 @@ version-store = { path = "../crates/version-store" }
 thiserror = "2"
 infer = "0.22"
 uuid = { version = "1", features = ["v4"] }
+blake3 = "1.8"
 windows-collections = "0.2"
 windows-core = "=0.61.2"
 windows = { version = "0.61", features = [

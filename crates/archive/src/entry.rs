@@ -14,6 +14,12 @@ pub enum ArchiveFormat {
     TarXz,
     Gz,
     Xz,
+    /// A single bzip2 stream (Step 06e).
+    Bz2,
+    /// A tar archive inside bzip2 (Step 06e).
+    TarBz2,
+    /// A RAR archive, read only through a separately installed 7-Zip.
+    Rar,
 }
 
 /// What an entry is. Links are listed but never extracted (Step 06d D7).

@@ -43,6 +43,20 @@ pub fn detect_format(path: &Path) -> Result<ArchiveFormat, ArchiveError> {
             ArchiveFormat::Xz
         });
     }
+    // bzip2: "BZh" and the block size digit 1 to 9.
+    if head.len() >= 4 && &head[..3] == b"BZh" && (b'1'..=b'9').contains(&head[3]) {
+        return Ok(if compressed_start_is_tar(path, Inner::Bzip2) {
+            ArchiveFormat::TarBz2
+        } else {
+            ArchiveFormat::Bz2
+        });
+    }
+    // RAR 4 and RAR 5 signatures, only at offset zero (never in a prefix).
+    if head.starts_with(&[0x52, 0x61, 0x72, 0x21, 0x1A, 0x07, 0x00])
+        || head.starts_with(&[0x52, 0x61, 0x72, 0x21, 0x1A, 0x07, 0x01, 0x00])
+    {
+        return Ok(ArchiveFormat::Rar);
+    }
     if has_tar_magic(head) {
         return Ok(ArchiveFormat::Tar);
     }
@@ -72,6 +86,7 @@ fn has_tar_magic(bytes: &[u8]) -> bool {
 enum Inner {
     Gzip,
     Xz,
+    Bzip2,
 }
 
 /// A gzip or xz stream that starts with a tar header is a tar archive.
@@ -86,6 +101,7 @@ fn compressed_start_is_tar(path: &Path, inner: Inner) -> bool {
             true,
             Limits::default().xz_memory_kb,
         )),
+        Inner::Bzip2 => Box::new(crate::read_bzip2::decoder(file)),
     };
     let mut head = [0u8; HEAD_BYTES];
     let mut taken = 0;

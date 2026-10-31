@@ -58,18 +58,41 @@ pub fn list(
     token: &CancellationToken,
     progress: &mut dyn FnMut(&OpProgress),
 ) -> Result<Listing, ArchiveError> {
+    list_with_options(
+        path,
+        limits,
+        token,
+        progress,
+        &crate::read_options::ArchiveReadOptions::default(),
+    )
+}
+
+/// The same listing with read options (Step 06e). Options that do not
+/// change a listing are accepted and ignored here.
+pub fn list_with_options(
+    path: &Path,
+    limits: &Limits,
+    token: &CancellationToken,
+    progress: &mut dyn FnMut(&OpProgress),
+    options: &crate::read_options::ArchiveReadOptions,
+) -> Result<Listing, ArchiveError> {
     let format = crate::format::detect_format(path)?;
     let size = std::fs::metadata(path)?.len();
     let mut meter = ProgressMeter::new(size, progress);
     let (listing, done) = match format {
         ArchiveFormat::Zip => (list_zip(path, limits, token)?, size),
-        ArchiveFormat::SevenZ => (list_7z(path, limits, token)?, size),
-        ArchiveFormat::Tar | ArchiveFormat::TarGz | ArchiveFormat::TarXz => {
+        ArchiveFormat::SevenZ => (
+            list_7z(path, limits, token, options.password.as_deref())?,
+            size,
+        ),
+        ArchiveFormat::Tar
+        | ArchiveFormat::TarGz
+        | ArchiveFormat::TarXz
+        | ArchiveFormat::TarBz2 => {
             let counter = Arc::new(AtomicU64::new(0));
-            let file = File::open(path)?;
             let listing = match format {
                 ArchiveFormat::Tar => list_tar(
-                    file,
+                    File::open(path)?,
                     format,
                     true,
                     limits,
@@ -78,7 +101,7 @@ pub fn list(
                     &mut meter,
                 )?,
                 ArchiveFormat::TarGz => list_tar(
-                    flate2::read::MultiGzDecoder::new(BufReader::new(file)),
+                    flate2::read::MultiGzDecoder::new(BufReader::new(File::open(path)?)),
                     format,
                     false,
                     limits,
@@ -86,9 +109,16 @@ pub fn list(
                     Arc::clone(&counter),
                     &mut meter,
                 )?,
+                ArchiveFormat::TarBz2 => crate::read_bzip2::list_tar_bz2(
+                    path,
+                    limits,
+                    token,
+                    Arc::clone(&counter),
+                    &mut meter,
+                )?,
                 _ => list_tar(
                     lzma_rust2::XzReader::new_mem_limit(
-                        BufReader::new(file),
+                        BufReader::new(File::open(path)?),
                         true,
                         limits.xz_memory_kb,
                     ),
@@ -102,7 +132,13 @@ pub fn list(
             };
             (listing, counter.load(Ordering::Relaxed))
         }
-        ArchiveFormat::Gz | ArchiveFormat::Xz => (list_stream(path, format, limits, token)?, size),
+        ArchiveFormat::Gz | ArchiveFormat::Xz | ArchiveFormat::Bz2 => {
+            (list_stream(path, format, limits, token)?, size)
+        }
+        ArchiveFormat::Rar => {
+            let runner = crate::rar::runner(options)?;
+            return crate::rar::list_rar(path, limits, token, options, &runner);
+        }
     };
     meter.force(done);
     Ok(listing)
