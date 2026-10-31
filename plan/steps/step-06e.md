@@ -514,3 +514,30 @@ Use a newly generated retained disposable folder, never the owner's real documen
 - Program inventory found no 7-Zip in standard installed locations, PATH or the normal registry records. No program was installed and no actual password-pipe/RAR trial was run. The real-tool acceptance boundary above is mandatory.
 - Existing large files are not refactoring targets: `archive.rs`, `extract.rs`, `ArchiveView.tsx` already exceed the newer size guideline. New logic goes in the named modules/hooks; integration adds only delegation. The existing writer remains KI-079, not silently “fixed” by adding a separate safe route.
 - Tests at default limits must not allocate 8 GiB/1 TiB fixtures. Inject small limits and synthetic streams; the existing development PC has limited remaining disk space while two workers are active.
+
+## Implementation corrections (2026-10-31)
+
+Checked against the installed pinned sources while building; these do not
+change any decision, only the names the code must use.
+
+- ZipCrypto's public trait is `zip::unstable::write::FileOptionsExt`.
+  `zip::write` only has a private inherent method. `SimpleFileOptions` is
+  `FileOptions<'static, 'static, ()>`; an encrypted entry uses
+  `FileOptions<'a, 'static, ()>` so the options borrow the exact password
+  for the `start_file` call.
+- 7z AES options are at `sevenz_rust2::encoder_options::AesEncoderOptions`;
+  `NtTime::new` and the public `ArchiveEntry.last_modified_date` field carry
+  timestamps.
+- The app binary did not depend on `blake3` directly; it is added with its
+  own `deps(app)` commit (already an approved workspace library).
+  `fs-service` uses the existing `uuid` 1 crate for random staging names.
+- Two additive helpers were needed: `OwnedOutput::keep` (a verified helper
+  spool must outlive the helper) and `plan_create_with_exclusion` (D8's
+  "exclude the chosen final archive/spool if it would be inside a selected
+  tree").
+- The guide names no UTC listing switch for 7-Zip. The parser accepts a
+  timestamp only when it carries an explicit ` UTC` suffix and records 0
+  otherwise; the real-tool acceptance check stays mandatory (KI-081).
+- Abandoned app-owned spool folders are retained, not reclaimed: T9.4
+  allows that fallback and requires `create_busy`/space instead of guessing
+  ownership (KI-082).
