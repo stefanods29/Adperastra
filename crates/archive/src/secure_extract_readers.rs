@@ -82,8 +82,56 @@ impl<'a> SecureWriter<'a> {
         self.report.cancelled
     }
 
+    pub(crate) fn stop_requested(&self) -> bool {
+        self.token.load(Ordering::Relaxed)
+    }
+
+    pub(crate) fn token(&self) -> &CancellationToken {
+        self.token
+    }
+
+    pub(crate) fn has_created(&self) -> bool {
+        !self.report.created.is_empty()
+    }
+
+    pub(crate) fn set_error(&mut self, code: &str) {
+        self.report.error = Some(code.to_string());
+    }
+
     pub(crate) fn cancel(&mut self) {
         self.report.cancelled = true;
+    }
+
+    /// A missing or wrong password. Before any output exists this is the
+    /// whole result (the UI asks and may try again); afterwards the exact
+    /// created list is kept and no work is repeated automatically.
+    pub(crate) fn fail_password(
+        &mut self,
+        planned: &PlannedEntry,
+        missing: bool,
+    ) -> Result<(), ArchiveError> {
+        let code = if missing {
+            "archive.password_required"
+        } else {
+            "archive.bad_password"
+        };
+        if !self.has_created() {
+            return Err(if missing {
+                ArchiveError::PasswordRequired
+            } else {
+                ArchiveError::BadPassword
+            });
+        }
+        self.set_error(code);
+        self.skip(
+            planned.inner.clone(),
+            if missing {
+                "password_required"
+            } else {
+                "bad_password"
+            },
+        );
+        Ok(())
     }
 
     pub(crate) fn note_created(&mut self, path: &Path) {
@@ -131,6 +179,25 @@ impl<'a> SecureWriter<'a> {
         planned: &PlannedEntry,
         reader: &mut dyn Read,
     ) -> Result<(), ArchiveError> {
+        self.write_file_mode(planned, reader, false)
+    }
+
+    /// The same for an entry whose data is encrypted: a read or size
+    /// failure is a password failure, never "damaged unencrypted data".
+    pub(crate) fn write_file_encrypted(
+        &mut self,
+        planned: &PlannedEntry,
+        reader: &mut dyn Read,
+    ) -> Result<(), ArchiveError> {
+        self.write_file_mode(planned, reader, true)
+    }
+
+    fn write_file_mode(
+        &mut self,
+        planned: &PlannedEntry,
+        reader: &mut dyn Read,
+        encrypted: bool,
+    ) -> Result<(), ArchiveError> {
         if self.token.load(Ordering::Relaxed) {
             self.cancel();
             return Err(ArchiveError::Cancelled);
@@ -146,9 +213,14 @@ impl<'a> SecureWriter<'a> {
             }
         };
         let mut read_bytes = 0u64;
-        let result = write_into(&mut output, reader, planned.size, self.token, &mut |read| {
-            read_bytes += read as u64
-        });
+        let result = write_into(
+            &mut output,
+            reader,
+            planned.size,
+            self.token,
+            encrypted,
+            &mut |read| read_bytes += read as u64,
+        );
         self.bytes_done = self.bytes_done.saturating_add(read_bytes);
         match result {
             WriteEnd::Cancelled => {
@@ -156,6 +228,9 @@ impl<'a> SecureWriter<'a> {
                 Err(ArchiveError::Cancelled)
             }
             WriteEnd::Skip(reason) => {
+                if encrypted && !self.has_created() {
+                    return Err(ArchiveError::BadPassword);
+                }
                 self.skip(planned.inner.clone(), reason);
                 let root = self.tree.root().to_path_buf();
                 self.progress(&root, false);
@@ -268,8 +343,10 @@ fn write_into(
     reader: &mut dyn Read,
     declared: u64,
     token: &CancellationToken,
+    encrypted: bool,
     on_bytes: &mut dyn FnMut(usize),
 ) -> WriteEnd {
+    let failure = if encrypted { "bad_password" } else { "damaged" };
     let mut buffer = vec![0u8; CHUNK_BYTES];
     let mut total = 0u64;
     loop {
@@ -278,7 +355,7 @@ fn write_into(
         }
         let read = match reader.read(&mut buffer) {
             Ok(read) => read,
-            Err(_) => return WriteEnd::Skip("damaged"),
+            Err(_) => return WriteEnd::Skip(failure),
         };
         if read == 0 {
             break;
@@ -286,7 +363,11 @@ fn write_into(
         crate::list::note_activity(read);
         total = total.saturating_add(read as u64);
         if total > declared {
-            return WriteEnd::Skip("size_mismatch");
+            return WriteEnd::Skip(if encrypted {
+                "bad_password"
+            } else {
+                "size_mismatch"
+            });
         }
         if output.file_mut().write_all(&buffer[..read]).is_err() {
             return WriteEnd::Skip("other");
@@ -294,7 +375,11 @@ fn write_into(
         on_bytes(read);
     }
     if total < declared {
-        return WriteEnd::Skip("size_mismatch");
+        return WriteEnd::Skip(if encrypted {
+            "bad_password"
+        } else {
+            "size_mismatch"
+        });
     }
     WriteEnd::Done
 }
@@ -306,10 +391,15 @@ pub(crate) fn extract_files(
     plan: &ExtractPlan,
     writer: &mut SecureWriter<'_>,
     limits: &Limits,
+    options: &crate::read_options::ArchiveReadOptions,
 ) -> Result<(), ArchiveError> {
     match format {
         ArchiveFormat::Bz2 => extract_bz2(path, plan, writer),
         ArchiveFormat::TarBz2 => extract_tar_bz2(path, plan, writer, limits),
+        ArchiveFormat::Zip => crate::secure_extract_zip::extract_zip(path, plan, writer, options),
+        ArchiveFormat::SevenZ => {
+            crate::secure_extract_7z::extract_7z(path, plan, writer, options, limits)
+        }
         _ => Err(ArchiveError::Unsupported),
     }
 }

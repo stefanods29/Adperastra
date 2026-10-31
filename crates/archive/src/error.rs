@@ -17,6 +17,30 @@ pub enum ArchiveError {
     Corrupt,
     #[error("the archive needs a password")]
     PasswordRequired,
+    #[error("the password is wrong, or the encrypted data is damaged")]
+    BadPassword,
+    #[error("the password is not valid")]
+    InvalidPassword,
+    #[error("the two passwords do not match")]
+    PasswordMismatch,
+    #[error("another archive is being created")]
+    CreateBusy,
+    #[error("this archive would be too large")]
+    CreateTooLarge,
+    #[error("too many items were selected")]
+    TooManySources,
+    #[error("a source changed while it was read")]
+    SourceChanged,
+    #[error("7-Zip is not installed")]
+    SevenZipMissing,
+    #[error("this 7-Zip installation cannot be used safely")]
+    SevenZipUnsupported,
+    #[error("this RAR listing cannot identify the selected file")]
+    AmbiguousRar,
+    #[error("multipart RAR files are not supported")]
+    MultiVolume,
+    #[error("the prepared output could not be verified")]
+    OutputChanged,
     #[error("the archive holds too many entries")]
     TooManyEntries,
     #[error("the archive would expand too far")]
@@ -47,6 +71,18 @@ impl ArchiveError {
             ArchiveError::Unsupported => "archive.unsupported",
             ArchiveError::Corrupt => "archive.corrupt",
             ArchiveError::PasswordRequired => "archive.password_required",
+            ArchiveError::BadPassword => "archive.bad_password",
+            ArchiveError::InvalidPassword => "archive.invalid_password",
+            ArchiveError::PasswordMismatch => "archive.password_mismatch",
+            ArchiveError::CreateBusy => "archive.create_busy",
+            ArchiveError::CreateTooLarge => "archive.create_too_large",
+            ArchiveError::TooManySources => "archive.too_many_sources",
+            ArchiveError::SourceChanged => "archive.source_changed",
+            ArchiveError::SevenZipMissing => "archive.seven_zip_missing",
+            ArchiveError::SevenZipUnsupported => "archive.seven_zip_unsupported",
+            ArchiveError::AmbiguousRar => "archive.ambiguous_rar",
+            ArchiveError::MultiVolume => "archive.multi_volume",
+            ArchiveError::OutputChanged => "archive.output_changed",
             ArchiveError::TooManyEntries => "archive.too_many_entries",
             ArchiveError::Bomb => "archive.bomb",
             ArchiveError::NoSpace => "archive.no_space",

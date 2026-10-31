@@ -74,14 +74,17 @@ pub fn list_with_options(
     limits: &Limits,
     token: &CancellationToken,
     progress: &mut dyn FnMut(&OpProgress),
-    _options: &crate::read_options::ArchiveReadOptions,
+    options: &crate::read_options::ArchiveReadOptions,
 ) -> Result<Listing, ArchiveError> {
     let format = crate::format::detect_format(path)?;
     let size = std::fs::metadata(path)?.len();
     let mut meter = ProgressMeter::new(size, progress);
     let (listing, done) = match format {
         ArchiveFormat::Zip => (list_zip(path, limits, token)?, size),
-        ArchiveFormat::SevenZ => (list_7z(path, limits, token)?, size),
+        ArchiveFormat::SevenZ => (
+            list_7z(path, limits, token, options.password.as_deref())?,
+            size,
+        ),
         ArchiveFormat::Tar
         | ArchiveFormat::TarGz
         | ArchiveFormat::TarXz

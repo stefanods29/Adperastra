@@ -83,6 +83,10 @@ pub fn extract_with_zone(
 ) -> Result<ExtractReport, ArchiveError> {
     let facts = facts_of(path)?;
     let listing = list_with_options(path, limits, token, &mut |_| {}, options)?;
+    // A selected encrypted item with no password stops before any write.
+    if options.password.is_none() && has_selected_encrypted(&listing, request) {
+        return Err(ArchiveError::PasswordRequired);
+    }
     let allow_encrypted = options.password.is_some();
     let plan = plan_extract_with_options(&listing, request, facts, limits, allow_encrypted)?;
     let dest = fs::canonicalize(&request.dest_dir).map_err(|_| ArchiveError::DestMissing)?;
@@ -127,7 +131,7 @@ pub fn extract_with_zone(
         writer.create_folder(folder);
     }
     if !writer.cancelled() {
-        extract_files(listing.format, path, &plan, &mut writer, limits)?;
+        extract_files(listing.format, path, &plan, &mut writer, limits, options)?;
     }
     if token.load(Ordering::Relaxed) {
         writer.cancel();
@@ -137,11 +141,30 @@ pub fn extract_with_zone(
 
 /// True when this extraction must use the new route instead of the old one.
 pub fn needs_secure_route(format: ArchiveFormat, options: &ArchiveReadOptions) -> bool {
-    options.password.is_some()
-        || matches!(
-            format,
-            ArchiveFormat::Bz2 | ArchiveFormat::TarBz2 | ArchiveFormat::Rar
-        )
+    match format {
+        ArchiveFormat::Bz2 | ArchiveFormat::TarBz2 | ArchiveFormat::Rar => true,
+        ArchiveFormat::Zip | ArchiveFormat::SevenZ => options.password.is_some(),
+        _ => false,
+    }
+}
+
+/// The selection rule the plan uses, for the password preflight.
+fn is_selected(entry: &crate::entry::ArchiveEntry, request: &ExtractRequest) -> bool {
+    if request.paths.is_empty() {
+        return request.base.is_empty() || entry.path.starts_with(&format!("{}/", request.base));
+    }
+    request
+        .paths
+        .iter()
+        .any(|wanted| entry.path == *wanted || entry.path.starts_with(&format!("{wanted}/")))
+}
+
+fn has_selected_encrypted(listing: &crate::entry::Listing, request: &ExtractRequest) -> bool {
+    listing.entries.iter().any(|entry| {
+        entry.encrypted
+            && entry.kind == crate::entry::EntryKind::File
+            && is_selected(entry, request)
+    })
 }
 
 fn facts_of(path: &Path) -> Result<ArchiveFacts, ArchiveError> {
