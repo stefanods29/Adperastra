@@ -4,7 +4,8 @@
 use std::io::Write;
 
 use fs_service::owned_io::{
-    OwnedIoError, OwnedOutput, PinnedDirectory, PinnedSource, SourceIdentity,
+    dispose_orphaned_staging, OwnedIoError, OwnedOutput, PinnedDirectory, PinnedSource,
+    SourceIdentity,
 };
 
 fn write(path: &std::path::Path, text: &str) {
@@ -152,4 +153,36 @@ fn a_guarded_source_refuses_writes_while_open() {
         "a delete is refused too"
     );
     source.verify_after_read().unwrap();
+}
+
+#[test]
+fn orphan_cleanup_removes_only_abandoned_staging_files() {
+    let folder = tempfile::tempdir().unwrap();
+    let pinned = PinnedDirectory::open(folder.path()).unwrap();
+    let target = folder.path().join("notes.txt");
+
+    // Left by a helper that was killed: nobody holds it any more.
+    let mut abandoned = OwnedOutput::create(&pinned, "notes.txt").unwrap();
+    abandoned.keep();
+    let abandoned_path = abandoned.staging_path().to_path_buf();
+    drop(abandoned);
+    // Still being written by a live operation.
+    let live = OwnedOutput::create(&pinned, "notes.txt").unwrap();
+    // Files that only look similar, and another file's staging.
+    let old_style = folder.path().join("~notes.txt.partial");
+    let lookalike = folder.path().join("~adp-notes.txt-not-random.partial");
+    std::fs::write(&old_style, "keep").unwrap();
+    std::fs::write(&lookalike, "keep").unwrap();
+    let mut other = OwnedOutput::create(&pinned, "other.txt").unwrap();
+    other.keep();
+    let other_path = other.staging_path().to_path_buf();
+    drop(other);
+
+    assert_eq!(dispose_orphaned_staging(&target), 1);
+
+    assert!(!abandoned_path.exists());
+    assert!(live.staging_path().exists());
+    assert!(old_style.exists());
+    assert!(lookalike.exists());
+    assert!(other_path.exists());
 }

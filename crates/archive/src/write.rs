@@ -1,11 +1,13 @@
 //! Writing one extracted file (Step 06d R-SAFE-2/3): never to the target
-//! itself, always to `~<name>.partial` next to it, counted against the size
-//! the archive declared, then renamed into place so an existing file is
-//! never replaced.
+//! itself, always to an owned staging file with a random name next to it,
+//! counted against the size the archive declared, flushed, then renamed into
+//! place so an existing file is never replaced. A failure removes only that
+//! staging file, through its own handle.
 
 use crate::limits::CHUNK_BYTES;
+use fs_service::owned_io::{OwnedIoError, OwnedOutput, PinnedDirectory};
 use fs_service::CancellationToken;
-use std::fs::{self, OpenOptions};
+use std::fs;
 use std::io::{BufWriter, Read, Write};
 use std::path::Path;
 use std::sync::atomic::Ordering;
@@ -34,54 +36,44 @@ pub fn write_entry(
     if target.symlink_metadata().is_ok() {
         return Err(WriteFailure::Skip("name_taken"));
     }
-    if let Some(parent) = target.parent() {
-        if let Err(error) = fs::create_dir_all(parent) {
-            return Err(WriteFailure::Skip(folder_reason(&error)));
-        }
+    let (Some(parent), Some(name)) = (target.parent(), target.file_name().and_then(|n| n.to_str()))
+    else {
+        return Err(WriteFailure::Skip("invalid_name"));
+    };
+    if let Err(error) = fs::create_dir_all(parent) {
+        return Err(WriteFailure::Skip(folder_reason(&error)));
     }
-    // Only this crate removes a file, and only its own unfinished partial
-    // one, so a cancelled or failed write leaves nothing behind (R-SAFE-3).
-    let partial = fs_service::partial_path(target);
-    let written = write_partial(&partial, reader, declared, modified_unix, token, on_bytes);
-    if let Err(failure) = written {
-        let _ = fs::remove_file(&partial);
-        return Err(failure);
-    }
-    if let Err(error) = fs_service::move_without_replacing(&partial, target) {
-        let _ = fs::remove_file(&partial);
-        return Err(WriteFailure::Skip(match error {
-            fs_service::FsError::Io(io) => match io.raw_os_error() {
-                // ERROR_FILE_EXISTS, ERROR_ALREADY_EXISTS
-                Some(80) | Some(183) => "name_taken",
-                _ => "other",
-            },
-            _ => "other",
-        }));
-    }
+    let pin = PinnedDirectory::open(parent).map_err(owned_failure)?;
+    // The staging file is removed through its handle when `output` is dropped
+    // unpublished, so a cancelled or failed write leaves nothing behind and
+    // never touches another file (R-SAFE-3).
+    let mut output = OwnedOutput::create(&pin, name).map_err(owned_failure)?;
+    write_output(
+        &mut output,
+        reader,
+        declared,
+        modified_unix,
+        token,
+        on_bytes,
+    )?;
+    output.publish_name(name).map_err(owned_failure)?;
+    drop(output);
     if let Some(zone) = zone {
         write_zone(target, zone);
     }
     Ok(())
 }
 
-/// The pieces of a write that happen in the partial file.
-fn write_partial(
-    partial: &Path,
+/// The pieces of a write that happen in the staging file.
+fn write_output(
+    output: &mut OwnedOutput,
     reader: &mut dyn Read,
     declared: u64,
     modified_unix: u64,
     token: &CancellationToken,
     on_bytes: &mut dyn FnMut(u64),
 ) -> Result<(), WriteFailure> {
-    let file = match OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(partial)
-    {
-        Ok(file) => file,
-        Err(error) => return Err(WriteFailure::Skip(open_reason(&error))),
-    };
-    let mut writer = BufWriter::new(file);
+    let mut writer = BufWriter::new(output.file_mut());
     let mut buffer = vec![0u8; CHUNK_BYTES];
     let mut total = 0u64;
     loop {
@@ -109,11 +101,13 @@ fn write_partial(
     if let Err(error) = writer.flush() {
         return Err(WriteFailure::Skip(write_reason(&error)));
     }
+    drop(writer);
+    output.flush_sync().map_err(owned_failure)?;
     if modified_unix > 0 {
         if let Some(time) = UNIX_EPOCH.checked_add(Duration::from_secs(modified_unix)) {
             let times = fs::FileTimes::new().set_modified(time);
             // A date the disk refuses is not worth failing the file for.
-            let _ = writer.get_ref().set_times(times);
+            let _ = output.file_mut().set_times(times);
         }
     }
     Ok(())
@@ -133,12 +127,13 @@ fn write_zone(target: &Path, zone: &str) {
     let _ = fs::write(Path::new(&stream), zone);
 }
 
-fn open_reason(error: &std::io::Error) -> &'static str {
-    if error.kind() == std::io::ErrorKind::AlreadyExists {
-        "name_taken"
-    } else {
-        folder_reason(error)
-    }
+fn owned_failure(error: OwnedIoError) -> WriteFailure {
+    WriteFailure::Skip(match error {
+        OwnedIoError::TargetExists => "name_taken",
+        OwnedIoError::InvalidName => "invalid_name",
+        OwnedIoError::Io(io) => folder_reason(&io),
+        _ => "other",
+    })
 }
 
 fn folder_reason(error: &std::io::Error) -> &'static str {

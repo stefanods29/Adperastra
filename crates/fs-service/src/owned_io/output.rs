@@ -10,9 +10,12 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use super::{
-    handle_identity, is_reparse, staging_name, validate_component, FileIdentity, OwnedIoError,
-    OwnedIoResult, PinnedDirectory,
+    handle_identity, hint_of, is_reparse, staging_name, validate_component, FileIdentity,
+    OwnedIoError, OwnedIoResult, PinnedDirectory,
 };
+
+/// The most folder entries one orphan cleanup looks at.
+const MAX_ORPHAN_SCAN: usize = 200_000;
 
 /// A file this operation alone owns until it is published or dropped.
 pub struct OwnedOutput {
@@ -88,6 +91,18 @@ impl OwnedOutput {
         self.published = true;
     }
 
+    /// Close the finished file so `ReplaceFileW` can open it itself. The
+    /// result still knows which file it wrote, so later cleanup never touches
+    /// another file that took the name.
+    pub fn close(mut self) -> ClosedOutput {
+        self.published = true;
+        drop(self.file.take());
+        ClosedOutput {
+            path: self.staging.clone(),
+            identity: self.identity,
+        }
+    }
+
     /// Rename the still-owned file to `name` inside the pinned folder. The
     /// target must not exist; a name that arrived meanwhile is left alone.
     pub fn publish_name(&mut self, name: &str) -> OwnedIoResult<PathBuf> {
@@ -112,6 +127,93 @@ impl Drop for OwnedOutput {
             dispose(file);
         }
     }
+}
+
+/// A finished staging file whose handle was closed. Dropping it leaves the
+/// file on disk: it may hold the only copy of the user's content.
+pub struct ClosedOutput {
+    path: PathBuf,
+    identity: FileIdentity,
+}
+
+impl ClosedOutput {
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    /// Remove the file, only if it is still the one this operation wrote.
+    pub fn dispose(self) -> OwnedIoResult<()> {
+        let file = self.reopen()?;
+        dispose(&file);
+        Ok(())
+    }
+
+    /// Publish the file at `target` without replacing anything.
+    pub fn publish_to(self, target: &Path) -> OwnedIoResult<()> {
+        let file = self.reopen()?;
+        publish(&file, &self.path, target)
+    }
+
+    fn reopen(&self) -> OwnedIoResult<File> {
+        let file = reopen_staging(&self.path)?;
+        if is_reparse(&file)? || handle_identity(&file)? != self.identity {
+            return Err(OwnedIoError::OutputChanged);
+        }
+        Ok(file)
+    }
+}
+
+/// Remove staging files that a killed helper left for `target`. Only names
+/// this app makes (`~adp-<hint>-<uuid>.partial`) qualify, and only regular
+/// files nobody holds: a live operation keeps its file open exclusively.
+/// Returns how many were removed.
+pub fn dispose_orphaned_staging(target: &Path) -> usize {
+    let (Some(parent), Some(name)) = (target.parent(), target.file_name()) else {
+        return 0;
+    };
+    let prefix = format!("~adp-{}-", hint_of(&name.to_string_lossy()));
+    let Ok(entries) = std::fs::read_dir(parent) else {
+        return 0;
+    };
+    let mut removed = 0;
+    for entry in entries.flatten().take(MAX_ORPHAN_SCAN) {
+        let entry_name = entry.file_name().to_string_lossy().into_owned();
+        let random = entry_name
+            .strip_prefix(&prefix)
+            .and_then(|rest| rest.strip_suffix(".partial"));
+        if !random.is_some_and(|text| uuid::Uuid::try_parse(text).is_ok()) {
+            continue;
+        }
+        let Ok(file) = reopen_staging(&entry.path()) else {
+            continue;
+        };
+        if !matches!(is_reparse(&file), Ok(false)) || !file.metadata().is_ok_and(|m| m.is_file()) {
+            continue;
+        }
+        dispose(&file);
+        removed += 1;
+    }
+    removed
+}
+
+/// Open a finished staging file again, alone, with the access a rename or a
+/// delete needs. Links are opened as themselves, never followed.
+#[cfg(windows)]
+fn reopen_staging(path: &Path) -> io::Result<File> {
+    use std::os::windows::fs::OpenOptionsExt;
+    use windows::Win32::Storage::FileSystem::{
+        DELETE, FILE_FLAG_OPEN_REPARSE_POINT, FILE_READ_ATTRIBUTES, FILE_SHARE_NONE,
+    };
+    OpenOptions::new()
+        .access_mode(FILE_READ_ATTRIBUTES.0 | DELETE.0)
+        .share_mode(FILE_SHARE_NONE.0)
+        .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT.0)
+        .open(path)
+}
+
+#[cfg(not(windows))]
+fn reopen_staging(path: &Path) -> io::Result<File> {
+    File::open(path)
 }
 
 #[cfg(windows)]
