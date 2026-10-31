@@ -32,7 +32,9 @@ mod media;
 mod operation_safety;
 mod settings_file;
 mod shell;
+mod text_save;
 mod transfer_history;
+mod versions;
 mod zone;
 
 pub const CURRENT_SCHEMA: u32 = 9;
@@ -2925,6 +2927,7 @@ fn main() {
             appearance::appearance_set_zoom,
             settings_file::settings_export,
             settings_file::settings_import,
+            text_save::text_save,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

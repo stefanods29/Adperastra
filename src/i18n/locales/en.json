@@ -522,6 +522,19 @@
       "too_large": "This file is too large to be a settings file.",
       "invalid": "This file isn't an Adperastra settings file.",
       "newer": "This file comes from a newer version of Adperastra. Update the app to use it."
+    },
+    "textSave": {
+      "other": "Couldn't save the file. Try again.",
+      "bad_request": "This file can't be saved here.",
+      "too_large": "The text is too large to save.",
+      "unmappable": "Some characters can't be saved in this encoding. Choose UTF-8 in Save with.",
+      "cannot_encode": "This encoding can't be saved. Use Save as… to save a copy in UTF-8.",
+      "changed_on_disk": "The file changed on disk.",
+      "read_only": "The file is read-only. Use Save as… to save a copy.",
+      "in_use": "Another program is using the file. Close it there and save again.",
+      "not_found": "The folder of this file no longer exists. Use Save as…",
+      "recycle_failed": "The file you chose couldn't be moved to the Recycle Bin, so nothing was saved.",
+      "write_failed": "Couldn't write the file. Your text is still here; try again or use Save as…"
     }
   },
   "keys": {

@@ -522,6 +522,19 @@
       "too_large": "Este archivo es demasiado grande para ser un archivo de configuración.",
       "invalid": "Este archivo no es un archivo de configuración de Adperastra.",
       "newer": "Este archivo es de una versión más reciente de Adperastra. Actualiza la aplicación para usarlo."
+    },
+    "textSave": {
+      "other": "No se pudo guardar el archivo. Vuelve a intentarlo.",
+      "bad_request": "Este archivo no se puede guardar aquí.",
+      "too_large": "El texto es demasiado grande para guardarlo.",
+      "unmappable": "Algunos caracteres no se pueden guardar con esta codificación. Elige UTF-8 en Guardar con.",
+      "cannot_encode": "Esta codificación no se puede guardar. Usa Guardar como… para guardar una copia en UTF-8.",
+      "changed_on_disk": "El archivo cambió en el disco.",
+      "read_only": "El archivo es de solo lectura. Usa Guardar como… para guardar una copia.",
+      "in_use": "Otro programa está usando el archivo. Ciérralo allí y vuelve a guardar.",
+      "not_found": "La carpeta de este archivo ya no existe. Usa Guardar como…",
+      "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
+      "write_failed": "No se pudo escribir el archivo. Tu texto sigue aquí; vuelve a intentarlo o usa Guardar como…"
     }
   },
   "keys": {
