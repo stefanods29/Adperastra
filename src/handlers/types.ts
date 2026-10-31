@@ -21,6 +21,15 @@ export interface FileTabStatus {
   };
 }
 
+/** A file tab's save handle (Step 06a): save the unsaved changes, or drop
+ * them and their recovery copy. */
+export interface SaveHandle {
+  /** True when the file was saved. */
+  save: () => Promise<boolean>;
+  /** Forget the unsaved changes and their recovery copy. */
+  discard: () => void;
+}
+
 /** The file tab's search box (Step 04b): the text to find, and a counter
  * that grows each time the user asks for the next (or previous) match. */
 export interface FindRequest {

@@ -665,6 +665,11 @@
       "controlCharacter": "Carácter de control"
     }
   },
+  "editor": {
+    "unmappable": "“{char}” en la línea {line}, columna {column}, no se puede guardar en {encoding}. Elige UTF-8 en Guardar con.",
+    "saveAsTitle": "Guardar como",
+    "allFiles": "Todos los archivos"
+  },
   "markdown": {
     "renderedMode": "Vista de lectura",
     "sourceMode": "Código fuente"

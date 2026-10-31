@@ -665,6 +665,11 @@
       "controlCharacter": "[Çøñtrøl çhäräçtër ~~~~~~~]"
     }
   },
+  "editor": {
+    "unmappable": "[“{char}” øñ lïñë {line}, çølümñ {column} çäñ't bë sävëd ïñ {encoding}. Çhøøsë ÜTF-8 ïñ Sävë wïth. ~~~~~~~~~~~~~~~~~~]",
+    "saveAsTitle": "[Sävë äs ~~~]",
+    "allFiles": "[Äll fïlës ~~~~]"
+  },
   "markdown": {
     "renderedMode": "[Rëädïñg vïëw ~~~~~]",
     "sourceMode": "[Søürçë ~~~]"

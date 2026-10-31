@@ -665,6 +665,11 @@
       "controlCharacter": "Control character"
     }
   },
+  "editor": {
+    "unmappable": "“{char}” on line {line}, column {column} can't be saved in {encoding}. Choose UTF-8 in Save with.",
+    "saveAsTitle": "Save as",
+    "allFiles": "All files"
+  },
   "markdown": {
     "renderedMode": "Reading view",
     "sourceMode": "Source"
