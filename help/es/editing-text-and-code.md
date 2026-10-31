@@ -6,7 +6,7 @@ Los archivos de texto, de código y Markdown se pueden cambiar en su propia pest
 
 - Haz clic en el texto y escribe. **Ctrl+Z** deshace y **Ctrl+Y** rehace.
 - **Ctrl+S** (o **Guardar** en la cinta de opciones) guarda. Un punto en la pestaña indica que hay cambios sin guardar.
-- **Ctrl+Mayús+S** (o **Guardar como…**) guarda con otro nombre o en otra carpeta. Si ya existe un archivo con ese nombre, Windows pregunta primero, y el archivo anterior va a la Papelera de reciclaje.
+- **Ctrl+Mayús+S** (o **Guardar como…**) guarda con otro nombre o en otra carpeta. Solo crea archivos nuevos: si ya existe un archivo con ese nombre, queda como está y eliges otro nombre.
 - **Tab** sale del texto, para que puedas llegar a la cinta de opciones con el teclado. Para aplicar sangría a las líneas, usa **Ctrl+]**, y **Ctrl+[** para quitarla.
 
 ## Buscar y reemplazar

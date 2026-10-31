@@ -3,7 +3,7 @@
 use std::path::Path;
 use std::time::Duration;
 
-use fs_service::{partial_path, replace_contents, write_new_file, SaveError, SaveExpect};
+use fs_service::{replace_contents, write_new_file, SaveError, SaveExpect};
 
 fn expect_of(path: &Path) -> SaveExpect {
     let meta = std::fs::metadata(path).unwrap();
@@ -18,6 +18,16 @@ fn expect_of(path: &Path) -> SaveExpect {
     }
 }
 
+/// The folder holds exactly these names: no staging file was left behind.
+fn assert_only_entries(folder: &Path, expected: &[&str]) {
+    let mut names: Vec<String> = std::fs::read_dir(folder)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    assert_eq!(names, expected);
+}
+
 #[test]
 fn replaces_the_content_and_leaves_no_partial_file() {
     let dir = tempfile::tempdir().unwrap();
@@ -29,7 +39,7 @@ fn replaces_the_content_and_leaves_no_partial_file() {
 
     assert_eq!(std::fs::read_to_string(&target).unwrap(), "new");
     assert_eq!(saved.size, 3);
-    assert!(!dir.path().join("~a.txt.partial").exists());
+    assert_only_entries(dir.path(), &["a.txt"]);
 }
 
 #[test]
@@ -79,7 +89,7 @@ fn writes_a_file_that_was_deleted() {
 
     assert_eq!(std::fs::read_to_string(&target).unwrap(), "new");
     assert_eq!(saved.size, 3);
-    assert!(!dir.path().join("~a.txt.partial").exists());
+    assert_only_entries(dir.path(), &["a.txt"]);
 }
 
 #[test]
@@ -126,9 +136,42 @@ fn keeps_the_creation_time() {
 }
 
 #[test]
-fn partial_path_sits_next_to_the_target() {
+fn a_foreign_partial_file_is_never_truncated_or_removed() {
+    let dir = tempfile::tempdir().unwrap();
+    let foreign = dir.path().join("~a.txt.partial");
+    std::fs::write(&foreign, "someone else's").unwrap();
+    let target = dir.path().join("a.txt");
+
+    // A new file, a save over it, and a refused save.
+    write_new_file(&target, b"one").unwrap();
+    replace_contents(&target, b"two", None).unwrap();
     assert_eq!(
-        partial_path(Path::new(r"C:\x\a.txt")),
-        Path::new(r"C:\x\~a.txt.partial")
+        write_new_file(&target, b"three"),
+        Err(SaveError::TargetExists)
     );
+
+    assert_eq!(std::fs::read_to_string(&target).unwrap(), "two");
+    assert_eq!(std::fs::read_to_string(&foreign).unwrap(), "someone else's");
+    assert_only_entries(dir.path(), &["a.txt", "~a.txt.partial"]);
+}
+
+#[cfg(windows)]
+#[test]
+fn a_save_refused_by_another_program_keeps_the_old_file_and_leaves_nothing() {
+    use std::os::windows::fs::OpenOptionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let target = dir.path().join("a.txt");
+    std::fs::write(&target, "old").unwrap();
+    let held = std::fs::OpenOptions::new()
+        .read(true)
+        .share_mode(0)
+        .open(&target)
+        .unwrap();
+
+    let result = replace_contents(&target, b"new", None);
+    drop(held);
+
+    assert_eq!(result, Err(SaveError::InUse));
+    assert_eq!(std::fs::read_to_string(&target).unwrap(), "old");
+    assert_only_entries(dir.path(), &["a.txt"]);
 }

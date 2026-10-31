@@ -149,8 +149,7 @@ pub fn save_error_code(error: &fs_service::SaveError) -> String {
         fs_service::SaveError::ReadOnly => "textSave.read_only".to_string(),
         fs_service::SaveError::InUse => "textSave.in_use".to_string(),
         fs_service::SaveError::FolderMissing => "textSave.not_found".to_string(),
-        fs_service::SaveError::RecycleFailed => "textSave.recycle_failed".to_string(),
-        fs_service::SaveError::TargetExists => "textSave.write_failed".to_string(),
+        fs_service::SaveError::TargetExists => "textSave.replace_unavailable".to_string(),
         fs_service::SaveError::Io(_) => "textSave.write_failed".to_string(),
     }
 }
@@ -169,9 +168,22 @@ pub async fn text_save(
         .map_err(|error| error.to_string())?
 }
 
+/// Save as only creates new files. Replacing an existing one stays unavailable
+/// until recycling can be tied to the exact file the user approved
+/// (`plan/contracts.md`, approved Replace targets).
+fn check_save_as_target(path: &Path) -> Result<(), String> {
+    if path.symlink_metadata().is_ok() {
+        return Err(save_error_code(&fs_service::SaveError::TargetExists));
+    }
+    Ok(())
+}
+
 fn save_now(app: AppHandle, request: TextSaveRequest) -> Result<SavedFile, String> {
     let bytes = encode_text(&request.text, &request.encoding, request.table.as_deref())?;
     let path = Path::new(&request.path);
+    if request.mode == "saveAs" {
+        check_save_as_target(path)?;
+    }
     let reason = if request.mode == "saveAs" {
         ModifyReason::SaveAs
     } else {
@@ -180,7 +192,6 @@ fn save_now(app: AppHandle, request: TextSaveRequest) -> Result<SavedFile, Strin
     crate::versions::before_modify(&app, path, reason)
         .map_err(|_| "textSave.version_failed".to_string())?;
     let saved = if request.mode == "saveAs" {
-        fs_service::recycle_target(path).map_err(|error| save_error_code(&error))?;
         fs_service::write_new_file(path, &bytes).map_err(|error| save_error_code(&error))?
     } else {
         let expect = match (request.expected_modified_unix, request.expected_size) {
@@ -335,6 +346,19 @@ mod tests {
             check_request(&request(r"C:\x\a.txt", "utf-8", "save")),
             Ok(())
         );
+    }
+
+    #[test]
+    fn save_as_refuses_an_existing_file_and_leaves_it_alone() {
+        let dir = tempfile::tempdir().unwrap();
+        let taken = dir.path().join("taken.txt");
+        std::fs::write(&taken, "old").unwrap();
+        assert_eq!(
+            check_save_as_target(&taken),
+            Err("textSave.replace_unavailable".to_string())
+        );
+        assert_eq!(std::fs::read_to_string(&taken).unwrap(), "old");
+        assert_eq!(check_save_as_target(&dir.path().join("new.txt")), Ok(()));
     }
 
     #[test]
