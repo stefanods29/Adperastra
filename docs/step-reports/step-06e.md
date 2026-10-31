@@ -53,6 +53,9 @@ retained folder, no signing or installer).
   data folder through an OS lock, app-owned spool folders with an ownership
   marker, a verified parent copy with recomputed hash, numbered no-replace
   publication, and a report that keeps the actual created path for Undo.
+  Follow-up F1 tightened the shared spool cap: a store already at 8 GiB
+  refuses new work with `create_busy`, and the helper's output cap is
+  reduced to what still fits under the same total.
 - **T10** password prompt, show/hide, strength estimate as text plus a
   meter, retry-in-place on a wrong password, and session-only remembering
   (unchecked by default) in archive tabs and Explorer extraction.
@@ -226,6 +229,7 @@ Previous steps' screenshots were not touched.
 ## Commits
 
 ```
+041bbdb fix(archive): bound the shared spool budget [step-06e/F1]
 6374ffc feat(explorer): Compress to with cancellable jobs and Undo [step-06e/T11]
 f58e91d feat(archive): password prompts and session-only remembering [step-06e/T10]
 5435f92 feat(archive): verified archive creation jobs [step-06e/T9]
