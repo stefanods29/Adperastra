@@ -222,6 +222,20 @@ that fixed it.
 
 ## Fixed
 
+### KI-85 - A RAR file record with no size was treated as an empty file (Major, fixed in Step 06e)
+- **Found in:** the full gate for Step 06e, 2026-10-31.
+- **Fix:** `rar_listing.rs` refuses such a listing as ambiguous. Tested with a fake runner only; no real 7-Zip was available (KI-081).
+
+### KI-84 - A wrong or missing archive password could leave output, or only skip files (Major, fixed in Step 06e)
+- **Found in:** the full gate for Step 06e, 2026-10-31.
+- **What:** With a wrong password, folders were created before the password was tried, and the run could report success with skipped files. With no password, encrypted files were skipped instead of the request being refused (guide D11).
+- **Fix:** a selected encrypted item with no password now returns `password_required` before any write on every route. When the plan's first file is an encrypted ZIP entry, the password is tried before anything is created. When a plain file comes first, it is written and the failure is reported with what was created, as the guide's test requires.
+
+### KI-83 - The new owned-staging folder pin always failed (Blocker, fixed in Step 06e)
+- **Found in:** the full gate for Step 06e, 2026-10-31.
+- **What:** `PinnedDirectory::open` opened the bare `\\?\C:` prefix, which is the volume device and not a folder, so Windows returned "Incorrect function". Creating archives and the new password and bzip2 extraction could not work at all.
+- **Fix:** pinning starts at the volume root (`owned_io/directory.rs`).
+
 ### KI-076 - Added diff text was unreadable in the dark theme (Major)
 - **Found in:** local 06b/06c review, 2026-10-31. **Severity:** Major.
 - **What:** The recipe used a fixed pale green background while inheriting light text in dark mode. The Spanish dark screenshot exposed it. Added rows now mix the existing Excel accent with the current surface token and explicitly use the primary text token; release verification measures actual added/removed text contrast against the 4.5:1 minimum.

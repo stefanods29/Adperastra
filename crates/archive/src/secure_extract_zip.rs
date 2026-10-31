@@ -63,6 +63,47 @@ pub(crate) fn extract_zip(
     Ok(())
 }
 
+/// The most an early password check reads from one file. ZipCrypto's header
+/// check passes for about 1 wrong password in 256; only the file's checksum
+/// at its end settles it. A larger file is checked while it is written.
+const VERIFY_READ_MAX: u64 = 64 * 1024 * 1024;
+
+/// Try the password when the plan's first file is encrypted, so a wrong one is
+/// the whole result. When a plain file comes first it is written, and a later
+/// password failure is reported with what was created.
+pub(crate) fn verify_password(
+    path: &Path,
+    plan: &ExtractPlan,
+    options: &ArchiveReadOptions,
+) -> Result<(), ArchiveError> {
+    let Some(password) = options.password.as_deref() else {
+        return Ok(());
+    };
+    let file = File::open(path)?;
+    let mut archive =
+        zip::ZipArchive::new(BufReader::new(file)).map_err(|_| ArchiveError::Corrupt)?;
+    let Some(planned) = plan.files.first() else {
+        return Ok(());
+    };
+    let encrypted = archive
+        .by_index_raw(planned.index as usize)
+        .map(|entry| entry.encrypted())
+        .unwrap_or(false);
+    if !encrypted {
+        return Ok(());
+    }
+    let mut entry = match archive.by_index_decrypt(planned.index as usize, password.as_bytes()) {
+        Err(error) if is_password_error(&error) => return Err(ArchiveError::BadPassword),
+        // Other problems are reported for this file when it is written.
+        Err(_) => return Ok(()),
+        Ok(entry) => entry,
+    };
+    if planned.size <= VERIFY_READ_MAX && std::io::copy(&mut entry, &mut std::io::sink()).is_err() {
+        return Err(ArchiveError::BadPassword);
+    }
+    Ok(())
+}
+
 fn is_password_error(error: &ZipError) -> bool {
     match error {
         ZipError::InvalidPassword => true,

@@ -32,7 +32,12 @@ impl PinnedDirectory {
             let mut current = PathBuf::new();
             for component in resolved.components() {
                 match component {
-                    Component::Prefix(prefix) => current.push(prefix.as_os_str()),
+                    // The bare prefix (`\\?\C:`) names the volume device, not
+                    // a folder: pinning starts at its root.
+                    Component::Prefix(prefix) => {
+                        current.push(prefix.as_os_str());
+                        continue;
+                    }
                     Component::RootDir => current.push("\\"),
                     Component::Normal(part) => current.push(part),
                     _ => continue,

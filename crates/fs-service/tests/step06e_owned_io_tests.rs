@@ -95,7 +95,7 @@ fn pinned_ancestor_cannot_be_swapped() {
 
     let published = output.publish_name("archive.zip").unwrap();
     assert!(
-        published.starts_with(&inside),
+        published.starts_with(std::fs::canonicalize(&inside).unwrap()),
         "no write left the pinned folder"
     );
 }

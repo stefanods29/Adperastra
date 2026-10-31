@@ -272,9 +272,11 @@ describe("creating an archive", () => {
       "archive",
     );
 
-    vi.mocked(archiveCreate).mockRejectedValue("archive.create_busy");
+    // After setup, which sets its own result for this mock.
     const rejected = setup(report());
+    vi.mocked(archiveCreate).mockRejectedValue("archive.create_busy");
     await expect(rejected.run()).rejects.toBe("archive.create_busy");
+    expect(rejected.deps.undoStack.entries).toHaveLength(0);
     expect(rejected.deps.notifyError).toHaveBeenCalled();
   });
 });

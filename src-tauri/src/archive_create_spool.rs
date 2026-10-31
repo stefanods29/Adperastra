@@ -99,7 +99,8 @@ pub fn stored_bytes(base: &Path) -> u64 {
 
 /// Make the unique folder for one creation and its ownership marker.
 pub fn prepare_spool_folder(base: &Path, request_id: &str) -> Result<PathBuf, String> {
-    crate::valid_request_id(request_id)?;
+    crate::valid_request_id(request_id).map_err(|_| "archive.bad_request".to_string())?;
+    std::fs::create_dir_all(base).map_err(|_| "archive.other".to_string())?;
     let folder = base.join(request_id);
     match std::fs::create_dir(&folder) {
         Ok(()) => {}

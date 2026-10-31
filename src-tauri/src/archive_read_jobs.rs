@@ -52,7 +52,7 @@ pub fn validate_start(
     request_id: &str,
     auth: Option<&ArchiveAuth>,
 ) -> Result<(), String> {
-    crate::valid_request_id(request_id)?;
+    crate::valid_request_id(request_id).map_err(|_| "archive.bad_request".to_string())?;
     crate::validate_absolute_path(path).map_err(|_| "archive.bad_request".to_string())?;
     if let Some(auth) = auth {
         auth.validate()?;

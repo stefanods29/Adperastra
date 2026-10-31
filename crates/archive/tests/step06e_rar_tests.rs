@@ -352,8 +352,8 @@ fn rar_password_is_only_on_stdin() {
             assert!(!arg.contains('ñ'));
         }
         assert!(
-            stdin.as_deref() == Some(format!("{SECRET}\n").as_bytes()),
-            "the secret travels once, as UTF-8 plus a newline, on stdin"
+            stdin.as_deref() == Some(SECRET.as_bytes()),
+            "the secret travels once, as UTF-8, to stdin (feed_stdin adds the newline)"
         );
     }
 

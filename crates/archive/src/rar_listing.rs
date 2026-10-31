@@ -153,6 +153,7 @@ fn take_record(
             .trim()
             .parse::<u64>()
             .map_err(|_| ArchiveError::AmbiguousRar)?,
+        None if !folder => return Err(ArchiveError::AmbiguousRar),
         _ => 0,
     };
     let packed_size = record

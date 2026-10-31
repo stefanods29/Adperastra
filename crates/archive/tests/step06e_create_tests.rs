@@ -301,7 +301,11 @@ fn seven_z_encrypts_names_only_when_requested() {
         &ArchiveReadOptions::default(),
     )
     .unwrap();
-    assert!(listing.entries.iter().all(|entry| entry.encrypted));
+    assert!(listing
+        .entries
+        .iter()
+        .filter(|entry| entry.kind == archive::EntryKind::File)
+        .all(|entry| entry.encrypted));
     assert!(listing
         .entries
         .iter()
@@ -333,11 +337,7 @@ fn seven_z_uses_configured_kdf_and_dictionary() {
         if coder.encoder_method_id() == sevenz_rust2::EncoderMethod::ID_AES256_SHA256 {
             saw_aes = true;
             let properties = coder.properties();
-            assert_eq!(
-                u16::from_le_bytes([properties[0], properties[1]]),
-                19,
-                "the KDF cycle power is 19"
-            );
+            assert_eq!(properties[0] & 0x3f, 19, "the KDF cycle power is 19");
         }
         if coder.encoder_method_id() == sevenz_rust2::EncoderMethod::ID_LZMA2 {
             saw_lzma2 = true;

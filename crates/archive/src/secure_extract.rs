@@ -94,6 +94,10 @@ pub fn extract_with_zone(
         return Err(ArchiveError::DestMissing);
     }
     check_space(plan.bytes_total, free_bytes(&dest), limits)?;
+    // A wrong password is the whole result: no folder or file exists yet (D11).
+    if listing.format == ArchiveFormat::Zip {
+        crate::secure_extract_zip::verify_password(path, &plan, options)?;
+    }
 
     let (root_pin, new_folder) = match &request.new_folder {
         Some(name) => {
@@ -159,7 +163,10 @@ fn is_selected(entry: &crate::entry::ArchiveEntry, request: &ExtractRequest) -> 
         .any(|wanted| entry.path == *wanted || entry.path.starts_with(&format!("{wanted}/")))
 }
 
-fn has_selected_encrypted(listing: &crate::entry::Listing, request: &ExtractRequest) -> bool {
+pub(crate) fn has_selected_encrypted(
+    listing: &crate::entry::Listing,
+    request: &ExtractRequest,
+) -> bool {
     listing.entries.iter().any(|entry| {
         entry.encrypted
             && entry.kind == crate::entry::EntryKind::File

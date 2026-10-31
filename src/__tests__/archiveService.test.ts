@@ -62,16 +62,20 @@ describe("archive services", () => {
 
   it("passwords are absent from results and errors", async () => {
     invokeMock.mockImplementation(async (command: string) => command === "job_poll" ? poll(true, summary) : undefined);
-    const result = await archiveOpen("C:\\a.zip", undefined, { password: "secret phrase", remember_session: true });
+    const opened = await archiveOpen("C:\\a.zip", undefined, { password: "secret phrase", remember_session: true });
+    const finished = opened.completion;
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+    const result = await finished;
     expect(Object.keys(result)).not.toContain("password");
     expect(JSON.stringify(result)).not.toContain("secret phrase");
 
     invokeMock.mockReset();
     invokeMock.mockImplementation(async (command: string) => command === "job_poll" ? poll(true, null, "archive.bad_password") : undefined);
-    const error = await archiveOpen("C:\\a.zip", undefined, { password: "secret phrase", remember_session: false })
-      .then(() => null, (reason: Error) => reason);
+    const job = await archiveOpen("C:\\a.zip", undefined, { password: "secret phrase", remember_session: false });
+    const failure = job.completion.then(() => null, (reason: Error) => reason);
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+    const error = await failure;
     expect(error?.message).toBe("archive.bad_password");
     expect(error?.message).not.toContain("secret phrase");
-    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
   });
 });

@@ -187,8 +187,9 @@ mod tests {
         assert!(validate_password("bell\u{7}").is_err());
         assert!(validate_password("nul\0").is_err());
         assert!(validate_password(&"x".repeat(257)).is_err());
-        // 256 characters of a 4-byte script exceed the byte cap.
-        assert!(validate_password(&"😀".repeat(256)).is_err());
+        // 256 characters of a 4-byte script are exactly the 1,024-byte cap.
+        assert!(validate_password(&"😀".repeat(256)).is_ok());
+        assert!(validate_password(&"😀".repeat(257)).is_err());
         assert!(validate_password("a normal passphrase").is_ok());
     }
 

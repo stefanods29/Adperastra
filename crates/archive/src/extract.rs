@@ -170,6 +170,12 @@ pub fn extract_with_options(
     options: &crate::read_options::ArchiveReadOptions,
 ) -> Result<ExtractReport, ArchiveError> {
     let format = crate::format::detect_format(path)?;
+    if options.password.is_none() && matches!(format, ArchiveFormat::Zip | ArchiveFormat::SevenZ) {
+        let listing = crate::list::list_with_options(path, limits, token, &mut |_| {}, options)?;
+        if crate::secure_extract::has_selected_encrypted(&listing, request) {
+            return Err(ArchiveError::PasswordRequired);
+        }
+    }
     if crate::secure_extract::needs_secure_route(format, options) {
         crate::secure_extract::extract_with_options(path, request, limits, token, events, options)
     } else {

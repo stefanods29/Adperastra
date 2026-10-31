@@ -20,7 +20,7 @@ export function validateReviewScope(argv) {
   if (!/^\d{2,5}$/.test(port ?? "")) throw new Error("the first argument must be the debugging port");
   if (!demo) throw new Error("the demo folder is required");
   const base = resolve(demo);
-  if (!/(^|[\\/])adperastra-review-06e-[0-9a-f]+$/i.test(base)) {
+  if (!/[\\/]Temp[\\/]adperastra-review-06e-[0-9a-f]+$/i.test(base)) {
     throw new Error("the demo folder must be a fresh adperastra-review-06e-* folder");
   }
   if (output && !isAbsolute(output)) throw new Error("the result file must be an absolute path");

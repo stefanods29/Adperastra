@@ -80,6 +80,8 @@ retained folder, no signing or installer).
 
 ## Decisions and plan changes made during the step
 
+**Checked with the full gate after the worker finished (2026-10-31): 406 Rust tests and 487 UI tests pass.** The first run had 29 failures, which the worker could not see because it does not run tests. Fixed: KI-83 (the new folder pin never worked), KI-84 (wrong and missing passwords), KI-85 (RAR records with no size); request-id errors now return a code, the spool folder creates its base, and the review runner only accepts a folder under Temp. Corrected tests, each still checking its rule: the 1,024-byte password edge (256 and 257 emoji), the resolved path comparison, files-only encryption, the 7z cycle power in the low 6 bits, the password at the runner boundary (`feed_stdin` adds the newline), awaiting job completion in the service test, the order of the rejected-creation test, the optional password argument, and the guide's new "needs a password" wording.
+
 The guide was corrected only where the pinned APIs differ from its text, in
 `docs(plan): correct step 06e API names and helpers [step-06e/plan]`:
 
