@@ -232,7 +232,17 @@
     "animationsFull": "[Füll ~~]",
     "animationsReduced": "[Rëdüçëd ~~~]",
     "animationsOff": "[Øff ~~]",
-    "animationsNote": "[Whëñ Wïñdøws ïs sët tø shøw fëwër äñïmätïøñs, thë äpp älwäÿs følløws ït. ~~~~~~~~~~~~~~~~~~~~~~~~]"
+    "animationsNote": "[Whëñ Wïñdøws ïs sët tø shøw fëwër äñïmätïøñs, thë äpp älwäÿs følløws ït. ~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "search": "[Fïñd ä sëttïñg ~~~~~]",
+    "noResults": "[Ñø sëttïñgs mätçh ÿøür sëärçh. ~~~~~~~~~~]",
+    "sections": "[Sëçtïøñs ~~~~]",
+    "resetSection": "[Rësët tø dëfäült ~~~~~~]",
+    "resetAll": "[Rësët äll sëttïñgs… ~~~~~~~]",
+    "resetAllTitle": "[Rësët äll sëttïñgs? ~~~~~~~]",
+    "resetAllBody": "[Ëvërÿ sëttïñg gøës bäçk tø ïts dëfäült, ëxçëpt ÿøür läñgüägë äñd ÿøür sävëd läÿøüt prësëts. Ÿøür fïlës ärë ñøt çhäñgëd. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "resetConfirm": "[Rësët ~~]",
+    "sectionWasReset": "[{name} ïs bäçk tø ïts dëfäült sëttïñgs. ~~~~~~~~~~~]",
+    "allWereReset": "[Äll sëttïñgs ärë bäçk tø thëïr dëfäülts. ~~~~~~~~~~~~~~]"
   },
   "gallery": {
     "title": "[Gällërÿ ~~~]",

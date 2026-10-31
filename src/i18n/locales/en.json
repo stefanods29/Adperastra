@@ -232,7 +232,17 @@
     "animationsFull": "Full",
     "animationsReduced": "Reduced",
     "animationsOff": "Off",
-    "animationsNote": "When Windows is set to show fewer animations, the app always follows it."
+    "animationsNote": "When Windows is set to show fewer animations, the app always follows it.",
+    "search": "Find a setting",
+    "noResults": "No settings match your search.",
+    "sections": "Sections",
+    "resetSection": "Reset to default",
+    "resetAll": "Reset all settings…",
+    "resetAllTitle": "Reset all settings?",
+    "resetAllBody": "Every setting goes back to its default, except your language and your saved layout presets. Your files are not changed.",
+    "resetConfirm": "Reset",
+    "sectionWasReset": "{name} is back to its default settings.",
+    "allWereReset": "All settings are back to their defaults."
   },
   "gallery": {
     "title": "Gallery",

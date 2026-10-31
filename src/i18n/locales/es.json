@@ -232,7 +232,17 @@
     "animationsFull": "Completas",
     "animationsReduced": "Reducidas",
     "animationsOff": "Desactivadas",
-    "animationsNote": "Cuando Windows está configurado para mostrar menos animaciones, la aplicación siempre lo respeta."
+    "animationsNote": "Cuando Windows está configurado para mostrar menos animaciones, la aplicación siempre lo respeta.",
+    "search": "Buscar una opción",
+    "noResults": "Ninguna opción coincide con tu búsqueda.",
+    "sections": "Secciones",
+    "resetSection": "Restablecer valores predeterminados",
+    "resetAll": "Restablecer toda la configuración…",
+    "resetAllTitle": "¿Restablecer toda la configuración?",
+    "resetAllBody": "Todas las opciones vuelven a sus valores predeterminados, excepto el idioma y tus diseños guardados. Tus archivos no cambian.",
+    "resetConfirm": "Restablecer",
+    "sectionWasReset": "{name} volvió a sus valores predeterminados.",
+    "allWereReset": "Toda la configuración volvió a sus valores predeterminados."
   },
   "gallery": {
     "title": "Galería",
