@@ -827,5 +827,84 @@
     "dark": "Adperastra dark",
     "amoled": "AMOLED black",
     "highContrast": "High contrast"
+  },
+  "templates": {
+    "letter": {
+      "name": "Letter",
+      "description": "A simple letter with your address and the recipient's.",
+      "yourName": "[Your name]",
+      "yourAddress": "[Your address]",
+      "date": "[Date]",
+      "recipientName": "[Recipient's name]",
+      "recipientAddress": "[Recipient's address]",
+      "greeting": "Dear [name],",
+      "body": "Write your letter here.",
+      "closing": "Kind regards,"
+    },
+    "report": {
+      "name": "Report",
+      "description": "A report with a title page heading and four sections.",
+      "title": "Report title",
+      "byline": "[Author] · [Date]",
+      "summary": "Summary",
+      "introduction": "Introduction",
+      "findings": "Findings",
+      "conclusions": "Conclusions",
+      "placeholder": "Write here."
+    },
+    "budget": {
+      "name": "Budget",
+      "description": "Planned and actual spending by category, with totals.",
+      "sheet": "Budget",
+      "category": "Category",
+      "planned": "Planned",
+      "actual": "Actual",
+      "difference": "Difference",
+      "total": "Total",
+      "housing": "Housing",
+      "food": "Food",
+      "transport": "Transport",
+      "utilities": "Utilities",
+      "other": "Other"
+    },
+    "invoice": {
+      "name": "Invoice",
+      "description": "An invoice that adds up its lines, tax and total.",
+      "sheet": "Invoice",
+      "title": "Invoice",
+      "number": "Invoice number",
+      "date": "Date",
+      "billTo": "Bill to",
+      "description2": "Description",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "amount": "Amount",
+      "subtotal": "Subtotal",
+      "tax": "Tax",
+      "total": "Total"
+    },
+    "meeting": {
+      "name": "Meeting notes",
+      "description": "Date, attendees, agenda, notes and action items.",
+      "title": "Meeting notes",
+      "date": "Date",
+      "attendees": "Attendees",
+      "agenda": "Agenda",
+      "notes": "Notes",
+      "actions": "Action items",
+      "actionItem": "Task, person, due date"
+    },
+    "presentation": {
+      "name": "Simple presentation",
+      "description": "A title slide, an agenda and a closing slide.",
+      "title": "Presentation title",
+      "byline": "[Your name] · [Date]",
+      "agenda": "Agenda",
+      "topic1": "First topic",
+      "topic2": "Second topic",
+      "topic3": "Third topic",
+      "thanks": "Thank you",
+      "questions": "Questions?"
+    }
   }
 }

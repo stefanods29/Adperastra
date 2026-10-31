@@ -827,5 +827,84 @@
     "dark": "[Ädpërästrä därk ~~~~~~]",
     "amoled": "[ÄMØLËD bläçk ~~~~~]",
     "highContrast": "[Hïgh çøñträst ~~~~~]"
+  },
+  "templates": {
+    "letter": {
+      "name": "[Lëttër ~~~]",
+      "description": "[Ä sïmplë lëttër wïth ÿøür äddrëss äñd thë rëçïpïëñt's. ~~~~~~~~~~~~~~~~~~]",
+      "yourName": "[[Ÿøür ñämë] ~~~~]",
+      "yourAddress": "[[Ÿøür äddrëss] ~~~~~]",
+      "date": "[[Dätë] ~~]",
+      "recipientName": "[[Rëçïpïëñt's ñämë] ~~~~~~]",
+      "recipientAddress": "[[Rëçïpïëñt's äddrëss] ~~~~~~~]",
+      "greeting": "[Dëär [ñämë], ~~~~]",
+      "body": "[Wrïtë ÿøür lëttër hërë. ~~~~~~~~]",
+      "closing": "[Kïñd rëgärds, ~~~~~]"
+    },
+    "report": {
+      "name": "[Rëpørt ~~~]",
+      "description": "[Ä rëpørt wïth ä tïtlë pägë hëädïñg äñd føür sëçtïøñs. ~~~~~~~~~~~~~~~~~~]",
+      "title": "[Rëpørt tïtlë ~~~~~]",
+      "byline": "[[Äüthør] · [Dätë] ~~~~]",
+      "summary": "[Sümmärÿ ~~~]",
+      "introduction": "[Ïñtrødüçtïøñ ~~~~~]",
+      "findings": "[Fïñdïñgs ~~~~]",
+      "conclusions": "[Çøñçlüsïøñs ~~~~~]",
+      "placeholder": "[Wrïtë hërë. ~~~~]"
+    },
+    "budget": {
+      "name": "[Büdgët ~~~]",
+      "description": "[Pläññëd äñd äçtüäl spëñdïñg bÿ çätëgørÿ, wïth tøtäls. ~~~~~~~~~~~~~~~~~~]",
+      "sheet": "[Büdgët ~~~]",
+      "category": "[Çätëgørÿ ~~~~]",
+      "planned": "[Pläññëd ~~~]",
+      "actual": "[Äçtüäl ~~~]",
+      "difference": "[Dïffërëñçë ~~~~]",
+      "total": "[Tøtäl ~~]",
+      "housing": "[Høüsïñg ~~~]",
+      "food": "[Føød ~~]",
+      "transport": "[Träñspørt ~~~~]",
+      "utilities": "[Ütïlïtïës ~~~~]",
+      "other": "[Øthër ~~]"
+    },
+    "invoice": {
+      "name": "[Ïñvøïçë ~~~]",
+      "description": "[Äñ ïñvøïçë thät ädds üp ïts lïñës, täx äñd tøtäl. ~~~~~~~~~~~~~~~~]",
+      "sheet": "[Ïñvøïçë ~~~]",
+      "title": "[Ïñvøïçë ~~~]",
+      "number": "[Ïñvøïçë ñümbër ~~~~~~]",
+      "date": "[Dätë ~~]",
+      "billTo": "[Bïll tø ~~~]",
+      "description2": "[Dësçrïptïøñ ~~~~~]",
+      "quantity": "[Qüäñtïtÿ ~~~~]",
+      "unitPrice": "[Üñït prïçë ~~~~]",
+      "amount": "[Ämøüñt ~~~]",
+      "subtotal": "[Sübtøtäl ~~~~]",
+      "tax": "[Täx ~~]",
+      "total": "[Tøtäl ~~]"
+    },
+    "meeting": {
+      "name": "[Mëëtïñg ñøtës ~~~~~]",
+      "description": "[Dätë, ättëñdëës, ägëñdä, ñøtës äñd äçtïøñ ïtëms. ~~~~~~~~~~~~~~~~]",
+      "title": "[Mëëtïñg ñøtës ~~~~~]",
+      "date": "[Dätë ~~]",
+      "attendees": "[Ättëñdëës ~~~~]",
+      "agenda": "[Ägëñdä ~~~]",
+      "notes": "[Ñøtës ~~]",
+      "actions": "[Äçtïøñ ïtëms ~~~~~]",
+      "actionItem": "[Täsk, përsøñ, düë dätë ~~~~~~~]"
+    },
+    "presentation": {
+      "name": "[Sïmplë prësëñtätïøñ ~~~~~~~~]",
+      "description": "[Ä tïtlë slïdë, äñ ägëñdä äñd ä çløsïñg slïdë. ~~~~~~~~~~~~~~]",
+      "title": "[Prësëñtätïøñ tïtlë ~~~~~~~]",
+      "byline": "[[Ÿøür ñämë] · [Dätë] ~~~~~]",
+      "agenda": "[Ägëñdä ~~~]",
+      "topic1": "[Fïrst tøpïç ~~~~]",
+      "topic2": "[Sëçøñd tøpïç ~~~~~]",
+      "topic3": "[Thïrd tøpïç ~~~~]",
+      "thanks": "[Thäñk ÿøü ~~~~]",
+      "questions": "[Qüëstïøñs? ~~~~]"
+    }
   }
 }
