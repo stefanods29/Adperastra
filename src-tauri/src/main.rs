@@ -43,7 +43,7 @@ mod transfer_history;
 mod versions;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 10;
+pub const CURRENT_SCHEMA: u32 = 11;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -434,6 +434,31 @@ impl Default for VersionSettings {
     }
 }
 
+/// Longest My templates folder path the settings accept, in characters
+/// (schema 11, Step 06c).
+pub const MAX_TEMPLATE_FOLDER_CHARS: usize = 1024;
+
+fn default_my_folder() -> String {
+    String::new()
+}
+
+/// The folder the user keeps their own file templates in (schema 11,
+/// Step 06c).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TemplateSettings {
+    /// Empty when no folder is chosen; otherwise an absolute path.
+    #[serde(default = "default_my_folder")]
+    pub my_folder: String,
+}
+
+impl Default for TemplateSettings {
+    fn default() -> Self {
+        Self {
+            my_folder: default_my_folder(),
+        }
+    }
+}
+
 fn default_paste_image_format() -> String {
     "png".to_string()
 }
@@ -509,6 +534,8 @@ pub struct Settings {
     pub appearance: AppearanceSettings,
     #[serde(default)]
     pub versions: VersionSettings,
+    #[serde(default)]
+    pub templates: TemplateSettings,
 }
 
 impl Default for Settings {
@@ -523,6 +550,7 @@ impl Default for Settings {
             layout: LayoutSettings::default(),
             appearance: AppearanceSettings::default(),
             versions: VersionSettings::default(),
+            templates: TemplateSettings::default(),
         }
     }
 }
@@ -686,6 +714,19 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             settings.versions.max_mb
         )));
     }
+    if !settings.templates.my_folder.is_empty() {
+        if settings.templates.my_folder.chars().count() > MAX_TEMPLATE_FOLDER_CHARS {
+            return Err(AppError::Validation(format!(
+                "templates.my_folder is longer than {MAX_TEMPLATE_FOLDER_CHARS} characters"
+            )));
+        }
+        validate_absolute_path(&settings.templates.my_folder).map_err(|_| {
+            AppError::Validation(format!(
+                "templates.my_folder {:?} is not an absolute path",
+                settings.templates.my_folder
+            ))
+        })?;
+    }
     if !matches!(settings.files.paste_image_format.as_str(), "png" | "jpg") {
         return Err(AppError::Validation(format!(
             "unsupported paste_image_format {:?} (expected png or jpg)",
@@ -840,6 +881,7 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         layout: LayoutSettings::default(),
         appearance: AppearanceSettings::default(),
         versions: VersionSettings::default(),
+        templates: TemplateSettings::default(),
     }
 }
 
@@ -910,7 +952,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
-            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) => {
+            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) => {
                 Ok(migrate_keep_known(value.clone()))
             }
             Some(3) => Ok(migrate_v3(value.clone())),
@@ -3061,7 +3103,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 10);
+        assert_eq!(settings.schema_version, 11);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -3365,6 +3407,41 @@ mod tests {
         assert_eq!(settings.appearance.density, "compact");
         assert_eq!(settings.appearance.ui_scale, 125);
         assert_eq!(settings.versions, VersionSettings::default());
+    }
+
+    #[test]
+    fn settings_v10_migrates_to_v11_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 10,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "versions": { "enabled": true, "keep_days": 90, "max_mb": 1024 }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.versions.keep_days, 90);
+        assert_eq!(settings.templates.my_folder, "");
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_templates_folder() {
+        let mut relative = Settings::default();
+        relative.templates.my_folder = r"relative\folder".to_string();
+        assert!(validate(&relative).is_err());
+
+        let mut too_long = Settings::default();
+        too_long.templates.my_folder = "a".repeat(1025);
+        assert!(validate(&too_long).is_err());
+
+        let mut empty = Settings::default();
+        empty.templates.my_folder = String::new();
+        assert!(validate(&empty).is_ok());
+
+        let mut good = Settings::default();
+        good.templates.my_folder = r"C:\Users\Ana\Templates".to_string();
+        assert!(validate(&good).is_ok());
     }
 
     #[test]

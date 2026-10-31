@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
 
-export const SETTINGS_SCHEMA_VERSION = 10;
+export const SETTINGS_SCHEMA_VERSION = 11;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -238,6 +238,16 @@ export interface VersionSettings {
   max_mb: MaxVersionsMb;
 }
 
+/** Longest My templates folder path, in characters (schema 11, Step 06c). */
+export const MAX_TEMPLATE_FOLDER_CHARS = 1024;
+
+/** The folder the user keeps their own file templates in (schema 11,
+ * Step 06c). */
+export interface TemplateSettings {
+  /** Empty when no folder is chosen. */
+  my_folder: string;
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
@@ -248,6 +258,7 @@ export interface AppSettings {
   layout: LayoutSettings;
   appearance: AppearanceSettings;
   versions: VersionSettings;
+  templates: TemplateSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -302,6 +313,9 @@ export function defaultSettings(): AppSettings {
       keep_days: 30,
       max_mb: 1024,
     },
+    templates: {
+      my_folder: "",
+    },
   };
 }
 
@@ -339,6 +353,17 @@ function normalizeOpenWith(value: unknown): Record<string, OpenWith> {
     }
   }
   return result;
+}
+
+/** A drive path (`C:\`) or a UNC path (`\\server`), like the Rust check. */
+const TEMPLATE_FOLDER_RE = /^(?:[A-Za-z]:\\|\\\\)/;
+
+/** An empty folder or an absolute Windows path of at most
+ * `MAX_TEMPLATE_FOLDER_CHARS` characters; anything else is no folder. */
+function normalizeTemplateFolder(value: unknown): string {
+  if (typeof value !== "string" || value === "") return "";
+  if (Array.from(value).length > MAX_TEMPLATE_FOLDER_CHARS) return "";
+  return TEMPLATE_FOLDER_RE.test(value) ? value : "";
 }
 
 /** The first `MAX_LAYOUT_NAME` code points of a name, trimmed at both ends. */
@@ -400,6 +425,7 @@ export function normalizeSettings(input: unknown): AppSettings {
   const openInput = isRecord(input.open) ? input.open : {};
   const appearanceInput = isRecord(input.appearance) ? input.appearance : {};
   const versionsInput = isRecord(input.versions) ? input.versions : {};
+  const templatesInput = isRecord(input.templates) ? input.templates : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
@@ -456,6 +482,9 @@ export function normalizeSettings(input: unknown): AppSettings {
       enabled: flag(versionsInput.enabled, defaults.versions.enabled),
       keep_days: pickNumber(versionsInput.keep_days, KEEP_DAYS, defaults.versions.keep_days),
       max_mb: pickNumber(versionsInput.max_mb, MAX_VERSIONS_MB, defaults.versions.max_mb),
+    },
+    templates: {
+      my_folder: normalizeTemplateFolder(templatesInput.my_folder),
     },
   };
 }

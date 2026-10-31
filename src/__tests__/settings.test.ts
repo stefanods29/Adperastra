@@ -32,6 +32,7 @@ describe("normalizeSettings", () => {
       layout: defaultSettings().layout,
       appearance: defaultSettings().appearance,
       versions: defaultSettings().versions,
+      templates: defaultSettings().templates,
     });
   });
 
@@ -53,8 +54,9 @@ describe("normalizeSettings", () => {
       column_preview: true,
     });
     expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
-    expect(defaultSettings().schema_version).toBe(10);
+    expect(defaultSettings().schema_version).toBe(11);
     expect(defaultSettings().versions).toEqual({ enabled: true, keep_days: 30, max_mb: 1024 });
+    expect(defaultSettings().templates).toEqual({ my_folder: "" });
     expect(defaultSettings().files.paste_image_format).toBe("png");
     expect(normalizeSettings({ files: { paste_image_format: "jpg" } }).files.paste_image_format).toBe("jpg");
     expect(normalizeSettings({ files: { paste_image_format: "gif" } }).files.paste_image_format).toBe("png");
@@ -216,6 +218,15 @@ describe("normalizeSettings", () => {
     expect(versions({ keep_days: 14 }).keep_days).toBe(30);
     expect(versions({ max_mb: 256 }).max_mb).toBe(256);
     expect(versions({ max_mb: 3000 }).max_mb).toBe(1024);
+  });
+
+  it("normalizes the templates folder (schema 11)", () => {
+    const folder = (input: Record<string, unknown>) => normalizeSettings({ templates: input }).templates.my_folder;
+    expect(folder({})).toBe("");
+    expect(folder({ my_folder: "C:\\T" })).toBe("C:\\T");
+    expect(folder({ my_folder: "\\\\srv\\share\\T" })).toBe("\\\\srv\\share\\T");
+    expect(folder({ my_folder: "relative" })).toBe("");
+    expect(folder({ my_folder: 5 })).toBe("");
   });
 
   it("clampColumnWidth rounds and keeps the limits", () => {
