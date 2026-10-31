@@ -847,7 +847,10 @@
       "tar_gz": "TAR archive (gzip)",
       "tar_xz": "TAR archive (xz)",
       "gz": "gzip file",
-      "xz": "xz file"
+      "xz": "xz file",
+      "bz2": "bzip2 file",
+      "tar_bz2": "TAR archive (bzip2)",
+      "rar": "RAR archive"
     }
   },
   "hex": {

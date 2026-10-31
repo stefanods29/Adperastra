@@ -80,6 +80,18 @@ pub fn plan_extract(
     facts: ArchiveFacts,
     limits: &Limits,
 ) -> Result<ExtractPlan, ArchiveError> {
+    plan_extract_with_options(listing, request, facts, limits, false)
+}
+
+/// The same plan, with encrypted entries allowed only when the caller says
+/// so explicitly (Step 06e D11). Without that, old behavior is unchanged.
+pub fn plan_extract_with_options(
+    listing: &Listing,
+    request: &ExtractRequest,
+    facts: ArchiveFacts,
+    limits: &Limits,
+    allow_encrypted: bool,
+) -> Result<ExtractPlan, ArchiveError> {
     if facts.size != request.expected_size
         || (request.expected_modified != 0 && request.expected_modified != facts.modified_unix)
     {
@@ -116,7 +128,7 @@ pub fn plan_extract(
         if entry.kind != EntryKind::File {
             return Err(ArchiveError::NotAFile);
         }
-        if entry.encrypted {
+        if entry.encrypted && !allow_encrypted {
             return Err(ArchiveError::PasswordRequired);
         }
     }
@@ -153,10 +165,12 @@ pub fn plan_extract(
                 path: entry.path.clone(),
                 reason: "link_entry".to_string(),
             }),
-            EntryKind::File if entry.encrypted => plan.skipped.push(SkippedEntry {
-                path: entry.path.clone(),
-                reason: "password_required".to_string(),
-            }),
+            EntryKind::File if entry.encrypted && !allow_encrypted => {
+                plan.skipped.push(SkippedEntry {
+                    path: entry.path.clone(),
+                    reason: "password_required".to_string(),
+                })
+            }
             EntryKind::File => plan.files.push(planned),
         }
     }

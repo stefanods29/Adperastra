@@ -847,7 +847,10 @@
       "tar_gz": "[TÄR ärçhïvë (gzïp) ~~~~~~]",
       "tar_xz": "[TÄR ärçhïvë (xz) ~~~~~]",
       "gz": "[gzïp fïlë ~~~~]",
-      "xz": "[xz fïlë ~~~]"
+      "xz": "[xz fïlë ~~~]",
+      "bz2": "[bzïp2 fïlë ~~~~]",
+      "tar_bz2": "[TÄR ärçhïvë (bzïp2) ~~~~~~]",
+      "rar": "[RÄR ärçhïvë ~~~~]"
     }
   },
   "hex": {

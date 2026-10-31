@@ -8,7 +8,17 @@ import { isTauriRuntime } from "./settings";
  * src-tauri/src/archive.rs. All archive bytes are read by the Rust side's
  * separate helper process; this file only asks for pages of results. */
 
-export type ArchiveFormatId = "zip" | "seven_z" | "tar" | "tar_gz" | "tar_xz" | "gz" | "xz";
+export type ArchiveFormatId =
+  | "zip"
+  | "seven_z"
+  | "tar"
+  | "tar_gz"
+  | "tar_xz"
+  | "gz"
+  | "xz"
+  | "bz2"
+  | "tar_bz2"
+  | "rar";
 
 export type ArchiveEntryKind = "file" | "folder" | "link";
 

@@ -28,6 +28,7 @@ pub(crate) fn list_stream(
     let file = File::open(path)?;
     let mut decoder: Box<dyn Read> = match format {
         ArchiveFormat::Gz => Box::new(flate2::read::MultiGzDecoder::new(BufReader::new(file))),
+        ArchiveFormat::Bz2 => Box::new(crate::read_bzip2::decoder(file)),
         _ => Box::new(lzma_rust2::XzReader::new_mem_limit(
             BufReader::new(file),
             true,
