@@ -62,8 +62,8 @@ Versions and licenses checked on 2026-10-29. Each step's guide confirms the vers
 | flate2 | 1.1 | MIT OR Apache-2.0 | 06d | .tar.gz, .gz | `read::MultiGzDecoder::new`, `write::GzEncoder::new(w, Compression::default())` (checked on docs.rs 1.1.0) |
 | lzma-rust2 | 0.22 (default features off; `std`, `xz`; tests also `encoder`) | Apache-2.0 | 06d | .tar.xz, .xz | Pure Rust, already used by sevenz-rust2 0.24; replaces the earlier plan for `liblzma` (C code whose default build needs bindgen). Needs Rust 1.85. `XzReader::new_mem_limit(inner, allow_multiple_streams, mem_limit_kb)` returns the reader; `XzWriter::new(inner, XzOptions::default())`, `finish` (checked on docs.rs 0.22.0) |
 | bzip2 | 0.6 | MIT OR Apache-2.0 (its default backend `libbz2-rs-sys` is "bzip2-1.0.6") | 06e | .tar.bz2, .bz2, bzip2 inside zip and 7z | The owner allowed the "bzip2-1.0.6" license on 2026-10-29 (`plan/rules.md` R-LIC-1). Default backend `libbz2-rs-sys` (pure Rust, Rust 1.82); `read::BzDecoder`, `read::MultiBzDecoder`, `write::BzEncoder::new(w, Compression::default())` (checked on docs.rs 0.6.0). 06e also turns on the `bzip2` features of zip and sevenz-rust2; record `libbz2-rs-sys` (bzip2-1.0.6) in `THIRD_PARTY_LICENSES.md` |
-| csv | 1.4 | Unlicense OR MIT | 06f | CSV and TSV tables | |
-| ttf-parser | 0.25 | MIT OR Apache-2.0 | 06f | Font names and character map | |
+| csv | 1.4 | Unlicense OR MIT | 06f | CSV and TSV tables | Needs Rust 1.73. Checked at 1.4.0: `ReaderBuilder::new`, `delimiter`, `has_headers`, `flexible`, `from_reader`, `read_byte_record` |
+| ttf-parser | 0.25 (default features off; `std`) | MIT OR Apache-2.0 | 06f | Font names and character map, in the font helper only | Needs Rust 1.63. Checked at 0.25.1: `Face::parse`, `names`, `fonts_in_collection`, `tables().cmap`, `Subtable::codepoints`, `Subtable::is_unicode`, `Name::to_string`, `Name::language`, `is_italic`, `is_monospaced`, `weight`, `number_of_glyphs` |
 | image | 0.25 (formats png, jpeg, gif, webp, bmp, tiff, ico) | MIT OR Apache-2.0 | 08a | Image conversion | AVIF output decided in the 08a guide |
 | resvg | 0.49 | Apache-2.0 OR MIT | 08a | SVG to PNG | |
 | little_exif | 0.6 | MIT OR Apache-2.0 | 08a, 08c | Keeping and removing EXIF | |
@@ -77,7 +77,7 @@ Versions and licenses checked on 2026-10-29. Each step's guide confirms the vers
 | foliate-js | 1.0.1 | MIT | 07f | E-books (EPUB, MOBI, AZW3) | |
 | pdf-lib | 1.17.1 | MIT | 08b | Pictures to PDF | |
 | docx, exceljs, pptxgenjs | 9.15.0, 4.4.0, 4.0.1 | MIT | 06c | Building the Office templates (development only, by a script) | Checked for the 06c guide: docx is ESM (`Document` needs `sections` with `children`; `HeadingLevel` is a constant object; `Packer.toBuffer`); exceljs is CommonJS (use the default import; `xlsx.writeBuffer`); pptxgenjs default import, `layout` "LAYOUT_WIDE", `write({ outputType: "nodebuffer" })` is typed as a union (cast). Node 22.12 or newer (ESM detection for pptxgenjs) |
-| @tanstack/react-table | 9.3.1 | MIT | 06f | CSV table sorting and columns | |
+| @tanstack/react-table | not adopted | MIT | | | 06f sorts and filters in Rust, so a million rows never reach the browser (step 06f, D2) |
 
 Libraries pulled in by the 06d features (record them in `THIRD_PARTY_LICENSES.md` with their parent): `deflate64` (MIT), `ppmd-rust` 1.5 (CC0-1.0 OR MIT-0), `zopfli` (Apache-2.0), `zlib-rs` (Zlib), `zstd` 0.14 (BSD-3-Clause, already present since 06b).
 

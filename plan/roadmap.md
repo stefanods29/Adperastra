@@ -33,7 +33,7 @@ Tags: steps get `v0.<milestone>.<n>-step<id>` (for example `v0.0.7-step04a`); a 
 | 06c | Templates in the New menu | ★★ | 06b | templates | guide |
 | 06d | Archives: open, browse, extract | ★★★ | 06c | 20 archive service, generic job table, first helper process | guide |
 | 06e | Archives: create, passwords, RAR | ★★★ | 06d | 20 | outline |
-| 06f | Tables (CSV), JSON, fonts, hex search | ★★ | 06e | handlers | outline |
+| 06f | Tables (CSV), JSON, fonts, hex search | ★★ | 06e | handlers | guide |
 | 07a | Thumbnails, cache store, helper process, background work v1 | ★★★ | 06f | 15 cache store, helper processes | outline |
 | 07b | Quick preview and rich file info | ★★★ | 07a | 21 metadata service | outline |
 | 07c | Gallery | ★★ | 07b | | outline |
