@@ -11,6 +11,18 @@ that fixed it.
 
 ## Open
 
+### KI-082 - App-owned spool folders are retained, not reclaimed (Minor)
+- **Found in:** Step 06e T9 implementation, 2026-10-31. **Severity:** Minor (no data loss; a full budget refuses new work instead of guessing ownership).
+- **What:** A helper that is killed leaves its `%LOCALAPPDATA%\Adperastra\archive-create\<request-id>` folder (marker plus incomplete `archive.spool`). The parent only removes spool folders it created and can still verify; it does not reclaim abandoned ones at startup. Until the App storage page exists, those bytes stay and can eventually make new creations fail with the translated "another archive is being created" or no-space message.
+- **Workaround:** close the app and delete only the `archive-create` folder under the data folder; it holds no user files.
+- **Target:** Step 12a (App storage) with a verified ownership record and the creation lock; do not delete paths by guess before that.
+
+### KI-081 - RAR runtime is unverified without a separately installed 7-Zip (Minor, pending acceptance)
+- **Found in:** Step 06e T7 implementation, 2026-10-31. **Severity:** Minor while the executable is absent; becomes Major if RAR support is called verified without it.
+- **What:** The read-only adapter, literal re-selection, stdin password transport and layout refusals are covered by fake-process tests. No 7-Zip is installed on this PC, so hidden-child startup, version/switch behavior, UTF-8 password prompting, exact empty-file identity and multipart refusal have not been exercised against the real program. The guide does not name the UTC listing switch; the parser accepts timestamps only with an explicit ` UTC` suffix and otherwise records 0.
+- **Workaround:** open RAR files in the app Windows uses; they remain readable there.
+- **Target:** owner/coordinator runtime check with a current 7-Zip from 7-zip.org before RAR is described as verified. Unknown or unprovable layouts already fail closed.
+
 ### KI-080 - Hex view stays on its error after a later read recovers (Minor)
 - **Found in:** the owner's earlier review note, confirmed during 06f planning, 2026-10-31.
 - **What:** the existing HexView read effect sets failed on rejection but never resets it when another read starts or succeeds. A later valid range can load bytes while the view still renders the old error.
