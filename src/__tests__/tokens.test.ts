@@ -1,6 +1,23 @@
 import { describe, expect, it } from "vitest";
+import amoled from "../../themes/amoled.tokens.json";
+import bright from "../../themes/bright.tokens.json";
 import dark from "../../themes/dark.tokens.json";
+import highContrast from "../../themes/highContrast.tokens.json";
 import light from "../../themes/light.tokens.json";
+import paper from "../../themes/paper.tokens.json";
+
+/** Every token path of a theme file, notes (`_...`) left out. */
+function tokenKeys(value: unknown, path: string[] = []): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => tokenKeys(item, [...path, String(index)]));
+  }
+  if (value !== null && typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !key.startsWith("_"))
+      .flatMap(([key, child]) => tokenKeys(child, [...path, key]));
+  }
+  return [path.join(".")];
+}
 
 describe("design tokens (plan/design-spec.md)", () => {
   it("light surfaces match the spec", () => {
@@ -43,5 +60,16 @@ describe("design tokens (plan/design-spec.md)", () => {
     expect(dark.color.text.primary).not.toBe(light.color.text.primary);
     expect(dark.color.accent.explorer).toBe("#4CC2FF");
     expect(dark.color.accent.explorer).not.toBe(light.color.accent.explorer);
+  });
+
+  it("every theme has the same tokens as the light theme", () => {
+    const expected = tokenKeys(light).sort();
+    for (const theme of [bright, paper, dark, amoled, highContrast]) {
+      expect(tokenKeys(theme).sort()).toEqual(expected);
+    }
+  });
+
+  it("the dark theme writes black on its accent", () => {
+    expect(dark.color.text.onAccent).toBe("#000000");
   });
 });

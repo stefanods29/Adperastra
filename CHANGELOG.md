@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Six built-in themes (Step 05d): Adperastra light (the standard look) with Bright and Paper for light mode, and Adperastra dark with AMOLED black and High contrast for dark mode, each with a small live preview in Settings > Theme. A theme is chosen for Light mode and one for Dark mode; System still follows Windows. Every theme is checked for contrast, and the whole app changes at once.
+- Appearance settings (Step 05d): UI scale from 75 % to 200 %, applied to the whole window and restored at start without a jump; density (Compact, Comfortable, Spacious) that sets the spacing and the height of the rows in every list; corner radius (Square, Standard, Round); and animations (Full, Reduced, Off), which always follow Windows' "show fewer animations" setting.
+- A rebuilt Settings page (Step 05d): a search box that finds sections and the labels inside them, a list of sections to jump to, **Reset to default** for each section and **Reset all settings…**, both with Undo, and **Export settings…** / **Import settings…** through Windows' file dialogs. A replaced settings file goes to the Recycle Bin first, and settings files from older versions are migrated.
+- Help pages for themes and appearance and for the Settings page, in English and Spanish; "Changing language and theme" rewritten (Step 05d).
 - Text, code and Markdown viewers (Step 04b): text files, logs, settings files and source code open in a read-only tab with colors for about 30 languages, search, word wrap, line numbers, zoom and a choice of 12 encodings; files over 10 MB open at once, read-only, in parts of 1 MB. Markdown opens as a formatted page or as its source, and its web and email links ask before opening in the browser or mail app.
 - Ribbons in file tabs: one row of grouped buttons with Alt key tips; the picture viewer's controls moved there and gained Rotate left, Rotate right and Actual size.
 - A search box on file tabs for viewers that can search: Ctrl+F, Enter or F3 for the next match, Shift+Enter or Shift+F3 for the previous one, Esc to clear.
@@ -42,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The dark theme writes black on its accent color instead of white, so the text on accent-colored buttons and rows is easy to read (Step 05d).
 - File tab viewers share a ribbon: the picture viewer's zoom, fit, actual size and rotate controls moved there, and the new text and Markdown viewers use the same frame.
 - The setup window no longer bundles fonts with a license outside the allowed list, and its downloads trust the certificates in the Windows certificate store.
 

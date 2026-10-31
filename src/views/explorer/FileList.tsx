@@ -1,7 +1,8 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Cloud, Link2 } from "lucide-react";
-import { useEffect, useId, useMemo, useRef } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useRowSizes } from "../../appearance/density";
 import type { ExplorerItem, SortKey } from "../../services/explorer";
 import { formatDate, formatSize } from "../../services/format";
 import { displayName } from "../../services/names";
@@ -21,7 +22,6 @@ type Row =
   | { type: "header"; key: string; label: string; count: number }
   | { type: "item"; key: string; item: ExplorerItem; order: number };
 
-const ROW_HEIGHT = 28;
 const HEADER_HEIGHT = 32;
 
 const KEY_MOVES: Record<string, FocusMove> = {
@@ -39,6 +39,7 @@ export default function FileList(props: FileListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const paintedRef = useRef(false);
   const virtual = props.virtual !== false;
+  const { row: rowHeight } = useRowSizes();
 
   const rows = useMemo<Row[]>(() => {
     const out: Row[] = [];
@@ -77,7 +78,7 @@ export default function FileList(props: FileListProps) {
       const move = KEY_MOVES[key];
       if (!move) return null;
       const height = scrollRef.current?.clientHeight ?? 280;
-      const pageSize = Math.max(1, Math.floor(height / ROW_HEIGHT) - 1);
+      const pageSize = Math.max(1, Math.floor(height / rowHeight) - 1);
       return linearMoveTarget(move, current, order.length, pageSize);
     },
     elementForIndex: (index) => {
@@ -87,10 +88,15 @@ export default function FileList(props: FileListProps) {
     },
   });
 
+  // A new function each time the density changes makes the virtualizer
+  // measure its rows again.
+  const getItemKey = useCallback((index: number) => index, [rowHeight]);
+
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index) => (rows[index]?.type === "header" ? HEADER_HEIGHT : ROW_HEIGHT),
+    estimateSize: (index) => (rows[index]?.type === "header" ? HEADER_HEIGHT : rowHeight),
+    getItemKey,
     overscan: 12,
   });
 
@@ -273,7 +279,7 @@ export default function FileList(props: FileListProps) {
               if (!row) return null;
               return renderRow(row, virtualRow.index, {
                 transform: `translateY(${virtualRow.start}px)`,
-                height: row.type === "header" ? HEADER_HEIGHT : ROW_HEIGHT,
+                height: row.type === "header" ? HEADER_HEIGHT : rowHeight,
               });
             })}
           </div>

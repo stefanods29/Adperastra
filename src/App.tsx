@@ -4,6 +4,9 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { CircleHelp, Copy, Home, LayoutGrid, List, Minus, Settings as SettingsIcon, Square, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { applyAppearanceAttributes, applyThemeAttributes } from "./appearance/applyAppearance";
+import { AppearanceContext } from "./appearance/density";
+import { setUiZoom } from "./services/appearance";
 import { LayoutContext } from "./layout/LayoutContext";
 import TabStrip from "./layout/TabStrip";
 import { KeyTipsContext } from "./ribbon/keyTips";
@@ -48,7 +51,7 @@ const SettingsView = lazy(() => import("./views/SettingsView"));
 const SESSION_KEY = "adperastra-session";
 const HELP_SLUGS: Record<TabKind, string> = {
   explorer: "browsing-folders",
-  settings: "changing-language-and-theme",
+  settings: "the-settings-page",
   help: "using-help",
   gallery: "using-help",
   file: "opening-files",
@@ -94,13 +97,13 @@ export default function App() {
   tabsRef.current = tabsState;
 
   const applyVisual = useCallback(async (next: AppSettings) => {
-    const resolved =
-      next.theme.mode === "system"
-        ? window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light"
-        : next.theme.mode;
-    document.documentElement.dataset.theme = resolved;
+    applyThemeAttributes(
+      document.documentElement,
+      next.theme,
+      window.matchMedia("(prefers-color-scheme: dark)").matches,
+    );
+    applyAppearanceAttributes(document.documentElement, next.appearance);
+    void setUiZoom(next.appearance.ui_scale).catch(() => undefined);
     await applyLanguage(next.language);
     let accent = "var(--adp-accent-explorer)";
     if (next.theme.accent_source === "custom") {
@@ -385,6 +388,7 @@ export default function App() {
             : Home;
 
   return (
+    <AppearanceContext.Provider value={settings.appearance.density}>
     <LayoutContext.Provider value={layoutValue}>
     <div className="adp-shell">
       <header className="adp-titlebar" data-tauri-drag-region="">
@@ -522,7 +526,7 @@ export default function App() {
           <Suspense fallback={null}><SettingsView
             settings={settings}
             onApply={applySettings}
-            onOpenHelp={() => openTab("help", "changing-language-and-theme")}
+            onOpenHelp={() => openTab("help", "the-settings-page")}
             onOpenHelpPage={(slug) => openTab("help", slug)}
           /></Suspense>
         ) : null}
@@ -578,5 +582,6 @@ export default function App() {
       </footer>
     </div>
     </LayoutContext.Provider>
+    </AppearanceContext.Provider>
   );
 }

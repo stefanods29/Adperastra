@@ -291,18 +291,21 @@ mod imp {
             let path = wide_path(target);
             let chars = &path[..path.len() - 1];
             let offset = std::mem::offset_of!(FILE_RENAME_INFO, FileName);
-            let bytes = offset + chars.len() * 2;
+            // Windows reads the name up to a terminating zero, whatever
+            // FileNameLength says, so the zero must be inside the buffer.
+            let bytes = offset + path.len() * 2;
             // u64 backing ensures the Windows structure is suitably aligned.
             let mut storage = vec![0u64; bytes.div_ceil(8)];
             let info = storage.as_mut_ptr().cast::<FILE_RENAME_INFO>();
             // SAFETY: the allocation is aligned and large enough for the
-            // header and filename. Zero sets ReplaceIfExists and RootDirectory.
+            // header and the zero-terminated filename. Zero sets
+            // ReplaceIfExists and RootDirectory.
             unsafe {
                 (*info).FileNameLength = (chars.len() * 2) as u32;
                 std::ptr::copy_nonoverlapping(
-                    chars.as_ptr(),
+                    path.as_ptr(),
                     std::ptr::addr_of_mut!((*info).FileName).cast::<u16>(),
-                    chars.len(),
+                    path.len(),
                 );
                 SetFileInformationByHandle(
                     self.handle(),
@@ -576,6 +579,34 @@ mod imp {
             assert_eq!(std::fs::read(&target).unwrap(), b"other file");
             drop(partial);
             assert_eq!(std::fs::read(&target).unwrap(), b"other file");
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+
+        #[test]
+        fn image_output_gets_exactly_the_chosen_name_at_every_path_length() {
+            let _com = Com::new();
+            let dir = std::env::temp_dir().join(format!(
+                "adp-image-name-{}-{:?}",
+                std::process::id(),
+                std::thread::current().id()
+            ));
+            std::fs::create_dir(&dir).unwrap();
+            for length in 1..=16 {
+                let name = format!("{}.png", "a".repeat(length));
+                let target = dir.join(&name);
+                let mut partial = create_image_partial(&dir, &name).unwrap();
+                use std::io::Write;
+                partial.file.write_all(b"new image").unwrap();
+                partial.publish(&target).unwrap();
+                drop(partial);
+                assert_eq!(std::fs::read(&target).unwrap(), b"new image");
+                let names: Vec<_> = std::fs::read_dir(&dir)
+                    .unwrap()
+                    .map(|entry| entry.unwrap().file_name())
+                    .collect();
+                assert_eq!(names, [std::ffi::OsString::from(&name)]);
+                std::fs::remove_file(&target).unwrap();
+            }
             std::fs::remove_dir_all(dir).unwrap();
         }
 

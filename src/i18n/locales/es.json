@@ -213,7 +213,48 @@
     "placeBottom": "Abajo",
     "placeLeft": "Izquierda",
     "placeRight": "Derecha",
-    "placeHidden": "Oculto"
+    "placeHidden": "Oculto",
+    "general": "General",
+    "appearance": "Apariencia",
+    "lightTheme": "Tema en modo claro",
+    "darkTheme": "Tema en modo oscuro",
+    "uiScale": "Escala de la interfaz",
+    "uiScaleValue": "{value} %",
+    "density": "Densidad",
+    "densityCompact": "Compacta",
+    "densityComfortable": "Cómoda",
+    "densitySpacious": "Amplia",
+    "cornerRadius": "Radio de las esquinas",
+    "radiusSquare": "Cuadradas",
+    "radiusStandard": "Estándar",
+    "radiusRound": "Redondeadas",
+    "animations": "Animaciones",
+    "animationsFull": "Completas",
+    "animationsReduced": "Reducidas",
+    "animationsOff": "Desactivadas",
+    "animationsNote": "Cuando Windows está configurado para mostrar menos animaciones, la aplicación siempre lo respeta.",
+    "search": "Buscar una opción",
+    "noResults": "Ninguna opción coincide con tu búsqueda.",
+    "sections": "Secciones",
+    "resetSection": "Restablecer valores predeterminados",
+    "resetAll": "Restablecer toda la configuración…",
+    "resetAllTitle": "¿Restablecer toda la configuración?",
+    "resetAllBody": "Todas las opciones vuelven a sus valores predeterminados, excepto el idioma y tus diseños guardados. Tus archivos no cambian.",
+    "resetConfirm": "Restablecer",
+    "sectionWasReset": "{name} volvió a sus valores predeterminados.",
+    "allWereReset": "Toda la configuración volvió a sus valores predeterminados.",
+    "backup": "Copia de seguridad y restauración",
+    "export": "Exportar la configuración…",
+    "import": "Importar la configuración…",
+    "exportTitle": "Exportar la configuración",
+    "importTitle": "Importar la configuración",
+    "exportFileName": "Configuración de Adperastra {date}.json",
+    "fileFilter": "Archivos de configuración",
+    "exported": "Se exportó la configuración a {path}.",
+    "importConfirmTitle": "¿Reemplazar tu configuración?",
+    "importConfirmBody": "La configuración del archivo reemplazará la actual. Puedes deshacerlo justo después.",
+    "importConfirm": "Importar",
+    "imported": "Se importó la configuración."
   },
   "gallery": {
     "title": "Galería",
@@ -467,6 +508,20 @@
       "bad_mode": "Esa vista no está disponible.",
       "path_too_long": "La ruta de esta carpeta es demasiado larga para recordar su vista.",
       "other": "No se pudieron cambiar las vistas de carpetas recordadas. Vuelve a intentarlo."
+    },
+    "appearance": {
+      "other": "No se pudo cambiar la escala. Vuelve a intentarlo.",
+      "bad_scale": "Esa escala no está disponible."
+    },
+    "settingsFile": {
+      "other": "No se pudo usar el archivo de configuración. Vuelve a intentarlo.",
+      "bad_request": "Ese nombre de archivo no se puede usar.",
+      "bad_extension": "Los archivos de configuración terminan en .json.",
+      "recycle_failed": "No se pudo mover el archivo anterior a la Papelera de reciclaje, así que no se guardó nada.",
+      "write_failed": "No se pudo guardar el archivo de configuración.",
+      "too_large": "Este archivo es demasiado grande para ser un archivo de configuración.",
+      "invalid": "Este archivo no es un archivo de configuración de Adperastra.",
+      "newer": "Este archivo es de una versión más reciente de Adperastra. Actualiza la aplicación para usarlo."
     }
   },
   "keys": {
@@ -625,5 +680,13 @@
     "toolbarStyle": "Estilo de la barra de herramientas",
     "preset": "Diseño predefinido",
     "menuLabel": "Opciones de la barra de herramientas"
+  },
+  "themes": {
+    "light": "Adperastra claro",
+    "bright": "Luminoso",
+    "paper": "Papel",
+    "dark": "Adperastra oscuro",
+    "amoled": "Negro AMOLED",
+    "highContrast": "Contraste alto"
   }
 }

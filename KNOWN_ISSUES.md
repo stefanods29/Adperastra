@@ -121,6 +121,11 @@ that fixed it.
 
 ## Fixed
 
+### KI-036 - A pasted image could be saved under a garbled name (Blocker, fixed in Step 05d)
+- **Found in:** the Step 05d full gate, 2026-10-30; the code dates from Step 03b. **Severity:** Blocker (wrong file name, a read past a buffer, and a false success report in a normal flow).
+- **What:** ImagePartial::publish gave Windows a file name with no terminating zero. For some path lengths Windows read past the buffer, so the file got extra characters in its name and the conflict check looked at that wrong name. No existing file was overwritten in the failing test, but the image did not reach the name the app reported.
+- **Fix:** the buffer now holds the terminating zero. New test `image_output_gets_exactly_the_chosen_name_at_every_path_length`.
+
 ### KI-031 - Markdown page search could fail on engines without the CSS Custom Highlight API (fixed in Step 04b)
 - **Found in:** Step 04b, 2026-10-30. **Severity:** Minor (only web engines without the CSS Custom Highlight API; the text viewer and the Markdown source view are not affected).
 - **What:** The search box of the Markdown reading view read `CSS.highlights` without first checking that the engine has a `CSS` object. On an older engine without it, typing in the search box threw an error instead of showing results.

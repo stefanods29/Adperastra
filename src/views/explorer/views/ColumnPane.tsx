@@ -1,6 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check } from "lucide-react";
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -10,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useRowSizes } from "../../../appearance/density";
 import Skeleton from "../../../components/Skeleton";
 import type { ExplorerItem } from "../../../services/explorer";
 import { samePath } from "../../../services/explorer";
@@ -18,7 +20,6 @@ import { linearMoveTarget, type FocusMove } from "../../../services/selection";
 import RenameInput from "../RenameInput";
 import { ColumnRowContent } from "./ColumnRow";
 import {
-  COLUMN_ROW_HEIGHT,
   COLUMN_SKELETON_ROWS,
   LISTING_TIMEOUT_MS,
   SKELETON_DELAY_MS,
@@ -74,6 +75,7 @@ export default function ColumnPane(props: ColumnPaneProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const listId = useId();
   const isActive = role === "active";
+  const { row: rowHeight } = useRowSizes();
 
   const cached = useMemo(
     () => columnItems(listing?.items ?? EMPTY_ITEMS, showHidden, groupBy, view.typeLabel, new Date()),
@@ -102,10 +104,15 @@ export default function ColumnPane(props: ColumnPaneProps) {
     return rows.findIndex((item) => samePath(item.path, pathItem));
   }, [role, pathItem, rows]);
 
+  // A new function each time the density changes makes the virtualizer
+  // measure its rows again.
+  const getItemKey = useCallback((index: number) => index, [rowHeight]);
+
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => listRef.current,
-    estimateSize: () => COLUMN_ROW_HEIGHT,
+    estimateSize: () => rowHeight,
+    getItemKey,
     overscan: 8,
   });
 
@@ -146,7 +153,7 @@ export default function ColumnPane(props: ColumnPaneProps) {
       const move = KEY_MOVES[key];
       if (!move) return null;
       const height = listRef.current?.clientHeight ?? 280;
-      const pageSize = Math.max(1, Math.floor(height / COLUMN_ROW_HEIGHT) - 1);
+      const pageSize = Math.max(1, Math.floor(height / rowHeight) - 1);
       return linearMoveTarget(move, current, rows.length, pageSize);
     },
     elementForIndex: (index) => listRef.current?.querySelector(`[data-index="${index}"]`) ?? null,
@@ -273,7 +280,7 @@ export default function ColumnPane(props: ColumnPaneProps) {
                 role="option"
                 aria-selected={isActive ? selected : role === "parent" ? atPath : false}
                 className={className}
-                style={{ transform: `translateY(${virtualRow.start}px)`, height: COLUMN_ROW_HEIGHT }}
+                style={{ transform: `translateY(${virtualRow.start}px)`, height: rowHeight }}
                 data-drop-folder={container ? item.path : undefined}
                 data-drop-name={container ? item.name : undefined}
                 onMouseDown={

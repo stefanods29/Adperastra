@@ -14,3 +14,34 @@
 .adp-defaultapps-list { list-style: none; margin: 0; padding: var(--adp-space-2) var(--adp-space-4) var(--adp-space-4); display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--adp-space-2) var(--adp-space-5); border-top: 1px solid var(--adp-color-border-panel); }
 .adp-defaultapps-item { display: flex; align-items: center; justify-content: space-between; gap: var(--adp-space-3); }
 .adp-defaultapps-ext { font-family: "Cascadia Mono", Consolas, monospace; font-size: var(--adp-font-body); color: var(--adp-color-text-primary); }
+
+/* Theme cards (Step 05d) */
+.adp-theme-cards { display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--adp-space-5); }
+.adp-theme-card { display: flex; flex-direction: column; align-items: stretch; width: 148px; padding: var(--adp-space-2); gap: var(--adp-space-2); background: var(--adp-color-surface-window); border: 1px solid var(--adp-color-border-default); border-radius: var(--adp-radius-lg); color: var(--adp-color-text-primary); font: inherit; cursor: pointer; }
+.adp-theme-card[aria-pressed="true"] { border: 2px solid var(--adp-accent-current); padding: calc(var(--adp-space-2) - 1px); }
+.adp-theme-card:focus-visible { outline: 2px solid var(--adp-accent-current); outline-offset: 2px; }
+.adp-theme-preview { display: grid; grid-template-columns: 28px 1fr; grid-template-rows: 10px 1fr; height: 80px; overflow: hidden; background: var(--adp-color-surface-window); border: 1px solid var(--adp-color-border-default); border-radius: var(--adp-radius-sm); }
+.adp-theme-preview-bar { grid-column: 1 / -1; grid-row: 1; background: var(--adp-color-surface-chrome); }
+.adp-theme-preview-side { grid-column: 1; grid-row: 2; background: var(--adp-color-surface-pane); border-right: 1px solid var(--adp-color-border-default); }
+.adp-theme-preview-main { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; padding: 6px; gap: 4px; }
+.adp-theme-preview-line { height: 4px; width: 80%; background: var(--adp-color-text-primary); border-radius: 2px; }
+.adp-theme-preview-line--short { width: 50%; background: var(--adp-color-text-secondary); }
+.adp-theme-preview-row { height: 10px; background: var(--adp-color-surface-selected-row); border-radius: 2px; }
+.adp-theme-preview-accent { align-self: flex-start; width: 28px; height: 8px; background: var(--adp-accent-explorer); border-radius: 4px; }
+.adp-theme-card-name { font-size: var(--adp-font-body); text-align: center; }
+
+/* The page: search, section list and resets (Step 05d) */
+.adp-settings { max-width: 920px; }
+.adp-settings-search { width: min(360px, 100%); }
+.adp-settings-search .adp-search { width: 100%; height: 32px; }
+.adp-settings-body { display: flex; flex-direction: row; align-items: flex-start; gap: var(--adp-space-8); }
+.adp-settings-nav { display: flex; flex-direction: column; position: sticky; top: 0; width: 180px; flex: none; gap: 2px; }
+.adp-settings-nav-item { display: flex; align-items: center; justify-content: flex-start; height: 32px; padding: 0 var(--adp-space-4); border: none; background: transparent; border-radius: var(--adp-radius-sm); color: var(--adp-color-text-primary); font: inherit; font-size: var(--adp-font-body); text-align: left; cursor: pointer; }
+.adp-settings-nav-item:hover { background: var(--adp-color-surface-selected); }
+.adp-settings-nav-item:focus-visible { outline: 2px solid var(--adp-accent-current); outline-offset: -2px; }
+.adp-settings-content { display: flex; flex-direction: column; flex: 1; min-width: 0; max-width: 640px; gap: var(--adp-space-6); }
+.adp-settings-block { display: flex; flex-direction: column; gap: var(--adp-space-3); }
+.adp-settings-block-actions { display: flex; flex-direction: row; justify-content: flex-end; }
+.adp-settings-notice { display: flex; flex-direction: row; align-items: center; gap: var(--adp-space-3); padding: var(--adp-space-3) var(--adp-space-5); background: var(--adp-accent-light-explorer); border-radius: var(--adp-radius-md); color: var(--adp-color-text-primary); }
+.adp-settings-footer { display: flex; flex-direction: column; align-items: flex-start; gap: var(--adp-space-4); padding-top: var(--adp-space-6); border-top: 1px solid var(--adp-color-border-panel); }
+@media (max-width: 720px) { .adp-settings-nav { display: none; } }

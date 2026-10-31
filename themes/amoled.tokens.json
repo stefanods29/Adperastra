@@ -1,0 +1,100 @@
+{
+  "_note": "AMOLED black: pure black surfaces for OLED screens (Step 05d).",
+  "color": {
+    "surface": {
+      "window": "#000000",
+      "chrome": "#0A0A0A",
+      "pane": "#050505",
+      "sidebar": "#080808",
+      "selected": "#262626",
+      "tabInactive": "#1A1A1A",
+      "header": "#111111",
+      "segmentTrack": "#1A1A1A",
+      "canvasDoc": "#000000",
+      "canvasMedia": "#000000",
+      "selectedRow": "#0E3A5E"
+    },
+    "text": {
+      "primary": "#F5F5F5",
+      "secondary": "#B3B3B3",
+      "tertiary": "#808080",
+      "bodyMuted": "#E0E0E0",
+      "onAccent": "#000000"
+    },
+    "border": {
+      "default": "#262626",
+      "subtle": "#1F1F1F",
+      "panel": "#1A1A1A",
+      "input": "#5C5C5C",
+      "chip": "#3A3A3A"
+    },
+    "accent": {
+      "explorer": "#4CC2FF",
+      "excel": "#107C41",
+      "word": "#185ABD",
+      "pdf": "#E4181F",
+      "image": "#0A8A93",
+      "powerpoint": "#C43E1C",
+      "group": "#7F56D9"
+    },
+    "accentDark": {
+      "excel": "#185C37",
+      "word": "#0F4761"
+    },
+    "accentLight": {
+      "explorer": "rgba(76,194,255,0.18)",
+      "excel": "#E6F2EA",
+      "word": "#EAF1FB",
+      "image": "#DEF3F4",
+      "group": "rgba(127,86,217,0.16)"
+    },
+    "status": {
+      "_note": "Message bars (Step 04c), from the Windows 11 caution colors.",
+      "caution": "#FCE100",
+      "cautionBackground": "#433519"
+    }
+  },
+  "font": {
+    "family": "Inter, system-ui, sans-serif",
+    "size": {
+      "tiny": 9,
+      "caption": 10,
+      "small": 11,
+      "body": 12,
+      "command": 13,
+      "section": 13,
+      "gallerySample": 16
+    }
+  },
+  "radius": {
+    "xs": 2,
+    "sm": 4,
+    "md": 6,
+    "lg": 8,
+    "xl": 10,
+    "pill": 14,
+    "round": 16
+  },
+  "shadow": {
+    "page": "0 2px 10px rgba(0,0,0,.16)",
+    "card": "0 2px 8px rgba(0,0,0,.12)",
+    "segment": "0 1px 3px rgba(0,0,0,.14)",
+    "image": "0 4px 16px rgba(0,0,0,.22)"
+  },
+  "space": [2, 4, 6, 8, 10, 12, 14, 16, 18, 22, 25],
+  "syntax": {
+    "_note": "Code colors for viewers and editors (Step 04b), from the GitHub dark palette.",
+    "keyword": "#FF7B72",
+    "string": "#A5D6FF",
+    "number": "#79C0FF",
+    "comment": "#8B949E",
+    "function": "#D2A8FF",
+    "type": "#FFA657",
+    "tag": "#7EE787",
+    "attribute": "#79C0FF",
+    "property": "#79C0FF",
+    "invalid": "#FFA198",
+    "match": "rgba(187, 128, 9, 0.45)",
+    "matchSelected": "rgba(255, 166, 87, 0.55)"
+  }
+}

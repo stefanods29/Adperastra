@@ -213,7 +213,48 @@
     "placeBottom": "[Bøttøm ~~~]",
     "placeLeft": "[Lëft ~~]",
     "placeRight": "[Rïght ~~]",
-    "placeHidden": "[Hïddëñ ~~~]"
+    "placeHidden": "[Hïddëñ ~~~]",
+    "general": "[Gëñëräl ~~~]",
+    "appearance": "[Äppëäräñçë ~~~~]",
+    "lightTheme": "[Thëmë ïñ lïght mødë ~~~~~~~]",
+    "darkTheme": "[Thëmë ïñ därk mødë ~~~~~~]",
+    "uiScale": "[ÜÏ sçälë ~~~]",
+    "uiScaleValue": "[{value}% ~~]",
+    "density": "[Dëñsïtÿ ~~~]",
+    "densityCompact": "[Çømpäçt ~~~]",
+    "densityComfortable": "[Çømførtäblë ~~~~~]",
+    "densitySpacious": "[Späçïøüs ~~~~]",
+    "cornerRadius": "[Çørñër rädïüs ~~~~~]",
+    "radiusSquare": "[Sqüärë ~~~]",
+    "radiusStandard": "[Stäñdärd ~~~~]",
+    "radiusRound": "[Røüñd ~~]",
+    "animations": "[Äñïmätïøñs ~~~~]",
+    "animationsFull": "[Füll ~~]",
+    "animationsReduced": "[Rëdüçëd ~~~]",
+    "animationsOff": "[Øff ~~]",
+    "animationsNote": "[Whëñ Wïñdøws ïs sët tø shøw fëwër äñïmätïøñs, thë äpp älwäÿs følløws ït. ~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "search": "[Fïñd ä sëttïñg ~~~~~]",
+    "noResults": "[Ñø sëttïñgs mätçh ÿøür sëärçh. ~~~~~~~~~~]",
+    "sections": "[Sëçtïøñs ~~~~]",
+    "resetSection": "[Rësët tø dëfäült ~~~~~~]",
+    "resetAll": "[Rësët äll sëttïñgs… ~~~~~~~]",
+    "resetAllTitle": "[Rësët äll sëttïñgs? ~~~~~~~]",
+    "resetAllBody": "[Ëvërÿ sëttïñg gøës bäçk tø ïts dëfäült, ëxçëpt ÿøür läñgüägë äñd ÿøür sävëd läÿøüt prësëts. Ÿøür fïlës ärë ñøt çhäñgëd. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "resetConfirm": "[Rësët ~~]",
+    "sectionWasReset": "[{name} ïs bäçk tø ïts dëfäült sëttïñgs. ~~~~~~~~~~~]",
+    "allWereReset": "[Äll sëttïñgs ärë bäçk tø thëïr dëfäülts. ~~~~~~~~~~~~~~]",
+    "backup": "[Bäçk üp äñd rëstørë ~~~~~~~]",
+    "export": "[Ëxpørt sëttïñgs… ~~~~~~]",
+    "import": "[Ïmpørt sëttïñgs… ~~~~~~]",
+    "exportTitle": "[Ëxpørt sëttïñgs ~~~~~~]",
+    "importTitle": "[Ïmpørt sëttïñgs ~~~~~~]",
+    "exportFileName": "[Ädpërästrä sëttïñgs {date}.jsøñ ~~~~~~~~~]",
+    "fileFilter": "[Sëttïñgs fïlës ~~~~~~]",
+    "exported": "[Sëttïñgs ëxpørtëd tø {path}. ~~~~~~~~]",
+    "importConfirmTitle": "[Rëpläçë ÿøür sëttïñgs? ~~~~~~~~]",
+    "importConfirmBody": "[Thë sëttïñgs ïñ thë fïlë wïll rëpläçë ÿøür çürrëñt øñës. Ÿøü çäñ üñdø thïs rïght äftër. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "importConfirm": "[Ïmpørt ~~~]",
+    "imported": "[Sëttïñgs ïmpørtëd. ~~~~~~~]"
   },
   "gallery": {
     "title": "[Gällërÿ ~~~]",
@@ -467,6 +508,20 @@
       "bad_mode": "[Thät vïëw ïsñ't äväïläblë. ~~~~~~~~~]",
       "path_too_long": "[Thïs føldër's päth ïs tøø løñg tø rëmëmbër ïts vïëw. ~~~~~~~~~~~~~~~~~]",
       "other": "[Çøüldñ't çhäñgë thë rëmëmbërëd føldër vïëws. Trÿ ägäïñ. ~~~~~~~~~~~~~~~~~~]"
+    },
+    "appearance": {
+      "other": "[Çøüldñ't çhäñgë thë sçälë. Trÿ ägäïñ. ~~~~~~~~~~~~]",
+      "bad_scale": "[Thät sçälë ïsñ't äväïläblë. ~~~~~~~~~]"
+    },
+    "settingsFile": {
+      "other": "[Çøüldñ't üsë thë sëttïñgs fïlë. Trÿ ägäïñ. ~~~~~~~~~~~~~~]",
+      "bad_request": "[Thät fïlë ñämë çäñ't bë üsëd. ~~~~~~~~~]",
+      "bad_extension": "[Sëttïñgs fïlës ëñd ïñ .jsøñ. ~~~~~~~~~]",
+      "recycle_failed": "[Thë øld fïlë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~]",
+      "write_failed": "[Çøüldñ't sävë thë sëttïñgs fïlë. ~~~~~~~~~~~]",
+      "too_large": "[Thïs fïlë ïs tøø lärgë tø bë ä sëttïñgs fïlë. ~~~~~~~~~~~~~~]",
+      "invalid": "[Thïs fïlë ïsñ't äñ Ädpërästrä sëttïñgs fïlë. ~~~~~~~~~~~~~~~]",
+      "newer": "[Thïs fïlë çømës frøm ä ñëwër vërsïøñ øf Ädpërästrä. Üpdätë thë äpp tø üsë ït. ~~~~~~~~~~~~~~~~~~~~~~~~~]"
     }
   },
   "keys": {
@@ -625,5 +680,13 @@
     "toolbarStyle": "[Tøølbär stÿlë ~~~~~]",
     "preset": "[Läÿøüt prësët ~~~~~]",
     "menuLabel": "[Tøølbär øptïøñs ~~~~~~]"
+  },
+  "themes": {
+    "light": "[Ädpërästrä lïght ~~~~~~]",
+    "bright": "[Brïght ~~~]",
+    "paper": "[Päpër ~~]",
+    "dark": "[Ädpërästrä därk ~~~~~~]",
+    "amoled": "[ÄMØLËD bläçk ~~~~~]",
+    "highContrast": "[Hïgh çøñträst ~~~~~]"
   }
 }

@@ -1,9 +1,25 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../components/Button";
+import Dialog from "../components/Dialog";
 import HelpButton from "../components/HelpButton";
-import type { AppSettings, LanguageSetting } from "../services/settings";
+import SearchBox from "../components/SearchBox";
+import { errorText } from "../services/errors";
+import type { AppSettings } from "../services/settings";
+import { exportSettings, importSettings, isoDate } from "../services/settingsFile";
+import AppearanceSettings from "./settings/AppearanceSettings";
+import GeneralSettings from "./settings/GeneralSettings";
 import LayoutSettings from "./settings/LayoutSettings";
 import OpeningFilesSettings from "./settings/OpeningFilesSettings";
+import ThemeSettings from "./settings/ThemeSettings";
+import {
+  SETTINGS_SECTIONS,
+  resetAllSettings,
+  resetSection,
+  sectionMatches,
+  type SettingsSection,
+  type SettingsSectionId,
+} from "./settings/sections";
 import ViewsSettings from "./settings/ViewsSettings";
 
 export interface SettingsViewProps {
@@ -14,27 +30,85 @@ export interface SettingsViewProps {
   onOpenHelpPage: (slug: string) => void;
 }
 
-const LANGUAGES: { id: LanguageSetting; labelKey: string }[] = [
-  { id: "en", labelKey: "settings.languageEnglish" },
-  { id: "es", labelKey: "settings.languageSpanish" },
-  { id: "pseudo", labelKey: "settings.languagePseudo" },
-];
-const MODES = [
-  { id: "system", labelKey: "settings.themeSystem" },
-  { id: "light", labelKey: "settings.themeLight" },
-  { id: "dark", labelKey: "settings.themeDark" },
-] as const;
-const ACCENTS = [
-  { id: "design", labelKey: "settings.accentDesign" },
-  { id: "windows", labelKey: "settings.accentWindows" },
-  { id: "custom", labelKey: "settings.accentCustom" },
-] as const;
+interface UndoState {
+  previous: AppSettings;
+  message: string;
+}
 
 export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelpPage }: SettingsViewProps) {
   const { t } = useTranslation();
-  const patch = (partial: Partial<AppSettings>) => onApply({ ...settings, ...partial });
-  const patchTheme = (partial: Partial<AppSettings["theme"]>) =>
-    onApply({ ...settings, theme: { ...settings.theme, ...partial } });
+  const [query, setQuery] = useState("");
+  const [undo, setUndo] = useState<UndoState | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<AppSettings | null>(null);
+
+  const applyWithUndo = (next: AppSettings, undoMessage: string) => {
+    setMessage(null);
+    setUndo({ previous: settings, message: undoMessage });
+    onApply(next);
+  };
+
+  const showMessage = (text: string) => {
+    setUndo(null);
+    setMessage(text);
+  };
+
+  const exportToFile = async () => {
+    try {
+      const path = await exportSettings(
+        t("settings.exportTitle"),
+        t("settings.exportFileName", { date: isoDate(new Date()) }),
+        t("settings.fileFilter"),
+      );
+      if (path !== null) showMessage(t("settings.exported", { path }));
+    } catch (error) {
+      showMessage(errorText(t, error, "settingsFile"));
+    }
+  };
+
+  const importFromFile = async () => {
+    try {
+      const imported = await importSettings(t("settings.importTitle"), t("settings.fileFilter"));
+      if (imported !== null) setPendingImport(imported);
+    } catch (error) {
+      showMessage(errorText(t, error, "settingsFile"));
+    }
+  };
+
+  const shown = SETTINGS_SECTIONS.filter((section) => sectionMatches(section, query, (key) => t(key)));
+
+  const scrollToSection = (id: SettingsSectionId) => {
+    document.getElementById(`adp-settings-${id}`)?.scrollIntoView?.({ block: "start" });
+  };
+
+  const sectionBody = (section: SettingsSection) => {
+    if (section.id === "general") return <GeneralSettings settings={settings} onApply={onApply} onOpenHelp={onOpenHelpPage} />;
+    if (section.id === "appearance") return <AppearanceSettings settings={settings} onApply={onApply} onOpenHelp={onOpenHelpPage} />;
+    if (section.id === "theme") return <ThemeSettings settings={settings} onApply={onApply} onOpenHelp={onOpenHelpPage} />;
+    if (section.id === "layout") {
+      return (
+        <LayoutSettings
+          layout={settings.layout}
+          detailsPane={settings.explorer.details_pane}
+          onChange={(layout, detailsPane) =>
+            onApply({ ...settings, layout, explorer: { ...settings.explorer, details_pane: detailsPane } })
+          }
+          onOpenHelp={onOpenHelpPage}
+        />
+      );
+    }
+    if (section.id === "views") {
+      return (
+        <ViewsSettings
+          explorer={settings.explorer}
+          onChange={(explorer) => onApply({ ...settings, explorer })}
+          onOpenHelp={onOpenHelpPage}
+        />
+      );
+    }
+    return <OpeningFilesSettings open={settings.open} onChange={(open) => onApply({ ...settings, open })} onOpenHelp={onOpenHelpPage} />;
+  };
 
   return (
     <div className="adp-settings">
@@ -42,89 +116,112 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
         <h2 className="adp-heading">{t("settings.title")}</h2>
         <HelpButton onOpenHelp={onOpenHelp} />
       </div>
-      <div className="adp-setting-row">
-        <span className="adp-setting-label">{t("settings.language")}</span>
-        <div className="adp-button-row">
-          {LANGUAGES.map((lang) => (
-            <Button
-              key={lang.id}
-              variant={settings.language === lang.id ? "primary" : "default"}
-              aria-pressed={settings.language === lang.id}
-              onClick={() => patch({ language: lang.id })}
+      {undo ? (
+        <div className="adp-settings-notice" role="status">
+          <span>{undo.message}</span>
+          <Button
+            variant="subtle"
+            onClick={() => {
+              onApply(undo.previous);
+              setUndo(null);
+            }}
+          >
+            {t("common.undo")}
+          </Button>
+          <Button variant="subtle" onClick={() => setUndo(null)}>
+            {t("common.dismiss")}
+          </Button>
+        </div>
+      ) : null}
+      {!undo && message !== null ? (
+        <div className="adp-settings-notice" role="status">
+          <span>{message}</span>
+          <Button variant="subtle" onClick={() => setMessage(null)}>
+            {t("common.dismiss")}
+          </Button>
+        </div>
+      ) : null}
+      <div className="adp-settings-search">
+        <SearchBox value={query} onChange={setQuery} placeholder={t("settings.search")} />
+      </div>
+      <div className="adp-settings-body">
+        <nav className="adp-settings-nav" aria-label={t("settings.sections")}>
+          {shown.map((section) => (
+            <button
+              key={section.id}
+              type="button"
+              className="adp-settings-nav-item"
+              onClick={() => scrollToSection(section.id)}
             >
-              {t(lang.labelKey)}
-            </Button>
+              {t(section.titleKey)}
+            </button>
           ))}
+        </nav>
+        <div className="adp-settings-content">
+          {shown.map((section) => (
+            <div key={section.id} className="adp-settings-block" id={`adp-settings-${section.id}`}>
+              {sectionBody(section)}
+              <div className="adp-settings-block-actions">
+                <Button
+                  variant="subtle"
+                  onClick={() =>
+                    applyWithUndo(
+                      resetSection(section.id, settings),
+                      t("settings.sectionWasReset", { name: t(section.titleKey) }),
+                    )
+                  }
+                >
+                  {t("settings.resetSection")}
+                </Button>
+              </div>
+            </div>
+          ))}
+          {shown.length === 0 ? <p className="adp-empty-note">{t("settings.noResults")}</p> : null}
         </div>
       </div>
-      <div className="adp-setting-row">
-        <span className="adp-setting-label">{t("settings.theme")}</span>
+      <div className="adp-settings-footer">
+        <h3 className="adp-heading">{t("settings.backup")}</h3>
         <div className="adp-button-row">
-          {MODES.map((mode) => (
-            <Button
-              key={mode.id}
-              variant={settings.theme.mode === mode.id ? "primary" : "default"}
-              aria-pressed={settings.theme.mode === mode.id}
-              onClick={() => patchTheme({ mode: mode.id })}
-            >
-              {t(mode.labelKey)}
-            </Button>
-          ))}
+          <Button onClick={() => void exportToFile()}>{t("settings.export")}</Button>
+          <Button onClick={() => void importFromFile()}>{t("settings.import")}</Button>
         </div>
+        <Button onClick={() => setConfirmReset(true)}>{t("settings.resetAll")}</Button>
+        <p className="adp-note">{t("settings.persistNote")}</p>
       </div>
-      <div className="adp-setting-row">
-        <span className="adp-setting-label">{t("settings.accent")}</span>
-        <div className="adp-button-row">
-          {ACCENTS.map((accent) => (
+      {confirmReset ? (
+        <Dialog title={t("settings.resetAllTitle")} onClose={() => setConfirmReset(false)}>
+          <p>{t("settings.resetAllBody")}</p>
+          <div className="adp-dialog-actions">
             <Button
-              key={accent.id}
-              variant={settings.theme.accent_source === accent.id ? "primary" : "default"}
-              aria-pressed={settings.theme.accent_source === accent.id}
-              onClick={() => patchTheme({ accent_source: accent.id })}
+              variant="primary"
+              onClick={() => {
+                applyWithUndo(resetAllSettings(settings), t("settings.allWereReset"));
+                setConfirmReset(false);
+              }}
             >
-              {t(accent.labelKey)}
+              {t("settings.resetConfirm")}
             </Button>
-          ))}
-          {settings.theme.accent_source === "custom" ? (
-            <label className="adp-button-row">
-              <span>{t("settings.customColor")}</span>
-              <input
-                className="adp-color-input"
-                type="color"
-                value={settings.theme.accent_custom ?? "#0067C0"}
-                aria-label={t("settings.customColor")}
-                onChange={(event) => patchTheme({ accent_custom: event.target.value })}
-              />
-            </label>
-          ) : null}
-        </div>
-      </div>
-      <div className="adp-setting-row">
-        <span className="adp-setting-label">{t("settings.pastedImages")}</span>
-        <div className="adp-button-row">
-          {(["png", "jpg"] as const).map((format) => (
+            <Button onClick={() => setConfirmReset(false)}>{t("common.cancel")}</Button>
+          </div>
+        </Dialog>
+      ) : null}
+      {pendingImport ? (
+        <Dialog title={t("settings.importConfirmTitle")} onClose={() => setPendingImport(null)}>
+          <p>{t("settings.importConfirmBody")}</p>
+          <div className="adp-dialog-actions">
             <Button
-              key={format}
-              variant={settings.files.paste_image_format === format ? "primary" : "default"}
-              aria-pressed={settings.files.paste_image_format === format}
-              onClick={() => onApply({ ...settings, files: { paste_image_format: format } })}
+              variant="primary"
+              onClick={() => {
+                applyWithUndo(pendingImport, t("settings.imported"));
+                setPendingImport(null);
+              }}
             >
-              {t(format === "png" ? "settings.formatPng" : "settings.formatJpg")}
+              {t("settings.importConfirm")}
             </Button>
-          ))}
-        </div>
-      </div>
-      <LayoutSettings
-        layout={settings.layout}
-        detailsPane={settings.explorer.details_pane}
-        onChange={(layout, detailsPane) =>
-          onApply({ ...settings, layout, explorer: { ...settings.explorer, details_pane: detailsPane } })
-        }
-        onOpenHelp={onOpenHelpPage}
-      />
-      <ViewsSettings explorer={settings.explorer} onChange={(explorer) => onApply({ ...settings, explorer })} onOpenHelp={onOpenHelpPage} />
-      <OpeningFilesSettings open={settings.open} onChange={(open) => onApply({ ...settings, open })} onOpenHelp={onOpenHelpPage} />
-      <p className="adp-note">{t("settings.persistNote")}</p>
+            <Button onClick={() => setPendingImport(null)}>{t("common.cancel")}</Button>
+          </div>
+        </Dialog>
+      ) : null}
     </div>
   );
 }
