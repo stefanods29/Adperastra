@@ -20,6 +20,9 @@ use thiserror::Error;
 
 mod appearance;
 mod archive;
+mod archive_create;
+mod archive_create_publish;
+mod archive_create_spool;
 mod archive_helper;
 mod archive_passwords;
 mod archive_rar;
@@ -3071,6 +3074,7 @@ fn main() {
             archive::archive_extract_start,
             archive::archive_pick_folder,
             archive_rar::archive_rar_status,
+            archive_create::archive_create_start,
             templates::templates_list,
             templates::template_create,
             template_jobs::template_create_start,

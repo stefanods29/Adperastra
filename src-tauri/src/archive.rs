@@ -165,15 +165,15 @@ impl ArchiveSessions {
 }
 
 /// What one conversation with the helper produced.
-struct HelperOutcome {
-    end: DriveEnd,
-    last_progress: fs_service::OpProgress,
+pub(crate) struct HelperOutcome {
+    pub(crate) end: DriveEnd,
+    pub(crate) last_progress: fs_service::OpProgress,
     /// The code the helper reported, or the reason it fell silent.
-    error: Option<String>,
+    pub(crate) error: Option<String>,
 }
 
 impl HelperOutcome {
-    fn cancelled(&self) -> bool {
+    pub(crate) fn cancelled(&self) -> bool {
         self.end == DriveEnd::Cancelled
     }
 }
@@ -190,7 +190,7 @@ fn no_progress() -> fs_service::OpProgress {
 
 /// Run one helper request, passing every message that is not progress or a
 /// failure to `on_message`. `Ok(true)` from it ends the work.
-fn run_helper_job(
+pub(crate) fn run_helper_job(
     ctx: &JobContext,
     request: &HelperRequest,
     mut on_message: impl FnMut(&HelperMessage) -> Result<bool, String>,

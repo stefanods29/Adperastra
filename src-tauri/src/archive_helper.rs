@@ -46,6 +46,36 @@ pub enum HelperRequest {
     },
     /// Ask for the separately installed 7-Zip's version (Step 06e).
     RarStatus,
+    /// Build a new archive in the app-owned spool (Step 06e).
+    Create { request: HelperCreate },
+}
+
+/// Everything the helper needs to plan and write one archive. The password
+/// is never Debug-printed.
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct HelperCreate {
+    pub sources: Vec<String>,
+    pub include_hidden: bool,
+    pub format: archive::CreateFormat,
+    pub encryption: archive::CreateEncryption,
+    pub password: Option<String>,
+    pub encrypt_names: bool,
+    pub spool: String,
+}
+
+impl std::fmt::Debug for HelperCreate {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("HelperCreate")
+            .field("sources", &self.sources)
+            .field("include_hidden", &self.include_hidden)
+            .field("format", &self.format)
+            .field("encryption", &self.encryption)
+            .field("password", &self.password.as_ref().map(|_| "<redacted>"))
+            .field("encrypt_names", &self.encrypt_names)
+            .field("spool", &self.spool)
+            .finish()
+    }
 }
 
 /// What the helper tells the app.
@@ -71,6 +101,10 @@ pub enum HelperMessage {
     /// The installed 7-Zip status (Step 06e).
     RarStatus {
         status: archive::RarToolStatus,
+    },
+    /// A verified spool written by the helper (Step 06e).
+    SpoolCreated {
+        report: archive::CreateSpoolReport,
     },
     Failed {
         code: String,
@@ -140,8 +174,50 @@ pub fn run_helper() -> i32 {
             options,
         } => extract(&path, &request, &options, &token, &mut reporter),
         HelperRequest::RarStatus => rar_status(),
+        HelperRequest::Create { request } => create(&request, &token, &mut reporter),
     }
     0
+}
+
+/// Plan the sources and write the spool; the helper never publishes.
+fn create(request: &HelperCreate, token: &CancellationToken, reporter: &mut Reporter) {
+    let limits = archive::CreateLimits::default();
+    let mut sink = |progress: &OpProgress| reporter.progress(progress);
+    let plan = match archive::plan_create(
+        &request.sources,
+        request.include_hidden,
+        &limits,
+        token,
+        &mut sink,
+    ) {
+        Ok(plan) => plan,
+        Err(error) => {
+            send(&HelperMessage::Failed {
+                code: error.code().to_string(),
+            });
+            return;
+        }
+    };
+    let options = archive::CreateOptions {
+        format: request.format,
+        encryption: request.encryption,
+        password: request.password.clone(),
+        encrypt_names: request.encrypt_names,
+        include_hidden: request.include_hidden,
+    };
+    match archive::create_spool(
+        &plan,
+        &options,
+        Path::new(&request.spool),
+        &limits,
+        token,
+        &mut sink,
+    ) {
+        Ok(report) => send(&HelperMessage::SpoolCreated { report }),
+        Err(error) => send(&HelperMessage::Failed {
+            code: error.code().to_string(),
+        }),
+    }
 }
 
 /// Probe the separately installed 7-Zip; the app never learns its path.
