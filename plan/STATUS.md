@@ -33,7 +33,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 06c | Templates in the New menu | in progress (local integration checked; owner checks and full speed comparison left) | v0.0.16-step06c |
 | 06d | Archives: open, browse, extract | in progress (speed, screenshots, hand checks left) | v0.0.17-step06d |
 | 06e | Archives: create, passwords, RAR | in progress (speed, screenshots, owner checks, real 7-Zip RAR trial left) | v0.0.18-step06e |
-| 06f | Tables (CSV), JSON, fonts, hex search | outline | v0.0.19-step06f |
+| 06f | Tables (CSV), JSON, fonts, hex search | guide | v0.0.19-step06f |
 | 07a | Thumbnails, cache store, helper process, background work v1 | outline | v0.0.20-step07a |
 | 07b | Quick preview and rich file info | outline | v0.0.21-step07b |
 | 07c | Gallery | outline | v0.0.22-step07c |

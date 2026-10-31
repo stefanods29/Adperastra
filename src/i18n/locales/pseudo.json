@@ -629,6 +629,23 @@
       "recycle_failed": "[Thë fïlë ÿøü çhøsë çøüldñ't bë møvëd tø thë Rëçÿçlë Bïñ, sø ñøthïñg wäs sävëd. ~~~~~~~~~~~~~~~~~~~~~~~~~]",
       "preview_too_large": "[Thïs fïlë ïs tøø lärgë tø prëvïëw hërë. Øpëñ ït tø løøk ät ït. ~~~~~~~~~~~~~~~~~~~]",
       "replace_unavailable": "[Rëpläçïñg äñ ëxïstïñg fïlë ïs ñøt äväïläblë ÿët. Çhøøsë ä ñëw ñämë. ~~~~~~~~~~~~~~~~~~~~~~]"
+    },
+    "data": {
+      "other": "[Çøüldñ't rëäd thïs fïlë. ~~~~~~~~]",
+      "too_large": "[Thïs fïlë ïs tøø lärgë før thïs vïëw. Üsë Øpëñ äs tëxt. ~~~~~~~~~~~~~~~~~]",
+      "too_deep": "[Thïs JSØÑ ïs ñëstëd tøø dëëplÿ tø shøw äs ä trëë. Üsë Øpëñ äs tëxt. ~~~~~~~~~~~~~~~~~~~~~]",
+      "invalid": "[Thïs ïsñ't välïd JSØÑ. Üsë Øpëñ äs tëxt tø sëë ït. ~~~~~~~~~~~~~~~]",
+      "read_failed": "[Çøüldñ't rëäd thïs fïlë. ~~~~~~~~]"
+    },
+    "table": {
+      "other": "[Çøüldñ't shøw thïs täblë. ~~~~~~~~]"
+    },
+    "json": {
+      "other": "[Çøüldñ't shøw thïs JSØÑ fïlë. ~~~~~~~~~~]"
+    },
+    "font": {
+      "other": "[Çøüldñ't rëäd thïs føñt. ~~~~~~~~]",
+      "install_failed": "[Wïñdøws çøüldñ't ïñställ thïs føñt. ~~~~~~~~~~~~]"
     }
   },
   "keys": {
@@ -701,6 +718,9 @@
     "markdown": "[Märkdøwñ ~~~~]",
     "media": "[Äüdïø äñd vïdëø ~~~~~~]",
     "hex": "[Hëx ~~]",
+    "table": "[Täblë ~~]",
+    "json": "[JSØÑ ~~]",
+    "font": "[Føñt ~~]",
     "archive": "[Ärçhïvë ~~~]"
   },
   "protected": {
@@ -731,7 +751,8 @@
     "actualSize": "[Äçtüäl sïzë ~~~~]",
     "rotateLeft": "[Røtätë lëft ~~~~]",
     "rotateRight": "[Røtätë rïght ~~~~~]",
-    "matches": "[{count, plural, =0 {Ñø mätçhës} one {# mätçh} other {# mätçhës}} ~~~~]"
+    "matches": "[{count, plural, =0 {Ñø mätçhës} one {# mätçh} other {# mätçhës}} ~~~~]",
+    "openAsText": "[Øpëñ äs tëxt ~~~~]"
   },
   "ribbon": {
     "view": "[Vïëw ~~]",
@@ -902,7 +923,19 @@
   },
   "hex": {
     "label": "[Bÿtës øf {name} ~~~]",
-    "loadError": "[Thë bÿtës øf thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~~~~~]"
+    "loadError": "[Thë bÿtës øf thïs fïlë çøüldñ't bë rëäd. ~~~~~~~~~~~~~]",
+    "searchText": "[Sëärçh äs tëxt ~~~~~]",
+    "searchBytes": "[Sëärçh äs bÿtës ~~~~~~]",
+    "searching": "[Sëärçhïñg… {percent}% ~~~~]",
+    "notFound": "[Ñøt føüñd. ~~~~]",
+    "foundAt": "[Føüñd ät {offset} ~~~]",
+    "badPattern": "[Ëñtër päïrs øf hëx dïgïts, lïkë 4D 5Ä. ~~~~~~~~~~~]",
+    "searchFailed": "[Thë fïlë çøüldñ't bë rëäd tø thë ëñd. ~~~~~~~~~~~~]",
+    "goToOffset": "[Gø tø øffsët… ~~~~]",
+    "goToTitle": "[Gø tø øffsët ~~~~]",
+    "goToLabel": "[Øffsët (hëxädëçïmäl, ør dëçïmäl wïth #) ~~~~~~~~~~~~]",
+    "goToConfirm": "[Gø ~~]",
+    "goToBad": "[Ëñtër äñ øffsët bëtwëëñ 0 äñd {last}. ~~~~~~~~~~]"
   },
   "links": {
     "openTitle": "[Øpëñ thïs lïñk? ~~~~~]",
@@ -1015,6 +1048,63 @@
     "creating": "[Çrëätïñg {name}… ~~~~]",
     "copyProgress": "[{done} øf {total} ~~]",
     "someUnreadable": "[{count, plural, one {# tëmplätë çøüld ñøt bë rëäd.} other {# tëmplätës çøüld ñøt bë rëäd.}} ~~~~~~~~~~]"
+  },
+  "json": {
+    "label": "[Trëë øf {name} ~~~]",
+    "reading": "[Rëädïñg thë JSØÑ fïlë… ~~~~~~~~]",
+    "collapseAll": "[Çølläpsë äll ~~~~~]",
+    "copyValue": "[Çøpÿ välüë ~~~~]",
+    "copied": "[Välüë çøpïëd. ~~~~~]",
+    "copyFailed": "[Çøüldñ't çøpÿ thïs välüë. ~~~~~~~~]",
+    "showMore": "[Shøw mørë ({count} lëft) ~~~~~]",
+    "items": "[{count, plural, one {# ïtëm} other {# ïtëms}} ~~]",
+    "nodeCount": "[{count, plural, one {# välüë} other {# välüës}} ~~~]",
+    "noMatches": "[Ñøthïñg mätçhës ÿøür sëärçh. ~~~~~~~~~~]",
+    "invalidAt": "[Lïñë {line}, çølümñ {column} ~~~~]"
+  },
+  "font": {
+    "label": "[Prëvïëw øf {name} ~~~~]",
+    "sample": "[Thë qüïçk brøwñ føx jümps øvër thë läzÿ døg. 0123456789 ~~~~~~~~~~~~~~]",
+    "sampleLabel": "[Sämplë tëxt ~~~~]",
+    "sizeLabel": "[{size} px ~~]",
+    "install": "[Ïñställ ~~~]",
+    "installTitle": "[Ïñställ thïs føñt? ~~~~~~]",
+    "installBody": "[Wïñdøws ïñställs {name} äñd mäÿ äsk før përmïssïøñ. Thïs äpp çäñ't üñdø ït; tø rëmøvë thë føñt, üsë Føñts ïñ Wïñdøws Sëttïñgs. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "installConfirm": "[Ïñställ ~~~]",
+    "installed": "[Wïñdøws ïs ïñställïñg thë føñt. ~~~~~~~~~~~]",
+    "protectedNote": "[Türñ øff prøtëçtëd vïëw tø ïñställ thïs føñt. ~~~~~~~~~~~~~~~]",
+    "loadError": "[Thïs føñt çøüldñ't bë shøwñ. Thë fïlë mäÿ bë dämägëd. ~~~~~~~~~~~~~~~~~]",
+    "details": "[Dëtäïls ~~~]",
+    "family": "[Fämïlÿ ~~~]",
+    "style": "[Stÿlë ~~]",
+    "version": "[Vërsïøñ ~~~]",
+    "designer": "[Dësïgñër ~~~~]",
+    "copyright": "[Çøpÿrïght ~~~~]",
+    "license": "[Lïçëñsë ~~~]",
+    "glyphs": "[Glÿphs ~~~]",
+    "faces": "[Thïs fïlë hølds {count} føñts; thë fïrst ïs shøwñ. ~~~~~~~~~~~~~~]",
+    "charMap": "[Çhäräçtër mäp ~~~~~]",
+    "noCharMap": "[Thë çhäräçtër mäp ïsñ't äväïläblë før thïs føñt førmät. ~~~~~~~~~~~~~~~~~~]",
+    "rangesCut": "[Thïs føñt häs mørë çhäräçtërs thäñ thë mäp çäñ lïst. ~~~~~~~~~~~~~~~~~]",
+    "copyChar": "[Çøpÿ {code} ~~]"
+  },
+  "table": {
+    "label": "[Täblë øf {name} ~~~]",
+    "firstRowHeaders": "[Fïrst røw ïs hëädërs ~~~~~~~]",
+    "columnNumber": "[Çølümñ {number} ~~~]",
+    "rowCount": "[{count, plural, one {# røw} other {# røws}} ~~]",
+    "columnCount": "[{count, plural, one {# çølümñ} other {# çølümñs}} ~~~]",
+    "filtered": "[{shown} øf {total} røws mätçh ~~~~~]",
+    "truncated": "[Thïs fïlë ïs tøø bïg tø shøw whølë. Shøwïñg thë fïrst {count, plural, one {# røw} other {# røws}}; üsë Øpëñ äs tëxt tø sëë thë rëst. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "empty": "[Thïs fïlë häs ñø røws. ~~~~~~~]",
+    "noMatches": "[Ñø røws mätçh ÿøür sëärçh. ~~~~~~~~~]",
+    "reading": "[Rëädïñg thë täblë… ~~~~~~]",
+    "sorting": "[Sørtïñg… ~~~]",
+    "delimiterComma": "[Çømmä sëpärätëd ~~~~~~]",
+    "delimiterSemicolon": "[Sëmïçøløñ sëpärätëd ~~~~~~~~]",
+    "delimiterTab": "[Täb sëpärätëd ~~~~~]",
+    "delimiterPipe": "[Pïpë sëpärätëd ~~~~~~]",
+    "sortColumn": "[Sørt bÿ {name} ~~~]"
   },
   "versions": {
     "title": "[Vërsïøñ hïstørÿ øf {name} ~~~~~~~]",

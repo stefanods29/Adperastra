@@ -31,11 +31,14 @@ mod classic_menu;
 mod clipboard;
 #[cfg(windows)]
 mod clipboard_image_helper;
+mod data_views;
 mod drag;
 mod explorer;
 mod file_dialogs;
 mod files;
 mod folder_views;
+mod font_helper;
+mod font_view;
 mod helper;
 mod jobs;
 mod links;
@@ -2929,6 +2932,11 @@ fn main() {
     if std::env::args().nth(1).as_deref() == Some(archive_helper::HELPER_FLAG) {
         std::process::exit(archive_helper::run_helper());
     }
+    // The font helper (Step 06f) reads font files in its own process, inside
+    // a memory-limited job.
+    if std::env::args().nth(1).as_deref() == Some(font_helper::HELPER_FLAG) {
+        std::process::exit(font_helper::run_helper());
+    }
     let data_dir = resolve_data_dir();
     let _ = fs::create_dir_all(&data_dir);
     let logs = logs_dir(&data_dir);
@@ -2957,6 +2965,7 @@ fn main() {
         .manage(jobs::Jobs::default())
         .manage(archive::ArchiveSessions::default())
         .manage(archive_passwords::ArchivePasswords::default())
+        .manage(data_views::DataSessions::default())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -3079,6 +3088,17 @@ fn main() {
             templates::template_create,
             template_jobs::template_create_start,
             templates::templates_pick_folder,
+            data_views::table_open_start,
+            data_views::table_view_start,
+            data_views::table_rows,
+            data_views::table_close,
+            data_views::json_open_start,
+            data_views::json_children,
+            data_views::json_find,
+            data_views::json_copy,
+            data_views::json_close,
+            font_view::font_info_start,
+            font_view::font_install,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

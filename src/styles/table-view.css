@@ -1,0 +1,100 @@
+/* Table viewer (Step 06f): virtualized rows and columns, a sticky header and
+ * a sticky row-number column. Every color comes from the theme tokens. */
+
+.adp-table {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--adp-color-surface-window);
+  outline: none;
+}
+
+.adp-table:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-table-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: stretch;
+  height: 32px;
+  background: var(--adp-color-surface-pane);
+  border-bottom: 1px solid var(--adp-color-border-default);
+}
+
+.adp-table-head-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  flex: none;
+  min-width: 0;
+  padding: 0 var(--adp-space-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.adp-table-head-cell:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-table-head-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adp-table-number {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 64px;
+  padding: 0 var(--adp-space-2);
+  color: var(--adp-color-text-tertiary);
+  background: var(--adp-color-surface-pane);
+  border-right: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-table-body {
+  position: relative;
+}
+
+.adp-table-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  background: var(--adp-color-surface-window);
+}
+
+.adp-table-cell {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 var(--adp-space-3);
+  color: var(--adp-color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: text;
+}
+
+.adp-table-note {
+  padding: var(--adp-space-3) var(--adp-space-5);
+  background: var(--adp-color-surface-pane);
+}

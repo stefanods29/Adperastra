@@ -21,6 +21,9 @@ archive = { path = "../crates/archive" }
 version-store = { path = "../crates/version-store" }
 thiserror = "2"
 infer = "0.22"
+data-views = { path = "../crates/data-views" }
+# Font details are read in the font helper process (Step 06f).
+ttf-parser = { version = "0.25", default-features = false, features = ["std"] }
 uuid = { version = "1", features = ["v4"] }
 blake3 = "1.8"
 windows-collections = "0.2"

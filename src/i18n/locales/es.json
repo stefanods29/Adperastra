@@ -629,6 +629,23 @@
       "recycle_failed": "No se pudo mover a la Papelera de reciclaje el archivo que elegiste, así que no se guardó nada.",
       "preview_too_large": "Este archivo es demasiado grande para mostrarlo aquí. Ábrelo para verlo.",
       "replace_unavailable": "Por ahora no se puede reemplazar un archivo. Elige otro nombre."
+    },
+    "data": {
+      "other": "No se pudo leer este archivo.",
+      "too_large": "Este archivo es demasiado grande para esta vista. Usa Abrir como texto.",
+      "too_deep": "Este JSON tiene demasiados niveles para mostrarlo como árbol. Usa Abrir como texto.",
+      "invalid": "Este JSON no es válido. Usa Abrir como texto para verlo.",
+      "read_failed": "No se pudo leer este archivo."
+    },
+    "table": {
+      "other": "No se pudo mostrar esta tabla."
+    },
+    "json": {
+      "other": "No se pudo mostrar este archivo JSON."
+    },
+    "font": {
+      "other": "No se pudo leer esta fuente.",
+      "install_failed": "Windows no pudo instalar esta fuente."
     }
   },
   "keys": {
@@ -701,6 +718,9 @@
     "markdown": "Markdown",
     "media": "Audio y video",
     "hex": "Hexadecimal",
+    "table": "Tabla",
+    "json": "JSON",
+    "font": "Fuente",
     "archive": "Archivo comprimido"
   },
   "protected": {
@@ -731,7 +751,8 @@
     "actualSize": "Tamaño real",
     "rotateLeft": "Girar a la izquierda",
     "rotateRight": "Girar a la derecha",
-    "matches": "{count, plural, =0 {Sin coincidencias} one {# coincidencia} other {# coincidencias}}"
+    "matches": "{count, plural, =0 {Sin coincidencias} one {# coincidencia} other {# coincidencias}}",
+    "openAsText": "Abrir como texto"
   },
   "ribbon": {
     "view": "Vista",
@@ -902,7 +923,19 @@
   },
   "hex": {
     "label": "Bytes de {name}",
-    "loadError": "No se pudieron leer los bytes de este archivo."
+    "loadError": "No se pudieron leer los bytes de este archivo.",
+    "searchText": "Buscar como texto",
+    "searchBytes": "Buscar como bytes",
+    "searching": "Buscando… {percent} %",
+    "notFound": "No se encontró.",
+    "foundAt": "Encontrado en {offset}",
+    "badPattern": "Escribe pares de dígitos hexadecimales, como 4D 5A.",
+    "searchFailed": "No se pudo leer el archivo hasta el final.",
+    "goToOffset": "Ir al desplazamiento…",
+    "goToTitle": "Ir al desplazamiento",
+    "goToLabel": "Desplazamiento (hexadecimal, o decimal con #)",
+    "goToConfirm": "Ir",
+    "goToBad": "Escribe un desplazamiento entre 0 y {last}."
   },
   "links": {
     "openTitle": "¿Abrir este vínculo?",
@@ -1015,6 +1048,63 @@
     "creating": "Creando {name}…",
     "copyProgress": "{done} de {total}",
     "someUnreadable": "{count, plural, one {No se pudo leer # plantilla.} other {No se pudieron leer # plantillas.}}"
+  },
+  "json": {
+    "label": "Árbol de {name}",
+    "reading": "Leyendo el archivo JSON…",
+    "collapseAll": "Contraer todo",
+    "copyValue": "Copiar valor",
+    "copied": "Valor copiado.",
+    "copyFailed": "No se pudo copiar este valor.",
+    "showMore": "Mostrar más (quedan {count})",
+    "items": "{count, plural, one {# elemento} other {# elementos}}",
+    "nodeCount": "{count, plural, one {# valor} other {# valores}}",
+    "noMatches": "Nada coincide con tu búsqueda.",
+    "invalidAt": "Línea {line}, columna {column}"
+  },
+  "font": {
+    "label": "Vista previa de {name}",
+    "sample": "El veloz murciélago hindú comía feliz cardillo y kiwi. 0123456789",
+    "sampleLabel": "Texto de muestra",
+    "sizeLabel": "{size} px",
+    "install": "Instalar",
+    "installTitle": "¿Instalar esta fuente?",
+    "installBody": "Windows instala {name} y puede pedir permiso. Esta aplicación no puede deshacerlo; para quitar la fuente, usa Fuentes en Configuración de Windows.",
+    "installConfirm": "Instalar",
+    "installed": "Windows está instalando la fuente.",
+    "protectedNote": "Desactiva la vista protegida para instalar esta fuente.",
+    "loadError": "No se pudo mostrar esta fuente. Es posible que el archivo esté dañado.",
+    "details": "Detalles",
+    "family": "Familia",
+    "style": "Estilo",
+    "version": "Versión",
+    "designer": "Diseñador",
+    "copyright": "Derechos de autor",
+    "license": "Licencia",
+    "glyphs": "Glifos",
+    "faces": "Este archivo contiene {count} fuentes; se muestra la primera.",
+    "charMap": "Mapa de caracteres",
+    "noCharMap": "El mapa de caracteres no está disponible para este formato de fuente.",
+    "rangesCut": "Esta fuente tiene más caracteres de los que puede mostrar el mapa.",
+    "copyChar": "Copiar {code}"
+  },
+  "table": {
+    "label": "Tabla de {name}",
+    "firstRowHeaders": "La primera fila son encabezados",
+    "columnNumber": "Columna {number}",
+    "rowCount": "{count, plural, one {# fila} other {# filas}}",
+    "columnCount": "{count, plural, one {# columna} other {# columnas}}",
+    "filtered": "{shown} de {total} filas coinciden",
+    "truncated": "Este archivo es demasiado grande para mostrarlo completo. Se muestra {count, plural, one {la primera fila} other {las primeras # filas}}; usa Abrir como texto para ver el resto.",
+    "empty": "Este archivo no tiene filas.",
+    "noMatches": "Ninguna fila coincide con tu búsqueda.",
+    "reading": "Leyendo la tabla…",
+    "sorting": "Ordenando…",
+    "delimiterComma": "Separado por comas",
+    "delimiterSemicolon": "Separado por punto y coma",
+    "delimiterTab": "Separado por tabulaciones",
+    "delimiterPipe": "Separado por barras verticales",
+    "sortColumn": "Ordenar por {name}"
   },
   "versions": {
     "title": "Historial de versiones de {name}",

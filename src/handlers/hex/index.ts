@@ -16,6 +16,6 @@ export const hexHandler: Handler = {
   maxBytes: Number.MAX_SAFE_INTEGER,
   helpSlug: "open-as-text-or-hex",
   speedTier: "fast",
-  supportsFind: false,
+  supportsFind: true,
   view: lazy(() => import("./HexView")),
 };

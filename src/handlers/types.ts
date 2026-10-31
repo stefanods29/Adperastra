@@ -73,6 +73,8 @@ export interface HandlerViewProps {
   onOpenFile?: (path: string) => Promise<void>;
   /** Extract through the Explorer's jobs panel (Step 06d). */
   onExtractArchive?: (request: ArchiveExtractRequest) => void;
+  /** Open this file in the text viewer (Step 06f). */
+  onOpenAsText?: () => void;
 }
 
 export interface Handler {

@@ -10,9 +10,9 @@ Facts that every new guide must stay consistent with: numbers that count up (set
 | Version store schema (`STORE_SCHEMA`, `<data>/versions/index.sqlite3` table `meta`) | 1 | 06b | 2 |
 | Explorer state schema (`EXPLORER_STATE_SCHEMA`, `explorer-state.json`) | 2 | 03a | 3 |
 | Folder views schema (`FOLDER_VIEWS_SCHEMA`, `folder-views.json`) | 1 | 05a | 2 |
-| Step tags | `v0.0.17-step06d` | 06d | `v0.0.18-step06e`; every step's tag is in `plan/STATUS.md` |
-| Screenshot numbers in `scripts/measure-ui.mjs` | `48-extract-menu` | 06d | `49-...` |
-| `step` value in the record of `scripts/measure-ui.mjs` | `06d` | 06d | the next step's id |
+| Step tags | `v0.0.19-step06f` | 06f | `v0.0.20-step07a`; every step's tag is in `plan/STATUS.md` |
+| Screenshot numbers in `scripts/measure-ui.mjs` | `56-hex-search` | 06f | `57-...` |
+| `step` value in the record of `scripts/measure-ui.mjs` | comes from `-Step` or the branch name, no literal to change | | |
 | Settings page sections (`SETTINGS_SECTIONS`) | 7 (`versions` last) | 06b | a new section goes after `versions`; update the count in `settingsView.test.tsx` |
 
 Every settings schema bump adds the previous version to the `migrate_keep_known` arm in `migrate` (05a made it "4 or 5", 05b "4, 5 or 6", 05c "4, 5, 6 or 7", 05d "4 to 8", 06b "4 to 9", 06c "4 to 10"; the next bump makes it "4 to 11"). A new settings section is also added to `impl Default for Settings` and to the struct literal in `migrate_v1` (05c did this for `layout`), changes the schema number in the Rust test `settings_defaults` and in `src/__tests__/settings.test.ts` (the test "keeps valid Explorer view options and repairs invalid ones"), changes the expected schema in the newest `settings_v<N-1>_migrates_to_v<N>_...` Rust test to `CURRENT_SCHEMA`, and updates the `$settings` block of `scripts/measure-ui.ps1` (`plan/recipes/add-settings-field.md`).
@@ -195,3 +195,12 @@ Steps P2, 04a, 04b and 04c are ready recipes with full code; the facts below are
 - Template listing diagnostics are additive optional fields; unreadable folders and partial lists never look empty. Folder persistence and creation callbacks return promises; the picker closes only after success and follows keyboard focus.
 - Step 06b review modules: `cache`, `coordination`, `disk`, `extraction`, `listing`, `pending`, `retention`, `session`, `store`; bounded preview and editor restore hooks are `readVersionText.ts` and `useVersionRestore.ts`. New modules remain below 400 lines.
 - `measure-ui.ps1 -Review06bc` uses fresh retained fixtures and data, performs only the current batch's checks, and never runs the legacy cleanup. Its JSON explicitly excludes the earlier-step speed regression suite and preserves failures.
+
+## Step 06f
+
+- Crate `crates/data-views`: `decode_text`, `TextEncodingId`, `DataError` (`data.*` codes), `parse_table`, `TableLimits`, `build_order`, `TableViewRequest`, `parse_json`, `JsonNodeInfo`, `find_next`, `copy_text`.
+- `src-tauri/src/data_views.rs`: `DataSessions`, `table_*` and `json_*` commands. `src-tauri/src/font_helper.rs`: `--font-helper`, `FontInfo`, `read_font`. `src-tauri/src/font_view.rs`: `font_info_start`, `font_install`.
+- Handlers `table`, `json` and `font`. `HandlerViewProps.onOpenAsText` is optional. Handler ties go to the one registered first, so a viewer for an extension the text viewer also lists registers before `text`.
+- Help slugs: `viewing-tables`, `viewing-json`, `viewing-fonts`. Settings schema unchanged at 11.
+- Trap: every new handler with extensions adds a group to Settings > Opening files, so `defaultApps.test.tsx`'s `groupSelects` count goes up.
+- Trap: the screenshot and speed scripts must not type the open folder's path into the address bar (KI-033).

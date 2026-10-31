@@ -629,6 +629,23 @@
       "recycle_failed": "The file you chose couldn't be moved to the Recycle Bin, so nothing was saved.",
       "preview_too_large": "This file is too large to preview here. Open it to look at it.",
       "replace_unavailable": "Replacing an existing file is not available yet. Choose a new name."
+    },
+    "data": {
+      "other": "Couldn't read this file.",
+      "too_large": "This file is too large for this view. Use Open as text.",
+      "too_deep": "This JSON is nested too deeply to show as a tree. Use Open as text.",
+      "invalid": "This isn't valid JSON. Use Open as text to see it.",
+      "read_failed": "Couldn't read this file."
+    },
+    "table": {
+      "other": "Couldn't show this table."
+    },
+    "json": {
+      "other": "Couldn't show this JSON file."
+    },
+    "font": {
+      "other": "Couldn't read this font.",
+      "install_failed": "Windows couldn't install this font."
     }
   },
   "keys": {
@@ -701,6 +718,9 @@
     "markdown": "Markdown",
     "media": "Audio and video",
     "hex": "Hex",
+    "table": "Table",
+    "json": "JSON",
+    "font": "Font",
     "archive": "Archive"
   },
   "protected": {
@@ -731,7 +751,8 @@
     "actualSize": "Actual size",
     "rotateLeft": "Rotate left",
     "rotateRight": "Rotate right",
-    "matches": "{count, plural, =0 {No matches} one {# match} other {# matches}}"
+    "matches": "{count, plural, =0 {No matches} one {# match} other {# matches}}",
+    "openAsText": "Open as text"
   },
   "ribbon": {
     "view": "View",
@@ -902,7 +923,19 @@
   },
   "hex": {
     "label": "Bytes of {name}",
-    "loadError": "The bytes of this file couldn't be read."
+    "loadError": "The bytes of this file couldn't be read.",
+    "searchText": "Search as text",
+    "searchBytes": "Search as bytes",
+    "searching": "Searching… {percent}%",
+    "notFound": "Not found.",
+    "foundAt": "Found at {offset}",
+    "badPattern": "Enter pairs of hex digits, like 4D 5A.",
+    "searchFailed": "The file couldn't be read to the end.",
+    "goToOffset": "Go to offset…",
+    "goToTitle": "Go to offset",
+    "goToLabel": "Offset (hexadecimal, or decimal with #)",
+    "goToConfirm": "Go",
+    "goToBad": "Enter an offset between 0 and {last}."
   },
   "links": {
     "openTitle": "Open this link?",
@@ -1015,6 +1048,63 @@
     "creating": "Creating {name}…",
     "copyProgress": "{done} of {total}",
     "someUnreadable": "{count, plural, one {# template could not be read.} other {# templates could not be read.}}"
+  },
+  "json": {
+    "label": "Tree of {name}",
+    "reading": "Reading the JSON file…",
+    "collapseAll": "Collapse all",
+    "copyValue": "Copy value",
+    "copied": "Value copied.",
+    "copyFailed": "Couldn't copy this value.",
+    "showMore": "Show more ({count} left)",
+    "items": "{count, plural, one {# item} other {# items}}",
+    "nodeCount": "{count, plural, one {# value} other {# values}}",
+    "noMatches": "Nothing matches your search.",
+    "invalidAt": "Line {line}, column {column}"
+  },
+  "font": {
+    "label": "Preview of {name}",
+    "sample": "The quick brown fox jumps over the lazy dog. 0123456789",
+    "sampleLabel": "Sample text",
+    "sizeLabel": "{size} px",
+    "install": "Install",
+    "installTitle": "Install this font?",
+    "installBody": "Windows installs {name} and may ask for permission. This app can't undo it; to remove the font, use Fonts in Windows Settings.",
+    "installConfirm": "Install",
+    "installed": "Windows is installing the font.",
+    "protectedNote": "Turn off protected view to install this font.",
+    "loadError": "This font couldn't be shown. The file may be damaged.",
+    "details": "Details",
+    "family": "Family",
+    "style": "Style",
+    "version": "Version",
+    "designer": "Designer",
+    "copyright": "Copyright",
+    "license": "License",
+    "glyphs": "Glyphs",
+    "faces": "This file holds {count} fonts; the first is shown.",
+    "charMap": "Character map",
+    "noCharMap": "The character map isn't available for this font format.",
+    "rangesCut": "This font has more characters than the map can list.",
+    "copyChar": "Copy {code}"
+  },
+  "table": {
+    "label": "Table of {name}",
+    "firstRowHeaders": "First row is headers",
+    "columnNumber": "Column {number}",
+    "rowCount": "{count, plural, one {# row} other {# rows}}",
+    "columnCount": "{count, plural, one {# column} other {# columns}}",
+    "filtered": "{shown} of {total} rows match",
+    "truncated": "This file is too big to show whole. Showing the first {count, plural, one {# row} other {# rows}}; use Open as text to see the rest.",
+    "empty": "This file has no rows.",
+    "noMatches": "No rows match your search.",
+    "reading": "Reading the table…",
+    "sorting": "Sorting…",
+    "delimiterComma": "Comma separated",
+    "delimiterSemicolon": "Semicolon separated",
+    "delimiterTab": "Tab separated",
+    "delimiterPipe": "Pipe separated",
+    "sortColumn": "Sort by {name}"
   },
   "versions": {
     "title": "Version history of {name}",

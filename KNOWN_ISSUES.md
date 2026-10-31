@@ -11,6 +11,12 @@ that fixed it.
 
 ## Open
 
+### KI-086 - JSON numbers beyond 64 bits show rounded in the tree (Minor)
+- **Found in:** Step 06f (D8), 2026-10-31. **Severity:** Minor (the value is still readable, and Open as text shows the exact text; the file is never changed).
+- **What:** The tree reads numbers as 64-bit integers or doubles, so an integer beyond 64 bits, or a very long decimal, can appear rounded in the tree.
+- **Workaround:** use Open as text to see the exact number.
+- **Target:** reviewed at the next milestone.
+
 ### KI-082 - App-owned spool folders are retained, not reclaimed (Minor)
 - **Found in:** Step 06e T9 implementation, 2026-10-31. **Severity:** Minor (no data loss; a full budget refuses new work instead of guessing ownership).
 - **What:** A helper that is killed leaves its `%LOCALAPPDATA%\Adperastra\archive-create\<request-id>` folder (marker plus incomplete `archive.spool`). The parent only removes spool folders it created and can still verify; it does not reclaim abandoned ones at startup. Until the App storage page exists, those bytes stay and can eventually make new creations fail with the translated "another archive is being created" or no-space message.
@@ -129,12 +135,6 @@ that fixed it.
 - **Workaround:** press F5, or open another folder and come back.
 - **Target:** not fixed yet; the owner decides when. Steps building other work only document it (owner's decision, 2026-10-30).
 
-### KI-032 - The hex viewer has no search or Go to offset yet (Minor, deferral)
-- **Found in:** Step 04c, 2026-10-30. **Severity:** Minor (deliberate deferral named in the step file; the viewer scrolls the whole 1 MB part, and larger files use the part buttons).
-- **What:** The hex viewer shows offsets, hex and text, with zoom and 1 MB parts, but a byte sequence cannot be searched and there is no Go to offset box. Both are scheduled with the other hex tools.
-- **Workaround:** use the part buttons to move through a large file, and Ctrl+F is not offered in this viewer.
-- **Target:** Step 06f (tables, JSON, fonts, hex search).
-
 ### KI-030 - Replacing existing files is not available yet (Minor, owner-approved deferral)
 - **Found in:** Step 03b, 2026-10-30. **Severity:** Minor (a deliberate deferral approved by the owner; the step does not require it, and Merge / Skip / Keep both cover safe daily use).
 - **What:** A path-based Recycle Bin call cannot prove that it removes the exact file the user approved; another file can appear at the same path after the prompt. The command boundary therefore returns `ops.replace_unavailable` and the dialog offers Merge (folders), Skip and Keep both. Replace returns with the full conflict window and the approved-target mechanism in `plan/contracts.md`.
@@ -221,6 +221,10 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-032 - The hex viewer had no search or Go to offset (fixed in Step 06f)
+- **Found in:** Step 04c, 2026-10-30.
+- **Fix:** Step 06f adds whole-file search (text or bytes; Ctrl+F then Enter or F3, wrapping once) and Go to offset (Ctrl+G), with the match highlighted across a row. Commit `feat(viewer): hex search and Go to offset [step-06f/T10]`.
 
 ### KI-85 - A RAR file record with no size was treated as an empty file (Major, fixed in Step 06e)
 - **Found in:** the full gate for Step 06e, 2026-10-31.
