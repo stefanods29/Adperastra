@@ -719,6 +719,7 @@
     "media": "Audio and video",
     "hex": "Hex",
     "table": "Table",
+    "json": "JSON",
     "font": "Font",
     "archive": "Archive"
   },
@@ -1035,6 +1036,19 @@
     "creating": "Creating {name}…",
     "copyProgress": "{done} of {total}",
     "someUnreadable": "{count, plural, one {# template could not be read.} other {# templates could not be read.}}"
+  },
+  "json": {
+    "label": "Tree of {name}",
+    "reading": "Reading the JSON file…",
+    "collapseAll": "Collapse all",
+    "copyValue": "Copy value",
+    "copied": "Value copied.",
+    "copyFailed": "Couldn't copy this value.",
+    "showMore": "Show more ({count} left)",
+    "items": "{count, plural, one {# item} other {# items}}",
+    "nodeCount": "{count, plural, one {# value} other {# values}}",
+    "noMatches": "Nothing matches your search.",
+    "invalidAt": "Line {line}, column {column}"
   },
   "font": {
     "label": "Preview of {name}",

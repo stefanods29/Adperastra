@@ -44,6 +44,8 @@ describe("handler registry", () => {
   it("ties go to the table and JSON viewers, and big files fall back to text", () => {
     expect(registry.pick(info("a.csv", "text/csv"))?.id).toBe("table");
     expect(registry.pick(info("a.csv", "text/csv", 134_217_729))?.id).toBe("text");
+    expect(registry.pick(info("a.json", "application/json"))?.id).toBe("json");
+    expect(registry.pick(info("a.json", "application/json", 33_554_433))?.id).toBe("text");
   });
 
   it("refuses duplicate handler ids", () => {

@@ -719,6 +719,7 @@
     "media": "[Äüdïø äñd vïdëø ~~~~~~]",
     "hex": "[Hëx ~~]",
     "table": "[Täblë ~~]",
+    "json": "[JSØÑ ~~]",
     "font": "[Føñt ~~]",
     "archive": "[Ärçhïvë ~~~]"
   },
@@ -1035,6 +1036,19 @@
     "creating": "[Çrëätïñg {name}… ~~~~]",
     "copyProgress": "[{done} øf {total} ~~]",
     "someUnreadable": "[{count, plural, one {# tëmplätë çøüld ñøt bë rëäd.} other {# tëmplätës çøüld ñøt bë rëäd.}} ~~~~~~~~~~]"
+  },
+  "json": {
+    "label": "[Trëë øf {name} ~~~]",
+    "reading": "[Rëädïñg thë JSØÑ fïlë… ~~~~~~~~]",
+    "collapseAll": "[Çølläpsë äll ~~~~~]",
+    "copyValue": "[Çøpÿ välüë ~~~~]",
+    "copied": "[Välüë çøpïëd. ~~~~~]",
+    "copyFailed": "[Çøüldñ't çøpÿ thïs välüë. ~~~~~~~~]",
+    "showMore": "[Shøw mørë ({count} lëft) ~~~~~]",
+    "items": "[{count, plural, one {# ïtëm} other {# ïtëms}} ~~]",
+    "nodeCount": "[{count, plural, one {# välüë} other {# välüës}} ~~~]",
+    "noMatches": "[Ñøthïñg mätçhës ÿøür sëärçh. ~~~~~~~~~~]",
+    "invalidAt": "[Lïñë {line}, çølümñ {column} ~~~~]"
   },
   "font": {
     "label": "[Prëvïëw øf {name} ~~~~]",

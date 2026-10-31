@@ -719,6 +719,7 @@
     "media": "Audio y video",
     "hex": "Hexadecimal",
     "table": "Tabla",
+    "json": "JSON",
     "font": "Fuente",
     "archive": "Archivo comprimido"
   },
@@ -1035,6 +1036,19 @@
     "creating": "Creando {name}…",
     "copyProgress": "{done} de {total}",
     "someUnreadable": "{count, plural, one {No se pudo leer # plantilla.} other {No se pudieron leer # plantillas.}}"
+  },
+  "json": {
+    "label": "Árbol de {name}",
+    "reading": "Leyendo el archivo JSON…",
+    "collapseAll": "Contraer todo",
+    "copyValue": "Copiar valor",
+    "copied": "Valor copiado.",
+    "copyFailed": "No se pudo copiar este valor.",
+    "showMore": "Mostrar más (quedan {count})",
+    "items": "{count, plural, one {# elemento} other {# elementos}}",
+    "nodeCount": "{count, plural, one {# valor} other {# valores}}",
+    "noMatches": "Nada coincide con tu búsqueda.",
+    "invalidAt": "Línea {line}, columna {column}"
   },
   "font": {
     "label": "Vista previa de {name}",

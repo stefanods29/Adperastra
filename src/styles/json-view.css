@@ -1,0 +1,93 @@
+/* JSON tree (Step 06f): one virtual row per value, colored by kind. Every
+ * color comes from the theme tokens. */
+
+.adp-json {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--adp-color-surface-window);
+  font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-size: 13px;
+  outline: none;
+}
+
+.adp-json:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: -2px;
+}
+
+.adp-json-rows {
+  position: relative;
+  min-width: 100%;
+}
+
+.adp-json-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  min-width: 100%;
+  padding-right: var(--adp-space-5);
+  white-space: nowrap;
+  color: var(--adp-color-text-primary);
+  user-select: text;
+  cursor: default;
+}
+
+.adp-json-row:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-json-row--selected {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-json-row:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: -2px;
+}
+
+.adp-json-chevron {
+  display: inline-flex;
+  flex: none;
+  width: 14px;
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-json-chevron--open {
+  transform: rotate(90deg);
+}
+
+.adp-json-key {
+  color: var(--adp-syntax-property);
+}
+
+.adp-json-colon {
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-json-string {
+  color: var(--adp-syntax-string);
+}
+
+.adp-json-number {
+  color: var(--adp-syntax-number);
+}
+
+.adp-json-bool,
+.adp-json-null {
+  color: var(--adp-syntax-keyword);
+}
+
+.adp-json-object,
+.adp-json-array {
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-json-more {
+  color: var(--adp-color-text-secondary);
+  cursor: pointer;
+}
