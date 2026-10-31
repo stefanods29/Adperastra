@@ -593,6 +593,7 @@ export default function App() {
               onConfirmDiscard={() => unsaved.confirmClose([tab.id])}
               onOpenFile={(path) => openFile(path, false)}
               onExtractArchive={extractArchive}
+              onOpenAsText={() => openFileWith(tab.path ?? "", "text")}
             />
           ))}
         {activeTab.kind === "help" ? (

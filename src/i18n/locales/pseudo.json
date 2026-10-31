@@ -714,6 +714,7 @@
     "markdown": "[Märkdøwñ ~~~~]",
     "media": "[Äüdïø äñd vïdëø ~~~~~~]",
     "hex": "[Hëx ~~]",
+    "table": "[Täblë ~~]",
     "archive": "[Ärçhïvë ~~~]"
   },
   "protected": {
@@ -744,7 +745,8 @@
     "actualSize": "[Äçtüäl sïzë ~~~~]",
     "rotateLeft": "[Røtätë lëft ~~~~]",
     "rotateRight": "[Røtätë rïght ~~~~~]",
-    "matches": "[{count, plural, =0 {Ñø mätçhës} one {# mätçh} other {# mätçhës}} ~~~~]"
+    "matches": "[{count, plural, =0 {Ñø mätçhës} one {# mätçh} other {# mätçhës}} ~~~~]",
+    "openAsText": "[Øpëñ äs tëxt ~~~~]"
   },
   "ribbon": {
     "view": "[Vïëw ~~]",
@@ -1028,6 +1030,24 @@
     "creating": "[Çrëätïñg {name}… ~~~~]",
     "copyProgress": "[{done} øf {total} ~~]",
     "someUnreadable": "[{count, plural, one {# tëmplätë çøüld ñøt bë rëäd.} other {# tëmplätës çøüld ñøt bë rëäd.}} ~~~~~~~~~~]"
+  },
+  "table": {
+    "label": "[Täblë øf {name} ~~~]",
+    "firstRowHeaders": "[Fïrst røw ïs hëädërs ~~~~~~~]",
+    "columnNumber": "[Çølümñ {number} ~~~]",
+    "rowCount": "[{count, plural, one {# røw} other {# røws}} ~~]",
+    "columnCount": "[{count, plural, one {# çølümñ} other {# çølümñs}} ~~~]",
+    "filtered": "[{shown} øf {total} røws mätçh ~~~~~]",
+    "truncated": "[Thïs fïlë ïs tøø bïg tø shøw whølë. Shøwïñg thë fïrst {count, plural, one {# røw} other {# røws}}; üsë Øpëñ äs tëxt tø sëë thë rëst. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
+    "empty": "[Thïs fïlë häs ñø røws. ~~~~~~~]",
+    "noMatches": "[Ñø røws mätçh ÿøür sëärçh. ~~~~~~~~~]",
+    "reading": "[Rëädïñg thë täblë… ~~~~~~]",
+    "sorting": "[Sørtïñg… ~~~]",
+    "delimiterComma": "[Çømmä sëpärätëd ~~~~~~]",
+    "delimiterSemicolon": "[Sëmïçøløñ sëpärätëd ~~~~~~~~]",
+    "delimiterTab": "[Täb sëpärätëd ~~~~~]",
+    "delimiterPipe": "[Pïpë sëpärätëd ~~~~~~]",
+    "sortColumn": "[Sørt bÿ {name} ~~~]"
   },
   "versions": {
     "title": "[Vërsïøñ hïstørÿ øf {name} ~~~~~~~]",

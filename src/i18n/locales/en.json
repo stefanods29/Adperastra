@@ -714,6 +714,7 @@
     "markdown": "Markdown",
     "media": "Audio and video",
     "hex": "Hex",
+    "table": "Table",
     "archive": "Archive"
   },
   "protected": {
@@ -744,7 +745,8 @@
     "actualSize": "Actual size",
     "rotateLeft": "Rotate left",
     "rotateRight": "Rotate right",
-    "matches": "{count, plural, =0 {No matches} one {# match} other {# matches}}"
+    "matches": "{count, plural, =0 {No matches} one {# match} other {# matches}}",
+    "openAsText": "Open as text"
   },
   "ribbon": {
     "view": "View",
@@ -1028,6 +1030,24 @@
     "creating": "Creating {name}…",
     "copyProgress": "{done} of {total}",
     "someUnreadable": "{count, plural, one {# template could not be read.} other {# templates could not be read.}}"
+  },
+  "table": {
+    "label": "Table of {name}",
+    "firstRowHeaders": "First row is headers",
+    "columnNumber": "Column {number}",
+    "rowCount": "{count, plural, one {# row} other {# rows}}",
+    "columnCount": "{count, plural, one {# column} other {# columns}}",
+    "filtered": "{shown} of {total} rows match",
+    "truncated": "This file is too big to show whole. Showing the first {count, plural, one {# row} other {# rows}}; use Open as text to see the rest.",
+    "empty": "This file has no rows.",
+    "noMatches": "No rows match your search.",
+    "reading": "Reading the table…",
+    "sorting": "Sorting…",
+    "delimiterComma": "Comma separated",
+    "delimiterSemicolon": "Semicolon separated",
+    "delimiterTab": "Tab separated",
+    "delimiterPipe": "Pipe separated",
+    "sortColumn": "Sort by {name}"
   },
   "versions": {
     "title": "Version history of {name}",

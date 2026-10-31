@@ -45,6 +45,8 @@ export interface FileTabViewProps {
   onOpenFile?: (path: string) => Promise<void>;
   /** Extract through the Explorer's jobs panel (Step 06d). */
   onExtractArchive?: (request: ArchiveExtractRequest) => void;
+  /** Open this file in the text viewer (Step 06f). */
+  onOpenAsText?: () => void;
 }
 
 type Phase =
@@ -72,6 +74,7 @@ export default function FileTabView({
   onConfirmDiscard,
   onOpenFile,
   onExtractArchive,
+  onOpenAsText,
 }: FileTabViewProps) {
   const { t } = useTranslation();
   const path = tab.path ?? "";
@@ -318,6 +321,7 @@ export default function FileTabView({
               onPathChange={onPathChange}
               onOpenFile={onOpenFile}
               onExtractArchive={onExtractArchive}
+              onOpenAsText={onOpenAsText}
             />
           </Suspense>
         ) : null}

@@ -714,6 +714,7 @@
     "markdown": "Markdown",
     "media": "Audio y video",
     "hex": "Hexadecimal",
+    "table": "Tabla",
     "archive": "Archivo comprimido"
   },
   "protected": {
@@ -744,7 +745,8 @@
     "actualSize": "Tamaño real",
     "rotateLeft": "Girar a la izquierda",
     "rotateRight": "Girar a la derecha",
-    "matches": "{count, plural, =0 {Sin coincidencias} one {# coincidencia} other {# coincidencias}}"
+    "matches": "{count, plural, =0 {Sin coincidencias} one {# coincidencia} other {# coincidencias}}",
+    "openAsText": "Abrir como texto"
   },
   "ribbon": {
     "view": "Vista",
@@ -1028,6 +1030,24 @@
     "creating": "Creando {name}…",
     "copyProgress": "{done} de {total}",
     "someUnreadable": "{count, plural, one {No se pudo leer # plantilla.} other {No se pudieron leer # plantillas.}}"
+  },
+  "table": {
+    "label": "Tabla de {name}",
+    "firstRowHeaders": "La primera fila son encabezados",
+    "columnNumber": "Columna {number}",
+    "rowCount": "{count, plural, one {# fila} other {# filas}}",
+    "columnCount": "{count, plural, one {# columna} other {# columnas}}",
+    "filtered": "{shown} de {total} filas coinciden",
+    "truncated": "Este archivo es demasiado grande para mostrarlo completo. Se muestra {count, plural, one {la primera fila} other {las primeras # filas}}; usa Abrir como texto para ver el resto.",
+    "empty": "Este archivo no tiene filas.",
+    "noMatches": "Ninguna fila coincide con tu búsqueda.",
+    "reading": "Leyendo la tabla…",
+    "sorting": "Ordenando…",
+    "delimiterComma": "Separado por comas",
+    "delimiterSemicolon": "Separado por punto y coma",
+    "delimiterTab": "Separado por tabulaciones",
+    "delimiterPipe": "Separado por barras verticales",
+    "sortColumn": "Ordenar por {name}"
   },
   "versions": {
     "title": "Historial de versiones de {name}",

@@ -19,6 +19,7 @@ import "./styles/versions.css";
 import "./styles/archive.css";
 import "./styles/archive-create.css";
 import "./styles/templates.css";
+import "./styles/table-view.css";
 
 const container = document.getElementById("root");
 if (!container) {

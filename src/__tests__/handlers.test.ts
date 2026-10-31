@@ -41,6 +41,11 @@ describe("handler registry", () => {
     expect(decideOpen(info("a.png", "image/png"), registry, "windows").kind).toBe("windows");
   });
 
+  it("ties go to the table and JSON viewers, and big files fall back to text", () => {
+    expect(registry.pick(info("a.csv", "text/csv"))?.id).toBe("table");
+    expect(registry.pick(info("a.csv", "text/csv", 134_217_729))?.id).toBe("text");
+  });
+
   it("refuses duplicate handler ids", () => {
     const fresh = createHandlerRegistry();
     expect(() => fresh.register(fresh.get("image")!)).toThrow();
