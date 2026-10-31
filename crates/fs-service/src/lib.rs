@@ -13,6 +13,7 @@ pub mod folder_views;
 pub mod item;
 pub mod list;
 pub mod ops;
+pub mod owned_io;
 pub mod rename;
 pub mod save;
 pub mod sort;
