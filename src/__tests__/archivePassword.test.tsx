@@ -121,7 +121,7 @@ describe("archive password dialog", () => {
     await render(<ArchivePasswordDialog name="a.zip" onSubmit={onSubmit} onCancel={vi.fn()} />);
     const field = input('input[type="password"]')!;
     await act(async () => {
-      field.value = SECRET;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, SECRET);
       field.dispatchEvent(new Event("input", { bubbles: true }));
     });
     const open = [...(container?.querySelectorAll("button") ?? [])].find(

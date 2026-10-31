@@ -139,7 +139,8 @@ describe("compress to", () => {
     });
     const secret = container?.querySelector<HTMLInputElement>('input[type="password"]')!;
     await act(async () => {
-      secret.value = "synthetic passphrase";
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!
+        .set!.call(secret, "synthetic passphrase");
       secret.dispatchEvent(new Event("input", { bubbles: true }));
     });
     expect(container?.querySelectorAll('input[type="password"]').length).toBe(2);
