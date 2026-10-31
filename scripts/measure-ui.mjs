@@ -841,6 +841,57 @@ if (shotDir) {
   await shot("30-layout-settings");
   await step(`window.__m.layoutField("preset", "builtin:standard")`);
   await step(`window.__m.openExplorer()`);
+
+  // Step 05d: the six themes and the density. The theme chosen for each mode
+  // is put back afterwards, so later runs start from the same settings.
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  const rememberedThemeMode = await page(`document.querySelector("[data-theme-mode][aria-pressed='true']")?.dataset.themeMode ?? "system"`);
+  const showTheme = async (mode, card, name) => {
+    await step(`window.__m.openSettings()`);
+    await sleep(300);
+    await step(`document.querySelector('[data-theme-mode="${mode}"]')?.click()`);
+    await step(`document.querySelector('[data-theme-id="${card}"]')?.click()`);
+    await sleep(200);
+    await step(`window.__m.openExplorer()`);
+    await sleep(300);
+    await step(`window.__m.click(window.__m.rows()[2])`);
+    await sleep(300);
+    await shot(name);
+  };
+  await showTheme("light", "bright", "31-theme-bright");
+  await showTheme("light", "paper", "32-theme-paper");
+  await showTheme("dark", "amoled", "33-theme-amoled");
+  await showTheme("dark", "highContrast", "34-theme-high-contrast");
+  // Standard themes and the mode the app started with, then the two densities.
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await step(`document.querySelector('[data-theme-id="light"]')?.click()`);
+  await step(`document.querySelector('[data-theme-id="dark"]')?.click()`);
+  await step(`document.querySelector('[data-theme-mode="${rememberedThemeMode}"]')?.click()`);
+  await step(`document.querySelector('[data-appearance-density="compact"]')?.click()`);
+  await step(`window.__m.openExplorer()`);
+  await sleep(300);
+  await shot("35-density-compact");
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await step(`document.querySelector('[data-appearance-density="spacious"]')?.click()`);
+  await step(`window.__m.openExplorer()`);
+  await sleep(300);
+  await shot("36-density-spacious");
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await step(`document.querySelector('[data-appearance-density="comfortable"]')?.click()`);
+  await sleep(300);
+  await shot("37-settings-page");
+  // Type into the Settings search box the way the page's own input event does.
+  const typeSearch = (text) =>
+    `(() => { const input = document.querySelector(".adp-settings-search .adp-search-input"); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`;
+  await step(typeSearch("theme"));
+  await sleep(200);
+  await shot("38-settings-search");
+  await step(typeSearch(""));
+  await step(`window.__m.openExplorer()`);
 }
 
 cdp.close();
