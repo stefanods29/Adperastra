@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State, WebviewWindow};
 
 use crate::archive_helper::{HelperMessage, HelperRequest, HELPER_FLAG, HELPER_MEMORY_LIMIT};
+use crate::archive_passwords::{ArchiveAuth, ArchivePasswords};
+use crate::archive_read_jobs;
 use crate::helper::{self, DriveEnd, DriveTimings, HelperProcess};
 use crate::jobs::{spawn_job, JobContext, Jobs};
 use crate::{ensure_main, validate_absolute_path, AppState};
@@ -283,12 +285,19 @@ pub fn archive_open_start(
     app: AppHandle,
     request_id: String,
     path: String,
+    auth: Option<ArchiveAuth>,
 ) -> Result<(), String> {
     ensure_main(window.label())?;
-    crate::valid_request_id(&request_id)?;
-    validate_absolute_path(&path).map_err(|_| "archive.bad_request".to_string())?;
+    archive_read_jobs::validate_start(&path, &request_id, auth.as_ref())?;
+    let cache = app.state::<ArchivePasswords>();
+    let credential = archive_read_jobs::credential_for(&cache, Path::new(&path), auth.as_ref())?;
+    let options = archive::ArchiveReadOptions {
+        password: credential.clone(),
+        seven_zip: None,
+    };
     let token = jobs.begin(&request_id, 0)?;
     let work_app = app.clone();
+    let auth_for_job = auth.clone();
     spawn_job(app, request_id.clone(), token, move |ctx| {
         let mut entries: Vec<ArchiveEntry> = Vec::new();
         let mut format: Option<ArchiveFormat> = None;
@@ -297,7 +306,10 @@ pub fn archive_open_start(
         let max_entries = archive::Limits::default().max_entries;
         let outcome = run_helper_job(
             ctx,
-            &HelperRequest::List { path: path.clone() },
+            &HelperRequest::List {
+                path: path.clone(),
+                options: options.clone(),
+            },
             |message| {
                 match message {
                     HelperMessage::Entries { entries: batch } => {
@@ -323,6 +335,14 @@ pub fn archive_open_start(
         if too_many {
             return Err("archive.too_many_entries".to_string());
         }
+        let credentials = work_app.state::<ArchivePasswords>();
+        archive_read_jobs::note_result(
+            &credentials,
+            Path::new(&path),
+            auth_for_job.as_ref(),
+            credential.as_deref(),
+            outcome.error.as_deref(),
+        );
         if let Some(code) = outcome.error {
             return Err(code);
         }
@@ -448,17 +468,26 @@ pub fn archive_open_entry_start(
     app: AppHandle,
     request_id: String,
     request: OpenEntryArgs,
+    auth: Option<ArchiveAuth>,
 ) -> Result<(), String> {
     ensure_main(window.label())?;
-    crate::valid_request_id(&request_id)?;
-    validate_absolute_path(&request.archive).map_err(|_| "archive.bad_request".to_string())?;
+    archive_read_jobs::validate_start(&request.archive, &request_id, auth.as_ref())?;
     let length = request.inner_path.chars().count();
     if length == 0 || length > MAX_INNER_PATH {
         return Err("archive.bad_request".to_string());
     }
+    let cache = app.state::<ArchivePasswords>();
+    let credential =
+        archive_read_jobs::credential_for(&cache, Path::new(&request.archive), auth.as_ref())?;
+    let options = archive::ArchiveReadOptions {
+        password: credential.clone(),
+        seven_zip: None,
+    };
+    let auth_for_job = auth.clone();
     let data_dir = app.state::<AppState>().data_dir.clone();
     let folder = data_dir.join(OPEN_FOLDER).join(&request_id);
     std::fs::create_dir_all(&folder).map_err(|_| "archive.other".to_string())?;
+    let work_app = app.clone();
     let token = jobs.begin(&request_id, 1)?;
     spawn_job(app, request_id, token, move |ctx| {
         let extract_request = archive::ExtractRequest {
@@ -477,6 +506,7 @@ pub fn archive_open_entry_start(
             &HelperRequest::Extract {
                 path: request.archive.clone(),
                 request: extract_request,
+                options: options.clone(),
             },
             |message| {
                 if let HelperMessage::Extracted { report: done } = message {
@@ -485,6 +515,14 @@ pub fn archive_open_entry_start(
                 }
                 Ok(false)
             },
+        );
+        let credentials = work_app.state::<ArchivePasswords>();
+        archive_read_jobs::note_result(
+            &credentials,
+            Path::new(&request.archive),
+            auth_for_job.as_ref(),
+            credential.as_deref(),
+            outcome.error.as_deref(),
         );
         if let Some(code) = outcome.error {
             return Err(code);
@@ -560,13 +598,26 @@ pub fn archive_extract_start(
     app: AppHandle,
     request_id: String,
     request: ExtractArgs,
+    auth: Option<ArchiveAuth>,
 ) -> Result<(), String> {
     ensure_main(window.label())?;
-    crate::valid_request_id(&request_id)?;
+    archive_read_jobs::validate_start(&request.archive, &request_id, auth.as_ref())?;
     check_extract_args(&request)?;
+    if let Some(auth) = auth.as_ref() {
+        auth.validate()?;
+    }
     if !Path::new(&request.dest_dir).is_dir() {
         return Err("archive.dest_missing".to_string());
     }
+    let cache = app.state::<ArchivePasswords>();
+    let credential =
+        archive_read_jobs::credential_for(&cache, Path::new(&request.archive), auth.as_ref())?;
+    let options = archive::ArchiveReadOptions {
+        password: credential.clone(),
+        seven_zip: None,
+    };
+    let auth_for_job = auth.clone();
+    let work_app = app.clone();
     let token = jobs.begin(&request_id, 0)?;
     spawn_job(app, request_id, token, move |ctx| {
         let extract_request = archive::ExtractRequest {
@@ -586,6 +637,7 @@ pub fn archive_extract_start(
             &HelperRequest::Extract {
                 path: request.archive.clone(),
                 request: extract_request,
+                options: options.clone(),
             },
             |message| {
                 match message {
@@ -598,6 +650,14 @@ pub fn archive_extract_start(
                 }
                 Ok(false)
             },
+        );
+        let credentials = work_app.state::<ArchivePasswords>();
+        archive_read_jobs::note_result(
+            &credentials,
+            Path::new(&request.archive),
+            auth_for_job.as_ref(),
+            credential.as_deref(),
+            outcome.error.as_deref(),
         );
         let cancelled =
             outcome.cancelled() || (outcome.error.is_some() && ctx.token().load(Ordering::Relaxed));

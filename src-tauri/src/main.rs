@@ -21,7 +21,9 @@ use thiserror::Error;
 mod appearance;
 mod archive;
 mod archive_helper;
+mod archive_passwords;
 mod archive_rar;
+mod archive_read_jobs;
 mod classic_menu;
 mod clipboard;
 #[cfg(windows)]
@@ -2951,6 +2953,7 @@ fn main() {
         .manage(folder_views::FolderViewsLock::default())
         .manage(jobs::Jobs::default())
         .manage(archive::ArchiveSessions::default())
+        .manage(archive_passwords::ArchivePasswords::default())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so

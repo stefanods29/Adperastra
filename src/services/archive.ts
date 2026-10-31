@@ -100,16 +100,25 @@ export interface OpenedEntry {
   path: string;
 }
 
+/** One password for one operation (mirrors Rust `ArchiveAuth`). The optional
+ * session cache lives only in the app's memory, never in settings. */
+export interface ArchiveAuth {
+  password: string;
+  /** Remember until the app closes, only after a verified read. */
+  remember_session: boolean;
+}
+
 /** Read an archive and keep it open for browsing. The job's result is the
  * summary; cancel asks the helper to stop. */
 export async function archiveOpen(
   path: string,
   onProgress?: (progress: OpProgress) => void,
+  auth?: ArchiveAuth,
 ): Promise<JobHandle<ArchiveSummary>> {
   return runJob<ArchiveSummary>(
     "arcopen",
     async (requestId) => {
-      await invoke("archive_open_start", { requestId, path });
+      await invoke("archive_open_start", { requestId, path, auth: auth ?? null });
     },
     onProgress,
   );
@@ -149,11 +158,12 @@ export async function archiveClose(session: string): Promise<void> {
 export async function archiveOpenEntry(
   request: OpenEntryRequest,
   onProgress?: (progress: OpProgress) => void,
+  auth?: ArchiveAuth,
 ): Promise<JobHandle<OpenedEntry>> {
   const job = await runJob<OpenedEntry>(
     "arcentry",
     async (requestId) => {
-      await invoke("archive_open_entry_start", { requestId, request });
+      await invoke("archive_open_entry_start", { requestId, request, auth: auth ?? null });
     },
     onProgress,
   );
@@ -168,11 +178,12 @@ export async function archiveOpenEntry(
 export async function archiveExtract(
   request: ArchiveExtractRequest,
   onProgress?: (progress: OpProgress) => void,
+  auth?: ArchiveAuth,
 ): Promise<JobHandle<ArchiveExtractReport>> {
   const job = await runJob<ArchiveExtractReport>(
     "arcextract",
     async (requestId) => {
-      await invoke("archive_extract_start", { requestId, request });
+      await invoke("archive_extract_start", { requestId, request, auth: auth ?? null });
     },
     onProgress,
   );

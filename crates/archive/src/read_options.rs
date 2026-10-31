@@ -4,12 +4,17 @@
 use std::fmt;
 use std::path::PathBuf;
 
-/// Options for one listing or extraction. Old callers use the defaults.
-#[derive(Clone, Default)]
+use serde::{Deserialize, Serialize};
+
+/// Options for one listing or extraction. Old callers use the defaults, and
+/// old JSON without these fields still deserializes.
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct ArchiveReadOptions {
     /// The exact password bytes, when the user supplied one.
+    #[serde(default)]
     pub password: Option<String>,
     /// The separately installed 7-Zip used for RAR. Never set from the UI.
+    #[serde(default)]
     pub seven_zip: Option<PathBuf>,
 }
 

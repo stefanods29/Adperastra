@@ -35,10 +35,14 @@ pub const ALIVE_INTERVAL: Duration = Duration::from_secs(5);
 pub enum HelperRequest {
     List {
         path: String,
+        #[serde(default)]
+        options: archive::ArchiveReadOptions,
     },
     Extract {
         path: String,
         request: ExtractRequest,
+        #[serde(default)]
+        options: archive::ArchiveReadOptions,
     },
     /// Ask for the separately installed 7-Zip's version (Step 06e).
     RarStatus,
@@ -129,8 +133,12 @@ pub fn run_helper() -> i32 {
         last_progress: Instant::now(),
     };
     match request {
-        HelperRequest::List { path } => list(&path, &token, &mut reporter),
-        HelperRequest::Extract { path, request } => extract(&path, &request, &token, &mut reporter),
+        HelperRequest::List { path, options } => list(&path, &options, &token, &mut reporter),
+        HelperRequest::Extract {
+            path,
+            request,
+            options,
+        } => extract(&path, &request, &options, &token, &mut reporter),
         HelperRequest::RarStatus => rar_status(),
     }
     0
@@ -145,10 +153,21 @@ fn rar_status() {
     send(&HelperMessage::RarStatus { status });
 }
 
-fn list(path: &str, token: &CancellationToken, reporter: &mut Reporter) {
+fn list(
+    path: &str,
+    options: &archive::ArchiveReadOptions,
+    token: &CancellationToken,
+    reporter: &mut Reporter,
+) {
     let listing = {
         let mut sink = |progress: &OpProgress| reporter.progress(progress);
-        archive::list(Path::new(path), &Limits::default(), token, &mut sink)
+        archive::list_with_options(
+            Path::new(path),
+            &Limits::default(),
+            token,
+            &mut sink,
+            options,
+        )
     };
     match listing {
         Ok(listing) => {
@@ -171,15 +190,17 @@ fn list(path: &str, token: &CancellationToken, reporter: &mut Reporter) {
 fn extract(
     path: &str,
     request: &ExtractRequest,
+    options: &archive::ArchiveReadOptions,
     token: &CancellationToken,
     reporter: &mut Reporter,
 ) {
-    match archive::extract(
+    match archive::extract_with_options(
         Path::new(path),
         request,
         &Limits::default(),
         token,
         reporter,
+        options,
     ) {
         Ok(report) => send(&HelperMessage::Extracted { report }),
         Err(error) => send(&HelperMessage::Failed {
@@ -261,6 +282,7 @@ mod tests {
     fn requests_round_trip() {
         let list = HelperRequest::List {
             path: "C:\\a.zip".to_string(),
+            options: archive::ArchiveReadOptions::default(),
         };
         let json = serde_json::to_string(&list).unwrap();
         assert!(json.contains("\"op\":\"list\""));
@@ -270,6 +292,7 @@ mod tests {
         let extract = HelperRequest::Extract {
             path: "C:\\a.zip".to_string(),
             request: extract_request(),
+            options: archive::ArchiveReadOptions::default(),
         };
         let json = serde_json::to_string(&extract).unwrap();
         assert!(json.contains("\"op\":\"extract\""));
