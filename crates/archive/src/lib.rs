@@ -8,11 +8,13 @@ pub mod format;
 pub mod limits;
 pub mod list;
 pub mod path;
+pub mod plan;
 mod read_7z;
 mod read_stream;
 mod read_tar;
 mod read_zip;
 pub mod time;
+pub mod tree;
 
 pub use entry::{ArchiveEntry, ArchiveFormat, EntryKind, Listing, IMPLICIT_INDEX};
 pub use error::ArchiveError;
@@ -22,4 +24,9 @@ pub use list::list;
 pub use path::{
     first_component, is_root_entry, name_of, normalize_inner_path, parent_of, relative_to,
 };
+pub use plan::{
+    plan_extract, top_level_names, ArchiveFacts, ExtractPlan, ExtractRequest, PlannedEntry,
+    SkippedEntry, MAX_EXTRACT_PATHS,
+};
 pub use time::dos_local_to_unix;
+pub use tree::{ArchiveTree, TreeStats};
