@@ -4,7 +4,9 @@ import Button from "../components/Button";
 import Dialog from "../components/Dialog";
 import HelpButton from "../components/HelpButton";
 import SearchBox from "../components/SearchBox";
+import { errorText } from "../services/errors";
 import type { AppSettings } from "../services/settings";
+import { exportSettings, importSettings, isoDate } from "../services/settingsFile";
 import AppearanceSettings from "./settings/AppearanceSettings";
 import GeneralSettings from "./settings/GeneralSettings";
 import LayoutSettings from "./settings/LayoutSettings";
@@ -38,10 +40,40 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
   const [query, setQuery] = useState("");
   const [undo, setUndo] = useState<UndoState | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<AppSettings | null>(null);
 
-  const applyWithUndo = (next: AppSettings, message: string) => {
-    setUndo({ previous: settings, message });
+  const applyWithUndo = (next: AppSettings, undoMessage: string) => {
+    setMessage(null);
+    setUndo({ previous: settings, message: undoMessage });
     onApply(next);
+  };
+
+  const showMessage = (text: string) => {
+    setUndo(null);
+    setMessage(text);
+  };
+
+  const exportToFile = async () => {
+    try {
+      const path = await exportSettings(
+        t("settings.exportTitle"),
+        t("settings.exportFileName", { date: isoDate(new Date()) }),
+        t("settings.fileFilter"),
+      );
+      if (path !== null) showMessage(t("settings.exported", { path }));
+    } catch (error) {
+      showMessage(errorText(t, error, "settingsFile"));
+    }
+  };
+
+  const importFromFile = async () => {
+    try {
+      const imported = await importSettings(t("settings.importTitle"), t("settings.fileFilter"));
+      if (imported !== null) setPendingImport(imported);
+    } catch (error) {
+      showMessage(errorText(t, error, "settingsFile"));
+    }
   };
 
   const shown = SETTINGS_SECTIONS.filter((section) => sectionMatches(section, query, (key) => t(key)));
@@ -101,6 +133,14 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
           </Button>
         </div>
       ) : null}
+      {!undo && message !== null ? (
+        <div className="adp-settings-notice" role="status">
+          <span>{message}</span>
+          <Button variant="subtle" onClick={() => setMessage(null)}>
+            {t("common.dismiss")}
+          </Button>
+        </div>
+      ) : null}
       <div className="adp-settings-search">
         <SearchBox value={query} onChange={setQuery} placeholder={t("settings.search")} />
       </div>
@@ -140,6 +180,11 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
         </div>
       </div>
       <div className="adp-settings-footer">
+        <h3 className="adp-heading">{t("settings.backup")}</h3>
+        <div className="adp-button-row">
+          <Button onClick={() => void exportToFile()}>{t("settings.export")}</Button>
+          <Button onClick={() => void importFromFile()}>{t("settings.import")}</Button>
+        </div>
         <Button onClick={() => setConfirmReset(true)}>{t("settings.resetAll")}</Button>
         <p className="adp-note">{t("settings.persistNote")}</p>
       </div>
@@ -157,6 +202,23 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
               {t("settings.resetConfirm")}
             </Button>
             <Button onClick={() => setConfirmReset(false)}>{t("common.cancel")}</Button>
+          </div>
+        </Dialog>
+      ) : null}
+      {pendingImport ? (
+        <Dialog title={t("settings.importConfirmTitle")} onClose={() => setPendingImport(null)}>
+          <p>{t("settings.importConfirmBody")}</p>
+          <div className="adp-dialog-actions">
+            <Button
+              variant="primary"
+              onClick={() => {
+                applyWithUndo(pendingImport, t("settings.imported"));
+                setPendingImport(null);
+              }}
+            >
+              {t("settings.importConfirm")}
+            </Button>
+            <Button onClick={() => setPendingImport(null)}>{t("common.cancel")}</Button>
           </div>
         </Dialog>
       ) : null}

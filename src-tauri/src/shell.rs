@@ -23,12 +23,12 @@ pub const MAX_PROPERTIES_ITEMS: usize = 512;
 const ERROR_CANCELLED_HRESULT: i32 = 0x8007_04C7_u32 as i32;
 
 #[cfg(windows)]
-fn is_cancelled(error: &windows::core::Error) -> bool {
+pub(crate) fn is_cancelled(error: &windows::core::Error) -> bool {
     error.code().0 == ERROR_CANCELLED_HRESULT
 }
 
 #[cfg(windows)]
-fn hwnd_from(raw: isize) -> windows::Win32::Foundation::HWND {
+pub(crate) fn hwnd_from(raw: isize) -> windows::Win32::Foundation::HWND {
     windows::Win32::Foundation::HWND(raw as *mut std::ffi::c_void)
 }
 

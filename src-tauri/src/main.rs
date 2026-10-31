@@ -30,6 +30,7 @@ mod folder_views;
 mod links;
 mod media;
 mod operation_safety;
+mod settings_file;
 mod shell;
 mod transfer_history;
 mod zone;
@@ -2922,6 +2923,8 @@ fn main() {
             zone::file_unblock,
             media::media_sidecars,
             appearance::appearance_set_zoom,
+            settings_file::settings_export,
+            settings_file::settings_import,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

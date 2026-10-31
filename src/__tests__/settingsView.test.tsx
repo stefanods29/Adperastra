@@ -114,4 +114,11 @@ describe("SettingsView", () => {
       "All settings are back to their defaults.",
     );
   });
+
+  it("the backup buttons are there", async () => {
+    await renderSettings();
+    const footer = container!.querySelector(".adp-settings-footer")!;
+    expect(buttonWithText(footer, "Export settings…")).not.toBeNull();
+    expect(buttonWithText(footer, "Import settings…")).not.toBeNull();
+  });
 });

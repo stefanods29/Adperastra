@@ -242,7 +242,19 @@
     "resetAllBody": "Every setting goes back to its default, except your language and your saved layout presets. Your files are not changed.",
     "resetConfirm": "Reset",
     "sectionWasReset": "{name} is back to its default settings.",
-    "allWereReset": "All settings are back to their defaults."
+    "allWereReset": "All settings are back to their defaults.",
+    "backup": "Back up and restore",
+    "export": "Export settings…",
+    "import": "Import settings…",
+    "exportTitle": "Export settings",
+    "importTitle": "Import settings",
+    "exportFileName": "Adperastra settings {date}.json",
+    "fileFilter": "Settings files",
+    "exported": "Settings exported to {path}.",
+    "importConfirmTitle": "Replace your settings?",
+    "importConfirmBody": "The settings in the file will replace your current ones. You can undo this right after.",
+    "importConfirm": "Import",
+    "imported": "Settings imported."
   },
   "gallery": {
     "title": "Gallery",
@@ -500,6 +512,16 @@
     "appearance": {
       "other": "Couldn't change the scale. Try again.",
       "bad_scale": "That scale isn't available."
+    },
+    "settingsFile": {
+      "other": "Couldn't use the settings file. Try again.",
+      "bad_request": "That file name can't be used.",
+      "bad_extension": "Settings files end in .json.",
+      "recycle_failed": "The old file couldn't be moved to the Recycle Bin, so nothing was saved.",
+      "write_failed": "Couldn't save the settings file.",
+      "too_large": "This file is too large to be a settings file.",
+      "invalid": "This file isn't an Adperastra settings file.",
+      "newer": "This file comes from a newer version of Adperastra. Update the app to use it."
     }
   },
   "keys": {
