@@ -51,7 +51,7 @@ pub use ops::{
     recycle_items, restore_bin_items, restore_items, unique_destination, CompletedItem, Conflict,
     ConflictPolicy, CreateKind, OpProgress, OpReport, ReplacedItem, SkippedItem,
 };
-pub use rename::{rename_error_reason, rename_in_place};
+pub use rename::{move_without_replacing, rename_error_reason, rename_in_place};
 pub use sort::{natural_cmp, sort_items, SortDirection, SortKey, SortSpec};
 pub use state::{atomic_write, ExplorerState};
 pub use watch::{coalesce_events, FsEvent, FsEventKind, FsWatcher, MAX_WATCH_BATCH};
