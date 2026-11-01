@@ -99,6 +99,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 
 ## Owner decisions log (newest first)
 
+- 2026-11-01: The owner requested complete guides for parallel non-AI code writing. The coordinator authors every full step guide and exact cross-step dependency/export tables before dispatch; coding workers do not write their own guides or choose missing names/designs. Workers write code and tests but do not compile, run tests, install dependencies or build prototypes; the coordinator executes verification/integration. The initial coordination packet is in `plan/parallel/README.md`; assignment briefs are not finished step guides. Step states and milestone promises remain unchanged. Seven AI-only steps are excluded; 22b retains only manual style-library work and remains partial.
 - 2026-10-31: The owner asked to fix the two open Blockers, KI-068 and KI-079, before Step 07a. Following the contract's fail-safe branch, Save as onto an existing file is unavailable until Step 09f can tie recycling to the approved file (KI-087).
 - 2026-10-30: The owner asked the agent to check the Step 05d theme screenshots instead of reviewing them personally.
 - 2026-10-30: Step 05c side and bottom designs approved from the T10 screenshots.

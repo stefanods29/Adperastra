@@ -1,5 +1,11 @@
 # Prompts for the owner
 
+## Current prompt: parallel code-writing workers (2026-11-01)
+
+Use [parallel/README.md](parallel/README.md) for the complete coordination plan, [parallel/ASSIGNMENTS.md](parallel/ASSIGNMENTS.md) to choose a worker letter, and [parallel/WORKER-PROMPT.md](parallel/WORKER-PROMPT.md) for the message to paste into another AI. Workers write code and tests concurrently in isolated workspaces; only the coordinating reviewer compiles, runs checks and integrates. Shared interfaces are frozen before dependent code is written. The packet covers the remaining non-AI work, including only the manual style-library portion of 22b.
+
+The prompts below are historical reference, not instructions for this assignment. Do not copy their deleted-folder paths or their conflicting permissions/workflow.
+
 These prompts were written when the plan lived in `C:\Users\stefa\Documents\Adperastra\adperastra-plan-v2.1`. That folder was merged into `plan/` and deleted on 2026-10-30, so they no longer work as written: update their folder paths before using one.
 
 ## 1. Planner: keep writing the next steps

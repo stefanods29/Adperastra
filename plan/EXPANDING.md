@@ -1,5 +1,11 @@
 # Writing guide steps (instructions for the planner)
 
+## Parallel code-writing assignment (owner direction, 2026-11-01)
+
+For the owner's parallel non-AI implementation work, read [parallel/README.md](parallel/README.md) and its assignments, interfaces, worker prompt and review procedure first. The coordinator writes the complete per-step guides and fixes every cross-step name/interface before dispatch. Other AIs write **code and tests concurrently** from those guides; they do not author their own guides, compile or run tests. The coordinating reviewer performs executed verification and integration.
+
+In that workflow, code writing may overlap across streams once complete guides and exact shared interfaces are frozen, without waiting for provider implementations to finish. Workers write only owned files in isolated workspaces and propose shared-file wiring changes. Coordinator draft guides stay under `plan/parallel/guide-drafts/` until accepted and promoted. Only the coordinator updates shared plan records/counters and runs checks before acceptance/commits. This is the specific exception to the sequential implementation procedure below; all guide precision, safety, translation, license and evidence requirements remain.
+
 Steps marked `outline` in `plan/STATUS.md` are not written yet. Before the coding agent can build one, a strong model (the **planner**, for example Claude Opus) writes its **guide**: a precise description of everything to build, with every decision made, but **no code**. The coding agent then writes the code exactly as the guide says. The coding agent never writes guides and never builds an `outline` step.
 
 `plan/steps/step-05a.md` is the model guide: same sections, same level of detail. Read it whole before writing a guide.
@@ -41,12 +47,13 @@ The planner changes only those plan files, never app code. Never read, print or 
 5. **Read first**: the plan files, pitfalls, recipes and code files the agent must read before T1.
 6. **Decisions (already made)**: `D1`, `D2`... one or two sentences each, covering every choice that shapes the work (libraries, limits, behavior, layout, file formats, safety).
 7. **Data shapes**: tables for every new type, struct, settings field (Rust type, TypeScript type, default, allowed values, validation, normalization), file format, Tauri command (arguments, returns, error codes), command (id, label key, icon, shortcut), and the full **translation key** table (key, English, Spanish).
-8. **Tasks** `T1`, `T2`...: each with **Files** (create/modify, exact paths), **Do this** (numbered steps), the translation keys it adds, **Tests** (file; each test's name, steps or input, and expected result, as a table), **Traps** (what tends to go wrong), and **Commit** (the exact message, `<type>(<area>): <what> [step-<id>/T<n>]`).
-9. **Help pages**: the full text of every new page in English and Spanish (`plan/recipes/add-help-page.md` format), and the exact changes to existing pages.
-10. **Check by hand**: a table of the test files the agent creates (path, content; never a script), then numbered checks the owner does in the packaged app, including Spanish, the dark theme and keyboard use.
-11. **Speed**: interaction, tier (`plan/speed.md`), measurement name (added in a task to `scripts/measure-ui.mjs`).
-12. **Screenshots**: names (next numbers from the ledger), added in a task.
-13. **Done when**: a checklist.
+8. **Uses from other steps** and **Exports for later steps**: explicit symbol tables, not just a list of step numbers. Each dependency row names its producing step/task, canonical definition file, exact exported name and fields/variants used, parameter and return/error shapes, relevant lifetime/ownership/limits, and baseline SHA or frozen contract revision. Each export row fixes those facts for later consumers. Each task lists the dependency rows it uses. Never depend on another module's private/local variables, guess a future name, copy a shared type or accept a proposed/unsettled API as frozen. Check every consumer row against its producer row before dispatch.
+9. **Tasks** `T1`, `T2`...: each with **Files** (create/modify, exact paths), **Do this** (numbered steps), the translation keys it adds, **Tests** (file; each test's name, steps or input, and expected result, as a table), **Traps** (what tends to go wrong), and **Commit** (the exact message, `<type>(<area>): <what> [step-<id>/T<n>]`).
+10. **Help pages**: the full text of every new page in English and Spanish (`plan/recipes/add-help-page.md` format), and the exact changes to existing pages.
+11. **Check by hand**: a table of the test files the agent creates (path, content; never a script), then numbered checks the owner does in the packaged app, including Spanish, the dark theme and keyboard use.
+12. **Speed**: interaction, tier (`plan/speed.md`), measurement name (added in a task to `scripts/measure-ui.mjs`).
+13. **Screenshots**: names (next numbers from the ledger), added in a task.
+14. **Done when**: a checklist.
 
 ## 5. How precise (the coding agent decides nothing)
 
