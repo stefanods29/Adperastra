@@ -1,10 +1,10 @@
 # Writing guide steps (instructions for the planner)
 
-## Parallel code-writing assignment (owner direction, 2026-11-01)
+## Parallel code-writing assignment (owner direction, 2026-11-02)
 
-For the owner's parallel non-AI implementation work, read [parallel/README.md](parallel/README.md) and its assignments, interfaces, worker prompt and review procedure first. The coordinator writes the complete per-step guides and fixes every cross-step name/interface before dispatch. Other AIs write **code and tests concurrently** from those guides; they do not author their own guides, compile or run tests. The coordinating reviewer performs executed verification and integration.
+The owner requested all54 remaining guides, including AI, plus one coding prompt per step, followed by a stop. Read [parallel/README.md](parallel/README.md), [GUIDE_STATUS.md](GUIDE_STATUS.md) and [prompts/README.md](prompts/README.md). The coordinator writes complete guides and exact producer/consumer contracts. Other AIs write code and tests concurrently; they do not expand their own guides, compile, install or execute checks. Coordinator performs future verification and integration.
 
-In that workflow, code writing may overlap across streams once complete guides and exact shared interfaces are frozen, without waiting for provider implementations to finish. Workers write only owned files in isolated workspaces and propose shared-file wiring changes. Coordinator draft guides stay under `plan/parallel/guide-drafts/` until accepted and promoted. Only the coordinator updates shared plan records/counters and runs checks before acceptance/commits. This is the specific exception to the sequential implementation procedure below; all guide precision, safety, translation, license and evidence requirements remain.
+Guides live directly in plan/steps/. Their state describes guide readiness, never feature completion. Code writing can overlap against specified interfaces; registration/integration remains ordered. Existing/shared files are coordinator-owned, with exact proposals from workers. Current source baseline and future contract hashes are recorded separately. This exception overrides sequential execution/commit instructions for external coding workers. No coding work is dispatched in this guide-authoring assignment.
 
 Steps marked `outline` in `plan/STATUS.md` are not written yet. Before the coding agent can build one, a strong model (the **planner**, for example Claude Opus) writes its **guide**: a precise description of everything to build, with every decision made, but **no code**. The coding agent then writes the code exactly as the guide says. The coding agent never writes guides and never builds an `outline` step.
 

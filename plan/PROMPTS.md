@@ -1,8 +1,10 @@
 # Prompts for the owner
 
-## Current prompt: parallel code-writing workers (2026-11-01)
+## Current prompts: one coding worker per step (2026-11-02)
 
-Use [parallel/README.md](parallel/README.md) for the complete coordination plan, [parallel/ASSIGNMENTS.md](parallel/ASSIGNMENTS.md) to choose a worker letter, and [parallel/WORKER-PROMPT.md](parallel/WORKER-PROMPT.md) for the message to paste into another AI. Workers write code and tests concurrently in isolated workspaces; only the coordinating reviewer compiles, runs checks and integrates. Shared interfaces are frozen before dependent code is written. The packet covers the remaining non-AI work, including only the manual style-library portion of 22b.
+Open [prompts/README.md](prompts/README.md). It indexes54 complete per-step prompts for all remaining work, including AI and full22b. Each prompt assigns a finished guide with exact producer dependencies, shared-file ownership and return requirements. Workers write code and tests concurrently in isolated workspaces. They do not compile/run/install/generate; coordinator does future verification. The assistant guide offers Local AI or API key, Meta first among API providers. This delivery stops at guides/prompts.
+
+The previous A–L/non-AI packet is superseded by [parallel/README.md](parallel/README.md). Do not use historical prompts as current dispatch instructions.
 
 The prompts below are historical reference, not instructions for this assignment. Do not copy their deleted-folder paths or their conflicting permissions/workflow.
 

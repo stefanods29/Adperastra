@@ -193,3 +193,16 @@ Replace unavailable for the affected case; do not weaken this contract or
 claim that identity revalidation alone closes the race. Tests must exercise
 new, changed, and swapped targets, nested conflicts, cancellation and failures,
 and crash recovery at each durable transition using disposable folders.
+
+
+## Future shared contracts: reviewed parallel guide packet (2026-11-02)
+
+This additive register binds future steps07a–22b without claiming their code exists. The full canonical definitions, exact parameters/types/errors/limits/ownership are in their producing guides, indexed verbatim in [parallel/CONTRACT-INDEX.md](parallel/CONTRACT-INDEX.md) and hashed in [parallel/GUIDE-MANIFEST.json](parallel/GUIDE-MANIFEST.json). Consumers import those definitions, never copy a type or depend on a producer's private variables. Later amendments in the whole producer guide are part of its contract.
+
+07a owns shared source identity/cache/scheduler;07d owns file-memory backing/PDF source union/private persistent framed helper.08a owns immutable snapshot authority, authorized encoder MIME sets and multi-output conversion;08c owns privacy closure acceptance.09a owns document controllers/revision+content identity, native drafts, Save as new and close/recovery integration.09e/09f extend reviewed file actions with explicit_names/expected_sources and exact receipts while retaining object-bound replacement gates.12a/12b own verified packs and engine sessions;13/14a/b/15 own read/edit models and microsecond time.14c owns local AI inputs/tasks.17a owns optional Local/API assistant inference and consent;17b–d own actions/speech/semantic/extraction consumers.19b adds the native-only timeline graph dispatch.20a E20–E25 owns Office proposals, clone evaluation, human confirmation, transactional application, lease resolution and blank/deck draft factories; consumers20b–22b use it.
+
+The assistant is Local by default, with API key as an explicit alternative and Meta first among API providers. Credential status never reveals a key. File-derived outbound requests require one-use approval bound to actual payload/provider/model/source revisions; no automatic cloud fallback, history resend or paid retry. Local speech/image/embeddings remain local. Provider protocol/source evidence is in [parallel/AI-API-EVIDENCE.md](parallel/AI-API-EVIDENCE.md).
+
+All future encoded captures retain native sensitivity and the captured revision/content tuple. Source MIME is descriptive; a trusted native encoder registers its output MIME before capture. Save copy does not clean/rebind; Save as new follows09a's atomic all-view registry contract. Virtual/sensitive content cannot acquire a fabricated disk path. No model/tool output directly mutates files or approves its own confirmation.
+
+The coordinator integrates shared declarations/registries and later enum extensions. Existing baseline files and shared roots are coordinator-owned during simultaneous coding. Workers write code/tests and return exact shared proposals; they execute no build/tests/install/generator/app/API call. Implementation acceptance, real artifact hashes, performance/screenshots and checkpoints are separate future evidence.

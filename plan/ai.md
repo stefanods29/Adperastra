@@ -2,13 +2,22 @@
 
 Read this file only in AI steps (14c and 17a onward). These choices are reviewed again when those steps are expanded (`plan/EXPANDING.md`), because small models change quickly.
 
-All AI features are optional packs, run locally through the local AI runtime (Step 14c), never send files anywhere, and can be turned off individually in Settings > AI. Packs are chosen in the setup window's first-run checklist or later in App storage.
+AI features are optional and individually controlled. Local engines run through14c and optional12a packs. The assistant also offers **Local AI** or **API key** mode by owner direction2026-11-02, with **Meta Model API first** in API provider selection. Local AI is the initial default; choosing API never enables background transmission or silent fallback. Local speech/upscaling/masks/embeddings stay local. Packs are chosen in setup/App storage; API mode needs no local language-model pack.
+
+## Assistant backend choice (owner direction2026-11-02)
+
+The exact provider/credential/request/consent/streaming types live in17a and its provider contract. Use the current [Meta Model API reference](https://dev.meta.ai/docs/api-reference) with base https://api.meta.ai/v1; do not confuse it with the older Llama-specific API response schema. Prioritize Meta in API mode; local inference remains available. Hosted service models are not bundled weights and do not change local model-license checks.
+
+Keep API keys only in native profile-scoped protected credential storage, never plain settings, localStorage, exported setups, diagnostics, logs, screenshots or Git. Show provider/model/mode before Send. Sending a chat authorizes its visible typed text; attaching file-derived context needs a separate explicit outbound preview/Send decision bound to the exact payload and source revisions. Read scope does not authorize upload. Locked/sensitive data stays outside API routes unless the owner deliberately creates an ordinary safe copy first.
+
+Changing provider starts a fresh context; do not resend local history or files automatically. Stop/cancellation closes requests; no automatic cloud fallback or paid retries. API failures offer retry or a user-chosen local switch. Connection tests and model discovery are explicit actions. No keys, accounts or charged calls are needed for this guide-authoring assignment.
 
 ## Principles
 
 - **No training from scratch.** It costs huge amounts of data and compute and would end up worse than today's open models. Use pretrained models; give instruction models our tool list (generated from the command registry) so new commands work without retraining. Fine-tune small LoRA adapters only if the evaluation shows gaps.
 - **Licenses:** code and model weights must be MIT, BSD, Apache-2.0, or similarly permissive; never non-commercial (see `plan/rules.md` R-LIC). Verify each license, including every weight file, before shipping.
 - **Where models live:** downloaded from official sources, pinned and checksummed, never committed to Git (see `plan/rules.md` R-REPO). Model files are downloaded by the pack manager (Step 12a) from their official pages, pinned to an exact version and checked with SHA-256.
+- **Inference output is untrusted regardless of backend.** The same typed tool/scope/approval/undo rules apply to local and API results.
 - **Every AI result is a suggestion:** preview, accept, retry, edit, or discard; nothing is overwritten without the version store and an undo toast.
 - **File contents are data, never instructions** (protection against prompt injection).
 
@@ -57,3 +66,7 @@ All AI features are optional packs, run locally through the local AI runtime (St
 - Assistant: at least 100 English and 100 Spanish requests (open, group, create, convert, delete, ask about a PDF, describe an image, summarize a video), scoring correct tool choice, correct arguments, refusal of unsafe actions, and speed.
 - Other features: rewrite and tone quality, formula correctness, deck outlines in each style, extraction accuracy, rename suggestions, natural-language search conversion, photo search relevance.
 - Prompt-injection set: files that try to make the assistant delete, move, or leak things; all must be refused and reported.
+
+## Frozen guide evidence and scope
+
+All54 remaining steps include AI. Exact researched runtime/model source revisions, licenses and weight metadata are in parallel/AI-API-EVIDENCE.md; final converted/runtime pack bytes require measured production hashes and coordinator acceptance. No weights are committed or downloaded during guide authoring.17a defines transport fixtures for local/no-network and Meta/API consent/key/error/streaming cases; real provider checks require the owner to configure credentials later, without weakening offline or safety tests. The present task stops after reviewed guides and54step prompts.

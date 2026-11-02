@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-02",
+  "packet_revision": "parallel-guides-2026-11-02",
+  "source_baseline": "0154c69b3ea5afbfadc39ffa8ee2637733396348",
+  "guide_count": 54,
+  "prompt_count": 54,
+  "task_count": 393,
+  "final_reserved_settings_schema": 56,
+  "next_unreserved_screenshot": 203,
+  "guide_hashes_match_prompts": true,
+  "documentation_only_changes": true,
+  "errors": [],
+  "runtime_acceptance": "not performed for future implementations; coordinator checks current baseline separately",
+  "current_baseline_gate": {
+    "status": "GATE PASSED",
+    "exit_code": 0,
+    "date": "2026-11-02",
+    "rust_tests_passed": 458,
+    "ui_tests_passed": 539,
+    "ui_test_files": 100,
+    "unchanged_test_commands_and_timeouts": true,
+    "cpu_affinity": "two logical CPUs",
+    "packaged_app_checks": "not run; documentation-only change",
+    "log_sha256": "84469726526124b48096993e31f99dc15ab76a54eeaef98d00bd757b69768345"
+  },
+  "guide_hashes_match_git_index": true
+}

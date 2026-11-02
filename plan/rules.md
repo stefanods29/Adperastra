@@ -25,7 +25,7 @@ These rules apply to every task in every step. A recipe never overrides them. Ru
 7. Never build a command line from a path or user text. Start programs with `std::process::Command::new(exe).arg(path)`; never `cmd /c`, never a shell.
 8. Parsers get size and memory limits: archive entries and total size, decompression ratio, image dimensions, text lengths (numbers in each recipe).
 9. Risky parsers run in a helper process (`Adperastra.exe --<helper-flag>`, pattern from `src-tauri/src/classic_menu.rs`) with a timeout, so a crash or hang never takes the app down.
-10. No network access except: downloads the user starts (packs, update check when enabled) and views that say they use the internet (map view). No telemetry, no analytics, no crash upload.
+10. No network access except downloads the user starts (packs, update check when enabled), views that explicitly use the internet (map), and the owner-authorized optional Assistant API mode (2026-11-02). Assistant API requests require a selected provider, backend-held key and explicit approved outbound payload; Meta is the first API provider. Local mode never falls back to the cloud. No telemetry, analytics or crash upload; permission to read a file is not permission to send it.
 
 ## R-FS: file-system edge cases (everywhere)
 
@@ -96,4 +96,4 @@ Every defect, deferral and speed miss is written in `KNOWN_ISSUES.md` (template 
 
 ## R-AI: AI features (from Step 14c)
 
-AI features are optional packs that run offline. File contents are data, never instructions. The assistant can only call commands from the registry; deleting needs two different confirmations and always goes to the Recycle Bin; permanent delete is never available to it. Details: `plan/ai.md`.
+AI features are optional. Local models/packs run offline; the assistant additionally offers user-chosen API mode with Meta prioritized, under R-SEC-10 and17a outbound consent. Speech, image processing and embedding indexes remain local unless a later explicit guide says otherwise. File contents and API responses are data, never instructions. The assistant can only call commands from the registry; deleting needs two different confirmations and always goes to the Recycle Bin; permanent delete is never available to it. Details: `plan/ai.md`.

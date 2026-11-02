@@ -1,0 +1,1443 @@
+{
+  "packet_revision": "parallel-guides-2026-11-02",
+  "source_baseline": "0154c69b3ea5afbfadc39ffa8ee2637733396348",
+  "scope": "all54 including AI and full22b",
+  "guides": [
+    {
+      "id": "07a",
+      "title": "Thumbnails, cache store, helper process, background work v1",
+      "settings": "11 -> 12",
+      "shots": "57-58",
+      "guide": "plan/steps/step-07a.md",
+      "sha256": "03b15ad8e86faf557327bbbf2b47a7b773df1728a63cee831ded407cbafc4893",
+      "contract_revision": "Shared interface revision | `preview-foundation-1` as defined below",
+      "producer_guides": [],
+      "task_count": 8,
+      "task_commits": [
+        "deps: add cache store workspace dependencies [step-07a/T1]",
+        "feat(cache): bounded owned cache persistence [step-07a/T2]",
+        "feat(cache): source revisions and leased file grants [step-07a/T3]",
+        "feat(background): common bounded background policy [step-07a/T4]",
+        "feat(thumbnails): isolated bounded WIC rendering [step-07a/T5]",
+        "feat(thumbnails): coalesced revision-aware requests [step-07a/T6]",
+        "feat(explorer): lazy thumbnails in existing item grids [step-07a/T7]",
+        "docs(help): thumbnails and background work [step-07a/T8]"
+      ]
+    },
+    {
+      "id": "07b",
+      "title": "Quick preview and rich file info",
+      "settings": "12 -> 12",
+      "shots": "59-61",
+      "guide": "plan/steps/step-07b.md",
+      "sha256": "cd3ede3f88302c5bf29b21d8754dbd7b54deb08593d8b912f72af6171bae47e3",
+      "contract_revision": "Shared interface revision | `preview-foundation-1`, `metadata-preview-1`",
+      "producer_guides": [
+        "07a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(metadata): fixed bounded property data [step-07b/T1]",
+        "feat(metadata): isolate Windows property reads [step-07b/T2]",
+        "feat(metadata): cancellable cached metadata service [step-07b/T3]",
+        "feat(preview): shared inert handler previews [step-07b/T4]",
+        "feat(preview): keyboard quick preview dialog [step-07b/T5]",
+        "feat(details): rich facts and pane previews [step-07b/T6]",
+        "docs(help): quick preview and file details [step-07b/T7]"
+      ]
+    },
+    {
+      "id": "07c",
+      "title": "Gallery",
+      "settings": "12 -> 13",
+      "shots": "62-63",
+      "guide": "plan/steps/step-07c.md",
+      "sha256": "de3c24890ac22b90a82cf811679aab8b3cd6b8e99295953739ed5187fc6f1cf8",
+      "contract_revision": "Shared interface revisions | preview-foundation-1; metadata-preview-1; gallery-source-1",
+      "producer_guides": [
+        "07a",
+        "07b"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(gallery): validated picture sources [step-07c/T1]",
+        "feat(gallery): bounded deduplicated discovery [step-07c/T2]",
+        "feat(gallery): stable dated paging [step-07c/T3]",
+        "feat(gallery): virtualized picture grid [step-07c/T4]",
+        "feat(gallery): previews and ordinary file opening [step-07c/T5]",
+        "feat(gallery): source lifecycle and refresh [step-07c/T6]",
+        "docs(help): photo Gallery [step-07c/T7]"
+      ]
+    },
+    {
+      "id": "07d",
+      "title": "PDF viewer",
+      "settings": "13 -> 13",
+      "shots": "64-66",
+      "guide": "plan/steps/step-07d.md",
+      "sha256": "0a2037ab81e8b3ebaa6774acfd2ac74738aff9e628b189527e2b16219d6ab3b2",
+      "contract_revision": "Interface revision | pdf-reader-2, preview-foundation-1; helper-transport-1; file-backing-1",
+      "producer_guides": [
+        "07a",
+        "07b"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "deps: add pdfjs-dist 6.4.299 (Apache-2.0) [step-07d/T1]",
+        "feat(pdf): isolated trusted PDF helper host [step-07d/T2]",
+        "feat(pdf): bounded page and text rendering [step-07d/T3]",
+        "feat(pdf): accessible paged viewer [step-07d/T4]",
+        "feat(pdf): text search and outline navigation [step-07d/T5]",
+        "feat(pdf): bounded user-confirmed printing [step-07d/T6]",
+        "docs(help): viewing PDFs [step-07d/T7]"
+      ]
+    },
+    {
+      "id": "07e",
+      "title": "Copy text from images and scans (OCR)",
+      "settings": "13 -> 14",
+      "shots": "67-68",
+      "guide": "plan/steps/step-07e.md",
+      "sha256": "d74484b458cb653930b07254000e3458d5cd8e13eebcaddc41d31f68fbed15ad",
+      "contract_revision": "Interface revision | ocr-1",
+      "producer_guides": [
+        "07a",
+        "07b",
+        "07d"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(ocr): languages and bounded contracts [step-07e/T1]",
+        "feat(ocr): isolated Windows text recognition [step-07e/T2]",
+        "feat(ocr): cached page recognition jobs [step-07e/T3]",
+        "feat(ocr): selectable text overlays [step-07e/T4]",
+        "feat(ocr): copy and search recognized text [step-07e/T5]",
+        "docs(help): copying text from images and scans [step-07e/T6]"
+      ]
+    },
+    {
+      "id": "07f",
+      "title": "More previewers 1: e-books, notebooks, email, subtitles, logs, SQLite",
+      "settings": "14 -> 15",
+      "shots": "69-74",
+      "guide": "plan/steps/step-07f.md",
+      "sha256": "0f3947ea317dc8fca8fe3e4298b168256838a0f15d699dd8f47ca9ff76458163",
+      "contract_revision": "Interface revision | extra-viewers-1",
+      "producer_guides": [
+        "07a",
+        "07b",
+        "07d"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "deps: add extra viewer parsers [step-07f/T1]",
+        "feat(viewers): bounded read-only helper sessions [step-07f/T2]",
+        "feat(book): safe paged e-book reading [step-07f/T3]",
+        "feat(viewers): notebooks and email without execution [step-07f/T4]",
+        "feat(viewers): subtitles and streamed logs [step-07f/T5]",
+        "feat(sqlite): bounded read-only table browser [step-07f/T6]",
+        "feat(viewers): register safe extra file handlers [step-07f/T7]",
+        "docs(help): extra read-only viewers [step-07f/T8]"
+      ]
+    },
+    {
+      "id": "07g",
+      "title": "More previewers 2: 3D models, camera RAW, HEIC/AVIF, PSD",
+      "settings": "15 -> 15",
+      "shots": "75-78",
+      "guide": "plan/steps/step-07g.md",
+      "sha256": "d5015c82b7ae9342dfc4f41b8798f5416db06f04c359ffd210717609c790499a",
+      "contract_revision": "Interface revision | special-viewers-1",
+      "producer_guides": [
+        "07a",
+        "07b",
+        "07d"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "deps: add three and ag-psd preview engines [step-07g/T1]",
+        "feat(model): isolated safe scene parsing [step-07g/T2]",
+        "feat(model): bounded interactive model viewer [step-07g/T3]",
+        "feat(images): RAW and installed codec previews [step-07g/T4]",
+        "feat(psd): composite and layer previews [step-07g/T5]",
+        "feat(preview): register special thumbnail providers [step-07g/T6]",
+        "docs(help): special image and model viewers [step-07g/T7]"
+      ]
+    },
+    {
+      "id": "08a",
+      "title": "Converter 1: Quick Convert, job queue, image formats",
+      "settings": "15 -> 16",
+      "shots": "79-81",
+      "guide": "plan/steps/step-08a.md",
+      "sha256": "8f40b601eef53fa6c35011483468473635a9bf7c3c6c69b6c52988eb5e612950",
+      "contract_revision": "Interface revision | conversion-2;export-snapshot-2",
+      "producer_guides": [
+        "07a",
+        "07d",
+        "07g"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "deps: add pinned image conversion engines [step-08a/T1]",
+        "feat(export): immutable bounded editor snapshots [step-08a/T2]",
+        "feat(convert): bounded image and SVG adapters [step-08a/T3]",
+        "feat(convert): safe cancellable conversion jobs [step-08a/T4]",
+        "feat(convert): versioned conversion previews [step-08a/T5]",
+        "feat(convert): Quick Convert and shared queue UI [step-08a/T6]",
+        "feat(convert): exact completion and Undo handoff [step-08a/T7]",
+        "docs(help): conversion and the job queue [step-08a/T8]"
+      ]
+    },
+    {
+      "id": "08b",
+      "title": "Converter 2: PDF, documents, sheets, archives, batch presets",
+      "settings": "16 -> 17",
+      "shots": "82-84",
+      "guide": "plan/steps/step-08b.md",
+      "sha256": "266b914731696feecf89bd0a3951fc914879a4934af2b0fb55a57e01f32f2ab8",
+      "contract_revision": "Interface revision | conversion-2;export-snapshot-2;conversion-presets-1",
+      "producer_guides": [
+        "07d",
+        "08a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "deps: add document and table conversion engines [step-08b/T1]",
+        "feat(convert): images and PDF page conversion [step-08b/T2]",
+        "feat(convert): safe document HTML and PDF export [step-08b/T3]",
+        "feat(convert): safe CSV and workbook conversion [step-08b/T4]",
+        "feat(convert): guarded ZIP and 7z conversion [step-08b/T5]",
+        "feat(convert): validated batch presets and naming [step-08b/T6]",
+        "docs(help): batch conversions and presets [step-08b/T7]"
+      ]
+    },
+    {
+      "id": "08c",
+      "title": "Privacy cleaner",
+      "settings": "17 -> 18",
+      "shots": "85-87",
+      "guide": "plan/steps/step-08c.md",
+      "sha256": "8270db8a28762a0e2af14238c6e898bd98b40e00aab0a9ecfa4055bd475c2e69",
+      "contract_revision": "Interface revision | privacy-1",
+      "producer_guides": [
+        "07d",
+        "08a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "deps: add bounded PDF privacy parser [step-08c/T1]",
+        "feat(privacy): bounded metadata inspection [step-08c/T2]",
+        "feat(privacy): selective verified image cleaning [step-08c/T3]",
+        "feat(privacy): fresh verified PDF cleaning [step-08c/T4]",
+        "feat(privacy): safe cleaning jobs and policy [step-08c/T5]",
+        "feat(privacy): reviewable cleaning dialog and entry points [step-08c/T6]",
+        "docs(help): hidden information and privacy choices [step-08c/T7]"
+      ]
+    },
+    {
+      "id": "08d",
+      "title": "First release (v0.1)",
+      "settings": "18 -> 19",
+      "shots": "88-90",
+      "guide": "plan/steps/step-08d.md",
+      "sha256": "c2f18d3f5b631eb5597e4c075946c2e69f2c5c033d7683064ffc5aaada4a9873",
+      "contract_revision": "Interface revision | release-1",
+      "producer_guides": [
+        "07a",
+        "07d",
+        "07f",
+        "07g",
+        "08a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(release): deterministic unsigned artifact manifest [step-08d/T1]",
+        "feat(installer): data-preserving per-user install [step-08d/T2]",
+        "feat(portable): explicit portable data location [step-08d/T3]",
+        "ci(release): verified unsigned artifact workflow [step-08d/T4]",
+        "feat(updates): opt-in release checks [step-08d/T5]",
+        "docs(release): bilingual install and verification guidance [step-08d/T6]",
+        "test(release): installer and milestone acceptance matrix [step-08d/T7]"
+      ]
+    },
+    {
+      "id": "09a",
+      "title": "More tabs and sessions",
+      "settings": "19 -> 20",
+      "shots": "91-92",
+      "guide": "plan/steps/step-09a.md",
+      "sha256": "7979f71cf84974fb5ce21fa052879bbbf089f84e84d32ffdc8c4be3e908f9069",
+      "contract_revision": "Interface revision | tabs-documents-1;session-2",
+      "producer_guides": [
+        "07b",
+        "07c",
+        "07d",
+        "08a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(tabs): bounded folder and document descriptors [step-09a/T1]",
+        "feat(documents): shared revision and lifetime registry [step-09a/T2]",
+        "feat(tabs): pin duplicate reorder and reopen [step-09a/T3]",
+        "feat(explorer): independent folder tab views [step-09a/T4]",
+        "feat(sessions): bounded view-state restore [step-09a/T5]",
+        "feat(tabs): dirty-safe tab controls and keyboard routing [step-09a/T6]",
+        "docs(help): tabs and startup sessions [step-09a/T7]"
+      ]
+    },
+    {
+      "id": "09b",
+      "title": "Tab groups and saved groups",
+      "settings": "20 -> 20",
+      "shots": "93-94",
+      "guide": "plan/steps/step-09b.md",
+      "sha256": "516ac51a98b2d09dfa0b7dab3c74e412007d0d80e0f965f618b71e791454a5d7",
+      "contract_revision": "Interface revision | tab-groups-1; saved-groups-1",
+      "producer_guides": [
+        "09a"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(tabs): validated tab group state [step-09b/T1]",
+        "feat(tabs): atomic group actions and history [step-09b/T2]",
+        "feat(tabs): atomic saved group catalog [step-09b/T3]",
+        "feat(tabs): restore and transfer saved groups [step-09b/T4]",
+        "feat(tabs): accessible group and saved group controls [step-09b/T5]",
+        "docs(help): tab groups and saved groups [step-09b/T6]"
+      ]
+    },
+    {
+      "id": "09c",
+      "title": "Dragging between tabs, content between tabs, opening files from Windows",
+      "settings": "20 -> 21",
+      "shots": "95-96",
+      "guide": "plan/steps/step-09c.md",
+      "sha256": "10e4cd0605534816faf1e9a4bc04ed6da6cf824e9a325738bca8f1f6db7d6c8f",
+      "contract_revision": "Interface revision | content-transfer-1; activation-1",
+      "producer_guides": [
+        "08a",
+        "09a"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(transfer): bounded content payload contracts [step-09c/T1]",
+        "feat(transfer): leased content registry [step-09c/T2]",
+        "feat(transfer): target negotiation and atomic insertion [step-09c/T3]",
+        "feat(tabs): hover activation and typed drop routing [step-09c/T4]",
+        "feat(shell): user-scoped single instance activation [step-09c/T5]",
+        "docs(help): cross-tab content and Windows opening [step-09c/T6]"
+      ]
+    },
+    {
+      "id": "09d",
+      "title": "Explorer extras and the command palette",
+      "settings": "21 -> 22",
+      "shots": "97-98",
+      "guide": "plan/steps/step-09d.md",
+      "sha256": "432af5197e24168e83a23eeb44a6e77f0ea09b6d49d925f921f3c9369fb26b1f",
+      "contract_revision": "Interface revision | folder-presentation-1; palette-1",
+      "producer_guides": [
+        "07b",
+        "09a",
+        "09b"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(explorer): folder presentation contracts [step-09d/T1]",
+        "feat(explorer): accessible column chooser and resize [step-09d/T2]",
+        "feat(explorer): rubber band selection in every view [step-09d/T3]",
+        "feat(palette): bounded bilingual command matching [step-09d/T4]",
+        "feat(palette): command and location dispatch [step-09d/T5]",
+        "docs(help): folder columns and command palette [step-09d/T6]"
+      ]
+    },
+    {
+      "id": "09e",
+      "title": "Bulk rename and batch actions",
+      "settings": "22 -> 22",
+      "shots": "99-100",
+      "guide": "plan/steps/step-09e.md",
+      "sha256": "d40ebe7dcc0e5236f1fa6bca4b5b0a40a4042a46142753c6b1e3cd836d6a1c07",
+      "contract_revision": "Interface revision | bulk-rename-1; batch-actions-1",
+      "producer_guides": [
+        "07a",
+        "07b",
+        "08a",
+        "08b",
+        "08c",
+        "09a",
+        "09b",
+        "09d"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "deps: add bounded bulk rename engine [step-09e/T1]",
+        "feat(rename): live validated rename plans [step-09e/T2]",
+        "feat(rename): guarded cyclic rename execution [step-09e/T3]",
+        "feat(rename): exact rename receipts and history [step-09e/T4]",
+        "feat(rename): bulk rename controls and presets [step-09e/T5]",
+        "feat(batch): reuse conversion and privacy actions [step-09e/T6]",
+        "docs(help): bulk rename and batch actions [step-09e/T7]"
+      ]
+    },
+    {
+      "id": "09f",
+      "title": "Copy window and conflict window",
+      "settings": "22 -> 23",
+      "shots": "101-103",
+      "guide": "plan/steps/step-09f.md",
+      "sha256": "bbac74bdbf1c09d70553fc6b41bbf25487103c8054acc97849b80d8717dfde6c",
+      "contract_revision": "Interface revision | transfer-jobs-1; replace-capability-0",
+      "producer_guides": [
+        "07a",
+        "09c"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(transfers): controlled queue contracts [step-09f/T1]",
+        "feat(transfers): pause resume skip and retry [step-09f/T2]",
+        "feat(transfers): readback verification and rate estimates [step-09f/T3]",
+        "feat(transfers): generation-bound conflict decisions [step-09f/T4]",
+        "fix(transfers): validate history object identities [step-09f/T5]",
+        "feat(transfers): accessible transfer and conflict windows [step-09f/T6]",
+        "docs(help): copy controls and safe conflicts [step-09f/T7]"
+      ]
+    },
+    {
+      "id": "09g",
+      "title": "\"What's using this file?\" and the shelf",
+      "settings": "23 -> 24",
+      "shots": "104-105",
+      "guide": "plan/steps/step-09g.md",
+      "sha256": "83293fe0a3dfb1188080f02ae16c06067ab26202afda423219bb4b591a61e090",
+      "contract_revision": "Interface revision | file-locks-1; shelf-1",
+      "producer_guides": [
+        "07a",
+        "08b",
+        "08c",
+        "09a",
+        "09b",
+        "09c",
+        "09e",
+        "09f"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "deps: enable Windows Restart Manager [step-09g/T1]",
+        "feat(locks): bounded program inspection and normal close [step-09g/T2]",
+        "feat(shelf): persistent bounded file references [step-09g/T3]",
+        "feat(shelf): shared action and drag routing [step-09g/T4]",
+        "feat(ui): files in use and dockable shelf [step-09g/T5]",
+        "docs(help): files in use and shelf [step-09g/T6]"
+      ]
+    },
+    {
+      "id": "09h",
+      "title": "Crash recovery, report a problem, safe mode",
+      "settings": "24 -> 25",
+      "shots": "106-107",
+      "guide": "plan/steps/step-09h.md",
+      "sha256": "15f8ade38a3977362473f7b68d1862945131aeb1d973825c2a3a8abc4416ece1",
+      "contract_revision": "Interface revision | recovery-1; diagnostics-1; Keep Explorer running if one tab fails, recover eligible unsaved revisions after a crash, start safely after repeated startup failures and save a reviewed/redacted diagnostic ZIP. No crash telemetry/upload, automatic issue submission, plaintext locked-document recovery, private keys, credentials, full-memory dumps by default or silent replacement of originals.",
+      "producer_guides": [
+        "08a",
+        "08d",
+        "09a",
+        "09b",
+        "09c",
+        "09e"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(recovery): encrypted bounded recovery records [step-09h/T1]",
+        "feat(recovery): immutable document capture scheduling [step-09h/T2]",
+        "feat(recovery): reviewed recovered copies and startup restore [step-09h/T3]",
+        "feat(startup): crash markers and non-destructive safe mode [step-09h/T4]",
+        "feat(diagnostics): local redacted diagnostic sessions [step-09h/T5]",
+        "feat(ui): tab failure and diagnostics review [step-09h/T6]",
+        "docs(help): recovery safe mode and diagnostics [step-09h/T7]"
+      ]
+    },
+    {
+      "id": "09i",
+      "title": "Split view",
+      "settings": "25 -> 25",
+      "shots": "108-109",
+      "guide": "plan/steps/step-09i.md",
+      "sha256": "83a33314852dc6feb3ceb2a923acd97c5ac4b0ffbc823708c395ee443ffbbb76",
+      "contract_revision": "Interface revision | split-view-1; scroll-sync-1",
+      "producer_guides": [
+        "09a",
+        "09b",
+        "09c",
+        "09d"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(splits): bounded leaf and session descriptors [step-09i/T1]",
+        "feat(splits): identity-preserving split transactions [step-09i/T2]",
+        "feat(splits): accessible resizable leaf host [step-09i/T3]",
+        "feat(splits): bounded synchronized scroll ports [step-09i/T4]",
+        "feat(splits): restore and transfer routing [step-09i/T5]",
+        "docs(help): split views and scrolling [step-09i/T6]"
+      ]
+    },
+    {
+      "id": "09j",
+      "title": "Disk images and clipboard history",
+      "settings": "25 -> 26",
+      "shots": "110-111",
+      "guide": "plan/steps/step-09j.md",
+      "sha256": "dd5f4ba37cf5e5d0ba537258379901859f40bcc01fb3bb3412b657bc68734c19",
+      "contract_revision": "Interface revision | disk-mount-1; clipboard-history-1",
+      "producer_guides": [
+        "07a",
+        "08a",
+        "09a",
+        "09c",
+        "09h"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "deps: enable Windows virtual disk APIs [step-09j/T1]",
+        "feat(disks): guarded read-only mount lifecycle [step-09j/T2]",
+        "feat(disks): narrowly scoped elevated broker [step-09j/T3]",
+        "feat(clipboard): private-aware bounded history [step-09j/T4]",
+        "feat(clipboard): encrypted optional history persistence [step-09j/T5]",
+        "feat(ui): disk mount actions and clipboard history [step-09j/T6]",
+        "docs(help): disk images and clipboard history [step-09j/T7]"
+      ]
+    },
+    {
+      "id": "09k",
+      "title": "Locked folders",
+      "settings": "26 -> 27",
+      "shots": "112-113",
+      "guide": "plan/steps/step-09k.md",
+      "sha256": "38f5b5027b84f7f68bcaa19035b26e21076a30c6785eddedc78cffd5026b3dab",
+      "contract_revision": "Interface revision | locked-container-1; sensitive-provider-1",
+      "producer_guides": [
+        "07a",
+        "07d",
+        "08a",
+        "09a",
+        "09c",
+        "09f",
+        "09h"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "deps: add standard age container encryption [step-09k/T1]",
+        "feat(locked): standard password and recovery keyslots [step-09k/T2]",
+        "feat(locked): bounded authenticated container format [step-09k/T3]",
+        "feat(locked): verified encrypted copies without source removal [step-09k/T4]",
+        "feat(locked): memory-only virtual document provider [step-09k/T5]",
+        "feat(locked): encrypted recovery and safe locking lifecycle [step-09k/T6]",
+        "feat(locked): encrypted container controls and disclosures [step-09k/T7]",
+        "docs(help): locked containers recovery and protection limits [step-09k/T8]"
+      ]
+    },
+    {
+      "id": "10a",
+      "title": "Themes: editor, day and night, wallpaper accent",
+      "settings": "27 -> 28",
+      "shots": "114-116",
+      "guide": "plan/steps/step-10a.md",
+      "sha256": "dcc8847a41d3aa7a6943b3a61e431115da97e6879987673f294c67d0c89f125b",
+      "contract_revision": "Interface revision | custom-theme-1",
+      "producer_guides": [
+        "07a",
+        "09d"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(theme): custom theme data and schema [step-10a/T1]",
+        "feat(theme): bounded theme storage and transfer [step-10a/T2]",
+        "feat(theme): live safe theme rendering [step-10a/T3]",
+        "feat(theme): scheduled day and night appearances [step-10a/T4]",
+        "feat(theme): wallpaper palette and readable accents [step-10a/T5]",
+        "docs(help): custom themes and scheduled appearances [step-10a/T6]"
+      ]
+    },
+    {
+      "id": "10b",
+      "title": "Toolbar and keyboard customization",
+      "settings": "28 -> 29",
+      "shots": "117-118",
+      "guide": "plan/steps/step-10b.md",
+      "sha256": "763a2f76bf6e6a8b619da77c09a1e4ad09d84bb0c7200306aeac08ada388ab50",
+      "contract_revision": "Interface revision | command-layout-1; keyboard-map-1",
+      "producer_guides": [
+        "09a",
+        "09c",
+        "09d"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(customize): command layout and shortcut data [step-10b/T1]",
+        "feat(toolbar): editable command layouts [step-10b/T2]",
+        "feat(keyboard): one scoped shortcut router [step-10b/T3]",
+        "feat(keyboard): editable keyboard presets and conflicts [step-10b/T4]",
+        "feat(customize): shared preview history and quick access [step-10b/T5]",
+        "docs(help): toolbars and keyboard styles [step-10b/T6]"
+      ]
+    },
+    {
+      "id": "10c",
+      "title": "Tab options, date and size formats, behavior, profiles, portable mode",
+      "settings": "29 -> 30",
+      "shots": "119-121",
+      "guide": "plan/steps/step-10c.md",
+      "sha256": "3c62d383063ad72987d6cd4c830ef26d4821434914c21f00ffcf01956fc5b5f8",
+      "contract_revision": "Interface revision | display-formats-1; profile-root-1; tab-options-1",
+      "producer_guides": [
+        "08d",
+        "09a",
+        "09b",
+        "09h",
+        "09k",
+        "10a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(preferences): tab and format schemas [step-10c/T1]",
+        "feat(tabs): configurable placement and previews [step-10c/T2]",
+        "feat(format): consistent dates names and sizes [step-10c/T3]",
+        "feat(profiles): bounded profile roots and catalog [step-10c/T4]",
+        "feat(profiles): dirty-safe controlled restart [step-10c/T5]",
+        "feat(portable): verified app-data copy [step-10c/T6]",
+        "docs(help): preferences profiles and portable data [step-10c/T7]"
+      ]
+    },
+    {
+      "id": "10d",
+      "title": "Folder colors, icons, backgrounds, column sets",
+      "settings": "30 -> 31",
+      "shots": "122-123",
+      "guide": "plan/steps/step-10d.md",
+      "sha256": "07e8f9518b309e865b0b539d4c7178d5cb99cbf8a0a4376c0c82459bb0a6704a",
+      "contract_revision": "Interface revision | file-identity-1; folder-customization-1",
+      "producer_guides": [
+        "07a",
+        "07b",
+        "09a",
+        "09d",
+        "09f",
+        "10a",
+        "10c"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(identity): shared stable file identity receipts [step-10d/T1]",
+        "feat(folders): bounded customization catalog [step-10d/T2]",
+        "feat(folders): shared decoration and background resolver [step-10d/T3]",
+        "feat(folders): manual column sets and suggestions [step-10d/T4]",
+        "feat(folders): explicit Windows appearance writes [step-10d/T5]",
+        "docs(help): folder appearance and column sets [step-10d/T6]"
+      ]
+    },
+    {
+      "id": "10e",
+      "title": "Menu editor, Home, sidebar and status bar customization, setup files",
+      "settings": "31 -> 32",
+      "shots": "124-127",
+      "guide": "plan/steps/step-10e.md",
+      "sha256": "919afcc2fe7b349a484ccd06031777349bf2a57121eec3effd423a9fd394cb06",
+      "contract_revision": "Interface revision | shell-sections-1; setup-file-1",
+      "producer_guides": [
+        "09a",
+        "09b",
+        "09d",
+        "10a",
+        "10b",
+        "10c",
+        "10d"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(shell): configurable section and menu data [step-10e/T1]",
+        "feat(menus): visual safe context menu editor [step-10e/T2]",
+        "feat(home): registered editable Home sections [step-10e/T3]",
+        "feat(shell): navigation and status customization [step-10e/T4]",
+        "feat(setup): bounded setup archive preview and export [step-10e/T5]",
+        "feat(setup): transactional application and recovery [step-10e/T6]",
+        "docs(help): shell customization and setup files [step-10e/T7]"
+      ]
+    },
+    {
+      "id": "10f",
+      "title": "Accessibility (v0.2)",
+      "settings": "32 -> 33",
+      "shots": "128-130",
+      "guide": "plan/steps/step-10f.md",
+      "sha256": "4ee0f393c960a87b9dc84c25536642e7c4ff0d91a8994c7f4a412f9cd40fefde",
+      "contract_revision": "Interface revision | accessibility-1; read-aloud-1",
+      "producer_guides": [
+        "09a",
+        "09c",
+        "10a",
+        "10b",
+        "10c",
+        "10e"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "deps: add pinned OpenDyslexic assets [step-10f/T1]",
+        "feat(accessibility): effective preferences and system state [step-10f/T2]",
+        "feat(accessibility): keyboard focus and responsive main flows [step-10f/T3]",
+        "feat(accessibility): installed voice read aloud [step-10f/T4]",
+        "feat(accessibility): alternate input and clear presentation [step-10f/T5]",
+        "docs(help): accessibility and milestone acceptance [step-10f/T6]"
+      ]
+    },
+    {
+      "id": "11a",
+      "title": "Search index, search modes, speed pass",
+      "settings": "33 -> 34",
+      "shots": "131-133",
+      "guide": "plan/steps/step-11a.md",
+      "sha256": "f1c5834e8d361eacc6d5a18f1e251db034c39f99065c46ddb5357ba5aa6dfecc",
+      "contract_revision": "Interface revision | search-index-1",
+      "producer_guides": [
+        "07a",
+        "07d",
+        "07e",
+        "07f",
+        "09a",
+        "09d",
+        "10c",
+        "10f"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "deps: register bounded search dependencies [step-11a/T1]",
+        "feat(index): bounded roots and metadata store [step-11a/T2]",
+        "feat(index): incremental watchers and opt-in content [step-11a/T3]",
+        "feat(search): typed bounded name content and regex queries [step-11a/T4]",
+        "feat(search): accessible modes filters and saved searches [step-11a/T5]",
+        "feat(index): optional scoped NTFS metadata helper [step-11a/T6]",
+        "test(speed): ordinary search and application speed pass [step-11a/T7]",
+        "docs(help): search modes filters and indexing privacy [step-11a/T8]"
+      ]
+    },
+    {
+      "id": "11b",
+      "title": "Tags, smart folders, views",
+      "settings": "34 -> 35",
+      "shots": "134-137",
+      "guide": "plan/steps/step-11b.md",
+      "sha256": "ef14d0675b3c7ceb6bf1a83f433364075ff60a34903e6ef435c083b2e30f76e3",
+      "contract_revision": "Interface revision | tags-1; smart-views-1; map-tiles-1",
+      "producer_guides": [
+        "07a",
+        "08c",
+        "09a",
+        "09e",
+        "09f",
+        "10a",
+        "10c",
+        "10d",
+        "10e",
+        "10f",
+        "11a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(tags): bounded identity-keyed tag store [step-11b/T1]",
+        "feat(tags): verified move copy and search integration [step-11b/T2]",
+        "feat(tags): safe tag exchange and embedded copies [step-11b/T3]",
+        "feat(views): smart folders timeline calendar and kinds [step-11b/T4]",
+        "feat(activity): bounded local activity view [step-11b/T5]",
+        "feat(map): explicit online geotagged photo view [step-11b/T6]",
+        "docs(help): tags smart folders and indexed views [step-11b/T7]"
+      ]
+    },
+    {
+      "id": "11c",
+      "title": "Storage view, duplicate finder, folder sizes",
+      "settings": "35 -> 36",
+      "shots": "138-140",
+      "guide": "plan/steps/step-11c.md",
+      "sha256": "daf39b624585f2c2fa796f1066ffde23d78685cc216903bfa0c2b4075395e783",
+      "contract_revision": "Interface revision | storage-scan-1; duplicate-review-1; folder-size-1",
+      "producer_guides": [
+        "07a",
+        "09a",
+        "09d",
+        "09f",
+        "10c",
+        "10f",
+        "11a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(storage): bounded scan data and metadata traversal [step-11c/T1]",
+        "feat(storage): bounded cache and paged summaries [step-11c/T2]",
+        "feat(storage): accessible treemap and largest-item view [step-11c/T3]",
+        "feat(duplicates): guarded full equality verification [step-11c/T4]",
+        "feat(duplicates): explicit keeper review and safe cleanup gate [step-11c/T5]",
+        "feat(folder-size): shared background consumers and sorting [step-11c/T6]",
+        "docs(help): storage duplicates and folder sizes [step-11c/T7]"
+      ]
+    },
+    {
+      "id": "12a",
+      "title": "Pack manager, App storage, Background work page",
+      "settings": "36 -> 37",
+      "shots": "141-143",
+      "guide": "plan/steps/step-12a.md",
+      "sha256": "cf166d3770d7d9c1ed60b3098688b81a9f7938b1891a03d2b4ff0c905db31f21",
+      "contract_revision": "Interface revision | packs-1; storage-providers-1; background-2",
+      "producer_guides": [
+        "07a",
+        "09h",
+        "09j",
+        "10c",
+        "11a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(packs): signed catalog contracts [step-12a/T1]",
+        "feat(packs): owned resumable downloads [step-12a/T2]",
+        "feat(packs): verified versioned activation [step-12a/T3]",
+        "feat(storage): bounded owned-store registry [step-12a/T4]",
+        "feat(background): shared policy controls [step-12a/T5]",
+        "feat(settings): packs and background pages [step-12a/T6]",
+        "docs(help): packs storage and background work [step-12a/T7]"
+      ]
+    },
+    {
+      "id": "12b",
+      "title": "Converter 3 (media, documents), privacy cleaner 2",
+      "settings": "37 -> 37",
+      "shots": "144-146",
+      "guide": "plan/steps/step-12b.md",
+      "sha256": "e702dcf4a75020b3305ddf89c62a73fe31e134957e2488b5aa06545ef6f4f6e8",
+      "contract_revision": "Interface revision | engines-2;media-probe-2;office-render-2;engine-session-1",
+      "producer_guides": [
+        "07a",
+        "08a",
+        "08c",
+        "12a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "docs(packs): freeze reviewed engine build inputs [step-12b/T1]",
+        "feat(engines): confined process lifecycle [step-12b/T2]",
+        "feat(media): bounded probe and sample previews [step-12b/T3]",
+        "feat(convert): media engine adapters [step-12b/T4]",
+        "feat(convert): isolated Office render adapters [step-12b/T5]",
+        "feat(privacy): selective Office media archive cleaning [step-12b/T6]",
+        "docs(help): media document conversion and privacy [step-12b/T7]"
+      ]
+    },
+    {
+      "id": "13",
+      "title": "Accurate Office viewers (v0.3)",
+      "settings": "37 -> 38",
+      "shots": "147-149",
+      "guide": "plan/steps/step-13.md",
+      "sha256": "d64054e46ea74db67612c5388b75889b79562a23e72c1ee479a42d08da4e5425",
+      "contract_revision": "Interface revision | office-view-1",
+      "producer_guides": [
+        "07a",
+        "07d",
+        "08a",
+        "09a",
+        "12a",
+        "12b"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(office): read-only session contracts [step-13/T1]",
+        "feat(office): bounded structural previews [step-13/T2]",
+        "feat(office): warm confined render bridge [step-13/T3]",
+        "feat(office): sections pages and comments [step-13/T4]",
+        "feat(office): handlers and presentation view [step-13/T5]",
+        "docs(fonts): verified metric-compatible font inventory [step-13/T6]",
+        "docs(help): Office viewing and fidelity [step-13/T7]"
+      ]
+    },
+    {
+      "id": "14a",
+      "title": "PDF tools",
+      "settings": "38 -> 39",
+      "shots": "150-152",
+      "guide": "plan/steps/step-14a.md",
+      "sha256": "7477809cb6b08400b92308e06a710c8a9f08ee73e224ca1035ebb973c7d562ee",
+      "contract_revision": "Interface revision |pdf-edit-1",
+      "producer_guides": [
+        "07d",
+        "08a",
+        "08b",
+        "09a",
+        "09c",
+        "09f"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(pdf): shared immutable edit model [step-14a/T1]",
+        "feat(pdf): standard annotation appearances [step-14a/T2]",
+        "feat(pdf): comments replies and visual signatures [step-14a/T3]",
+        "feat(pdf): bounded page operations [step-14a/T4]",
+        "feat(pdf): safe supported form filling [step-14a/T5]",
+        "feat(pdf): revision-safe capture and save controls [step-14a/T6]",
+        "docs(help): PDF tools and compatibility [step-14a/T7]"
+      ]
+    },
+    {
+      "id": "14b",
+      "title": "Basic image editor",
+      "settings": "39 -> 40",
+      "shots": "153-155",
+      "guide": "plan/steps/step-14b.md",
+      "sha256": "9772db5a0a54249fe54bc0b2e232c78b97855a71d21b60ea303092319a6e77aa",
+      "contract_revision": "Interface revision|image-document-1;image-render-1",
+      "producer_guides": [
+        "07a",
+        "07g",
+        "08a",
+        "09a",
+        "09c",
+        "09f"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(image): shared tiled document controller [step-14b/T1]",
+        "feat(image): crop transform resize [step-14b/T2]",
+        "feat(image): deterministic adjustments and presets [step-14b/T3]",
+        "feat(image): markup drawing and manual erase [step-14b/T4]",
+        "feat(image): edit and draw interface [step-14b/T5]",
+        "feat(image): encoded snapshot save and export [step-14b/T6]",
+        "docs(help): image editing and drawing [step-14b/T7]"
+      ]
+    },
+    {
+      "id": "14c",
+      "title": "Local AI runtime and AI upscaling",
+      "settings": "40 -> 41",
+      "shots": "156-158",
+      "guide": "plan/steps/step-14c.md",
+      "sha256": "eb859a5a43e37379175538c9f2c5f4be5d7cbdbe27209cc747d50a49f3de904d",
+      "contract_revision": "Interface revision | ai-runtime-1; ai-upstream-1",
+      "producer_guides": [
+        "07a",
+        "08a",
+        "09a",
+        "12a",
+        "12b",
+        "14b"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "deps: pin local AI helper and model sources [step-14c/T1]",
+        "feat(ai): typed bounded runtime and artifacts [step-14c/T2]",
+        "feat(ai): confined model host and cancellation [step-14c/T3]",
+        "feat(ai): tiled image enlargement [step-14c/T4]",
+        "feat(ai): crop comparison and image editor apply [step-14c/T5]",
+        "feat(convert): local AI enlargement adapter and settings [step-14c/T6]",
+        "docs(help): AI enlargement and local packs [step-14c/T7]"
+      ]
+    },
+    {
+      "id": "15",
+      "title": "Audio and video basics",
+      "settings": "41 -> 42",
+      "shots": "159-160",
+      "guide": "plan/steps/step-15.md",
+      "sha256": "cbcfe358fc402c21d0e0c715127a486b3d2872a0bd939be2bc06799c41851e4c",
+      "contract_revision": "Interface revision|media-edit-1;media-time-1",
+      "producer_guides": [
+        "07f",
+        "08a",
+        "09a",
+        "12b"
+      ],
+      "task_count": 6,
+      "task_commits": [
+        "feat(media): immutable recipe and timing [step-15/T1]",
+        "feat(media): trim crop speed and gain controls [step-15/T2]",
+        "feat(media): bounded waveforms and proxy preview [step-15/T3]",
+        "feat(media): subtitles and safe recipe exports [step-15/T4]",
+        "feat(media): saveable edit recipes [step-15/T5]",
+        "docs(help): media editing and export [step-15/T6]"
+      ]
+    },
+    {
+      "id": "16",
+      "title": "Windows integration and release polish (v0.4)",
+      "settings": "42 -> 43",
+      "shots": "161-162",
+      "guide": "plan/steps/step-16.md",
+      "sha256": "2d91a520acf522bccb4ee6fcb1a817bfeac46684b42ae306466bbd20d1cfe066",
+      "contract_revision": "Interface revision|windows-integration-1;resident-mode-1",
+      "producer_guides": [
+        "08d",
+        "09a",
+        "09c",
+        "09h",
+        "10c",
+        "12a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(windows): owned optional registration ledger [step-16/T1]",
+        "feat(windows): Explorer activation and association choices [step-16/T2]",
+        "feat(startup): dirty-safe resident state machine [step-16/T3]",
+        "feat(tray): localized background controls and memory [step-16/T4]",
+        "build(installer): clean upgrade uninstall and offline packs [step-16/T5]",
+        "docs(windows): modern-menu checkpoint evidence [step-16/T6]",
+        "docs(help): Windows startup associations and updates [step-16/T7]"
+      ]
+    },
+    {
+      "id": "17a",
+      "title": "AI assistant: core, safety, models, evaluation",
+      "settings": "43 -> 44",
+      "shots": "163-166",
+      "guide": "plan/steps/step-17a.md",
+      "sha256": "034504de270fd20c04c5e08c0860cfec47bacbb422ae6eb0a86f36c382c5a374",
+      "contract_revision": "Interface revision | assistant-core-1;assistant-schema-1;assistant-provider-1;ai-eval-1",
+      "producer_guides": [
+        "07d",
+        "07e",
+        "08a",
+        "08c",
+        "09a",
+        "09b",
+        "09e",
+        "09f",
+        "10b",
+        "10c",
+        "10e",
+        "11a",
+        "11b",
+        "12a",
+        "13",
+        "14c",
+        "15"
+      ],
+      "task_count": 9,
+      "task_commits": [
+        "feat(assistant): typed command adapters and policy [step-17a/T1]",
+        "feat(assistant): constrained prompts and grounded sources [step-17a/T2]",
+        "feat(assistant): scopes conversations and local turns [step-17a/T3]",
+        "feat(assistant): Meta API choice and outbound approvals [step-17a/T4]",
+        "feat(assistant): previews and native human approval [step-17a/T5]",
+        "feat(assistant): docked chat and review interface [step-17a/T6]",
+        "feat(assistant): preferences and encrypted optional history [step-17a/T7]",
+        "test(ai): bilingual assistant and injection evaluations [step-17a/T8]",
+        "docs(help): assistant models permissions and API privacy [step-17a/T9]"
+      ]
+    },
+    {
+      "id": "17b",
+      "title": "Local AI actions",
+      "settings": "44 -> 45",
+      "shots": "167-169",
+      "guide": "plan/steps/step-17b.md",
+      "sha256": "dcd710cb5d02c5d45e1d06019ebe464c12d4214b702ed85c6e2520270f7cba4e",
+      "contract_revision": "Interface revision | ai-actions-1;speech-1",
+      "producer_guides": [
+        "07e",
+        "08a",
+        "09a",
+        "11a",
+        "12b",
+        "13",
+        "14b",
+        "14c",
+        "15",
+        "17a"
+      ],
+      "task_count": 9,
+      "task_commits": [
+        "feat(ai): typed actions and suggestion results [step-17b/T1]",
+        "feat(ai): local foreground and object erase previews [step-17b/T2]",
+        "feat(speech): standalone local transcription [step-17b/T3]",
+        "feat(speech): explicit microphone dictation sessions [step-17b/T4]",
+        "feat(media): local automatic captions and subtitle apply [step-17b/T5]",
+        "feat(ai): grounded document media and folder suggestions [step-17b/T6]",
+        "feat(ai): result tabs action menus and safe exports [step-17b/T7]",
+        "test(ai): bilingual actions and speech evaluation fixtures [step-17b/T8]",
+        "docs(help): AI actions transcription and captions [step-17b/T9]"
+      ]
+    },
+    {
+      "id": "17c",
+      "title": "AI search and organizing",
+      "settings": "45 -> 46",
+      "shots": "170-172",
+      "guide": "plan/steps/step-17c.md",
+      "sha256": "1fbc9f91fef035b78f4838f743bc99ec1c8ed56c08301349f4d2cd443f58fa5a",
+      "contract_revision": "Contract revision | ai-search-1, consuming ai-runtime-1 and assistant-core-1/assistant-schema-1/ai-eval-1",
+      "producer_guides": [
+        "07a",
+        "09a",
+        "09e",
+        "09f",
+        "09k",
+        "11a",
+        "12a",
+        "14c",
+        "17a"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "feat(ai-search): typed contracts and independent consent [step-17c/T1]",
+        "feat(ai-search): bounded revisioned semantic index [step-17c/T2]",
+        "feat(ai-search): opted-in background embeddings and retrieval [step-17c/T3]",
+        "feat(ai-search): reviewable natural-language filter previews [step-17c/T4]",
+        "feat(ai-search): content-based names through safe rename preview [step-17c/T5]",
+        "feat(ai-search): explicit destination suggestions and local choices [step-17c/T6]",
+        "test(ai-search): bilingual relevance and organizing evaluations [step-17c/T7]",
+        "docs(ai-search): help and review instrumentation [step-17c/T8]"
+      ]
+    },
+    {
+      "id": "17d",
+      "title": "AI for scans and PDFs, writing suggestions (v0.5)",
+      "settings": "46 -> 47",
+      "shots": "173-175",
+      "guide": "plan/steps/step-17d.md",
+      "sha256": "05b0fd8d999c38d19d20fbe9abce7da4c626f9904a3c285feeea4286ffdaccc4",
+      "contract_revision": "Contract revision | ai-extraction-1; ai-inline-1; consumes ai-runtime-1/assistant-schema-1/ai-eval-1",
+      "producer_guides": [
+        "07a",
+        "07d",
+        "07e",
+        "08a",
+        "09a",
+        "12a",
+        "14c",
+        "15",
+        "17a"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "feat(ai-extract): source-bound review and inline contracts [step-17d/T1]",
+        "feat(ai-extract): bounded OCR layout and source anchors [step-17d/T2]",
+        "feat(ai-extract): structured documents tables and receipts [step-17d/T3]",
+        "feat(ai-extract): side-by-side correction review [step-17d/T4]",
+        "feat(ai-extract): reviewed safe document and spreadsheet exports [step-17d/T5]",
+        "feat(ai-inline): cancellable opt-in ghost completions [step-17d/T6]",
+        "test(ai-extract): bilingual accuracy and suggestion evaluations [step-17d/T7]",
+        "docs(ai-extract): help and v0.5 review evidence [step-17d/T8]"
+      ]
+    },
+    {
+      "id": "18a",
+      "title": "Advanced image editor: layers and selections",
+      "settings": "47 -> 48",
+      "shots": "176-177",
+      "guide": "plan/steps/step-18a.md",
+      "sha256": "46754b2ee67e10b26dc6cb759fc65bf6aba70b0ee29f2dd2116d256267b28930",
+      "contract_revision": "Interface revision|image-layers-1;selection-mask-1",
+      "producer_guides": [
+        "09a",
+        "09c",
+        "14b"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(image): immutable layer operations [step-18a/T1]",
+        "feat(image): tiled alpha-correct compositing [step-18a/T2]",
+        "feat(image): selection masks and set operations [step-18a/T3]",
+        "feat(image): layer and selection transforms [step-18a/T4]",
+        "feat(image): safe selected-content transfer [step-18a/T5]",
+        "feat(image): Advanced layers and history panels [step-18a/T6]",
+        "docs(help): layers selections and transforms [step-18a/T7]"
+      ]
+    },
+    {
+      "id": "18b",
+      "title": "Advanced image editor: painting, filters, project format",
+      "settings": "48 -> 48",
+      "shots": "178-179",
+      "guide": "plan/steps/step-18b.md",
+      "sha256": "be69f94a163b670d8820b16c20643aa7bd769163f4e2758556bf0e9032f1a778",
+      "contract_revision": "Interface revision|image-project-1;image-brush-1",
+      "producer_guides": [
+        "07g",
+        "08a",
+        "09a",
+        "14b",
+        "18a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(paint): deterministic pressure brush engine [step-18b/T1]",
+        "feat(paint): fill gradient clone and picker [step-18b/T2]",
+        "feat(image): non-destructive adjustment layers [step-18b/T3]",
+        "feat(image): editable text shapes rulers guides [step-18b/T4]",
+        "feat(project): guarded layered image format [step-18b/T5]",
+        "feat(project): PSD import and flattened exports [step-18b/T6]",
+        "docs(help): painting adjustments and projects [step-18b/T7]"
+      ]
+    },
+    {
+      "id": "19a",
+      "title": "Video timeline: tracks and clips",
+      "settings": "48 -> 49",
+      "shots": "180-181",
+      "guide": "plan/steps/step-19a.md",
+      "sha256": "a163b97e27fbf56a7757ddfbb57dc1627ced7addffdcff174bb180dc88032e4d",
+      "contract_revision": "Interface revision|timeline-project-1;timeline-render-1",
+      "producer_guides": [
+        "07a",
+        "09a",
+        "09c",
+        "09g",
+        "12b",
+        "15",
+        "16"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(timeline): bounded project and exact timing [step-19a/T1]",
+        "feat(timeline): track and clip transactions [step-19a/T2]",
+        "feat(timeline): ripple snap and relink [step-19a/T3]",
+        "feat(timeline): bounded proxies thumbnails waveforms [step-19a/T4]",
+        "feat(timeline): virtualized editor and content drops [step-19a/T5]",
+        "feat(timeline): saveable project snapshots [step-19a/T6]",
+        "docs(help): timeline clips and proxies [step-19a/T7]"
+      ]
+    },
+    {
+      "id": "19b",
+      "title": "Video timeline: effects, audio, export",
+      "settings": "49 -> 49",
+      "shots": "182-183",
+      "guide": "plan/steps/step-19b.md",
+      "sha256": "51c90a6ee1aaf5f7f20a539184a2254904e6fac349cfeb9c6aaaf679ee74fdfc",
+      "contract_revision": "Interface revision|timeline-effects-1;timeline-export-1",
+      "producer_guides": [
+        "08a",
+        "08b",
+        "12b",
+        "14b",
+        "15",
+        "16",
+        "19a"
+      ],
+      "task_count": 7,
+      "task_commits": [
+        "feat(timeline): deterministic transitions and titles [step-19b/T1]",
+        "feat(timeline): shared preview and export effects [step-19b/T2]",
+        "feat(timeline): exact audio mix and fades [step-19b/T3]",
+        "feat(timeline): plain subtitle editing and rendering [step-19b/T4]",
+        "feat(timeline): bounded render graph and native export [step-19b/T5]",
+        "feat(timeline): reviewed presets and export dialog [step-19b/T6]",
+        "docs(help): timeline effects audio and export [step-19b/T7]"
+      ]
+    },
+    {
+      "id": "20a",
+      "title": "Office editing: engine spikes and integration",
+      "settings": "49 -> 50",
+      "shots": "184-185",
+      "guide": "plan/steps/step-20a.md",
+      "sha256": "d9df8d520ae431f7f23e889a811b1d5403402c1cbc3a33af83bdb48625af32ce",
+      "contract_revision": "Contract revision | office-edit-1",
+      "producer_guides": [
+        "08a",
+        "09a",
+        "09c",
+        "09f",
+        "09h",
+        "12a",
+        "13"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "feat(office): freeze engine-neutral editing contracts [step-20a/T1]",
+        "feat(office): atomic session and controller lifecycle [step-20a/T2]",
+        "docs(office): prepare engine comparison protocol [step-20a/T3]",
+        "docs(office): measured engine recommendation and owner checkpoint [step-20a/T4]",
+        "feat(office): integrate approved isolated engine binding [step-20a/T5]",
+        "feat(office): rendering formatting and item services [step-20a/T6]",
+        "feat(office): immutable capture and safe save integration [step-20a/T7]",
+        "docs(help): Office editing and compatibility [step-20a/T8]"
+      ]
+    },
+    {
+      "id": "20b",
+      "title": "Word-style editing",
+      "settings": "50 -> 51",
+      "shots": "186-188",
+      "guide": "plan/steps/step-20b.md",
+      "sha256": "be3825f0c409923a92cc73274a73f8fd5c4c99f9557b2b7813477df36f8c1186",
+      "contract_revision": "Contract revision | office-document-ui-1; imports office-edit-1 without redefining it",
+      "producer_guides": [
+        "08a",
+        "09a",
+        "09c",
+        "09h",
+        "13",
+        "20a"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "feat(document): shared controller and view-state adapter [step-20b/T1]",
+        "feat(document): editable viewport and synchronized selection [step-20b/T2]",
+        "feat(document): live header ribbon and backstage [step-20b/T3]",
+        "feat(document): text paragraph styles and page controls [step-20b/T4]",
+        "feat(document): insert references and heading navigation [step-20b/T5]",
+        "feat(document): comments tracked changes and local spelling [step-20b/T6]",
+        "feat(document): safe autosave recovery and content transfer [step-20b/T7]",
+        "docs(help): document editing and review [step-20b/T8]"
+      ]
+    },
+    {
+      "id": "20c",
+      "title": "AI for documents",
+      "settings": "51 -> 52",
+      "shots": "189-190",
+      "guide": "plan/steps/step-20c.md",
+      "sha256": "27656b7bb485191fe4e9392f6420b5f71b360f9869f2500c24f65f48cd550db0",
+      "contract_revision": "Contract revision | ai-document-1, office-ai-proposal-1, ai-runtime-1, assistant-schema-1, ai-eval-1",
+      "producer_guides": [
+        "08a",
+        "09a",
+        "14c",
+        "17a",
+        "20a",
+        "20b"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "feat(ai-document): typed actions and quality settings [step-20c/T1]",
+        "feat(ai-document): immutable selection and protected facts [step-20c/T2]",
+        "feat(ai-document): structured writing suggestions [step-20c/T3]",
+        "feat(ai-document): clone previews with formatting preservation [step-20c/T4]",
+        "feat(ai-document): explicit atomic tracked acceptance [step-20c/T5]",
+        "feat(ai-document): accessible writing review panel [step-20c/T6]",
+        "test(ai-document): bilingual action and preservation evaluations [step-20c/T7]",
+        "docs(ai-document): writing help and review evidence [step-20c/T8]"
+      ]
+    },
+    {
+      "id": "21a",
+      "title": "Excel-style editing",
+      "settings": "52 -> 53",
+      "shots": "191-193",
+      "guide": "plan/steps/step-21a.md",
+      "sha256": "90d708d1578d9b1e897275a1a2071ee258bdb01083fda1b0fb2ac79f23ee7b53",
+      "contract_revision": "Contract revision |office-sheet-ui-1; deterministic sheet UI;20c is a separate included document-AI step; Edit cells, formulas, formatting, sheets, charts and pivot tables with a movable ribbon and a responsive large-sheet grid. Preserve unsupported workbook content or refuse unsafe saving. No21b AI/formula assistant, external data refresh, macro/VBA execution, DDE, online functions, paid spreadsheet engine I/O or conversion of formulas to unrelated cached values without disclosure. Generic cross-tab formulas paste as text under09c revision1.",
+      "producer_guides": [
+        "08a",
+        "09a",
+        "09c",
+        "09f",
+        "09h",
+        "12b",
+        "13",
+        "20a"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "feat(sheet): source-aware spreadsheet controller and state [step-21a/T1]",
+        "feat(sheet): bounded virtual grid and accessible selection [step-21a/T2]",
+        "feat(sheet): formula entry and locale-safe expression display [step-21a/T3]",
+        "feat(sheet): nine-tab ribbon and workbook formatting [step-21a/T4]",
+        "feat(sheet): sheet structure and safe range operations [step-21a/T5]",
+        "feat(sheet): validation conditional rules charts and pivots [step-21a/T6]",
+        "feat(sheet): print export recovery and formula parity [step-21a/T7]",
+        "docs(help): spreadsheets formulas and data tools [step-21a/T8]"
+      ]
+    },
+    {
+      "id": "21b",
+      "title": "AI for sheets",
+      "settings": "53 -> 54",
+      "shots": "194-195",
+      "guide": "plan/steps/step-21b.md",
+      "sha256": "bebb320d1656444ac69a5e7b44c53dc6491e69a2ee31e614495382a9b48d247f",
+      "contract_revision": "Contract revision | ai-sheet-1, office-ai-proposal-1, assistant-provider-1",
+      "producer_guides": [
+        "17a",
+        "20a",
+        "21a"
+      ],
+      "task_count": 8,
+      "task_commits": [
+        "feat(ai-sheet): bounded typed action contracts [step-21b/T1]",
+        "feat(ai-sheet): deterministic reviewed cleaning transforms [step-21b/T2]",
+        "feat(ai-sheet): consented structured suggestions [step-21b/T3]",
+        "feat(ai-sheet): real clone-calculated formula previews [step-21b/T4]",
+        "feat(ai-sheet): typed cleaning charts and grounded explanations [step-21b/T5]",
+        "feat(ai-sheet): accessible checked suggestion review [step-21b/T6]",
+        "test(ai-sheet): bilingual calculation and cleaning evaluations [step-21b/T7]",
+        "docs(ai-sheet): safe formula and cleaning help [step-21b/T8]"
+      ]
+    },
+    {
+      "id": "22a",
+      "title": "PowerPoint-style editing",
+      "settings": "54 -> 55",
+      "shots": "196-198",
+      "guide": "plan/steps/step-22a.md",
+      "sha256": "9509d67dcaeef000d7143a5e850183a00bf0f38ef36252625aa443fd0dec8912",
+      "contract_revision": "Contract revision |office-deck-ui-1; deterministic deck UI;21b included independently",
+      "producer_guides": [
+        "07d",
+        "08a",
+        "09a",
+        "09c",
+        "09f",
+        "09h",
+        "12b",
+        "13",
+        "15",
+        "16",
+        "20a"
+      ],
+      "task_count": 9,
+      "task_commits": [
+        "feat(deck): shared presentation controller and state [step-22a/T1]",
+        "feat(deck): slide canvas thumbnails and notes [step-22a/T2]",
+        "feat(deck): ten-tab ribbon header and backstage [step-22a/T3]",
+        "feat(deck): shapes text tables charts and transfers [step-22a/T4]",
+        "feat(deck): masters layouts and theme application [step-22a/T5]",
+        "feat(deck): transitions animations and review [step-22a/T6]",
+        "feat(present): display-aware presentation and presenter view [step-22a/T7]",
+        "feat(deck): safe exports recovery and fidelity cases [step-22a/T8]",
+        "docs(help): editing and presenting slides [step-22a/T9]"
+      ]
+    },
+    {
+      "id": "22b",
+      "title": "AI for decks and the style library (v1.0)",
+      "settings": "55 -> 56",
+      "shots": "199-202",
+      "guide": "plan/steps/step-22b.md",
+      "sha256": "a8ecc6a8bfdb3dae19f80836efa96959c7a7bf8bf29ae7c2c93166c05244b1d4",
+      "contract_revision": "Contract revision |deck-style-library-1;office-deck-ui-1;office-edit-1",
+      "producer_guides": [
+        "08a",
+        "09a",
+        "20a",
+        "22a"
+      ],
+      "task_count": 15,
+      "task_commits": [
+        "feat(styles): fixed manual deck style contracts [step-22b/T1]",
+        "feat(styles): eight palettes and deterministic layouts [step-22b/T2]",
+        "feat(styles): bounded atomic user-style catalog [step-22b/T3]",
+        "feat(styles): previewed one-transaction style application [step-22b/T4]",
+        "feat(styles): safe template import and style exchange [step-22b/T5]",
+        "feat(styles): accessible library cards and details [step-22b/T6]",
+        "docs(help): manual presentation styles and imports [step-22b/T7]",
+        "feat(ai-deck): typed outline and provider contracts [step-22b/T8]",
+        "feat(ai-deck): bilingual examples for eight styles [step-22b/T9]",
+        "feat(ai-deck): consented source-grounded outline generation [step-22b/T10]",
+        "feat(ai-deck): real layout placement and draft clone preview [step-22b/T11]",
+        "feat(ai-deck): explicit atomic draft and slide acceptance [step-22b/T12]",
+        "feat(ai-deck): accessible outline and draft review [step-22b/T13]",
+        "test(ai-deck): bilingual style quality and legal tuning protocol [step-22b/T14]",
+        "docs(ai-deck): full help and v1.0 acceptance evidence [step-22b/T15]"
+      ]
+    }
+  ]
+}

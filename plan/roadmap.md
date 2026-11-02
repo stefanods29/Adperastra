@@ -1,5 +1,7 @@
 # Roadmap
 
+Guide delivery2026-11-02: all54 remaining guides and prompts are written; [prompt index](prompts/README.md). The state guide records documentation, not completed implementation. Integration/release evidence and real owner checkpoints remain required.
+
 Difficulty: ★ very easy ... ★★★★★ very hard. Each step depends only on earlier steps. Every step ends with a merge to `main` and a tag, without waiting for the owner, who checks it afterwards (AGENTS.md section 4).
 
 Tags: steps get `v0.<milestone>.<n>-step<id>` (for example `v0.0.7-step04a`); a milestone release gets `v0.1.0`, `v0.2.0`, ... After a milestone, numbering continues from it (the step after `v0.1.0` is `v0.1.1-step09a`).
@@ -12,7 +14,7 @@ Tags: steps get `v0.<milestone>.<n>-step<id>` (for example `v0.0.7-step04a`); a 
 | v0.2 | 10f | More tabs and tab groups, command palette, bulk rename, copy window, shelf, split view, locked folders, full customization, accessibility |
 | v0.3 | 13 | Search modes, tags, views, storage tools, optional packs, App storage, media and document conversion, Office viewing |
 | v0.4 | 16 | PDF and image editing, AI upscaling, audio/video basics, Windows integration |
-| v0.5 | 17d | Optional offline AI assistant and AI features |
+| v0.5 | 17d | Optional Local/API assistant (Meta first among API providers) and local AI features |
 | v1.0 | 22b | Advanced image editor, video timeline, Word-, Excel- and PowerPoint-style editing |
 
 ## Steps
@@ -32,62 +34,62 @@ Tags: steps get `v0.<milestone>.<n>-step<id>` (for example `v0.0.7-step04a`); a 
 | 06b | Version history | ★★★ | 06a | 19 version store | guide |
 | 06c | Templates in the New menu | ★★ | 06b | templates | guide |
 | 06d | Archives: open, browse, extract | ★★★ | 06c | 20 archive service, generic job table, first helper process | guide |
-| 06e | Archives: create, passwords, RAR | ★★★ | 06d | 20 | outline |
+| 06e | Archives: create, passwords, RAR | ★★★ | 06d | 20 | guide |
 | 06f | Tables (CSV), JSON, fonts, hex search | ★★ | 06e | handlers | guide |
-| 07a | Thumbnails, cache store, helper process, background work v1 | ★★★ | 06f | 15 cache store, helper processes | outline |
-| 07b | Quick preview and rich file info | ★★★ | 07a | 21 metadata service | outline |
-| 07c | Gallery | ★★ | 07b | | outline |
-| 07d | PDF viewer | ★★★ | 07c | PDF engine | outline |
-| 07e | Copy text from images and scans (OCR) | ★★★ | 07d | 22 OCR service | outline |
-| 07f | More previewers 1: e-books, notebooks, email, subtitles, logs, SQLite | ★★★ | 07e | handlers | outline |
-| 07g | More previewers 2: 3D models, camera RAW, HEIC/AVIF, PSD | ★★★ | 07f | handlers | outline |
-| 08a | Converter 1: Quick Convert, job queue, image formats | ★★★ | 07g | 23 converter registry | outline |
-| 08b | Converter 2: PDF, documents, sheets, archives, batch presets | ★★★ | 08a | 23 | outline |
-| 08c | Privacy cleaner | ★★★ | 08b | 24 privacy cleaner | outline |
-| 08d | First release (v0.1) | ★★ | 08c | 25 release pipeline | outline |
-| 09a | More tabs and sessions | ★★★ | 08d | 26 tab sessions | outline |
-| 09b | Tab groups and saved groups | ★★★ | 09a | 26 | outline |
-| 09c | Dragging between tabs, content between tabs, opening files from Windows | ★★★ | 09b | 12 (tabs, content) | outline |
-| 09d | Explorer extras and the command palette | ★★★ | 09c | palette | outline |
-| 09e | Bulk rename and batch actions | ★★★ | 09d | | outline |
-| 09f | Copy window and conflict window | ★★★ | 09e | 10 (pause, verify, queue) | outline |
-| 09g | "What's using this file?" and the shelf | ★★★ | 09f | shelf | outline |
-| 09h | Crash recovery, report a problem, safe mode | ★★★ | 09g | 6 recovery UI | outline |
-| 09i | Split view | ★★★ | 09h | split view | outline |
-| 09j | Disk images and clipboard history | ★★★ | 09i | | outline |
-| 09k | Locked folders | ★★★★ | 09j | 27 encrypted containers | outline |
-| 10a | Themes: editor, day and night, wallpaper accent | ★★★ | 09k | theme editor | outline |
-| 10b | Toolbar and keyboard customization | ★★★ | 10a | shortcut maps | outline |
-| 10c | Tab options, date and size formats, behavior, profiles, portable mode | ★★★ | 10b | profiles | outline |
-| 10d | Folder colors, icons, backgrounds, column sets | ★★★ | 10c | folder customization | outline |
-| 10e | Menu editor, Home, sidebar and status bar customization, setup files | ★★★ | 10d | 28 setup files | outline |
-| 10f | Accessibility (v0.2) | ★★★ | 10e | accessibility settings | outline |
-| 11a | Search index, search modes, speed pass | ★★★★ | 10f | 29, 30 | outline |
-| 11b | Tags, smart folders, views | ★★★ | 11a | 31 | outline |
-| 11c | Storage view, duplicate finder, folder sizes | ★★★ | 11a | storage scanner | outline |
-| 12a | Pack manager, App storage, Background work page | ★★★★ | 11c | 32 | outline |
-| 12b | Converter 3 (media, documents), privacy cleaner 2 | ★★★★ | 12a | 33 engine adapters | outline |
-| 13 | Accurate Office viewers (v0.3) | ★★★★ | 12b | | outline |
-| 14a | PDF tools | ★★★★ | 13 | PDF edit mode | outline |
-| 14b | Basic image editor | ★★★★ | 14a | image edit mode | outline |
-| 14c | Local AI runtime and AI upscaling | ★★★★ | 14b | 34 | outline |
-| 15 | Audio and video basics | ★★★★ | 14c | media edit mode | outline |
-| 16 | Windows integration and release polish (v0.4) | ★★★★ | 15 | shell integration | outline |
-| 17a | AI assistant: core, safety, models, evaluation | ★★★★ | 16 | 35, 36 | outline |
-| 17b | Local AI actions | ★★★★ | 17a | | outline |
-| 17c | AI search and organizing | ★★★★ | 17b | embeddings index | outline |
-| 17d | AI for scans and PDFs, writing suggestions (v0.5) | ★★★★ | 17c | | outline |
-| 18a | Advanced image editor: layers and selections | ★★★★★ | 17d | | outline |
-| 18b | Advanced image editor: painting, filters, project format | ★★★★★ | 18a | | outline |
-| 19a | Video timeline: tracks and clips | ★★★★★ | 18b | | outline |
-| 19b | Video timeline: effects, audio, export | ★★★★★ | 19a | | outline |
-| 20a | Office editing: engine spikes and integration | ★★★★★ | 19b | Office engine adapter | outline |
-| 20b | Word-style editing | ★★★★★ | 20a | | outline |
-| 20c | AI for documents | ★★★★ | 20b | | outline |
-| 21a | Excel-style editing | ★★★★★ | 20c | | outline |
-| 21b | AI for sheets | ★★★★ | 21a | | outline |
-| 22a | PowerPoint-style editing | ★★★★★ | 21b | | outline |
-| 22b | AI for decks and the style library (v1.0) | ★★★★ | 22a | | outline |
+| 07a | Thumbnails, cache store, helper process, background work v1 | ★★★ | 06f | 15 cache store, helper processes | guide |
+| 07b | Quick preview and rich file info | ★★★ | 07a | 21 metadata service | guide |
+| 07c | Gallery | ★★ | 07b | | guide |
+| 07d | PDF viewer | ★★★ | 07c | PDF engine | guide |
+| 07e | Copy text from images and scans (OCR) | ★★★ | 07d | 22 OCR service | guide |
+| 07f | More previewers 1: e-books, notebooks, email, subtitles, logs, SQLite | ★★★ | 07e | handlers | guide |
+| 07g | More previewers 2: 3D models, camera RAW, HEIC/AVIF, PSD | ★★★ | 07f | handlers | guide |
+| 08a | Converter 1: Quick Convert, job queue, image formats | ★★★ | 07g | 23 converter registry | guide |
+| 08b | Converter 2: PDF, documents, sheets, archives, batch presets | ★★★ | 08a | 23 | guide |
+| 08c | Privacy cleaner | ★★★ | 08b | 24 privacy cleaner | guide |
+| 08d | First release (v0.1) | ★★ | 08c | 25 release pipeline | guide |
+| 09a | More tabs and sessions | ★★★ | 08d | 26 tab sessions | guide |
+| 09b | Tab groups and saved groups | ★★★ | 09a | 26 | guide |
+| 09c | Dragging between tabs, content between tabs, opening files from Windows | ★★★ | 09b | 12 (tabs, content) | guide |
+| 09d | Explorer extras and the command palette | ★★★ | 09c | palette | guide |
+| 09e | Bulk rename and batch actions | ★★★ | 09d | | guide |
+| 09f | Copy window and conflict window | ★★★ | 09e | 10 (pause, verify, queue) | guide |
+| 09g | "What's using this file?" and the shelf | ★★★ | 09f | shelf | guide |
+| 09h | Crash recovery, report a problem, safe mode | ★★★ | 09g | 6 recovery UI | guide |
+| 09i | Split view | ★★★ | 09h | split view | guide |
+| 09j | Disk images and clipboard history | ★★★ | 09i | | guide |
+| 09k | Locked folders | ★★★★ | 09j | 27 encrypted containers | guide |
+| 10a | Themes: editor, day and night, wallpaper accent | ★★★ | 09k | theme editor | guide |
+| 10b | Toolbar and keyboard customization | ★★★ | 10a | shortcut maps | guide |
+| 10c | Tab options, date and size formats, behavior, profiles, portable mode | ★★★ | 10b | profiles | guide |
+| 10d | Folder colors, icons, backgrounds, column sets | ★★★ | 10c | folder customization | guide |
+| 10e | Menu editor, Home, sidebar and status bar customization, setup files | ★★★ | 10d | 28 setup files | guide |
+| 10f | Accessibility (v0.2) | ★★★ | 10e | accessibility settings | guide |
+| 11a | Search index, search modes, speed pass | ★★★★ | 10f | 29, 30 | guide |
+| 11b | Tags, smart folders, views | ★★★ | 11a | 31 | guide |
+| 11c | Storage view, duplicate finder, folder sizes | ★★★ | 11a | storage scanner | guide |
+| 12a | Pack manager, App storage, Background work page | ★★★★ | 11c | 32 | guide |
+| 12b | Converter 3 (media, documents), privacy cleaner 2 | ★★★★ | 12a | 33 engine adapters | guide |
+| 13 | Accurate Office viewers (v0.3) | ★★★★ | 12b | | guide |
+| 14a | PDF tools | ★★★★ | 13 | PDF edit mode | guide |
+| 14b | Basic image editor | ★★★★ | 14a | image edit mode | guide |
+| 14c | Local AI runtime and AI upscaling | ★★★★ | 14b | 34 | guide |
+| 15 | Audio and video basics | ★★★★ | 14c | media edit mode | guide |
+| 16 | Windows integration and release polish (v0.4) | ★★★★ | 15 | shell integration | guide |
+| 17a | AI assistant: core, safety, models, evaluation | ★★★★ | 16 | 35, 36 | guide |
+| 17b | Local AI actions | ★★★★ | 17a | | guide |
+| 17c | AI search and organizing | ★★★★ | 17b | embeddings index | guide |
+| 17d | AI for scans and PDFs, writing suggestions (v0.5) | ★★★★ | 17c | | guide |
+| 18a | Advanced image editor: layers and selections | ★★★★★ | 17d | | guide |
+| 18b | Advanced image editor: painting, filters, project format | ★★★★★ | 18a | | guide |
+| 19a | Video timeline: tracks and clips | ★★★★★ | 18b | | guide |
+| 19b | Video timeline: effects, audio, export | ★★★★★ | 19a | | guide |
+| 20a | Office editing: engine spikes and integration | ★★★★★ | 19b | Office engine adapter | guide |
+| 20b | Word-style editing | ★★★★★ | 20a | | guide |
+| 20c | AI for documents | ★★★★ | 20b | | guide |
+| 21a | Excel-style editing | ★★★★★ | 20c | | guide |
+| 21b | AI for sheets | ★★★★ | 21a | | guide |
+| 22a | PowerPoint-style editing | ★★★★★ | 21b | | guide |
+| 22b | AI for decks and the style library (v1.0) | ★★★★ | 22a | | guide |
 
 ## Where the v1 plan's features went
 

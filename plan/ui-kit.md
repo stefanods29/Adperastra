@@ -63,3 +63,12 @@ Use these before writing anything new. Import from `src/components/<Name>`. All 
 | Default corner radius | 4 px (`--adp-radius-sm`); cards 8 px (`--adp-radius-lg`); window 10 px |
 | Font | Inter, body 12 px, commands 13 px |
 | Icons | Lucide, 16 px in bars and menus, stroke 1.4 if set explicitly |
+
+
+## Planned components in the54-guide packet
+
+These are future components, not current installed UI. Their exact props, sizes, keyboard/focus behavior, loading/empty/error states and locale keys are fixed by their producing guides. Reuse existing Button/Dialog/Menu/Tooltip/ToolbarDock/Ribbon rather than copy them. All new feature styles remain in the named feature CSS files.
+
+07b owns shared previews;07c Gallery;08a conversion UI;08c privacy review;09a shared document/tab host;09b groups;09d palette;09e rename review;09f copy/conflict controls;09h recovery;09i split presentation;10a–f customization/accessibility;11a–c search/tags/storage;12a pack/storage/background pages;13 Office previews;14a/b editable PDF/images;14c AI enlargement;15 media editor;17a assistant/provider settings and outbound review;17b action/transcript views;17c/d search/extraction/suggestions;18a/b layers/projects;19a/b timeline;20a–22b Office editors, proposal previews and deck style library.
+
+Use the canonical component/data/export paths in [parallel/CONTRACT-INDEX.md](parallel/CONTRACT-INDEX.md) and each complete guide. New shared props and registrations are coordinator proposals. API keys are entered through17a's native credential editor, not a React password prop; file upload review and edit acceptance are distinct human choices. No generated output is displayed as a verified accepted document before its real engine preview and consent steps.

@@ -8,13 +8,13 @@ This work belongs to the coordinating reviewer. Code-writing workers must not ex
 
 **Implementation accepted:** reviewer has inspected the real code, run the required compilation/tests/package/runtime checks and recorded evidence. A worker handoff or written test cannot produce this state by itself.
 
-At packet creation, the 47 full per-step guides have not been authored and future worker code has not been returned. The 47 rows are assignment briefs, not complete coding recipes or reviewed implementations. The coordinator authors full guides before dispatch. Never write a final whole-project acceptance report until outputs and required evidence exist.
+All 54 remaining guides and per-step prompts are supplied by this packet, including AI. Their authoring review is recorded in FINAL-REVIEW.md. Future worker code has not been returned or accepted. No whole-project runtime acceptance is implied.
 
 ## R0 — Establish review baseline
 
 - [ ] Record actual base SHA/status, worker workspace, contract revision and task/file map.
 - [ ] Preserve all uncommitted work; do not stage another worker's files or discard a failed attempt.
-- [ ] Read owner decisions in current STATUS. Retain local-only restrictions and AI exclusions.
+- [ ] Read owner decisions in current STATUS. Retain local-only restrictions and the all 54-step scope, including AI.
 - [ ] Reconcile stale issue/status/ledger statements against code/commits before relying on them.
 - [ ] Record unfinished earlier owner checks, screenshots, packaged runs and speed comparisons separately.
 
@@ -39,7 +39,7 @@ Disposition per guide: accept, request concrete corrections, or mark the exact d
 
 ## R2 — Cross-stream contract review before assembling code
 
-- [ ] I1-I9 changes have provider and consumer agreement at the same revision.
+- [ ] Producing guide exports/data and every consuming guide Uses row agree at the recorded revision; CONTRACT-INDEX hashes match the handed-out guides.
 - [ ] No duplicate scheduler, cache, file grant, job runner, tab/document model, menu registry or Office adapter was created.
 - [ ] Settings bumps, migrations, previous-version tests and measurement settings form one ordered chain from schema 11.
 - [ ] New command IDs, handler IDs, key namespaces, error codes, shortcuts, help slugs and screenshot names do not collide.
@@ -111,7 +111,7 @@ Only the coordinator runs these checks; workers provide proposed selectors/fixtu
 1. Promote only accepted complete guides to `plan/steps/step-<id>.md`, update plan contracts/libraries/ledger/UI kit/status consistently, and use separate `docs(plan)` commits after required reviewer checks.
 2. Integrate implementation by included-step order and task boundaries. Preserve the guide's commit messages and explicit F fixes; do not merge all late features through an earlier step's commit.
 3. Record gate/package/test/runtime evidence and actual speed/screenshot results in step reports. Update known issues and changelog with observed behavior and remaining limitations.
-4. Never mark skipped AI steps or partial 22b complete. Do not invent tags or claim milestone release readiness with excluded requirements or open Blocker/Major issues.
+4. All 54 steps, including AI and full22b, require their actual implementation/evaluation evidence before completion. Do not invent tags or claim milestone readiness with missing requirements or open Blocker/Major issues.
 5. Keep work local and main untouched under current owner decisions. Releases require owner's explicit publication approval.
 
 ## Reviewer return format

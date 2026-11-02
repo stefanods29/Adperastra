@@ -6,12 +6,12 @@ Facts that every new guide must stay consistent with: numbers that count up (set
 
 | Counter | Last used | By | Next free |
 |---|---|---|---|
-| Settings schema (`CURRENT_SCHEMA` in `src-tauri/src/main.rs`, `SETTINGS_SCHEMA_VERSION` in `src/services/settings.ts`) | 11 | 06c (06d adds none) | 12 |
+| Settings schema (`CURRENT_SCHEMA` in `src-tauri/src/main.rs`, `SETTINGS_SCHEMA_VERSION` in `src/services/settings.ts`) | 11 actual;12–56 reserved | 06c actual;07a–22b planned | 57 unreserved; next implementation12 |
 | Version store schema (`STORE_SCHEMA`, `<data>/versions/index.sqlite3` table `meta`) | 1 | 06b | 2 |
 | Explorer state schema (`EXPLORER_STATE_SCHEMA`, `explorer-state.json`) | 2 | 03a | 3 |
 | Folder views schema (`FOLDER_VIEWS_SCHEMA`, `folder-views.json`) | 1 | 05a | 2 |
 | Step tags | `v0.0.19-step06f` | 06f | `v0.0.20-step07a`; every step's tag is in `plan/STATUS.md` |
-| Screenshot numbers in `scripts/measure-ui.mjs` | `56-hex-search` | 06f | `57-...` |
+| Screenshot numbers in `scripts/measure-ui.mjs` | `56-hex-search` actual;57–202 reserved | 06f actual;07a–22b planned | `203-...` unreserved |
 | `step` value in the record of `scripts/measure-ui.mjs` | comes from `-Step` or the branch name, no literal to change | | |
 | Settings page sections (`SETTINGS_SECTIONS`) | 7 (`versions` last) | 06b | a new section goes after `versions`; update the count in `settingsView.test.tsx` |
 
@@ -204,3 +204,14 @@ Steps P2, 04a, 04b and 04c are ready recipes with full code; the facts below are
 - Help slugs: `viewing-tables`, `viewing-json`, `viewing-fonts`. Settings schema unchanged at 11.
 - Trap: every new handler with extensions adds a group to Settings > Opening files, so `defaultApps.test.tsx`'s `groupSelects` count goes up.
 - Trap: the screenshot and speed scripts must not type the open folder's path into the address bar (KI-033).
+
+
+## Complete parallel guide packet (2026-11-02)
+
+All54 remaining guides07a–22b, including AI and full22b, are written before their implementations. The exact per-step reservation chain is [GUIDE_STATUS.md](GUIDE_STATUS.md); source/schema11 remain unchanged. Do not allocate schema12 independently in multiple workers. The complete dependency/export navigation and guide hashes are [parallel/CONTRACT-INDEX.md](parallel/CONTRACT-INDEX.md) and [parallel/GUIDE-MANIFEST.json](parallel/GUIDE-MANIFEST.json). Every guide fixes canonical definitions, symbols, units, bounds, ownership, errors, algorithm/tasks/tests, bilingual text/help and acceptance evidence. Workers use [prompts](prompts/README.md) and never expand their own guides.
+
+Primary new shared contracts: SourceStamp/FileIdentityKey in fs-service; bounded scheduler/cache;07d disk/snapshot PDF identities and GrantedBacking/private-helper/framed transport;08a conversion-2/export-snapshot-2/native MIME authority;09a document content identity, drafts/rebind/watchers/close policy;09e explicit_names/09f expected_sources;12a signed packs/storage/background;12b persistent engines/native dispatch;14c local AI inputs;17a Local/API selected gateway with Meta first, protected keys and exact-payload consent;17b speech microseconds/caption windows;19b native timeline graph;20a Office E20–E25 proposals/drafts/lease/blank creators. Import these canonical definitions; no duplicated private variants.
+
+Runtime source pins and pack artifact hashes are different facts. Derived model/engine packs are unavailable until actual signed build/license/security/quality evidence exists.20a engine binding and16 Windows identity have genuine owner decisions. Replace/recycle remains gated by object-bound proof. A guide never implies those gates passed. No cloud fallback and no unapproved API upload.
+
+Code writing can overlap; coordinator owns existing/shared files, manifests/lockfiles/locales/generators/counters/root wiring and executed verification. Integration stays in roadmap order. No application feature, tag or milestone became completed through this packet. The owner's requested stopping point is guides/prompts; no implementation is dispatched here.
