@@ -84,4 +84,8 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
   control-frame tag collision, the missing reply-shape check, PDF.js 6.4 shutdown, TypeScript
   7 buffer views, Clippy findings, the helper allowlist and the Default apps group count.
   Final full gate passed: 673 Rust tests in 51 binaries, 670 UI tests in 119 files, IPC and
-  translations clean. Ready to commit.
+  translations clean. Committed as `26bbdf0` with its own deps commit (`ea14385`).
+- 2026-11-03: 07e payload inventoried. It needs two additive producer adapters that its
+  payload does not contain: `decode_pixels_from_memory` in `thumbnail_decode.rs` and a
+  `PdfOcrAdapter` implementing `ocr_pdf::OcrPdfPageSource` in `pdf.rs`. The copied files were
+  removed again; the branch stays at the clean, green 07d boundary (`1523bfa`).
