@@ -266,7 +266,15 @@
     "importConfirmTitle": "[Rëpläçë ÿøür sëttïñgs? ~~~~~~~~]",
     "importConfirmBody": "[Thë sëttïñgs ïñ thë fïlë wïll rëpläçë ÿøür çürrëñt øñës. Ÿøü çäñ üñdø thïs rïght äftër. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~]",
     "importConfirm": "[Ïmpørt ~~~]",
-    "imported": "[Sëttïñgs ïmpørtëd. ~~~~~~~]"
+    "imported": "[Sëttïñgs ïmpørtëd. ~~~~~~~]",
+    "background": "[Bäçkgrøüñd wørk ~~~~~~]",
+    "backgroundEnabled": "[Ëñäblë bäçkgrøüñd wørk ~~~~~~~~]",
+    "backgroundThumbnails": "[Çrëätë thümbñäïls ~~~~~~~]",
+    "backgroundIdle": "[Øñlÿ whëñ ïdlë ~~~~~]",
+    "backgroundAc": "[Øñlÿ øñ ÄÇ pøwër ~~~~~~]",
+    "backgroundPaused": "[Päüsë äll bäçkgrøüñd wørk ~~~~~~~~~]",
+    "cacheLimit": "[Prëvïëw çäçhë lïmït ~~~~~~~]",
+    "cacheLimitOption": "[{size} MB ~~]"
   },
   "gallery": {
     "title": "[Gällërÿ ~~~]",
@@ -646,6 +654,26 @@
     "font": {
       "other": "[Çøüldñ't rëäd thïs føñt. ~~~~~~~~]",
       "install_failed": "[Wïñdøws çøüldñ't ïñställ thïs føñt. ~~~~~~~~~~~~]"
+    },
+    "background": {
+      "other": "[Bäçkgrøüñd wørk çøüldñ't bë üsëd. ~~~~~~~~~~~]",
+      "paused": "[Bäçkgrøüñd prëpärätïøñ ïs päüsëd. ~~~~~~~~~~~~]",
+      "cancelled": "[Bäçkgrøüñd prëpärätïøñ wäs çäñçëllëd. ~~~~~~~~~~~~~~]",
+      "busy": "[Thë prëpärätïøñ qüëüë ïs füll. Trÿ ägäïñ. ~~~~~~~~~~~~~~]",
+      "unavailable": "[Bäçkgrøüñd wørk ïs ñøt äväïläblë. ~~~~~~~~~~~~]"
+    },
+    "thumbnail": {
+      "other": "[Thïs thümbñäïl çøüldñ't bë çrëätëd. ~~~~~~~~~~~~]",
+      "bad_request": "[Thïs thümbñäïl rëqüëst ïs ñøt välïd. ~~~~~~~~~~~~]",
+      "changed": "[Thë fïlë çhäñgëd. Trÿ ägäïñ. ~~~~~~~~~]",
+      "too_large": "[Thïs pïçtürë ïs tøø lärgë tø prëvïëw. ~~~~~~~~~~~~]",
+      "failed": "[Thïs thümbñäïl çøüld ñøt bë çrëätëd. ~~~~~~~~~~~~]",
+      "busy": "[Thë prëpärätïøñ qüëüë ïs füll. Trÿ ägäïñ. ~~~~~~~~~~~~~~]"
+    },
+    "cache": {
+      "other": "[Thë prëvïëw çäçhë çøüldñ't bë üsëd. ~~~~~~~~~~~~]",
+      "bad_request": "[Thïs çäçhë rëqüëst ïs ñøt välïd. ~~~~~~~~~~~]",
+      "unavailable": "[Thë prëvïëw çäçhë ïs ñøt äväïläblë. ~~~~~~~~~~~~]"
     }
   },
   "keys": {
@@ -1135,5 +1163,9 @@
     "windowsVersions": "[Prëvïøüs vërsïøñs frøm Wïñdøws… ~~~~~~~~~~~]",
     "allFiles": "[Äll fïlës ~~~~]",
     "loadMore": "[Løäd mørë ~~~~]"
+  },
+  "background": {
+    "waitingIdle": "[Wäïtïñg før ïñäçtïvïtÿ ~~~~~~~~]",
+    "waitingAc": "[Wäïtïñg før ÄÇ pøwër ~~~~~~~]"
   }
 }

@@ -27,8 +27,25 @@ mod archive_helper;
 mod archive_passwords;
 mod archive_rar;
 mod archive_read_jobs;
+pub mod background;
+pub mod background_queue;
+mod background_windows;
+mod cache;
+#[cfg(test)]
+mod cache_lease_tests;
+mod cache_leases;
+mod cache_stamp;
 mod classic_menu;
 mod clipboard;
+mod preview_setup;
+mod thumbnail_decode;
+mod thumbnail_encode;
+mod thumbnail_helper;
+mod thumbnail_jobs;
+mod thumbnail_providers;
+mod thumbnails;
+#[cfg(windows)]
+pub(crate) use clipboard::bounded_stream;
 #[cfg(windows)]
 mod clipboard_image_helper;
 mod data_views;
@@ -54,7 +71,7 @@ mod transfer_history;
 mod versions;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 11;
+pub const CURRENT_SCHEMA: u32 = 12;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -547,6 +564,10 @@ pub struct Settings {
     pub versions: VersionSettings,
     #[serde(default)]
     pub templates: TemplateSettings,
+    #[serde(default)]
+    pub background: background::BackgroundSettings,
+    #[serde(default)]
+    pub cache: background::CacheSettings,
 }
 
 impl Default for Settings {
@@ -562,6 +583,8 @@ impl Default for Settings {
             appearance: AppearanceSettings::default(),
             versions: VersionSettings::default(),
             templates: TemplateSettings::default(),
+            background: background::BackgroundSettings::default(),
+            cache: background::CacheSettings::default(),
         }
     }
 }
@@ -629,6 +652,11 @@ fn check_layout_values(
 }
 
 pub fn validate(settings: &Settings) -> Result<(), AppError> {
+    settings
+        .background
+        .validate()
+        .map_err(AppError::Validation)?;
+    settings.cache.validate().map_err(AppError::Validation)?;
     if settings.schema_version != CURRENT_SCHEMA {
         return Err(AppError::Validation(format!(
             "unsupported schema_version {} (expected {CURRENT_SCHEMA})",
@@ -893,6 +921,8 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         appearance: AppearanceSettings::default(),
         versions: VersionSettings::default(),
         templates: TemplateSettings::default(),
+        background: background::BackgroundSettings::default(),
+        cache: background::CacheSettings::default(),
     }
 }
 
@@ -963,7 +993,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
-            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) => {
+            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) | Some(11) => {
                 Ok(migrate_keep_known(value.clone()))
             }
             Some(3) => Ok(migrate_v3(value.clone())),
@@ -1472,6 +1502,7 @@ fn get_settings(window: WebviewWindow, state: State<'_, AppState>) -> Result<Set
 #[tauri::command]
 fn save_settings(
     window: WebviewWindow,
+    app: AppHandle,
     state: State<'_, AppState>,
     settings: Settings,
 ) -> Result<Settings, String> {
@@ -1483,6 +1514,8 @@ fn save_settings(
         .lock()
         .map_err(|_| "settings lock poisoned".to_string())?;
     *cached = settings.clone();
+    drop(cached);
+    preview_setup::apply_settings(&app, &settings);
     Ok(settings)
 }
 
@@ -2916,6 +2949,9 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     Ok(())
 }
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some(thumbnail_helper::HELPER_FLAG) {
+        std::process::exit(thumbnail_helper::run_helper());
+    }
     #[cfg(windows)]
     if std::env::args().nth(1).as_deref() == Some(clipboard_image_helper::HELPER_FLAG) {
         std::process::exit(clipboard_image_helper::run(
@@ -2960,7 +2996,7 @@ fn main() {
             watch: Mutex::new(None),
             watch_next_id: AtomicU64::new(0),
         })
-        .manage(files::FileGrants::default())
+        .manage(Arc::new(files::FileGrants::default()))
         .manage(folder_views::FolderViewsLock::default())
         .manage(jobs::Jobs::default())
         .manage(archive::ArchiveSessions::default())
@@ -2999,6 +3035,7 @@ fn main() {
             // Keep versions of file changes in the background (Step 06b).
             let worker = versions::VersionWorker::start(app.handle().clone());
             app.manage(worker);
+            preview_setup::initialize(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -3099,6 +3136,14 @@ fn main() {
             data_views::json_close,
             font_view::font_info_start,
             font_view::font_install,
+            cache_stamp::file_identity,
+            cache::cache_usage,
+            cache::cache_clear,
+            cache::cache_release,
+            background::background_status,
+            thumbnails::thumbnail_request_start,
+            thumbnails::thumbnail_lookup,
+            thumbnails::thumbnail_release,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");
@@ -3144,10 +3189,29 @@ mod tests {
     }
 
     #[test]
+    fn schema_11_import_keeps_existing_values_and_adds_background_defaults() {
+        let value = serde_json::json!({
+            "schema_version": 11,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "templates": { "my_folder": "C:\\T" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.templates.my_folder, "C:\\T");
+        assert_eq!(
+            settings.background,
+            background::BackgroundSettings::default()
+        );
+        assert_eq!(settings.cache, background::CacheSettings::default());
+    }
+
+    #[test]
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 11);
+        assert_eq!(settings.schema_version, 12);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");

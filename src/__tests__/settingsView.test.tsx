@@ -57,7 +57,7 @@ const navTitles = () =>
   [...container!.querySelectorAll(".adp-settings-nav-item")].map((item) => item.textContent?.trim());
 
 describe("SettingsView", () => {
-  it("lists the seven sections in order", async () => {
+  it("lists the eight sections in order", async () => {
     await renderSettings();
     expect(navTitles()).toEqual([
       "General",
@@ -67,8 +67,9 @@ describe("SettingsView", () => {
       "Views",
       "Opening files",
       "Version history",
+      "Background work",
     ]);
-    expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(7);
+    expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(8);
   });
 
   it("search keeps only the matching sections", async () => {

@@ -1,7 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { GroupBy } from "./grouping";
+import {
+  BACKGROUND_TASK_DEFAULTS, BACKGROUND_TASKS, CACHE_LIMITS_MB,
+  type BackgroundSettings, type BackgroundTaskKind, type CacheLimitMb, type CacheSettings,
+} from "./background";
+export type { BackgroundSettings, CacheLimitMb, CacheSettings };
 
-export const SETTINGS_SCHEMA_VERSION = 11;
+export const SETTINGS_SCHEMA_VERSION = 12;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -259,6 +264,8 @@ export interface AppSettings {
   appearance: AppearanceSettings;
   versions: VersionSettings;
   templates: TemplateSettings;
+  background: BackgroundSettings;
+  cache: CacheSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -316,6 +323,9 @@ export function defaultSettings(): AppSettings {
     templates: {
       my_folder: "",
     },
+    background: { enabled: true, only_idle: false, only_ac: false, paused: false,
+      tasks: { ...BACKGROUND_TASK_DEFAULTS } },
+    cache: { max_mb: 512 },
   };
 }
 
@@ -408,6 +418,36 @@ function normalizeLayout(value: unknown): LayoutSettings {
 }
 
 /** Pure: every field falls back independently when missing or invalid. */
+/** Schema 12: every known task gets a boolean; unknown keys are dropped. */
+function normalizeBackground(value: unknown): BackgroundSettings {
+  const input = isRecord(value) ? value : {};
+  const tasksInput = isRecord(input.tasks) ? input.tasks : {};
+  const tasks = {} as Record<BackgroundTaskKind, boolean>;
+  for (const kind of BACKGROUND_TASKS) {
+    const entry = tasksInput[kind];
+    tasks[kind] = typeof entry === "boolean" ? entry : BACKGROUND_TASK_DEFAULTS[kind];
+  }
+  return {
+    enabled: typeof input.enabled === "boolean" ? input.enabled : true,
+    only_idle: typeof input.only_idle === "boolean" ? input.only_idle : false,
+    only_ac: typeof input.only_ac === "boolean" ? input.only_ac : false,
+    paused: typeof input.paused === "boolean" ? input.paused : false,
+    tasks,
+  };
+}
+
+/** Schema 12: one of CACHE_LIMITS_MB, else the 512 MB default. */
+function normalizeCache(value: unknown): CacheSettings {
+  const input = isRecord(value) ? value : {};
+  const max = input.max_mb;
+  return {
+    max_mb:
+      typeof max === "number" && (CACHE_LIMITS_MB as readonly number[]).includes(max)
+        ? (max as CacheLimitMb)
+        : 512,
+  };
+}
+
 export function normalizeSettings(input: unknown): AppSettings {
   const defaults = defaultSettings();
   if (!isRecord(input)) return defaults;
@@ -486,6 +526,8 @@ export function normalizeSettings(input: unknown): AppSettings {
     templates: {
       my_folder: normalizeTemplateFolder(templatesInput.my_folder),
     },
+    background: normalizeBackground(input.background),
+    cache: normalizeCache(input.cache),
   };
 }
 

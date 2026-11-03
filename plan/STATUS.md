@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `07a` (guide written; implementation has not started). Step 06f is merged into local `testing`, with458 Rust/539 UI tests passing in the latest coordinator gate. KI-068 and KI-079 are fixed in the committed baseline. Other open issues, owner checks and speed runs remain pending; tags stay at03b. All 54 remaining guides and per-step prompts are written and documentation-reviewed under the owner's planning-only instruction; no new step is implemented. Start at `plan/prompts/README.md`.
+**Current step:** `07a` (handoff integration and safety fixes in progress). Step 06f is merged into local `testing`, with458 Rust/539 UI tests passing in the latest coordinator gate. KI-068 and KI-079 are fixed in the committed baseline. Other open issues, owner checks and speed runs remain pending; tags stay at03b. All 54 remaining guides and per-step prompts are written and documentation-reviewed under the owner's planning-only instruction; no new step is implemented. Start at `plan/prompts/README.md`.
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
@@ -98,6 +98,8 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 - 2026-10-31: `measure-ui.ps1 -Review06bc` uses fresh retained data/fixtures and never invokes legacy permanent cleanup. Test processes are closed through their own job handles. The original unscoped runner is not authorized for this review. No project/worktree/build/session was deleted; no remote operation or main change was made.
 
 ## Owner decisions log (newest first)
+
+- 2026-11-02: All54 worker handoffs received. Owner now authorizes the coordinator to integrate the parts, fill missing implementations, compile/test/debug/package and install required libraries/development tools. This supersedes the earlier planning-only stopping point. Continue locally in dependency order; preserve the submitted handoffs, keep main/remotes/publication untouched, and retain genuine owner engine/distribution checkpoints. The integration branch is codex/integrate-handoffs; original submissions have a verified external backup recorded in docs/integration/incoming-manifest.json.
 
 - 2026-11-02: Guide-authoring scope now includes all54remainingsteps, including14c,17a-d,20c,21b and full22b. Finish complete guides with exact cross-step APIs and create one prompt per step under plan/prompts/, then stop; do not implement or dispatch coding work. Workers write code/tests without compilation/installation/execution; coordinator handles later verification. The assistant must offer Local AI or API-key mode, with Meta Model API first in the API provider list. API sends require explicit reviewed payload consent and protected native credentials; no automatic cloud fallback. This supersedes the earlier non-AI-only scope while retaining local-only Git/no publication rules.
 

@@ -120,6 +120,7 @@ version = "0.1.0"
 dependencies = [
  "archive",
  "blake3",
+ "cache-store",
  "data-views",
  "fs-service",
  "infer",
@@ -731,6 +732,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3a53fac24f34a81bc9954b5d6cfce0c21e18ec6959f44f56e8e90e4bb7c346c"
 dependencies = [
  "libbz2-rs-sys",
+]
+
+[[package]]
+name = "cache-store"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "fs-service",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "uuid",
+ "windows 0.61.3",
 ]
 
 [[package]]

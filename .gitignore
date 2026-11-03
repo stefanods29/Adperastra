@@ -60,3 +60,6 @@ test-files/corpus/
 
 # Agent stop notes (AGENTS.md rule 4), never committed
 /BLOCKED.md
+
+# Preserved worker handoffs (working input, hash manifest committed instead)
+/handoff/

@@ -223,6 +223,23 @@ that fixed it.
 
 ## Fixed
 
+### KI-089 - Incoming preview cache could touch foreign files or exceed its physical budget (Blocker, fixed during 07a integration)
+- **Found in:** review and regression tests of the received 07a handoff, 2026-11-02; never accepted into the local baseline in this state.
+- **Cause:** content-only accounting, filename-based ownership, lookup-to-open and cleanup path races, coercion of corrupt index fields, and helper output written before storage admission.
+- **Fix:** account index/sidecars/pending/foreign bytes; native ownership receipts and same-handle open/deletion; bounded validated rows; inspect schema before writes; crash-cleaned helper staging preallocated under a cross-process budget lock. Foreground cloud-open policy is retained through a separate background API.
+- **Verification:** the final 523-test Rust run includes physical-budget, substitution, foreign-byte retention, corrupt/oversized/newer index, OFFLINE refusal, actual crash cleanup and separate-process reservation regressions. Packaged-app verification is recorded separately in the step report.
+
+### KI-090 - Incoming thumbnails had wrong channels and mirrored EXIF orientations (Major, fixed during 07a integration)
+- **Found in:** exact RGBA roundtrip and asymmetric six-pixel EXIF tests, 2026-11-02.
+- **Fix:** the public decoder returns actual RGBA and encoding converts to WIC BGRA. EXIF5/7 mappings match WIC transform ordering. All eight pixel orientation oracles remain unchanged.
+- **Verification:** regression failed before correction; all 24 focused thumbnail tests passed afterward.
+
+### KI-091 - Incoming preview cancellation and refresh could strand work or leak leases (Major, fixed during 07a integration)
+- **Found in:** incoming group/job review and UI regressions, 2026-11-02.
+- **Fix:** independent group cancellation, per-consumer start reservations, admission before user-job allocation, generation-safe completion, final-consumer cleanup, late-result lease release, listing revision invalidation, live status and one shared paused-preview eligibility poll. Ordinary scrolling releases no longer scan the full cache; explicit pending clear cleanup remains immediate.
+- **Verification:** focused group/policy/UI regressions and the full UI suite passed. The real-job/lease runtime runner records its separate result; unit tests are not claimed as full saturation evidence.
+
+
 ### KI-079 - Archive extraction could delete a partial file it did not create (Blocker, fixed after Step 06f)
 - **Found in:** Step 06e guide research, 2026-10-31, by reading the Step 06d code.
 - **What:** A failed extraction removed the predictable `~name.partial` next to the target, even when that file belonged to someone else. The file was not flushed to the disk before it got its final name.

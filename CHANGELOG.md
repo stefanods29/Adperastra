@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Local picture thumbnails in icon, tile and content views (Step 07a), with isolated decoding, a bounded shared preview cache, source-revision checks and leased image access. Background work settings control thumbnails, pause, idle time, charger use and cache size. English and Spanish help is included.
+
 - Tables, JSON and fonts (Step 06f): double-click a CSV or TSV file to read it as a table - click a column heading to sort (ascending, descending, back to file order), type in the tab's search box to filter, and turn **First row is headers** on or off; the file is parsed and sorted in the background, so a 100,000-row file scrolls smoothly, and a table that hits a limit says so. JSON files open as a tree you can fold, with **Show more** for long lists, search in keys and values, **Ctrl+C** to copy a value, and the line and column when the file has an error. Font files open as a sample sheet with your own text at six sizes, the font's details, a character map where a click copies a character, and **Install** through Windows after a question. Each of these viewers has **Open as text**.
 - Hex search and Go to offset (Step 06f): in the hex viewer, **Ctrl+F** and **Enter** (or **F3**) search text or pairs of hex digits anywhere in the file, wrap around once, and highlight the match across the row; the ribbon chooses **Search as text** or **Search as bytes**. **Ctrl+G** goes to an offset, in hexadecimal by default or decimal after #.
 - Help pages for viewing tables, JSON and fonts, in English and Spanish; "Open as text or hex" now describes hex search and Go to offset.

@@ -6,7 +6,7 @@ Critical additions reviewed:07d helper input rotation/private preflight/framed t
 
 ## Step 07a
 
-[Canonical complete guide](../steps/step-07a.md); SHA-256 `03b15ad8e86faf557327bbbf2b47a7b773df1728a63cee831ded407cbafc4893`.
+[Canonical complete guide](../steps/step-07a.md); SHA-256 `51459c84a16099f71197dce570c93d96d26fa273deea3457950651e2a2b0ec5a`.
 
 Shared interface revision | `preview-foundation-1` as defined below
 
@@ -52,6 +52,17 @@ T1 creates source_stamp.rs/FileIdentityKey wire module and tests stable ID width
 Additional exact keys errors.background.paused = “Background preparation is paused.” / “La preparación en segundo plano está en pausa.”; errors.background.cancelled = “Background preparation was cancelled.” / “Se canceló la preparación en segundo plano.”; errors.background.busy = “The preparation queue is full. Try again.” / “La cola de preparación está llena. Vuelve a intentarlo.”; errors.thumbnail.busy uses same queue-full pair. Native maps preserve lowercase snake_case. `thumbnail_release` always calls scheduler.cancel_consumer, including before a job ID exists.
 
 E1 publish reads a completed helper-owned result already bounded to 4 MiB for thumbnails; later producers specify their own finite per-kind blob cap before registration. It does not read arbitrary original user files. No duplicate exported type may be defined in another module.
+
+### Integration amendments — 2026-11-02
+
+- E1 adds `CacheStore::open_blob(&CacheRecord)->Result<File,CacheError>`. It verifies the indexed native object identity on the same read-only handle retained by a lease. Cleanup uses durable `owned_blobs` identity receipts and same-handle deletion; a UUID filename alone never establishes ownership. Cache hits defer bounded recency updates instead of scanning/fsyncing the entire cache per tile.
+- U4 adds `PinnedSource::open_background(&Path,&SourceIdentity)->OwnedIoResult<PinnedSource>`. Background providers use no-recall opens and check online-only flags on that opened handle before reading. Existing `open` retains foreground behavior.
+- Thumbnail helper output uses a parent-held delete-on-close staging guard and identity-checked child writer. The parent transfers lifetime to a read handle after validation; the kernel cleans staging after the final handle closes, including a process crash.
+- E6 `requestThumbnail(request:ThumbnailRequest,sourceRevision?:object)` and E7/FileThumbnail `sourceRevision?:object` accept an optional listing revision. The wire request is unchanged. A refreshed listing invalidates the UI group so Rust checks full precision stamps even when the path and size are unchanged.
+- `subscribeBackgroundEligible(listener:()=>void):()=>void` in services/background.ts shares one one-second status poll while paused previews wait. Hidden/unmounted views unsubscribe; eligibility retries the normal request and releases the previous consumer. Damaged pictures do not retry indefinitely.
+- The original 100-byte cache test could not hold a SQLite index while satisfying the physical cap. T2 now uses the 2 MiB fixture above without weakening physical accounting. Additional tests cover foreign physical bytes, corrupt/oversized rows, unknown schemas, cache substitution, all eight EXIF orientations, cancel-before-admission, pause/resume, and crash cleanup.
+
+- E1 adds `CacheStore::with_staging_budget<T>(&self,bytes:u64,create:impl FnOnce()->Result<T,CacheError>)->Result<T,CacheError>`. Operation/OS locks cover admission and callback. The callback exclusively creates a guarded file pre-sized to its maximum result length before returning; the store verifies total physical usage. WIC reserves 4 MiB before helper launch and shrinks only after the bounded write finishes. Other processes see the same reserved length, and process crashes reclaim it through delete-on-close. Reserved filenames are never treated as ownership evidence.
 
 ## Step 07b
 

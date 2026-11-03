@@ -1926,6 +1926,7 @@ export default function ExplorerHome({
           {!columnsMode && showNoResults ? <p className="adp-empty-note">{t("explorer.noSearchResults")}</p> : null}
           {showList ? (
             <ItemView
+              active={active}
               {...listProps}
               items={visibleItems}
               groups={groups}

@@ -17,6 +17,9 @@ import {
   type GridModeId,
 } from "./viewModes";
 
+import FileThumbnail from "../../../components/FileThumbnail";
+import { isThumbnailFile, thumbnailEdgeFor } from "../../../services/thumbnails";
+
 const GRID_KEYS: Record<string, GridMove> = {
   ArrowLeft: "left",
   ArrowRight: "right",
@@ -41,6 +44,7 @@ export default function FileGrid({ mode, ...props }: FileGridProps) {
   const paintedRef = useRef(false);
   const [width, setWidth] = useState(0);
   const spec = GRID_SPECS[mode];
+  const pixelRatio = window.devicePixelRatio;
 
   const orderItems = useMemo<ExplorerItem[]>(() => {
     if (!props.groups) return props.items;
@@ -242,7 +246,10 @@ export default function FileGrid({ mode, ...props }: FileGridProps) {
           style={{ width: spec.tile, height: spec.tile }}
           aria-hidden="true"
         >
-          <Icon size={spec.icon} aria-hidden="true" />
+          {item.kind === "file" && !item.online_only && isThumbnailFile(item.name) ? (
+            <FileThumbnail path={item.path} edge={thumbnailEdgeFor(spec.tile, pixelRatio)}
+              active={props.active !== false} sourceRevision={item} fallback={<Icon size={spec.icon} aria-hidden="true" />} />
+          ) : <Icon size={spec.icon} aria-hidden="true" />}
         </span>
         {content}
       </div>

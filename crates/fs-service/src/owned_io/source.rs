@@ -66,9 +66,26 @@ impl PinnedSource {
     /// Open the exact file that was enumerated. A different file at the
     /// same path is refused as `source_changed`.
     pub fn open(path: &Path, expected: &SourceIdentity) -> OwnedIoResult<Self> {
-        let file = open_guarded(path)?;
+        Self::open_with_policy(path, expected, false)
+    }
+
+    /// Background readers never recall content and inspect the same opened
+    /// handle before reading. Foreground readers retain their existing policy.
+    pub fn open_background(path: &Path, expected: &SourceIdentity) -> OwnedIoResult<Self> {
+        Self::open_with_policy(path, expected, true)
+    }
+
+    fn open_with_policy(
+        path: &Path,
+        expected: &SourceIdentity,
+        background: bool,
+    ) -> OwnedIoResult<Self> {
+        let file = open_guarded(path, background)?;
         if is_reparse(&file)? {
             return Err(OwnedIoError::ReparseRefused);
+        }
+        if background {
+            reject_online_only(super::handle_attributes(&file)?)?;
         }
         let identity = SourceIdentity::of(&file)?;
         if identity != *expected {
@@ -122,17 +139,44 @@ fn open_capture(path: &Path) -> io::Result<File> {
 /// Reading: read sharing only, so writes, renames and deletion are refused
 /// for the whole read. No delete or write authority is ever requested.
 #[cfg(windows)]
-fn open_guarded(path: &Path) -> io::Result<File> {
+fn open_guarded(path: &Path, background: bool) -> io::Result<File> {
     use std::os::windows::fs::OpenOptionsExt;
-    use windows::Win32::Storage::FileSystem::{FILE_FLAG_OPEN_REPARSE_POINT, FILE_SHARE_READ};
+    use windows::Win32::Storage::FileSystem::{
+        FILE_FLAG_OPEN_NO_RECALL, FILE_FLAG_OPEN_REPARSE_POINT, FILE_SHARE_READ,
+    };
+    let flags = FILE_FLAG_OPEN_REPARSE_POINT.0
+        | if background {
+            FILE_FLAG_OPEN_NO_RECALL.0
+        } else {
+            0
+        };
     std::fs::OpenOptions::new()
         .read(true)
         .share_mode(FILE_SHARE_READ.0)
-        .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT.0)
+        .custom_flags(flags)
         .open(path)
 }
 
 #[cfg(not(windows))]
-fn open_guarded(path: &Path) -> io::Result<File> {
+fn open_guarded(path: &Path, _background: bool) -> io::Result<File> {
     File::open(path)
+}
+
+fn reject_online_only(attributes: u32) -> OwnedIoResult<()> {
+    if crate::source_stamp::attributes_are_online_only(attributes) {
+        return Err(OwnedIoError::SourceChanged);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod guard_tests {
+    use super::reject_online_only;
+    #[test]
+    fn placeholder_attributes_are_refused_before_content_access() {
+        for flag in [0x1000, 0x40000, 0x400000] {
+            assert!(reject_online_only(flag).is_err());
+        }
+        assert!(reject_online_only(0x20).is_ok());
+    }
 }

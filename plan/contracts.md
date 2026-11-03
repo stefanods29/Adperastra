@@ -206,3 +206,9 @@ The assistant is Local by default, with API key as an explicit alternative and M
 All future encoded captures retain native sensitivity and the captured revision/content tuple. Source MIME is descriptive; a trusted native encoder registers its output MIME before capture. Save copy does not clean/rebind; Save as new follows09a's atomic all-view registry contract. Virtual/sensitive content cannot acquire a fabricated disk path. No model/tool output directly mutates files or approves its own confirmation.
 
 The coordinator integrates shared declarations/registries and later enum extensions. Existing baseline files and shared roots are coordinator-owned during simultaneous coding. Workers write code/tests and return exact shared proposals; they execute no build/tests/install/generator/app/API call. Implementation acceptance, real artifact hashes, performance/screenshots and checkpoints are separate future evidence.
+
+### Step 07a integration additions (2026-11-02)
+
+The producing guide records additive same-handle `CacheStore::open_blob`, `PinnedSource::open_background`, optional thumbnail `sourceRevision`, and shared `subscribeBackgroundEligible` contracts. Existing foreground source opens and wire request shapes retain their behavior. Cache cleanup requires indexed native ownership receipts; helper staging uses kernel delete-on-close lifetime guards.
+
+Cache-store also exposes `with_staging_budget<T>(&self,bytes:u64,create:impl FnOnce()->Result<T,CacheError>)->Result<T,CacheError>`, with callback/physical preallocation rules defined by07a. Thumbnail helpers reserve their full output length under the shared OS cache lock before starting.

@@ -17,6 +17,7 @@ tauri = { version = "2", features = ["isolation"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 fs-service = { path = "../crates/fs-service" }
+cache-store = { path = "../crates/cache-store" }
 archive = { path = "../crates/archive" }
 version-store = { path = "../crates/version-store" }
 thiserror = "2"
@@ -52,6 +53,10 @@ windows = { version = "0.61", features = [
     "Win32_UI_Shell",
     "Win32_UI_Shell_Common",
     "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Power",
+    "Win32_System_SystemInformation",
+    "Win32_System_Variant",
+    "Win32_UI_Input_KeyboardAndMouse",
 ] }
 
 [dev-dependencies]

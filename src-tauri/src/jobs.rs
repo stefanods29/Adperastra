@@ -140,6 +140,12 @@ pub struct JobContext {
 }
 
 impl JobContext {
+    /// Work shared by background consumers owns its cancellation token rather
+    /// than borrowing the lifetime of one consumer's polled job.
+    pub(crate) fn background(app: AppHandle, id: String, token: CancellationToken) -> Self {
+        Self { app, id, token }
+    }
+
     pub fn token(&self) -> &CancellationToken {
         &self.token
     }

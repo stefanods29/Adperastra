@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(windows)]
 #[path = "bounded_stream.rs"]
-mod bounded_stream;
+pub(crate) mod bounded_stream;
 
 /// Most file paths one clipboard request may carry.
 pub const MAX_CLIPBOARD_FILES: usize = 10_000;

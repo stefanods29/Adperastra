@@ -63,6 +63,8 @@ En **Configuración** > **Vistas**:
 
 ## Para tener en cuenta
 
+Las imágenes locales pueden mostrar miniaturas. Consulta Miniaturas y vistas.
+
 - Ordenar y agrupar funcionan en todas las vistas. Los grupos se muestran como títulos en las vistas de iconos, **Mosaicos** y **Contenido**; **Lista** y **Columnas** mantienen el mismo orden, sin títulos.
 - En **Columnas**, solo la columna de la carpeta abierta muestra al instante los cambios que hacen otras aplicaciones. Presiona **F5** para actualizar las demás columnas.
 - El cuadro de búsqueda busca solo en la carpeta abierta; en **Columnas**, es la columna con la selección azul.

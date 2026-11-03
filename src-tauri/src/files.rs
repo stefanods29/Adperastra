@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::http::{header, Method, Request, Response, StatusCode};
 use tauri::{Manager, State, UriSchemeContext, UriSchemeResponder, WebviewWindow, Wry};
 
@@ -394,7 +394,7 @@ pub fn protocol(
         .map(str::to_string);
     std::thread::spawn(move || {
         let path = if is_valid_token(&token) {
-            app.state::<FileGrants>().path_for(&token)
+            app.state::<Arc<FileGrants>>().path_for(&token)
         } else {
             None
         };
@@ -417,7 +417,7 @@ pub async fn file_detect(window: WebviewWindow, path: String) -> Result<FileType
 #[tauri::command]
 pub async fn file_grant(
     window: WebviewWindow,
-    grants: State<'_, FileGrants>,
+    grants: State<'_, Arc<FileGrants>>,
     path: String,
 ) -> Result<FileGrant, String> {
     ensure_main(window.label())?;
@@ -437,7 +437,7 @@ pub async fn file_grant(
 #[tauri::command]
 pub fn file_revoke(
     window: WebviewWindow,
-    grants: State<'_, FileGrants>,
+    grants: State<'_, Arc<FileGrants>>,
     token: String,
 ) -> Result<(), String> {
     ensure_main(window.label())?;

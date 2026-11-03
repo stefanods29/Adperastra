@@ -8,7 +8,8 @@ export type SettingsSectionId =
   | "layout"
   | "views"
   | "openingFiles"
-  | "versions";
+  | "versions"
+  | "background";
 
 export interface SettingsSection {
   id: SettingsSectionId;
@@ -97,6 +98,19 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
       "settings.versionsDeleteAll",
     ],
   },
+  {
+    id: "background",
+    titleKey: "settings.background",
+    helpSlug: "background-work",
+    keywordKeys: [
+      "settings.backgroundEnabled",
+      "settings.backgroundThumbnails",
+      "settings.backgroundIdle",
+      "settings.backgroundAc",
+      "settings.backgroundPaused",
+      "settings.cacheLimit",
+    ],
+  },
 ];
 
 /** Case and accents ignored, for the search box. */
@@ -144,7 +158,8 @@ export function resetSection(id: SettingsSectionId, settings: AppSettings): AppS
     };
   }
   if (id === "openingFiles") return { ...settings, open: defaults.open };
-  return { ...settings, versions: defaults.versions };
+  if (id === "versions") return { ...settings, versions: defaults.versions };
+  return { ...settings, background: defaults.background, cache: defaults.cache };
 }
 
 /** Every setting back to its default, except the language and the saved layouts. */

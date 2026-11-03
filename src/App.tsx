@@ -605,6 +605,7 @@ export default function App() {
         ) : null}
         {activeTab.kind === "settings" ? (
           <Suspense fallback={null}><SettingsView
+            active={activeTab.kind === "settings"}
             settings={settings}
             onApply={applySettings}
             onOpenHelp={() => openTab("help", "the-settings-page")}

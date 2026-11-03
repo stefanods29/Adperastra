@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| State | guide; documentation reviewed; implementation not started |
+| State | guide; implementation integrated, coordinator verification in progress |
 | Difficulty | 3/5 |
 | Branch | `step-07a-thumbnails` |
 | Tag | `v0.0.20-step07a` (reserved; no tag is created by guide authoring) |
@@ -144,7 +144,7 @@ Reuse common.cancel/common.close/existing online-only labels; verify exact exist
 
 ### T2 — Owned cache persistence and physical budgets
 **Files:** create crate `src/store.rs`, `src/schema.rs`, `src/cleanup.rs`, `tests/step07a_store_tests.rs`.
-**Do this:** validate root; acquire OS lock; create schema or refuse newer schema; key hash is BLAKE3 of canonical field order with length-prefixed UTF-8 values and fixed-width little-endian integers; lookup validates record/owned blob; publish stages, flushes, rechecks source stamp, publishes no-replace UUID blob, commits index, then evicts oldest unleased records by used_unix/key_hash. Account all physical files. Clear removes only verified owned blobs; do not delete foreign or uncertain entries. **Uses:** U4/E1. **Tests:** limit 100 bytes with two 60-byte blobs evicts oldest unleased; lease oldest leaves it and refuses admission when remaining cap cannot fit; foreign file remains unchanged after clear; interrupted publication is never a usable hit. **Traps:** SQLite metadata success is not proof a blob exists. **Commit:** `feat(cache): bounded owned cache persistence [step-07a/T2]`.
+**Do this:** validate root; acquire OS lock; create schema or refuse newer schema; key hash is BLAKE3 of canonical field order with length-prefixed UTF-8 values and fixed-width little-endian integers; lookup validates record/owned blob; publish stages, flushes, rechecks source stamp, publishes no-replace UUID blob, commits index, then evicts oldest unleased records by used_unix/key_hash. Account all physical files. Clear removes only verified owned blobs; do not delete foreign or uncertain entries. **Uses:** U4/E1. **Tests:** physical limit 2 MiB with two 1 MiB blobs evicts oldest unleased; lease oldest leaves it and refuses admission when remaining cap cannot fit; fixture inputs live outside the cache and total physical usage stays within the cap; foreign file remains unchanged after clear; interrupted publication is never a usable hit. **Traps:** SQLite metadata success is not proof a blob exists. **Commit:** `feat(cache): bounded owned cache persistence [step-07a/T2]`.
 
 ### T3 — Source stamp and lease service
 **Files:** create `src-tauri/src/cache.rs`, `cache_leases.rs`, `cache_stamp.rs`; create service `src/services/cache.ts`; coordinator IPC wiring.
@@ -210,3 +210,14 @@ Reserve `57-thumbnails`, `58-background-work`, each en/light, es/dark, pseudo/li
 - [ ] Existing helper consumers, grid selection/keyboard/rename/drag and settings survive unchanged except the specified additions.
 - [ ] E1-E11 and all consumer guides agree exactly; no duplicate or guessed shared name.
 - [ ] Bilingual help/keys, pseudo/screenshots/speed and known-issue/report updates are verified. No implementation or milestone acceptance is claimed from this guide alone.
+
+## Integration amendments — 2026-11-02
+
+- E1 adds `CacheStore::open_blob(&CacheRecord)->Result<File,CacheError>`. It verifies the indexed native object identity on the same read-only handle retained by a lease. Cleanup uses durable `owned_blobs` identity receipts and same-handle deletion; a UUID filename alone never establishes ownership. Cache hits defer bounded recency updates instead of scanning/fsyncing the entire cache per tile.
+- U4 adds `PinnedSource::open_background(&Path,&SourceIdentity)->OwnedIoResult<PinnedSource>`. Background providers use no-recall opens and check online-only flags on that opened handle before reading. Existing `open` retains foreground behavior.
+- Thumbnail helper output uses a parent-held delete-on-close staging guard and identity-checked child writer. The parent transfers lifetime to a read handle after validation; the kernel cleans staging after the final handle closes, including a process crash.
+- E6 `requestThumbnail(request:ThumbnailRequest,sourceRevision?:object)` and E7/FileThumbnail `sourceRevision?:object` accept an optional listing revision. The wire request is unchanged. A refreshed listing invalidates the UI group so Rust checks full precision stamps even when the path and size are unchanged.
+- `subscribeBackgroundEligible(listener:()=>void):()=>void` in services/background.ts shares one one-second status poll while paused previews wait. Hidden/unmounted views unsubscribe; eligibility retries the normal request and releases the previous consumer. Damaged pictures do not retry indefinitely.
+- The original 100-byte cache test could not hold a SQLite index while satisfying the physical cap. T2 now uses the 2 MiB fixture above without weakening physical accounting. Additional tests cover foreign physical bytes, corrupt/oversized rows, unknown schemas, cache substitution, all eight EXIF orientations, cancel-before-admission, pause/resume, and crash cleanup.
+
+- E1 adds `CacheStore::with_staging_budget<T>(&self,bytes:u64,create:impl FnOnce()->Result<T,CacheError>)->Result<T,CacheError>`. Operation/OS locks cover admission and callback. The callback exclusively creates a guarded file pre-sized to its maximum result length before returning; the store verifies total physical usage. WIC reserves 4 MiB before helper launch and shrinks only after the bounded write finishes. Other processes see the same reserved length, and process crashes reclaim it through delete-on-close. Reserved filenames are never treated as ownership evidence.

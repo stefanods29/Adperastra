@@ -17,6 +17,7 @@ pub mod owned_io;
 pub mod rename;
 pub mod save;
 pub mod sort;
+pub mod source_stamp;
 pub mod state;
 pub mod watch;
 pub mod winlist;
@@ -66,6 +67,10 @@ pub use ops::{
 pub use rename::{move_without_replacing, rename_error_reason, rename_in_place};
 pub use save::{replace_contents, write_new_file, SaveError, SaveExpect, SavedInfo};
 pub use sort::{natural_cmp, sort_items, SortDirection, SortKey, SortSpec};
+pub use source_stamp::{
+    capture_file_identity, capture_source_stamp, path_key_of, FileIdentityKey, SourceStamp,
+    MAX_WIRE_SIZE,
+};
 pub use state::{atomic_write, ExplorerState};
 pub use watch::{coalesce_events, FsEvent, FsEventKind, FsWatcher, MAX_WATCH_BATCH};
 pub use winlist::list_dir_with_ids;

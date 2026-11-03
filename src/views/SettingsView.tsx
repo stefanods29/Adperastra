@@ -13,6 +13,7 @@ import LayoutSettings from "./settings/LayoutSettings";
 import OpeningFilesSettings from "./settings/OpeningFilesSettings";
 import ThemeSettings from "./settings/ThemeSettings";
 import VersionsSettings from "./settings/VersionsSettings";
+import BackgroundSettings from "./settings/BackgroundSettings";
 import {
   SETTINGS_SECTIONS,
   resetAllSettings,
@@ -24,6 +25,7 @@ import {
 import ViewsSettings from "./settings/ViewsSettings";
 
 export interface SettingsViewProps {
+  active?: boolean;
   settings: AppSettings;
   onApply: (settings: AppSettings) => void;
   onOpenHelp: () => void;
@@ -36,7 +38,7 @@ interface UndoState {
   message: string;
 }
 
-export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelpPage }: SettingsViewProps) {
+export default function SettingsView({ active = true, settings, onApply, onOpenHelp, onOpenHelpPage }: SettingsViewProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [undo, setUndo] = useState<UndoState | null>(null);
@@ -117,7 +119,10 @@ export default function SettingsView({ settings, onApply, onOpenHelp, onOpenHelp
         />
       );
     }
-    return <VersionsSettings settings={settings} onApply={onApply} onOpenHelp={onOpenHelpPage} />;
+    if (section.id === "versions") {
+      return <VersionsSettings settings={settings} onApply={onApply} onOpenHelp={onOpenHelpPage} />;
+    }
+    return <BackgroundSettings active={active} settings={settings} onApply={onApply} onOpenHelp={onOpenHelpPage} />;
   };
 
   return (

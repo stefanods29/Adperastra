@@ -18,6 +18,8 @@ export const RENAME_CLICK_DELAY_MS = 500;
 
 /** What every item view draws and reports (Step 05a D13). */
 export interface ItemViewProps {
+  /** Hidden tabs release background previews; omitted by standalone views. */
+  active?: boolean;
   items: ExplorerItem[];
   /** Grouped view; `null` shows the items as one list. */
   groups: ItemGroup<ExplorerItem>[] | null;

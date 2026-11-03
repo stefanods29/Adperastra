@@ -266,7 +266,15 @@
     "importConfirmTitle": "¿Reemplazar tu configuración?",
     "importConfirmBody": "La configuración del archivo reemplazará la actual. Puedes deshacerlo justo después.",
     "importConfirm": "Importar",
-    "imported": "Se importó la configuración."
+    "imported": "Se importó la configuración.",
+    "background": "Trabajo en segundo plano",
+    "backgroundEnabled": "Habilitar el trabajo en segundo plano",
+    "backgroundThumbnails": "Crear miniaturas",
+    "backgroundIdle": "Solo en inactividad",
+    "backgroundAc": "Solo con el cargador conectado",
+    "backgroundPaused": "Pausar todo el trabajo en segundo plano",
+    "cacheLimit": "Límite de la caché de vistas previas",
+    "cacheLimitOption": "{size} MB"
   },
   "gallery": {
     "title": "Galería",
@@ -646,6 +654,26 @@
     "font": {
       "other": "No se pudo leer esta fuente.",
       "install_failed": "Windows no pudo instalar esta fuente."
+    },
+    "background": {
+      "other": "No se pudo usar el trabajo en segundo plano.",
+      "paused": "La preparación en segundo plano está en pausa.",
+      "cancelled": "Se canceló la preparación en segundo plano.",
+      "busy": "La cola de preparación está llena. Vuelve a intentarlo.",
+      "unavailable": "El trabajo en segundo plano no está disponible."
+    },
+    "thumbnail": {
+      "other": "No se pudo crear esta miniatura.",
+      "bad_request": "La solicitud de miniatura no es válida.",
+      "changed": "El archivo cambió. Vuelve a intentarlo.",
+      "too_large": "Esta imagen es demasiado grande para la vista previa.",
+      "failed": "No se pudo crear esta miniatura.",
+      "busy": "La cola de preparación está llena. Vuelve a intentarlo."
+    },
+    "cache": {
+      "other": "No se pudo usar la caché de vistas previas.",
+      "bad_request": "La solicitud de caché no es válida.",
+      "unavailable": "La caché de vistas previas no está disponible."
     }
   },
   "keys": {
@@ -1135,5 +1163,9 @@
     "windowsVersions": "Versiones anteriores de Windows…",
     "allFiles": "Todos los archivos",
     "loadMore": "Cargar más"
+  },
+  "background": {
+    "waitingIdle": "Esperando inactividad",
+    "waitingAc": "Esperando el cargador"
   }
 }

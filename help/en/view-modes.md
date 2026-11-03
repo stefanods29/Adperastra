@@ -28,7 +28,7 @@ Choose how a folder shows its files: as big icons, a compact list, a table with 
 - **Content**: one wide row per item with its type, date modified and size.
 - **Columns**: each folder in its own column, from left to right. See "Column view" below.
 
-For now the icons show the type of each file. Previews of pictures, videos and documents arrive in a later version.
+Local pictures can show thumbnails. See Thumbnails and views.
 
 ## Column view
 
