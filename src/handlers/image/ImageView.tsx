@@ -76,7 +76,7 @@ const RIBBON: RibbonDef = {
 /** Image viewer (Steps 04a, 04b): fit to window, zoom with Ctrl+wheel and
  * Ctrl+=/Ctrl+-/Ctrl+0, pan by dragging, rotate the view, checkerboard
  * behind transparency. The browser decodes the image (`decoding="async"`). */
-export default function ImageView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, previewOnly = false, ocrLanguage = "auto" }: HandlerViewProps) {
+export default function ImageView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, find, previewOnly = false, ocrLanguage = "auto" }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [natural, setNatural] = useState<{ width: number; height: number } | null>(null);
@@ -131,12 +131,32 @@ export default function ImageView({ info, url, active, savedState, onStateChange
   const setPercent = useCallback((value: number) => apply({ mode: "manual", percent: clampZoom(value) }), [apply]);
   const fit = useCallback(() => apply({ mode: "fit", percent: 100 }), [apply]);
 
-  // Status bar: dimensions, size, zoom control.
+  // Route the viewer's Find row to OCR: the first request recognizes, later
+  // requests move through the matches.
+  const lastFind = useRef(0);
+  useEffect(() => {
+    if (!find || find.request === 0 || find.request === lastFind.current) return;
+    lastFind.current = find.request;
+    setOcrOn(true);
+    const query = find.text;
+    const caseSensitive = find.options?.caseSensitive === true;
+    if (ocr.page) {
+      const found = ocr.find(query, caseSensitive);
+      if (find.backwards && found.length > 0) ocr.nextMatch(true);
+      return;
+    }
+    void ocr.recognize().then(() => {
+      ocr.find(query, caseSensitive);
+    });
+  }, [find, ocr]);
+
+  // Status bar: dimensions, size, zoom control and OCR match count.
   useEffect(() => {
     const items = [formatSize(info.size, i18n.language)];
     if (natural) items.unshift(t("viewer.dimensions", { width: natural.width, height: natural.height }));
+    if (ocr.matches.length > 0) items.push(t("viewer.matches", { count: ocr.matches.length }));
     onStatus({ items, zoom: natural ? { percent, min: MIN_ZOOM, max: MAX_ZOOM, set: setPercent, fit } : undefined });
-  }, [info.size, i18n.language, natural, percent, onStatus, setPercent, fit, t]);
+  }, [info.size, i18n.language, natural, percent, onStatus, setPercent, fit, t, ocr.matches.length]);
 
   const ctx: ImageCtx = { hasImage: natural !== null, mode: view.mode, percent, ocrOn };
   const commands = useMemo<Command<ImageCtx>[]>(
@@ -271,6 +291,7 @@ export default function ImageView({ info, url, active, savedState, onStateChange
               rotation={((view.turns * 90) % 360) as 0 | 90 | 180 | 270}
               zoom={percent / 100}
               onSelectionText={ocr.setSelectedText}
+              highlight={ocr.matches[ocr.matchIndex]?.words}
             />
           ) : null}
         </div>

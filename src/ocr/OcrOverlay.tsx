@@ -26,6 +26,8 @@ export interface OcrOverlayProps {
   /** Escaped, reading-order selected text (the copy event already put it
    * on the plain-text clipboard). No write callback exists here. */
   onSelectionText: (text: string) => void;
+  /** Ordered word indexes of the current Find match. */
+  highlight?: readonly number[];
 }
 
 interface PlacedWord {
@@ -78,6 +80,7 @@ export function OcrOverlay({
   rotation,
   zoom,
   onSelectionText,
+  highlight = [],
 }: OcrOverlayProps) {
   const placed = useMemo(
     () => placeWords(result, viewWidth, viewHeight, rotation, zoom),
@@ -109,7 +112,7 @@ export function OcrOverlay({
         return (
           <span
             key={`${index}-${text.slice(0, 8)}`}
-            className="adp-ocr-word"
+            className={`adp-ocr-word${highlight.includes(index) ? " adp-ocr-word--match" : ""}`}
             data-adp-ocr-index={index}
             style={style}
           >

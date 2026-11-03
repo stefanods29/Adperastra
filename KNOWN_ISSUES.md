@@ -225,7 +225,7 @@ that fixed it.
 
 ### KI-096 - OCR search routing and the PDF text overlay are not complete (Major, found during 07e integration)
 - **Found in:** integration review of Step 07e, 2026-11-03.
-- **What:** **Copy all text** works for images, native-text PDFs and scanned PDF pages. The image overlay shows recognized words and supports selection. However, the **Search in this image** command only starts recognition; it does not route the query into the existing Find row or highlight matches. The PDF viewer has no overlaid word layer yet, so its OCR search has no visible matches.
+- **What:** **Copy all text** works for images, native-text PDFs and scanned PDF pages. The image overlay shows recognized words, supports selection, and the image Find row now routes to OCR and highlights the current match. The PDF viewer still has no overlaid word layer, so its OCR search has no visible matches.
 - **Workaround:** copy all recognized text, or use the PDF's own selectable text when it has one.
 - **Plan:** complete the shared Find routing and the PDF overlay as an `F` task before 07e is accepted or merged to `main`; this is why 07e is integrated locally but not claimed complete.
 

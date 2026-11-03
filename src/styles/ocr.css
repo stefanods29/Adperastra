@@ -1,6 +1,11 @@
 /* OCR overlay and status (Step 07e). Colours come only from tokens.css:
    the selection uses the themed selected-row surface, never a fixed green. */
 
+.adp-ocr-word--match {
+  outline: 2px solid var(--adp-color-accent);
+  outline-offset: 1px;
+}
+
 .adp-ocr-overlay {
   position: absolute;
   inset: 0;
