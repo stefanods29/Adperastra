@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `07e` (integrated locally, not accepted: KI-096 is a Major). Steps 07a, 07b, 07c, 07d and 07e are committed on `codex/integrate-handoffs`; the latest full gate has 722 Rust and 692 UI tests passing. 07e still needs the PDF OCR word overlay and Find highlight before acceptance; then the next step is 07f. Packaging, speed runs, screenshots and owner checks remain pending, and tags stay at 03b. The integration order and remaining review defects are tracked in `docs/integration/INTEGRATION-PLAN.md`. All 54 remaining guides and per-step prompts are written; their handoffs are preserved outside Git under `handoff/`.
+**Current step:** `07f` (handoff integration in progress). Steps 07a, 07b, 07c, 07d and 07e are integrated and committed on `codex/integrate-handoffs`; the latest full gate has 722 Rust and 692 UI tests passing. KI-096 was fixed during 07e, so 07e has no open Blocker or Major; its packaged-app checks, speed runs and screenshots remain pending. Packaging and owner checks for the earlier steps, and speed/screenshot evidence, remain pending; tags stay at 03b. The integration order and remaining review defects are tracked in `docs/integration/INTEGRATION-PLAN.md`. All 54 remaining guides and per-step prompts are written; their handoffs are preserved outside Git under `handoff/`.
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
