@@ -52,6 +52,7 @@ mod data_views;
 mod drag;
 mod explorer;
 mod file_dialogs;
+mod file_grant_backing;
 mod files;
 mod folder_views;
 mod font_helper;
@@ -65,6 +66,7 @@ mod gallery_source;
 mod gallery_types;
 mod gallery_watch;
 mod helper;
+mod helper_frames;
 mod jobs;
 mod links;
 mod media;
@@ -79,6 +81,15 @@ mod metadata_source;
 mod metadata_types;
 mod metadata_windows;
 mod operation_safety;
+mod pdf;
+mod pdf_helper;
+mod pdf_helper_process;
+mod pdf_helper_types;
+mod pdf_jobs;
+mod pdf_print;
+mod pdf_sessions;
+mod pdf_snapshot_resolver;
+mod pdf_types;
 mod recovery;
 mod settings_file;
 mod shell;
@@ -87,6 +98,11 @@ mod templates;
 mod text_save;
 mod transfer_history;
 mod versions;
+mod webview_helper;
+mod webview_helper_inputs;
+mod webview_helper_protocol;
+mod webview_helper_types;
+mod webview_private;
 mod zone;
 
 pub const CURRENT_SCHEMA: u32 = 13;
@@ -1490,6 +1506,13 @@ pub struct AppState {
     explorer_state_lock: Mutex<()>,
     watch: Mutex<Option<WatchControl>>,
     watch_next_id: AtomicU64,
+}
+
+impl AppState {
+    /// The app's data folder: caches, versions, helper profiles (R-BG-2).
+    pub fn data_dir(&self) -> &std::path::Path {
+        &self.data_dir
+    }
 }
 
 struct WatchControl {
@@ -2972,6 +2995,25 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     Ok(())
 }
 fn main() {
+    // The PDF helper (Step 07d) is this executable with a static flag; it
+    // never starts the Explorer and owns one hidden, incognito webview.
+    if std::env::args().nth(1).as_deref() == Some(pdf_helper::HELPER_FLAG) {
+        pdf_helper::run_helper(resolve_data_dir());
+    }
+    // Other trusted WebView helpers are started by the same host with a
+    // static kind argument from this fixed list (never a user string).
+    if std::env::args().nth(1).as_deref() == Some(webview_helper::HELPER_FLAG) {
+        let kind = match std::env::args().nth(2).as_deref() {
+            Some("book") => webview_helper_types::WebviewHelperKind::Book,
+            Some("notebook") => webview_helper_types::WebviewHelperKind::Notebook,
+            Some("model") => webview_helper_types::WebviewHelperKind::Model,
+            Some("psd") => webview_helper_types::WebviewHelperKind::Psd,
+            Some("pdf_write") => webview_helper_types::WebviewHelperKind::PdfWrite,
+            Some("presentation") => webview_helper_types::WebviewHelperKind::Presentation,
+            _ => std::process::exit(2),
+        };
+        webview_helper::run_helper_process(kind, resolve_data_dir().join("webview-helper"));
+    }
     if std::env::args().nth(1).as_deref() == Some(thumbnail_helper::HELPER_FLAG) {
         std::process::exit(thumbnail_helper::run_helper());
     }
@@ -3013,6 +3055,8 @@ fn main() {
         panic!("forced crash (test)");
     }
     let initial_settings = load_settings(&data_dir);
+    let pdf_resolvers = std::sync::Arc::new(pdf_snapshot_resolver::PdfSnapshotResolvers::new());
+    let pdf_sessions = pdf_sessions::PdfSessions::new(std::sync::Arc::clone(&pdf_resolvers));
     tauri::Builder::default()
         .manage(AppState {
             data_dir,
@@ -3031,6 +3075,8 @@ fn main() {
         .manage(archive_passwords::ArchivePasswords::default())
         .manage(data_views::DataSessions::default())
         .manage(gallery::GallerySessions::default())
+        .manage(pdf_resolvers)
+        .manage(pdf_sessions)
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -3170,6 +3216,14 @@ fn main() {
             gallery::gallery_close,
             gallery::gallery_active,
             gallery::gallery_pick_source,
+            pdf::pdf_open_start,
+            pdf::pdf_open_input_start,
+            pdf::pdf_close,
+            pdf::pdf_render_start,
+            pdf::pdf_text_page,
+            pdf::pdf_outline,
+            pdf::pdf_search_start,
+            pdf_print::pdf_print_start,
             cache_stamp::file_identity,
             cache::cache_usage,
             cache::cache_clear,

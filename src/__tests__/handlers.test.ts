@@ -46,6 +46,9 @@ describe("handler registry", () => {
     expect(registry.pick(info("a.csv", "text/csv", 134_217_729))?.id).toBe("text");
     expect(registry.pick(info("a.json", "application/json"))?.id).toBe("json");
     expect(registry.pick(info("a.json", "application/json", 33_554_433))?.id).toBe("text");
+    expect(registry.pick(info("budget.pdf", "application/pdf"))?.id).toBe("pdf");
+    expect(registry.pick(info("budget.pdf", "application/pdf", 512 * 1024 * 1024))?.id).toBe("pdf");
+    expect(registry.pick(info("huge.pdf", "application/pdf", 512 * 1024 * 1024 + 1))).toBeNull();
   });
 
   it("refuses duplicate handler ids", () => {

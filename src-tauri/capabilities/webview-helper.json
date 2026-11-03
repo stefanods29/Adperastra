@@ -1,0 +1,11 @@
+{
+  "identifier": "webview-helper",
+  "description": "Trusted helper event listener only; no main window or filesystem commands",
+  "windows": [
+    "webview-helper-*"
+  ],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
+  ]
+}

@@ -223,6 +223,12 @@ that fixed it.
 
 ## Fixed
 
+### KI-094 - Incoming PDF helper handoff did not compile against the integrated toolchain (Major, fixed during 07d integration)
+- **Found in:** first `cargo check`, Clippy and TypeScript build of the received 07d handoff, 2026-11-03; never accepted into the local baseline in this state.
+- **Cause:** the control frame used the same `kind` tag as a payload field, the child imported a missing reply-shape validator, a nested outline counter captured a non-capturable parameter, the PDF.js 6.4 API has no `PDFDocumentProxy.destroy`, and TypeScript 7 rejects `Uint8Array<ArrayBufferLike>` as a `BlobPart`/`BufferSource`. Several public helper items are also unused until 07e.
+- **Fix:** renamed the wire tag to `frame`, implemented the cheap reply-shape check, passed the outline limit explicitly, shut documents down through the loading task, made fresh `ArrayBuffer` copies for Blob/digest/upload, and scoped dead-code allows to the producer modules with the unused imports and Clippy findings corrected.
+- **Verification:** 375 app tests and 38 focused PDF/handler UI tests pass; the full gate result is recorded in the step report.
+
 ### KI-093 - Incoming Gallery handoff did not compile against the integrated baseline (Major, fixed during 07c integration)
 - **Found in:** first `cargo check` and full gate of the received 07c handoff, 2026-11-03; never accepted into the local baseline in this state.
 - **Cause:** the scan referenced a `gallery_source` module that was not declared, called a non-existent `fs_service::list_dir_with_ids_cancellable`, used Gallery callbacks before their declarations, and two submitted tests named different fixture paths than the list they created. The command metadata test also rejected the guide's documented `gallery.*` label keys.

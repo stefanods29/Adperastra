@@ -15,6 +15,7 @@ use std::sync::{Arc, Mutex};
 use tauri::http::{header, Method, Request, Response, StatusCode};
 use tauri::{Manager, State, UriSchemeContext, UriSchemeResponder, WebviewWindow, Wry};
 
+use crate::file_grant_backing::{serve_backing, GrantedBacking};
 use crate::{ensure_main, validate_absolute_path};
 
 /// The protocol name. On Windows the UI reaches it at
@@ -58,6 +59,9 @@ pub struct FileGrant {
 #[derive(Default)]
 pub struct FileGrants {
     map: Mutex<HashMap<String, PathBuf>>,
+    /// Memory results and guarded backings (Step 07d E8). Kept apart so
+    /// `path_for` keeps answering only for path grants.
+    backings: Mutex<HashMap<String, Arc<GrantedBacking>>>,
 }
 
 impl FileGrants {
@@ -78,10 +82,56 @@ impl FileGrants {
         if let Ok(mut map) = self.map.lock() {
             map.remove(token);
         }
+        if let Ok(mut backings) = self.backings.lock() {
+            backings.remove(token);
+        }
     }
 
     pub fn path_for(&self, token: &str) -> Option<PathBuf> {
         self.map.lock().ok().and_then(|map| map.get(token).cloned())
+    }
+
+    /// Grant a guarded backing (a memory page or a pinned file).
+    pub fn grant_backing(&self, backing: Arc<GrantedBacking>) -> Result<String, String> {
+        if !backing.is_consistent() {
+            return Err("files.invalid_request".to_string());
+        }
+        let mut backings = self
+            .backings
+            .lock()
+            .map_err(|_| "file grants lock poisoned".to_string())?;
+        let paths = self.map.lock().map(|map| map.len()).unwrap_or(0);
+        if paths + backings.len() >= MAX_GRANTS {
+            return Err("files.too_many_open".to_string());
+        }
+        let token = uuid::Uuid::new_v4().simple().to_string();
+        backings.insert(token.clone(), backing);
+        Ok(token)
+    }
+
+    /// Resolve a token to guarded bytes. A memory grant is found here; an
+    /// ordinary path grant is materialized lazily through the fs-service
+    /// guards and is never inserted (so `path_for` keeps its old value).
+    pub fn resolve_backing(&self, token: &str) -> Option<Arc<GrantedBacking>> {
+        if !is_valid_token(token) {
+            return None;
+        }
+        if let Some(found) = self
+            .backings
+            .lock()
+            .ok()
+            .and_then(|backings| backings.get(token).cloned())
+        {
+            return Some(found);
+        }
+        let path = self.path_for(token)?;
+        let identity = fs_service::owned_io::SourceIdentity::capture(&path).ok()?;
+        let length = identity.size;
+        let pinned = fs_service::owned_io::PinnedSource::open(&path, &identity).ok()?;
+        Some(Arc::new(GrantedBacking::Disk {
+            source: Arc::new(pinned),
+            length,
+        }))
     }
 }
 
@@ -379,6 +429,14 @@ pub fn protocol(
     }
     let app = ctx.app_handle().clone();
     let method = request.method().clone();
+    let request_name = request
+        .uri()
+        .path()
+        .trim_start_matches('/')
+        .split('/')
+        .nth(1)
+        .unwrap_or("")
+        .to_string();
     let token = request
         .uri()
         .path()
@@ -393,8 +451,16 @@ pub fn protocol(
         .and_then(|value| value.to_str().ok())
         .map(str::to_string);
     std::thread::spawn(move || {
+        let grants = app.state::<Arc<FileGrants>>();
+        if is_valid_token(&token) && grants.path_for(&token).is_none() {
+            if let Some(backing) = grants.resolve_backing(&token) {
+                let mime = mime_from_ext(&extension_of(&request_name)).to_string();
+                responder.respond(serve_backing(&backing, &mime, &method, range.as_deref()));
+                return;
+            }
+        }
         let path = if is_valid_token(&token) {
-            app.state::<Arc<FileGrants>>().path_for(&token)
+            grants.path_for(&token)
         } else {
             None
         };

@@ -7,6 +7,14 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: "index.html",
+        "pdf-helper": "pdf-helper.html",
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],

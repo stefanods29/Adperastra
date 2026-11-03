@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><title>Adperastra helper isolation</title></head><body><script>
+(function () {
+  var allowed = new Set(['helper_reply', 'helper_ready', 'plugin:event|listen', 'plugin:event|unlisten']);
+  window.__TAURI_ISOLATION_HOOK__ = function (payload) {
+    if (!payload || typeof payload.cmd !== 'string' || !allowed.has(payload.cmd)) {
+      throw new Error('isolation: blocked helper command');
+    }
+    return payload;
+  };
+})();
+</script></body></html>

@@ -1,6 +1,8 @@
 //! Stage a bounded immutable result, publish owned bytes, commit the hit last.
 use crate::store::{acquire_file_lock, unix_now};
-use crate::{cleanup, records, schema, CacheError, CacheKey, CacheRecord, CacheStore};
+use crate::{
+    cleanup, records, schema, CacheError, CacheKey, CacheRecord, CacheStore, MAX_BLOB_BYTES,
+};
 use fs_service::owned_io::{OwnedOutput, PinnedDirectory};
 use rusqlite::params;
 use std::fs::File;
@@ -15,9 +17,22 @@ impl CacheStore {
         width: Option<u32>,
         height: Option<u32>,
     ) -> Result<CacheRecord, CacheError> {
+        self.publish_with_cap(key, source, mime, width, height, MAX_BLOB_BYTES)
+    }
+
+    pub fn publish_with_cap(
+        &self,
+        key: &CacheKey,
+        source: &File,
+        mime: &str,
+        width: Option<u32>,
+        height: Option<u32>,
+        max_bytes: u64,
+    ) -> Result<CacheRecord, CacheError> {
         let hash = crate::key_hash(key)?;
         let before = fs_service::source_stamp::stamp_for_open_file(source)?;
-        let cap = key.kind.blob_cap();
+        // Callers choose a per-kind cap; never accept more than 8 MiB here.
+        let cap = max_bytes.min(8 * 1024 * 1024);
         if before.size_bytes == 0 {
             return Err(CacheError::BadRequest);
         }
@@ -59,7 +74,7 @@ impl CacheStore {
             used_unix: unix_now(),
             pending_delete: false,
         };
-        record.validate()?;
+        record.validate_with_cap(max_bytes)?;
         self.make_room(&connection, record.byte_len, true)?;
         self.flush_touches(&connection)?;
         let staging_name = format!("~adp-cache-{id}.partial");

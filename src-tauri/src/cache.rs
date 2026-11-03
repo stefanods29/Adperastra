@@ -5,6 +5,7 @@
 //! exposes usage and clear to Settings. A lease grants a token only after
 //! the owned blob was opened and verified.
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -19,6 +20,7 @@ use tauri::{State, WebviewWindow};
 use crate::cache_leases::{Lease, LeaseTable, MAX_ACTIVE_LEASES};
 use crate::cache_stamp;
 use crate::ensure_main;
+use crate::file_grant_backing::GrantedBacking;
 use crate::files::FileGrants;
 
 /// 512 MiB until Settings says otherwise (plan D3).
@@ -56,7 +58,18 @@ pub struct CacheService {
     store: Mutex<Option<CacheStore>>,
     leases: LeaseTable,
     pending_cleanup: AtomicBool,
+    /// Memory-only leases (sensitive pages, snapshots). Never a disk file.
+    memory_leases: Mutex<HashMap<String, MemoryLease>>,
+    memory_bytes: AtomicU64,
 }
+
+struct MemoryLease {
+    token: String,
+    byte_len: u64,
+}
+
+/// Aggregate cap of all memory leases and grants: 1 GiB (E8).
+pub const MAX_MEMORY_BYTES: u64 = 1024 * 1024 * 1024;
 
 impl CacheService {
     pub fn new(data_dir: PathBuf, grants: Arc<FileGrants>) -> Self {
@@ -67,6 +80,8 @@ impl CacheService {
             store: Mutex::new(None),
             leases: LeaseTable::default(),
             pending_cleanup: AtomicBool::new(false),
+            memory_leases: Mutex::new(HashMap::new()),
+            memory_bytes: AtomicU64::new(0),
         }
     }
 
@@ -128,6 +143,79 @@ impl CacheService {
         })
     }
 
+    /// Publish a PDF page result through the store with the per-kind 8 MiB
+    /// cap (Step 07d D6). The store's 4 MiB default stays for thumbnails.
+    pub(crate) fn publish_result(
+        &self,
+        key: &CacheKey,
+        source: &File,
+        mime: &str,
+        width: Option<u32>,
+        height: Option<u32>,
+        max_bytes: u64,
+    ) -> Result<CacheRecord, String> {
+        self.with_store(|store| {
+            store
+                .publish_with_cap(key, source, mime, width, height, max_bytes)
+                .map_err(cache_code)
+        })
+    }
+
+    /// Lease bounded bytes that must never reach a disk cache (E8). The
+    /// result cap is 8 MiB for a PDF PNG and 256 MiB otherwise.
+    pub fn lease_memory(
+        &self,
+        bytes: Arc<zeroize::Zeroizing<Vec<u8>>>,
+        name: &str,
+        mime: &str,
+        width: Option<u32>,
+        height: Option<u32>,
+        sensitive: bool,
+    ) -> Result<CacheLease, String> {
+        let length = bytes.len() as u64;
+        let cap = if mime == "image/png" {
+            8 * 1024 * 1024
+        } else {
+            256 * 1024 * 1024
+        };
+        if length == 0 || length > cap {
+            return Err("cache.too_large".to_string());
+        }
+        let previous = self.memory_bytes.load(Ordering::Relaxed);
+        if previous.saturating_add(length) > MAX_MEMORY_BYTES {
+            return Err("cache.unavailable".to_string());
+        }
+        let backing = Arc::new(GrantedBacking::Memory {
+            bytes,
+            length,
+            sensitive,
+        });
+        let token = self.grants.grant_backing(backing)?;
+        let lease_id = uuid::Uuid::new_v4().to_string();
+        let mut leases = self
+            .memory_leases
+            .lock()
+            .map_err(|_| "cache.unavailable".to_string())?;
+        self.memory_bytes.fetch_add(length, Ordering::Relaxed);
+        leases.insert(
+            lease_id.clone(),
+            MemoryLease {
+                token: token.clone(),
+                byte_len: length,
+            },
+        );
+        Ok(CacheLease {
+            lease_id,
+            token,
+            name: name.to_string(),
+            mime: mime.to_string(),
+            byte_len: length,
+            width,
+            height,
+            sensitive,
+        })
+    }
+
     /// Pin a verified owned blob and grant its `adpfile` token.
     pub fn lease(&self, record: &CacheRecord) -> Result<CacheLease, String> {
         record
@@ -173,6 +261,14 @@ impl CacheService {
     pub fn release(&self, lease_id: &str) -> Result<(), String> {
         if uuid::Uuid::try_parse(lease_id).is_err() {
             return Err("cache.bad_request".to_string());
+        }
+        if let Ok(mut memory) = self.memory_leases.lock() {
+            if let Some(lease) = memory.remove(lease_id) {
+                self.grants.revoke(&lease.token);
+                self.memory_bytes
+                    .fetch_sub(lease.byte_len, Ordering::Relaxed);
+                return Ok(());
+            }
         }
         let Some(lease) = self.leases.take(lease_id) else {
             return Ok(());

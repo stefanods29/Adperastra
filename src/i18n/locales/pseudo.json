@@ -725,6 +725,24 @@
       "unavailable": "[Thësë pïçtürës çøüld ñøt bë lïstëd. ~~~~~~~~~~~~]",
       "other": "[Thësë Gällërÿ føldërs çøüld ñøt bë sävëd. ~~~~~~~~~~~~~~]"
     },
+    "pdf": {
+      "other": "[Thïs PDF çøüld ñøt bë shøwñ. ~~~~~~~~~]",
+      "bad_request": "[Thïs PDF rëqüëst ïs ñøt välïd. ~~~~~~~~~~]",
+      "too_large": "[Thïs PDF ëxçëëds thë vïëwïñg lïmïts. ~~~~~~~~~~~~]",
+      "password_required": "[Ëñtër thë pässwørd tø øpëñ thïs PDF. ~~~~~~~~~~~~]",
+      "bad_password": "[Thät pässwørd dïd ñøt øpëñ thïs PDF. ~~~~~~~~~~~~]",
+      "permissions": "[Thïs PDF døës ñøt älløw thät äçtïøñ. ~~~~~~~~~~~~]",
+      "changed": "[Thë PDF çhäñgëd. Øpëñ ït ägäïñ. ~~~~~~~~~~]",
+      "corrupt": "[Thïs PDF çøüld ñøt bë rëäd. ~~~~~~~~~]",
+      "unavailable": "[Thë PDF vïëwër ïs ñøt äväïläblë. ~~~~~~~~~~~]",
+      "snapshot_unavailable": "[Thïs üñsävëd PDF sñäpshøt ïs ñøt äväïläblë. ~~~~~~~~~~~~~~~]",
+      "unsupported_feature": "[Thïs PDF fëätürë çäññøt bë rëñdërëd säfëlÿ bÿ thïs vïëwër. ~~~~~~~~~~~~~~~~~~~~]"
+    },
+    "helper": {
+      "other": "[Thë vïëwër çøüld ñøt prëpärë thïs çøñtëñt. ~~~~~~~~~~~~~~]",
+      "busy": "[Thë vïëwër ïs stïll häñdlïñg äñøthër rëqüëst. ~~~~~~~~~~~~~~~~]",
+      "sensitive_unsupported": "[Thïs vïëwër çäññøt øpëñ sëñsïtïvë çøñtëñt säfëlÿ. ~~~~~~~~~~~~~~~~~]"
+    },
     "metadata": {
       "bad_request": "[Thïs dëtäïls rëqüëst ïs ñøt välïd. ~~~~~~~~~~~~]",
       "changed": "[Thë fïlë çhäñgëd. Sëlëçt ït ägäïñ. ~~~~~~~~~~~]",
@@ -797,6 +815,35 @@
     "moveTo": "[Møvë tø {name} ~~~]",
     "shortcutTo": "[Çrëätë shørtçüt ïñ {name} ~~~~~~~]"
   },
+  "pdf": {
+    "previous": "[Prëvïøüs pägë ~~~~~]",
+    "next": "[Ñëxt pägë ~~~~]",
+    "page": "[Pägë {page} øf {count} ~~~]",
+    "pageNumber": "[Pägë ñümbër ~~~~]",
+    "thumbnails": "[Thümbñäïls ~~~~]",
+    "outline": "[Øütlïñë ~~~]",
+    "fitWidth": "[Fït wïdth ~~~~]",
+    "fitPage": "[Fït pägë ~~~]",
+    "rotateLeft": "[Røtätë lëft ~~~~]",
+    "rotateRight": "[Røtätë rïght ~~~~~]",
+    "print": "[Prïñt… ~~]",
+    "printRange": "[Prïñt pägës ~~~~]",
+    "password": "[Pässwørd ~~~~]",
+    "unlock": "[Øpëñ PDF ~~~]",
+    "loading": "[Prëpärïñg PDF… ~~~~~]",
+    "noText": "[Thïs pägë häs ñø sëlëçtäblë tëxt. ~~~~~~~~~~~]",
+    "searching": "[Sëärçhïñg pägës… ~~~~~~]",
+    "noOutline": "[Thïs PDF häs ñø øütlïñë. ~~~~~~~~]",
+    "canvas": "[PDF pägës ~~~~]",
+    "sidebarSize": "[Sïdëbär wïdth ~~~~~]",
+    "navigation": "[Ñävïgätïøñ ~~~~]",
+    "printFirst": "[Fïrst pägë ~~~~]",
+    "printLast": "[Läst pägë ~~~~]",
+    "printLimit": "[{count, plural, one {Üp tø # pägë} other {Üp tø # pägës}} ~~~~]",
+    "printing": "[Prëpärïñg thë prïñt vïëw… ~~~~~~~~~]",
+    "noMatches": "[Ñø mätçhës ~~~~]",
+    "matchCount": "[{current} øf {total} ~~]"
+  },
   "handlers": {
     "image": "[Ïmägë ~~]",
     "text": "[Tëxt ~~]",
@@ -806,7 +853,8 @@
     "table": "[Täblë ~~]",
     "json": "[JSØÑ ~~]",
     "font": "[Føñt ~~]",
-    "archive": "[Ärçhïvë ~~~]"
+    "archive": "[Ärçhïvë ~~~]",
+    "pdf": "[PDF døçümëñt ~~~~~]"
   },
   "protected": {
     "message": "[Thïs fïlë çämë frøm thë ïñtërñët, sø ït øpëñëd ïñ prøtëçtëd vïëw. ~~~~~~~~~~~~~~~~~~~~~]",

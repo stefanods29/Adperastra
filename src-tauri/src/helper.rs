@@ -99,7 +99,7 @@ fn finish(mut line: Vec<u8>, cap: usize) -> HelperLine {
 
 /// The job object a helper runs in: a memory limit, and a death sentence if
 /// the app itself goes away.
-struct JobObject(windows::Win32::Foundation::HANDLE);
+pub(crate) struct JobObject(windows::Win32::Foundation::HANDLE);
 
 // SAFETY: a kernel handle may be used from any thread; the job object only
 // ever holds that handle.
@@ -115,7 +115,7 @@ impl Drop for JobObject {
 }
 
 impl JobObject {
-    fn create(child: &Child, memory_limit: usize) -> Result<Self, String> {
+    pub(crate) fn create(child: &Child, memory_limit: usize) -> Result<Self, String> {
         use std::os::windows::io::AsRawHandle;
         use windows::core::PCWSTR;
         use windows::Win32::Foundation::HANDLE;
@@ -167,6 +167,24 @@ impl HelperProcess {
         let mut command = Command::new(exe);
         command.arg(flag);
         HelperProcess::spawn_command(command, memory_limit)
+    }
+
+    /// Start this executable again with a helper flag over the framed binary
+    /// transport (Step 07d E7). The line transport above is unchanged.
+    #[allow(dead_code)] // Consumed by the later WebView helper kinds.
+    pub fn spawn_framed(
+        flag: &str,
+        memory_limit: usize,
+        max_frame_bytes: usize,
+    ) -> Result<crate::helper_frames::FramedHelperProcess, String> {
+        let exe = std::env::current_exe().map_err(|_| "helper.start_failed".to_string())?;
+        let mut command = Command::new(exe);
+        command.arg(flag);
+        crate::helper_frames::FramedHelperProcess::spawn_command(
+            command,
+            memory_limit,
+            max_frame_bytes,
+        )
     }
 
     /// Start any command as a helper (the tests use PowerShell).

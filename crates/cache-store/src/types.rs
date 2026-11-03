@@ -128,6 +128,11 @@ pub struct CacheRecord {
 impl CacheRecord {
     /// Check the fields read from disk before any consumer sees them.
     pub fn validate(&self) -> Result<(), CacheError> {
+        self.validate_with_cap(MAX_BLOB_BYTES)
+    }
+
+    /// The same checks with a per-kind byte cap (Step 07d PDF pages).
+    pub fn validate_with_cap(&self, max_bytes: u64) -> Result<(), CacheError> {
         if !is_blake3_hex(&self.key_hash) {
             return Err(CacheError::BadRequest);
         }
@@ -146,7 +151,7 @@ impl CacheRecord {
         {
             return Err(CacheError::BadRequest);
         }
-        if self.byte_len == 0 || self.byte_len > MAX_BLOB_BYTES {
+        if self.byte_len == 0 || self.byte_len > max_bytes {
             return Err(CacheError::BadRequest);
         }
         match (self.width, self.height) {

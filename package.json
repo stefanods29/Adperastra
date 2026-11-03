@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "pdfjs:assets": "node scripts/copy-pdfjs-assets.mjs",
+    "dev": "npm run pdfjs:assets && vite",
+    "build": "npm run pdfjs:assets && tsc --noEmit && vite build",
     "test": "vitest run",
     "lint:i18n": "node scripts/check-i18n.mjs",
     "lint:ipc": "node scripts/check-ipc.mjs",

@@ -127,6 +127,7 @@ dependencies = [
  "notify",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "tauri",
  "tauri-build",
  "tempfile",
@@ -134,9 +135,12 @@ dependencies = [
  "ttf-parser",
  "uuid",
  "version-store",
+ "webview2-com",
  "windows 0.61.3",
  "windows-collections 0.2.0",
  "windows-core 0.61.2",
+ "windows-core 0.62.2",
+ "zeroize",
 ]
 
 [[package]]

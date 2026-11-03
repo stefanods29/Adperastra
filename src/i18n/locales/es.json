@@ -725,6 +725,24 @@
       "unavailable": "No se pudieron mostrar estas imágenes.",
       "other": "No se pudieron guardar estas carpetas de la Galería."
     },
+    "pdf": {
+      "other": "No se pudo mostrar este PDF.",
+      "bad_request": "La solicitud de PDF no es válida.",
+      "too_large": "Este PDF supera los límites del visor.",
+      "password_required": "Escribe la contraseña para abrir este PDF.",
+      "bad_password": "Esa contraseña no abrió este PDF.",
+      "permissions": "Este PDF no permite esa acción.",
+      "changed": "El PDF cambió. Vuelve a abrirlo.",
+      "corrupt": "No se pudo leer este PDF.",
+      "unavailable": "El visor de PDF no está disponible.",
+      "snapshot_unavailable": "Esta copia PDF sin guardar no está disponible.",
+      "unsupported_feature": "Este visor no puede mostrar esta función PDF de forma segura."
+    },
+    "helper": {
+      "other": "El visor no pudo preparar este contenido.",
+      "busy": "El visor todavía está atendiendo otra solicitud.",
+      "sensitive_unsupported": "Este visor no puede abrir contenido confidencial de forma segura."
+    },
     "metadata": {
       "bad_request": "La solicitud de detalles no es válida.",
       "changed": "El archivo cambió. Vuelve a seleccionarlo.",
@@ -797,6 +815,35 @@
     "moveTo": "Mover a {name}",
     "shortcutTo": "Crear acceso directo en {name}"
   },
+  "pdf": {
+    "previous": "Página anterior",
+    "next": "Página siguiente",
+    "page": "Página {page} de {count}",
+    "pageNumber": "Número de página",
+    "thumbnails": "Miniaturas",
+    "outline": "Esquema",
+    "fitWidth": "Ajustar al ancho",
+    "fitPage": "Ajustar a la página",
+    "rotateLeft": "Girar a la izquierda",
+    "rotateRight": "Girar a la derecha",
+    "print": "Imprimir…",
+    "printRange": "Imprimir páginas",
+    "password": "Contraseña",
+    "unlock": "Abrir PDF",
+    "loading": "Preparando el PDF…",
+    "noText": "Esta página no tiene texto seleccionable.",
+    "searching": "Buscando en las páginas…",
+    "noOutline": "Este PDF no tiene esquema.",
+    "canvas": "Páginas del PDF",
+    "sidebarSize": "Ancho de la barra lateral",
+    "navigation": "Navegación",
+    "printFirst": "Primera página",
+    "printLast": "Última página",
+    "printLimit": "{count, plural, one {Hasta # página} other {Hasta # páginas}}",
+    "printing": "Preparando la vista de impresión…",
+    "noMatches": "Sin coincidencias",
+    "matchCount": "{current} de {total}"
+  },
   "handlers": {
     "image": "Imagen",
     "text": "Texto",
@@ -806,7 +853,8 @@
     "table": "Tabla",
     "json": "JSON",
     "font": "Fuente",
-    "archive": "Archivo comprimido"
+    "archive": "Archivo comprimido",
+    "pdf": "Documento PDF"
   },
   "protected": {
     "message": "Este archivo proviene de Internet, así que se abrió en vista protegida.",

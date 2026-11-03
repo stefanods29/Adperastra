@@ -79,4 +79,9 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
   sources, settings persistence, help/locales). Fixed the missing module declaration, the
   non-existent fs-service ID call, callback ordering, and two wrong fixture paths in the
   submitted tests. Final full gate passed: 614 Rust tests in 51 binaries, 639 UI tests in
-  114 files, IPC and translations clean. Ready to commit.
+  114 files, IPC and translations clean. Committed as `1923846`.
+- 2026-11-03: 07d PDF viewer and WebView helper applied with its own deps commit. Fixed the
+  control-frame tag collision, the missing reply-shape check, PDF.js 6.4 shutdown, TypeScript
+  7 buffer views, Clippy findings, the helper allowlist and the Default apps group count.
+  Final full gate passed: 673 Rust tests in 51 binaries, 670 UI tests in 119 files, IPC and
+  translations clean. Ready to commit.

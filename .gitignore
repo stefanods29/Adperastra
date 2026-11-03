@@ -63,3 +63,6 @@ test-files/corpus/
 
 # Preserved worker handoffs (working input, hash manifest committed instead)
 /handoff/
+
+# Generated PDF.js assets (scripts/copy-pdfjs-assets.mjs)
+/public/pdfjs/

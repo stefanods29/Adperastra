@@ -725,6 +725,24 @@
       "unavailable": "These pictures could not be listed.",
       "other": "These Gallery folders could not be saved."
     },
+    "pdf": {
+      "other": "This PDF could not be shown.",
+      "bad_request": "This PDF request is not valid.",
+      "too_large": "This PDF exceeds the viewing limits.",
+      "password_required": "Enter the password to open this PDF.",
+      "bad_password": "That password did not open this PDF.",
+      "permissions": "This PDF does not allow that action.",
+      "changed": "The PDF changed. Open it again.",
+      "corrupt": "This PDF could not be read.",
+      "unavailable": "The PDF viewer is not available.",
+      "snapshot_unavailable": "This unsaved PDF snapshot is not available.",
+      "unsupported_feature": "This PDF feature cannot be rendered safely by this viewer."
+    },
+    "helper": {
+      "other": "The viewer could not prepare this content.",
+      "busy": "The viewer is still handling another request.",
+      "sensitive_unsupported": "This viewer cannot open sensitive content safely."
+    },
     "metadata": {
       "bad_request": "This details request is not valid.",
       "changed": "The file changed. Select it again.",
@@ -797,6 +815,35 @@
     "moveTo": "Move to {name}",
     "shortcutTo": "Create shortcut in {name}"
   },
+  "pdf": {
+    "previous": "Previous page",
+    "next": "Next page",
+    "page": "Page {page} of {count}",
+    "pageNumber": "Page number",
+    "thumbnails": "Thumbnails",
+    "outline": "Outline",
+    "fitWidth": "Fit width",
+    "fitPage": "Fit page",
+    "rotateLeft": "Rotate left",
+    "rotateRight": "Rotate right",
+    "print": "Print…",
+    "printRange": "Print pages",
+    "password": "Password",
+    "unlock": "Open PDF",
+    "loading": "Preparing PDF…",
+    "noText": "This page has no selectable text.",
+    "searching": "Searching pages…",
+    "noOutline": "This PDF has no outline.",
+    "canvas": "PDF pages",
+    "sidebarSize": "Sidebar width",
+    "navigation": "Navigation",
+    "printFirst": "First page",
+    "printLast": "Last page",
+    "printLimit": "{count, plural, one {Up to # page} other {Up to # pages}}",
+    "printing": "Preparing the print view…",
+    "noMatches": "No matches",
+    "matchCount": "{current} of {total}"
+  },
   "handlers": {
     "image": "Image",
     "text": "Text",
@@ -806,7 +853,8 @@
     "table": "Table",
     "json": "JSON",
     "font": "Font",
-    "archive": "Archive"
+    "archive": "Archive",
+    "pdf": "PDF document"
   },
   "protected": {
     "message": "This file came from the internet, so it opened in protected view.",

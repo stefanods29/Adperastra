@@ -85,7 +85,7 @@ const snake = (name) => name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase(
 // --- Rust side -------------------------------------------------------------
 const rustFiles = walk(join(root, "src-tauri", "src"), [".rs"]);
 const rustCommands = new Map(); // name -> { file, params: [{ name, optional }] }
-let handlerNames = null;
+let handlerNames = [];
 const INJECTED = /^(tauri::)?(WebviewWindow|Window|AppHandle|State<|Webview|ipc::Channel|Channel<)/;
 
 for (const file of rustFiles) {
@@ -105,18 +105,20 @@ for (const file of rustFiles) {
     }
     rustCommands.set(match[1], { file: relative(root, file), params });
   }
-  const handlerAt = text.indexOf("generate_handler![");
-  if (handlerAt !== -1) {
-    const list = enclosed(text, handlerAt + "generate_handler!".length, "[", "]") ?? "";
-    handlerNames = list
-      .split(",")
-      .map((entry) => entry.trim().split("::").pop())
-      .filter(Boolean);
+  // A process may build more than one handler list (the WebView helper child
+  // has its own). Every command name from any list counts as registered.
+  for (const match of text.matchAll(/generate_handler!\[/g)) {
+    const list = enclosed(text, match.index + "generate_handler!".length, "[", "]") ?? "";
+    handlerNames.push(
+      ...list
+        .split(",")
+        .map((entry) => entry.trim().split("::").pop())
+        .filter(Boolean),
+    );
   }
 }
-if (!handlerNames) {
+if (handlerNames.length === 0) {
   problems.push("could not find tauri::generate_handler![...] in src-tauri/src");
-  handlerNames = [];
 }
 const handlers = new Set(handlerNames);
 

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Step 07d D4: the exact helper CSP. It is stricter than the app's own
+         policy (no eval, no wasm, no inline script) and it can only load
+         packaged PDF.js assets and the helper's guarded `adpfile` routes.
+         The app CSP in tauri.conf.json is unchanged; both apply. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; worker-src 'self'; connect-src 'self' http://adpfile.localhost; img-src 'self' blob: http://adpfile.localhost; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'"
+    />
+    <title>Adperastra PDF helper</title>
+  </head>
+  <body>
+    <div id="pdf-helper-root"></div>
+    <script type="module" src="/src/pdf-helper/main.ts"></script>
+  </body>
+</html>

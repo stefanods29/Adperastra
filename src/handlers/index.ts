@@ -5,6 +5,7 @@ import { jsonHandler } from "./json";
 import { imageHandler } from "./image";
 import { markdownHandler } from "./markdown";
 import { mediaHandler } from "./media";
+import { pdfHandler } from "./pdf";
 import { HandlerRegistry } from "./registry";
 import { tableHandler } from "./table";
 import { textHandler } from "./text";
@@ -16,6 +17,8 @@ export function createHandlerRegistry(): HandlerRegistry {
   registry.register(imageHandler);
   registry.register(mediaHandler);
   registry.register(fontHandler);
+  // PDF wins before any text fallback (Step 07d).
+  registry.register(pdfHandler);
   // Markdown before text: ties on ".md" go to the Markdown viewer.
   registry.register(markdownHandler);
   // The table viewer before text: ".csv" and ".tsv" go to the table, and a
