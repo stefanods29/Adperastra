@@ -57,3 +57,10 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | Testing | Playwright (Apache-2.0), cargo test/fuzz, axe-core (MPL-2.0) | WebdriverIO; pixelmatch (ISC) | Test code never ships |
 
 Explicitly excluded (license gate): Pandoc, MuPDF, Ghostscript, Poppler, ONLYOFFICE, SuperDoc, x264/x265, Univer Pro, Slint (royalty-free terms), Piper TTS, BRIA RMBG, ImageMagick (own license - re-verify or prefer the image crate), exiftool (GPL/Artistic - user-installed only).
+
+## Step 07g additions
+
+- three 0.186.1, MIT: isolated loaders, trusted core scene rendering and OrbitControls.
+- ag-psd 34.1.0, MIT: isolated PSD parsing; base64-js 1.5.1 MIT and pako 2.1.0 MIT AND Zlib.
+- @types/three 0.186.0, MIT: development declarations; the runtime package has no declarations.
+- zip 9.1 direct dependency with deflate only, MIT: bounded 3MF preflight, existing approved crate.

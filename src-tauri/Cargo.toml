@@ -31,6 +31,7 @@ blake3 = "1.8"
 notify = "8"
 # Step 07d: memory sinks, framed-pipe hashes, the private-profile preflight.
 zeroize = "1.9.1"
+zip = { version = "9.1", default-features = false, features = ["deflate"] }
 sha2 = "0.10"
 webview2-com = "=0.39.1"
 windows-core-webview = { package = "windows-core", version = "=0.62.2", default-features = true }

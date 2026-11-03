@@ -36,6 +36,7 @@
     "@lezer/highlight": "1.2.5",
     "@tanstack/react-virtual": "^3.14.23",
     "@tauri-apps/api": "^2.12.4",
+    "ag-psd": "34.1.0",
     "dompurify": "^3.4.17",
     "fflate": "0.8.3",
     "foliate-js": "1.0.1",
@@ -46,12 +47,14 @@
     "pdfjs-dist": "6.4.299",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-i18next": "^17.1.9"
+    "react-i18next": "^17.1.9",
+    "three": "0.186.1"
   },
   "devDependencies": {
     "@types/markdown-it": "^14.2.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "0.186.0",
     "@vitejs/plugin-react": "^6.1.2",
     "axe-core": "4.14.0",
     "docx": "9.15.0",
