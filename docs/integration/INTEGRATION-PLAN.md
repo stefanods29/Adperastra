@@ -96,3 +96,11 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
   twelve producer/API gaps (book WebView main-thread start, grant cloning, foliate parser
   surface, mail-parser accessors, SQLite table discovery and others). The reconciliation plan
   is in `docs/integration/step07f-plan.md`; the tree stays at the green 07e boundary.
+- 2026-11-03: 07f integrated with its own deps commit (`9a9c7d9`) and implementation commit
+  (`c2a377f`). Mail-parser/rusqlite API corrections, the `webview_helper_types` import path,
+  the 06e three-value archive helper, Clippy findings in `data-views`, the registry priority
+  rules and schema-15 tests are recorded in `docs/step-reports/step-07f.md`. Gap 11 does not
+  apply (the helper window lives in the child process); the foliate/native spine counts are
+  now checked. `fflate` is 0.8.3. Final full gate passed: 798 Rust tests in 51 binaries, 731
+  UI tests in 134 files, IPC and translations clean. KI-097 (MOBI pictures, Major) and KI-098
+  (fixed-layout pages, Minor) are open with targets. Next: 07g.

@@ -1,8 +1,8 @@
 # Step 07f integration plan — more previewers 1
 
-Status: **not started**. The 07f handoff is inventoried but has twelve declared contract
-gaps that must be reconciled before any of its code is committed. This keeps the branch at
-the clean, green 07e boundary.
+Status: **integrated locally** (`9a9c7d9` deps, `c2a377f` implementation, plus the
+section-count fix). The twelve declared gaps are reconciled below; the packaged-app checks,
+speed runs, screenshots and the owner's checks remain evidence tasks.
 
 ## Why this needs a dedicated pass
 
@@ -60,3 +60,23 @@ SQLite), a second WebView helper (`book-helper.html`), seven new commands and se
 
 `cargo fmt --all`, then `.\scripts\gate.ps1`; record corrections in the step report. Never
 commit failing code. Keep KI-096 closed and do not reopen it for 07f.
+
+## Resolution of the twelve gaps
+
+| Gap | Result |
+|---|---|
+| 1 `HelperAction` names | The 07d enum already carries `BookOpen`/`BookPage`/`BookContents`; the adapter compiles unchanged. |
+| 2 foliate parser surface | Confirmed against pinned foliate-js 1.0.1: `EPUB` loader, `sections`, `toc`, `MOBI({unzlib})`, `section.load`. Parser-only imports; no view/renderer. |
+| 3 spine index alignment | Native loader keeps HTML/XML items; foliate keeps every manifest item. `BookBackend` now refuses a differing count instead of showing the wrong chapter; four unit tests cover it. |
+| 4 grant name length | Entries map to short `e<n>` grants and the entry-to-grant map stays in the private payload, as the handoff proposed. |
+| 5 no `book_page` cache kind | Book pages use memory leases and are not disk-cached; no kind was fabricated. |
+| 6 SQLite table discovery | Additive `extra_view_sqlite_tables` command and `sqliteTables()` service are wired and allowlisted. |
+| 7 mail-parser accessors | Compile-checked and corrected: `MimeHeaders` trait methods, optional `subtype()`, `Address::Group(Vec<Group>)`, `PartType::{Html,InlineBinary,Multipart}`, and a real `PartType::Html` part instead of `body_html(0)` so plain text stays plain. |
+| 8 producer modules | Present; imports use `webview_helper_types` for grants and the 06e three-value `run_archive_helper`. |
+| 9 grant cloning | 07d already derives `Clone` on the grant types. |
+| 10 open cancellation | The job token is checked before and after the factory open; a cancel closes the just-created session. A token parameter was not needed for the bounded 15 s open. |
+| 11 book host thread | Not applicable: `start_webview_helper` spawns a child process and the WebView2 window is created in that child's own event loop. Parsing stays on the blocking job thread. |
+| 12 MOBI inline images | Not implemented; recorded as KI-097 (Major) with a private resource-grant route before v0.1. |
+
+Also recorded: `fflate` 0.8.3 replaces the guide's 0.8.2 for GHSA-px8p-9vwx-vf98; fixed
+layout EPUB is not scale-to-fit (KI-098, Minor).

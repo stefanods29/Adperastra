@@ -11,6 +11,18 @@ that fixed it.
 
 ## Open
 
+### KI-098 - Fixed-layout e-books are paginated like reflowable text (Minor)
+- **Found in:** Step 07f integration, 2026-11-03. **Severity:** Minor (a fixed-layout book still opens and its pages are readable; only the original viewport and scale-to-fit are missing).
+- **What:** The book helper builds deterministic text/image pages (4,000 scalars or 24 blocks) and does not read the EPUB rendition layout. A pre-paginated (fixed-layout) book, usually comics or children's books, is therefore split by text length instead of keeping its designed page size and scaling to the window.
+- **Workaround:** open that book in its Windows app; nothing in the file is changed.
+- **Target:** reviewed at the next milestone with the optional book thumbnail provider; a fixed-layout page needs a private viewport/scale route, not a renderer with scripts.
+
+### KI-097 - Pictures inside MOBI books are not shown (Major)
+- **Found in:** Step 07f integration, 2026-11-03. **Severity:** Major (MOBI/AZW3 text and chapters work, but a picture in the book is removed instead of displayed).
+- **What:** foliate's MOBI parser exposes inline pictures as `data:`/`blob:` URLs, not as named book entries. The sanitizer removes every URL that has no current cache lease, so a MOBI page keeps its text but loses its images. EPUB pictures work because their entry names become grants and memory leases.
+- **Workaround:** open the MOBI/AZW3 file in its Windows app; text reading in Adperastra is unaffected.
+- **Target:** the next additive book-helper revision, before v0.1 (Step 08d). The fix needs a private resource-grant route for parser-produced bytes; do not weaken the sanitizer or add `allow-scripts`.
+
 ### KI-088 - Saving or extracting below a folder that is a mounted volume is refused (Minor)
 - **Found in:** the KI-068 repair, 2026-10-31. **Severity:** Minor (a rare setup; nothing is written and nothing is lost).
 - **What:** The folder pin refuses every folder that redirects to another place, which includes a drive mounted into a folder. Cloud-synced folders are allowed by a test of their tag only: a real OneDrive folder has not been tried.
