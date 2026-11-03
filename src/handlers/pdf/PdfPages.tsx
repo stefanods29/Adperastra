@@ -4,6 +4,9 @@ import { useTranslation } from "react-i18next";
 import Skeleton from "../../components/Skeleton";
 import { fileUrl } from "../../services/files";
 import type { PdfPageImage, PdfPageInfo, PdfRotation, PdfSearchMatch, PdfSession, PdfTextPage } from "../../services/pdf";
+import OcrOverlay from "../../ocr/OcrOverlay";
+import type { OcrMatch } from "../../ocr/ocrSelection";
+import type { OcrPage } from "../../services/ocr";
 import { pdfRunBox, pdfViewportSize } from "./pdfCoordinates";
 import { clampPage, PDF_PAGE_GAP, pdfPageRowHeight } from "./pdfState";
 
@@ -27,6 +30,11 @@ export interface PdfPagesProps {
   images: ReadonlyMap<string, PdfPageImage>;
   texts: ReadonlyMap<number, PdfTextPage>;
   highlights: readonly PdfSearchMatch[];
+  /** Recognized words for the current page, when OCR ran. */
+  ocrPage?: OcrPage | null;
+  ocrMatches?: readonly OcrMatch[];
+  ocrMatchIndex?: number;
+  onOcrSelection?: (text: string) => void;
   active: boolean;
   requestPage: (page: number, bucket: "page" | "thumbnail") => void;
   requestText: (page: number) => void;
@@ -45,6 +53,10 @@ export default function PdfPages({
   images,
   texts,
   highlights,
+  ocrPage = null,
+  ocrMatches = [],
+  ocrMatchIndex = -1,
+  onOcrSelection,
   active,
   requestPage,
   requestText,
@@ -179,6 +191,17 @@ export default function PdfPages({
                   text={texts.get(number)}
                   highlights={highlights.filter((match) => match.page === number)}
                 />
+                {ocrPage && ocrPage.page === number && image && onOcrSelection ? (
+                  <OcrOverlay
+                    result={ocrPage}
+                    viewWidth={Math.max(1, Math.ceil(size.width))}
+                    viewHeight={Math.max(1, Math.ceil(size.height))}
+                    rotation={0}
+                    zoom={Math.max(1, Math.ceil(size.width)) / image.render_width}
+                    onSelectionText={onOcrSelection}
+                    highlight={ocrMatches[ocrMatchIndex]?.words}
+                  />
+                ) : null}
               </div>
               <div className="adp-pdf-page-number" aria-hidden="true">
                 {number}

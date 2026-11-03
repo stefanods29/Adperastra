@@ -163,6 +163,25 @@ export default function PdfView({ info, active, savedState, onStateChange, onSta
     clipboardAllowed: session?.permissions.can_copy ?? false,
     previewOnly,
   });
+  // A page with no selectable text uses OCR for the viewer's Find row.
+  const lastFind = useRef(0);
+  useEffect(() => {
+    if (!find || find.request === 0 || find.request === lastFind.current) return;
+    lastFind.current = find.request;
+    const native = doc.texts.get(page)?.runs.length ?? 0;
+    if (native > 0) return;
+    const query = find.text;
+    const caseSensitive = find.options?.caseSensitive === true;
+    if (ocr.page?.page === page) {
+      const found = ocr.find(query, caseSensitive);
+      if (find.backwards && found.length > 0) ocr.nextMatch(true);
+      return;
+    }
+    void ocr.recognize().then(() => {
+      ocr.find(query, caseSensitive);
+    });
+  }, [find, doc.texts, page, ocr]);
+
   const commands = useMemo<Command<PdfCommandContext>[]>(
     () => [
       ...createPdfCommands(actions),
@@ -383,6 +402,10 @@ export default function PdfView({ info, active, savedState, onStateChange, onSta
                 images={doc.images}
                 texts={doc.texts}
                 highlights={highlights}
+                ocrPage={ocr.page?.page === page ? ocr.page : null}
+                ocrMatches={ocr.matches}
+                ocrMatchIndex={ocr.matchIndex}
+                onOcrSelection={ocr.setSelectedText}
                 active={active}
                 requestPage={doc.requestPage}
                 requestText={doc.requestText}

@@ -90,5 +90,5 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
   `PdfOcrAdapter` implementing `ocr_pdf::OcrPdfPageSource` in `pdf.rs`.
 - 2026-11-03: 07e OCR integrated with both missing adapters, schema 14 and the image/PDF
   commands. Final full gate passed: 722 Rust tests in 51 binaries, 692 UI tests in 123 files,
-  IPC and translations clean. KI-096 records the remaining Major gap: search routing and the
-  PDF word overlay are not complete, so 07e is integrated locally but not accepted.
+  IPC and translations clean. KI-096 (image/PDF OCR Find routing and the PDF word overlay) is
+  fixed in the follow-up; the final gate for that fix is running before 07e is called complete.

@@ -83,12 +83,11 @@ screenshot value is claimed before it is measured.
 
 ## Known issues and remaining acceptance
 
-KI-096 remains open and is **Major**: the image Find row now routes to OCR and highlights the
-current match, but the PDF viewer still has no word overlay, so its OCR search has no visible
-matches. Copy all text works for images, native-text PDFs and scanned PDF pages, so a
-workaround exists. This must be fixed as an `F` task before 07e is accepted or merged to
-`main`. The helper's real Windows OCR availability, recognition quality and the owner's
-language installation remain environment checks.
+KI-096 is fixed: the image and PDF Find rows route to OCR (native text first for PDFs) and
+highlight the current match; the PDF page renders the same inert word overlay with the
+raster-to-view zoom. No Blocker or Major is open for the paths this step changes. The helper's
+real Windows OCR availability, recognition quality and the owner's language installation
+remain environment checks, and the packaged-app click-through is still pending.
 
 ## Next steps
 

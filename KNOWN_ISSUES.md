@@ -221,15 +221,13 @@ that fixed it.
 - **Workaround:** use Adperastra's own Rename (F2) and menu commands.
 - **Target:** review with Windows integration (Step 16).
 
-## Open
-
-### KI-096 - OCR search routing and the PDF text overlay are not complete (Major, found during 07e integration)
-- **Found in:** integration review of Step 07e, 2026-11-03.
-- **What:** **Copy all text** works for images, native-text PDFs and scanned PDF pages. The image overlay shows recognized words, supports selection, and the image Find row now routes to OCR and highlights the current match. The PDF viewer still has no overlaid word layer, so its OCR search has no visible matches.
-- **Workaround:** copy all recognized text, or use the PDF's own selectable text when it has one.
-- **Plan:** complete the shared Find routing and the PDF overlay as an `F` task before 07e is accepted or merged to `main`; this is why 07e is integrated locally but not claimed complete.
-
 ## Fixed
+
+### KI-096 - OCR search routing and the PDF text overlay were incomplete (Major, fixed during 07e integration)
+- **Found in:** integration review of Step 07e, 2026-11-03.
+- **What:** **Copy all text** worked, but the Find row did not search recognized image text, and the PDF viewer had no overlaid word layer, so OCR search had no visible matches.
+- **Fix:** the image viewer now routes Find to OCR and highlights the current match; the PDF page renders the same inert overlay with `rotation={0}` and the raster-to-view zoom, and its Find row uses OCR only when the page has no native text.
+- **Verification:** TypeScript build and the focused OCR/PDF suites pass; the full gate result is recorded in the step report. Real recognition remains an owner environment check.
 
 ### KI-094 - Incoming PDF helper handoff did not compile against the integrated toolchain (Major, fixed during 07d integration)
 - **Found in:** first `cargo check`, Clippy and TypeScript build of the received 07d handoff, 2026-11-03; never accepted into the local baseline in this state.
