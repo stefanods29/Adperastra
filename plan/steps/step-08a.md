@@ -18,7 +18,7 @@ Convert one or many local images in a small Quick Convert dialog with a preview,
 
 ## Read first
 
-v1 08a mappedimage/UI/registry scope; 07a/07g exports; owned_io/save/version contracts and current source; UndoStack/FileAction/executeFileAction; JobsPanel TrackJobOptions/jobsTypes; current image/text editor save/export state; add-dependency/settings/command/help recipes. Pin image0.25.10, resvg0.49.0,little_exif0.6.0, reusing metadata/serde/blake3/UUID. Confirm API source from retained official package snapshots, not stale v1 library suggestions.
+v1 08a mappedimage/UI/registry scope; 07a/07g exports; owned_io/save/version contracts and current source; UndoStack/FileAction/executeFileAction; JobsPanel TrackJobOptions/jobsTypes; current image/text editor save/export state; add-dependency/settings/command/help recipes. Pin image0.25.10, resvg0.49.0,little_exif0.6.23, reusing metadata/serde/blake3/UUID. Confirm API source from retained official package snapshots, not stale v1 library suggestions.
 
 ## Decisions
 
@@ -213,3 +213,5 @@ Measures `step08a.convert.dialog` Instant0.1s;previewFast1s;smallimage Waiting1-
 - [ ] Nooriginaloverwrite/delete,metadata/transparency/animationlossdisclosed,unsavedrevisioncorrect,cancel/partialeffects/Undohonestandtested.
 - [ ] Coordinator runsallrequiredchecks/package/runtime/speed/screenshots; localization/help/accessibilityandlicense/noticerecordsverified.
 - [ ] Any unresolvedsafety/historyissue remainsvisibleandblocksacceptancewhereR-KIrequires; nofalsecompletedstepormilestoneclaim.
+
+Integration correction (2026-11-03): the registry cannot resolve the original exact little_exif0.6.0 pin. Use exact0.6.23 (MIT OR Apache-2.0), verified from the downloaded registry source. Its get_tag_by_hex requires the explicit optional group argument. Coordinator image/metadata round-trip tests passed against0.6.23; original handoffs are preserved.

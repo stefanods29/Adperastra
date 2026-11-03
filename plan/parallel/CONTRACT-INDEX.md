@@ -380,7 +380,7 @@ Handler IDs model/raw/codecImage/psd with separate lazy directories. model exten
 
 ## Step 08a
 
-[Canonical complete guide](../steps/step-08a.md); SHA-256 `8f40b601eef53fa6c35011483468473635a9bf7c3c6c69b6c52988eb5e612950`.
+[Canonical complete guide](../steps/step-08a.md); SHA-256 `e6090d62a5716f936435a5fb0117d126859f9d79a987ffc22f214561d7c34c60`.
 
 Interface revision | conversion-2;export-snapshot-2
 
@@ -499,7 +499,7 @@ Font asset provisioning belongs T1/coordinator, before embedding: official Inter
 
 ## Step 08c
 
-[Canonical complete guide](../steps/step-08c.md); SHA-256 `8270db8a28762a0e2af14238c6e898bd98b40e00aab0a9ecfa4055bd475c2e69`.
+[Canonical complete guide](../steps/step-08c.md); SHA-256 `18307d8261f1c196f6eb9a7d344eb2a1e856ee931a4df56a4cba93a55febe4cf`.
 
 Interface revision | privacy-1
 

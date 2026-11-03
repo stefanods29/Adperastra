@@ -66,7 +66,7 @@ Versions and licenses checked on 2026-10-29. Each step's guide confirms the vers
 | ttf-parser | 0.25 (default features off; `std`) | MIT OR Apache-2.0 | 06f | Font names and character map, in the font helper only | Needs Rust 1.63. Checked at 0.25.1: `Face::parse`, `names`, `fonts_in_collection`, `tables().cmap`, `Subtable::codepoints`, `Subtable::is_unicode`, `Name::to_string`, `Name::language`, `is_italic`, `is_monospaced`, `weight`, `number_of_glyphs` |
 | image | 0.25.10 | MIT OR Apache-2.0 | 08a | Image conversion | AVIF output decided in the 08a guide |
 | resvg | 0.49.0 | Apache-2.0 OR MIT | 08a | SVG to PNG | |
-| little_exif | 0.6.0 | MIT OR Apache-2.0 | 08a, 08c | Keeping and removing EXIF | |
+| little_exif | 0.6.23 | MIT OR Apache-2.0 | 08a, 08c | Keeping and removing EXIF | |
 | lopdf | 0.46.0 | MIT | 08c | Removing hidden information from PDFs | |
 | rust_xlsxwriter | 0.102.0 | MIT OR Apache-2.0 | 08b | Writing .xlsx | |
 | calamine | 0.37.0 | MIT | 08b | Reading .xlsx, .xls, .ods | |
@@ -115,3 +115,5 @@ Planned newnativefeatureflagsarelistedineachproducerandverifiedfrompinnedwindows
 ## Never use
 
 GPL, AGPL, SSPL, "source-available", non-commercial or paid-tier code, in any step: for example Pandoc, MuPDF, Ghostscript, Poppler, ONLYOFFICE, x264/x265, UnRAR code, exiftool, BRIA RMBG, Univer Pro, SheetJS Pro. Also not `jszip` (its license is MIT OR GPL-3.0: allowed, but not needed; use the Rust `zip` crate instead).
+
+07g integration correction: three 0.186.1 ships no TypeScript declarations. Use development-only @types/three 0.186.0 (MIT), exact pin, matching the runtime minor release; do not add untyped module stubs. ag-psd has root index.d.ts.

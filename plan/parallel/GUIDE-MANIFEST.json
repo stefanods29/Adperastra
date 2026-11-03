@@ -170,7 +170,7 @@
       "settings": "15 -> 16",
       "shots": "79-81",
       "guide": "plan/steps/step-08a.md",
-      "sha256": "8f40b601eef53fa6c35011483468473635a9bf7c3c6c69b6c52988eb5e612950",
+      "sha256": "e6090d62a5716f936435a5fb0117d126859f9d79a987ffc22f214561d7c34c60",
       "contract_revision": "Interface revision | conversion-2;export-snapshot-2",
       "producer_guides": [
         "07a",
@@ -218,7 +218,7 @@
       "settings": "17 -> 18",
       "shots": "85-87",
       "guide": "plan/steps/step-08c.md",
-      "sha256": "8270db8a28762a0e2af14238c6e898bd98b40e00aab0a9ecfa4055bd475c2e69",
+      "sha256": "18307d8261f1c196f6eb9a7d344eb2a1e856ee931a4df56a4cba93a55febe4cf",
       "contract_revision": "Interface revision | privacy-1",
       "producer_guides": [
         "07d",

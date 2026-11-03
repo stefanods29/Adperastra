@@ -18,7 +18,7 @@ Inspect and remove selected hidden information from images/PDFs, normally into a
 
 ## Read first
 
-v1 08b;08a E1-E7 conversion-2/export-snapshot-2;08b E6/E7; current versions/owned_io/Details/QuickConvert; little_exif0.6.0 andlopdf0.46.0 exactsource. Verified lopdf load_mem/is_encrypted/get_object_mut/prune_objects/delete_object/decompressed_content_with_limit/save_to. Do not use incremental save or unconstrained decompression for a cleaned copy.
+v1 08b;08a E1-E7 conversion-2/export-snapshot-2;08b E6/E7; current versions/owned_io/Details/QuickConvert; little_exif0.6.23 andlopdf0.46.0 exactsource. Verified lopdf load_mem/is_encrypted/get_object_mut/prune_objects/delete_object/decompressed_content_with_limit/save_to. Do not use incremental save or unconstrained decompression for a cleaned copy.
 
 ## Decisions and algorithms
 
@@ -158,3 +158,5 @@ Measurements step08c.inspect.firstfields Fast1s,clean1image Waiting1-10s,batchBa
 ## Shared caller requirements
 
 PrivacyRequest is imported unchanged by09e,12b and later assistant tools. Each caller first obtains the inspection-derived PrivacyClosure, displays requested plus effective categories, and supplies accepted_effective_categories as that exact reviewed set. It also supplies accepted_content_changes, accepted_signature_change and accepted_appearance_changes only from the corresponding current user acknowledgements; no wrapper fills them with true or conflates them with08a accepted_warning_codes. Any changed inspection/source/categories clears acknowledgements and recomputes the closure. T5/T6 tests a missing appearance acknowledgement, an extra effective category, and a stale inspection from each shared caller; each must create zero published files. Sensitive snapshot policy remains native08a authority classification, including derived MIME captures; a cleaner cannot register an ordinary replacement authority to bypass it.
+
+Integration correction (2026-11-03): the registry cannot resolve the original exact little_exif0.6.0 pin. Use exact0.6.23 (MIT OR Apache-2.0), verified from the downloaded registry source. Its get_tag_by_hex requires the explicit optional group argument. Coordinator image/metadata round-trip tests passed against0.6.23; original handoffs are preserved.
