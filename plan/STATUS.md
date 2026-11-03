@@ -2,7 +2,8 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `07g` (handoff integration). Steps 07a, 07b, 07c, 07d, 07e and 07f are integrated and committed on `codex/integrate-handoffs`; the latest full gate has 798 Rust and 731 UI tests passing. 07f's own code has no open Blocker; KI-097 (MOBI pictures, Major) and KI-098 (fixed-layout pages, Minor) are open with targets. KI-096 stays fixed from 07e. Packaged-app checks, speed runs, screenshots and owner checks for these steps remain pending. Tags stay at 03b. The integration order and remaining review defects are tracked in `docs/integration/INTEGRATION-PLAN.md`. All 54 remaining guides and per-step prompts are written; their handoffs are preserved outside Git under `handoff/`.
+**Current step:** `08a` (converter handoff integration). Steps07a–07g are integrated locally on codex/integrate-handoffs. The07g implementation commit is69f778d; final gate passed829Rust and777UI tests. Packaged-app fidelity, screenshots, speed and real-device checks remain pending and are not implied by implementation status. Existing issues remain in KNOWN_ISSUES.md. Original handoffs are preserved; next repaired sources are handoff/integration-08a/files.
+
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
@@ -40,7 +41,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 07d | PDF viewer | in progress (integrated locally; speed, screenshots, owner checks left) | v0.0.23-step07d |
 | 07e | Copy text from images and scans (OCR) | in progress (integrated locally; speed, screenshots, owner checks left) | v0.0.24-step07e |
 | 07f | More previewers 1: e-books, notebooks, email, subtitles, logs, SQLite | in progress (integrated locally; KI-097/098 open; speed, screenshots, owner checks left) | v0.0.25-step07f |
-| 07g | More previewers 2: 3D models, camera RAW, HEIC/AVIF, PSD | guide | v0.0.26-step07g |
+| 07g | More previewers 2: 3D models, camera RAW, HEIC/AVIF, PSD | implemented locally; packaged evidence pending | v0.0.26-step07g |
 | 08a | Converter 1: Quick Convert, job queue, image formats | guide | v0.0.27-step08a |
 | 08b | Converter 2: PDF, documents, sheets, archives, batch presets | guide | v0.0.28-step08b |
 | 08c | Privacy cleaner | guide | v0.0.29-step08c |
@@ -98,6 +99,9 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 - 2026-10-31: `measure-ui.ps1 -Review06bc` uses fresh retained data/fixtures and never invokes legacy permanent cleanup. Test processes are closed through their own job handles. The original unscoped runner is not authorized for this review. No project/worktree/build/session was deleted; no remote operation or main change was made.
 
 ## Owner decisions log (newest first)
+
+- 2026-11-03: Owner authorizes continuous integration through all remaining steps, separate-step subagents and autonomous implementation choices while unavailable. Start the next available step as an agent finishes; coordinator retains compilation/testing and reports “step <id> implemented.” only after its implementation checks. Preserve source/user data and original handoffs; keep publication/remotes unchanged unless specifically required. Obsolete build cleanup is authorized; attempted deletion of the 12.4 GiB repository target folder was rejected by automatic command approval review, so no deletion occurred.
+
 
 - 2026-11-02: All54 worker handoffs received. Owner now authorizes the coordinator to integrate the parts, fill missing implementations, compile/test/debug/package and install required libraries/development tools. This supersedes the earlier planning-only stopping point. Continue locally in dependency order; preserve the submitted handoffs, keep main/remotes/publication untouched, and retain genuine owner engine/distribution checkpoints. The integration branch is codex/integrate-handoffs; original submissions have a verified external backup recorded in docs/integration/incoming-manifest.json.
 

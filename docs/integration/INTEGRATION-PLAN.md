@@ -104,3 +104,5 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
   now checked. `fflate` is 0.8.3. Final full gate passed: 798 Rust tests in 51 binaries, 731
   UI tests in 134 files, IPC and translations clean. KI-097 (MOBI pictures, Major) and KI-098
   (fixed-layout pages, Minor) are open with targets. Next: 07g.
+
+- 2026-11-03:07g implemented locally as69f778d, report719b645; full gate829Rust/777UI tests. Distinct texture-slot keys and transformed world bounds verified. Faster isolated vmThreads UI runner preserves per-file isolation (144files in about13–22s). Runtime/packaged evidence remains pending. Next08a; isolated pure converter18tests passed after resolving little_exif to0.6.23 and actual encoder APIs.
