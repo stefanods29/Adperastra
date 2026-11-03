@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `08a` (converter handoff integration). Steps07a–07g are integrated locally on codex/integrate-handoffs. The07g implementation commit is69f778d; final gate passed829Rust and777UI tests. Packaged-app fidelity, screenshots, speed and real-device checks remain pending and are not implied by implementation status. Existing issues remain in KNOWN_ISSUES.md. Original handoffs are preserved; next repaired sources are handoff/integration-08a/files.
+**Current step:** `08b` (document/PDF/table/archive conversion integration). Steps07a–08a are integrated locally on codex/integrate-handoffs. The08a implementation commit is3ba4c4b; final gate passed875Rust and808UI tests, plus5actual debug conversion-helper checks. Packaged-app fidelity, screenshots, speed and real-device checks remain pending. Conversion Undo remains explicitly unavailable until09f exact recovery receipts. Original handoffs are preserved; next repaired sources are handoff/integration-08b/files.
 
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
@@ -42,7 +42,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 07e | Copy text from images and scans (OCR) | in progress (integrated locally; speed, screenshots, owner checks left) | v0.0.24-step07e |
 | 07f | More previewers 1: e-books, notebooks, email, subtitles, logs, SQLite | in progress (integrated locally; KI-097/098 open; speed, screenshots, owner checks left) | v0.0.25-step07f |
 | 07g | More previewers 2: 3D models, camera RAW, HEIC/AVIF, PSD | implemented locally; packaged evidence pending | v0.0.26-step07g |
-| 08a | Converter 1: Quick Convert, job queue, image formats | guide | v0.0.27-step08a |
+| 08a | Converter 1: Quick Convert, job queue, image formats | implemented locally; packaged evidence pending | v0.0.27-step08a |
 | 08b | Converter 2: PDF, documents, sheets, archives, batch presets | guide | v0.0.28-step08b |
 | 08c | Privacy cleaner | guide | v0.0.29-step08c |
 | 08d | First release (v0.1) | guide | v0.1.0 |
