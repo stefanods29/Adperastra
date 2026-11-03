@@ -43,6 +43,8 @@ export interface CommandContext {
   selectedKind: "folder" | "file" | "other" | null;
   currentPinned: boolean;
   selection: SelectionContext;
+  /** A Gallery source row is selected, so Remove folder is enabled. */
+  gallerySourceSelected?: boolean;
   view: ViewContext;
   /** Every selected item is already a favorite. */
   allFavorites: boolean;

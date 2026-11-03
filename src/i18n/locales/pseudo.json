@@ -5,7 +5,8 @@
     "newTab": "[Ñëw täb ~~~]",
     "close": "[Çløsë täb ~~~~]",
     "collapse": "[Shøw øñlÿ ïçøñs ~~~~~~]",
-    "expand": "[Shøw ñämës ~~~~]"
+    "expand": "[Shøw ñämës ~~~~]",
+    "components": "[Çømpøñëñts ~~~~]"
   },
   "window": {
     "minimize": "[Mïñïmïzë ~~~~]",
@@ -52,7 +53,6 @@
     "driveStillLoading": "[Stïll løädïñg... ~~~~~]",
     "driveNotAvailable": "[Drïvë ñøt äväïläblë ~~~~~~~]",
     "drivesTitle": "[Thïs PÇ ~~~]",
-    "galleryPlaceholder": "[Gällërÿ ärrïvës ïñ ä lätër stëp. ~~~~~~~~~~~]",
     "networkPlaceholder": "[Ñëtwørk brøwsïñg ïs ñøt äväïläblë ÿët. ~~~~~~~~~~~~~]",
     "favoritesEmpty": "[Ñø fävørïtës ÿët. Rïght-çlïçk ä fïlë ør føldër äñd çhøøsë Ädd tø fävørïtës. ~~~~~~~~~~~~~~~~~~~~~~~~]",
     "recentEmpty": "[Ñø rëçëñt ïtëms ÿët. ~~~~~~~]",
@@ -278,6 +278,19 @@
   },
   "gallery": {
     "title": "[Gällërÿ ~~~]",
+    "addFolder": "[Ädd pïçtürë føldër… ~~~~~~~]",
+    "removeFolder": "[Rëmøvë føldër frøm Gällërÿ ~~~~~~~~~~]",
+    "sources": "[Pïçtürë føldërs ~~~~~~]",
+    "empty": "[Çhøøsë ä føldër tø sëë ïts pïçtürës hërë. ~~~~~~~~~~~~~~]",
+    "noPictures": "[Ñø pïçtürës wërë føüñd ïñ thësë føldërs. ~~~~~~~~~~~~~~]",
+    "recursive": "[Ïñçlüdë sübføldërs ~~~~~~~]",
+    "dateSource": "[Grøüp pïçtürës bÿ ~~~~~~]",
+    "taken": "[Dätë täkëñ ~~~~]",
+    "modified": "[Dätë mødïfïëd ~~~~~]",
+    "undated": "[Ñø dätë ~~~]",
+    "partial": "[Sømë pïçtürës çøüld ñøt bë lïstëd. ~~~~~~~~~~~~]",
+    "skipped": "[{count, plural, one {# ïtëm wäs skïppëd.} other {# ïtëms wërë skïppëd.}} ~~~~~~~]",
+    "loading": "[Løøkïñg før pïçtürës… ~~~~~~~~]",
     "devBadge": "[Dëv ~~]",
     "buttons": "[Büttøñs ~~~]",
     "primaryAction": "[Prïmärÿ äçtïøñ ~~~~~~]",
@@ -704,6 +717,13 @@
       "other": "[Thë prëvïëw çäçhë çøüldñ't bë üsëd. ~~~~~~~~~~~~]",
       "bad_request": "[Thïs çäçhë rëqüëst ïs ñøt välïd. ~~~~~~~~~~~]",
       "unavailable": "[Thë prëvïëw çäçhë ïs ñøt äväïläblë. ~~~~~~~~~~~~]"
+    },
+    "gallery": {
+      "bad_request": "[Thësë Gällërÿ føldërs ärë ñøt välïd. ~~~~~~~~~~~~]",
+      "too_many": "[Gällërÿ çäñ üsë üp tø 32 føldërs. ~~~~~~~~~~]",
+      "changed": "[Gällërÿ çhäñgëd. Rëfrësh tø çøñtïñüë. ~~~~~~~~~~~~~]",
+      "unavailable": "[Thësë pïçtürës çøüld ñøt bë lïstëd. ~~~~~~~~~~~~]",
+      "other": "[Thësë Gällërÿ føldërs çøüld ñøt bë sävëd. ~~~~~~~~~~~~~~]"
     },
     "metadata": {
       "bad_request": "[Thïs dëtäïls rëqüëst ïs ñøt välïd. ~~~~~~~~~~~~]",

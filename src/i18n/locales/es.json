@@ -5,7 +5,8 @@
     "newTab": "Nueva pestaña",
     "close": "Cerrar pestaña",
     "collapse": "Mostrar solo iconos",
-    "expand": "Mostrar nombres"
+    "expand": "Mostrar nombres",
+    "components": "Componentes"
   },
   "window": {
     "minimize": "Minimizar",
@@ -52,7 +53,6 @@
     "driveStillLoading": "Sigue cargando...",
     "driveNotAvailable": "Unidad no disponible",
     "drivesTitle": "Este equipo",
-    "galleryPlaceholder": "La galería llegará en un paso posterior.",
     "networkPlaceholder": "La exploración de red aún no está disponible.",
     "favoritesEmpty": "Aún no tienes favoritos. Haz clic derecho en un archivo o carpeta y elige Agregar a favoritos.",
     "recentEmpty": "Aún no hay elementos recientes.",
@@ -278,6 +278,19 @@
   },
   "gallery": {
     "title": "Galería",
+    "addFolder": "Agregar carpeta de imágenes…",
+    "removeFolder": "Quitar carpeta de la Galería",
+    "sources": "Carpetas de imágenes",
+    "empty": "Elige una carpeta para ver sus imágenes aquí.",
+    "noPictures": "No se encontraron imágenes en estas carpetas.",
+    "recursive": "Incluir subcarpetas",
+    "dateSource": "Agrupar imágenes por",
+    "taken": "Fecha de captura",
+    "modified": "Fecha de modificación",
+    "undated": "Sin fecha",
+    "partial": "No se pudieron mostrar algunas imágenes.",
+    "skipped": "{count, plural, one {Se omitió # elemento.} other {Se omitieron # elementos.}}",
+    "loading": "Buscando imágenes…",
     "devBadge": "Desarrollo",
     "buttons": "Botones",
     "primaryAction": "Acción principal",
@@ -704,6 +717,13 @@
       "other": "No se pudo usar la caché de vistas previas.",
       "bad_request": "La solicitud de caché no es válida.",
       "unavailable": "La caché de vistas previas no está disponible."
+    },
+    "gallery": {
+      "bad_request": "Estas carpetas de la Galería no son válidas.",
+      "too_many": "La Galería puede usar hasta 32 carpetas.",
+      "changed": "La Galería cambió. Actualiza para continuar.",
+      "unavailable": "No se pudieron mostrar estas imágenes.",
+      "other": "No se pudieron guardar estas carpetas de la Galería."
     },
     "metadata": {
       "bad_request": "La solicitud de detalles no es válida.",

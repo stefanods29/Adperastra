@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { supportedLanguages } from "../i18n";
 import Menu, { type MenuAnchor } from "../components/Menu";
@@ -126,6 +126,9 @@ import type { ColumnViewOptions } from "./explorer/views/columnTrail";
 import { useColumnNavigation } from "./explorer/views/useColumnNavigation";
 import { useViewMode } from "./explorer/views/useViewMode";
 import { skeletonVariant, viewModeFromKey } from "./explorer/views/viewModes";
+import type { GallerySettings } from "../services/gallery";
+
+const GalleryContent = lazy(() => import("./gallery/GalleryContent"));
 
 /** What the status bar shows for the Explorer tab. */
 export interface ExplorerStats {
@@ -135,6 +138,8 @@ export interface ExplorerStats {
   selectedFiles: number;
   /** The open folder's view; null when no folder is open. */
   viewMode: ViewModeId | null;
+  /** Help page opened by F1 for the current location. */
+  helpSlug: string;
 }
 
 /** Ask the Explorer to open a folder (and select one item in it). A new
@@ -176,6 +181,9 @@ export interface ExplorerHomeProps {
   onTemplatesFolderChange?: (folder: string) => void | Promise<void>;
   /** Settings > Version history is on (Step 06b); true when absent. */
   versionsEnabled?: boolean;
+  /** Gallery settings (schema 13). */
+  gallery?: GallerySettings;
+  onGallerySettingsChange?: (next: GallerySettings) => Promise<void>;
 }
 
 const DEFAULT_VIEW: ExplorerViewSettings = defaultSettings().explorer;
@@ -264,6 +272,8 @@ export default function ExplorerHome({
   templatesFolder = "",
   onTemplatesFolderChange,
   versionsEnabled = true,
+  gallery = defaultSettings().gallery,
+  onGallerySettingsChange,
 }: ExplorerHomeProps) {
   const { t, i18n } = useTranslation();
   const { layout } = useLayout();
@@ -299,6 +309,11 @@ export default function ExplorerHome({
   const [partialCount, setPartialCount] = useState(0);
   const [skeletonVisible, setSkeletonVisible] = useState(false);
   const [selection, setSelection] = useState<SelectionState>(EMPTY_SELECTION);
+  const [galleryRequest, setGalleryRequest] = useState<
+    { kind: "add" | "remove"; nonce: number } | null
+  >(null);
+  const [gallerySourceSelected, setGallerySourceSelected] = useState(false);
+  const [galleryCount, setGalleryCount] = useState(0);
   const {
     preview: quickPreviewSelection,
     toggle: toggleQuickPreview,
@@ -505,6 +520,7 @@ export default function ExplorerHome({
     selectedKind: singleSelected ? (singleSelected.kind === "drive" ? "other" : singleSelected.kind) : null,
     currentPinned,
     selection: { paths: selectedPaths, count: summary.count, files: summary.files, folders: summary.folders },
+    gallerySourceSelected,
     view: {
       showHidden: view.show_hidden,
       showExtensions: view.show_extensions,
@@ -974,6 +990,23 @@ export default function ExplorerHome({
     }
   };
 
+  const galleryAddFolder = useCallback(
+    () =>
+      setGalleryRequest((previous) => ({
+        kind: "add",
+        nonce: (previous?.nonce ?? 0) + 1,
+      })),
+    [],
+  );
+  const galleryRemoveFolder = useCallback(
+    () =>
+      setGalleryRequest((previous) => ({
+        kind: "remove",
+        nonce: (previous?.nonce ?? 0) + 1,
+      })),
+    [],
+  );
+
   const actions: ExplorerActions = useMemo(
     () => ({
       back: () => setHistory((current) => goBack(current)),
@@ -986,6 +1019,8 @@ export default function ExplorerHome({
         else goToLocation({ type: "drives" });
       },
       refresh,
+      galleryAddFolder,
+      galleryRemoveFolder,
       openSelected: () => {
         const { selectedPaths: paths, itemByPath: byPath } = live.current;
         const targets = paths.map((path) => byPath.get(path)).filter((item): item is ExplorerItem => item !== undefined);
@@ -1222,7 +1257,7 @@ export default function ExplorerHome({
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [archive, archiveCreate, goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat, toggleQuickPreview],
+    [archive, archiveCreate, galleryAddFolder, galleryRemoveFolder, goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat, toggleQuickPreview],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);
@@ -1532,15 +1567,18 @@ export default function ExplorerHome({
           ? homeItems.length
           : location.type === "drives"
             ? drives.length
-            : 0;
+            : location.type === "gallery"
+              ? galleryCount
+              : 0;
     onStatsChange?.({
       total,
       selected: summary.count,
       selectedBytes: summary.bytes,
       selectedFiles: summary.files,
       viewMode: location.type === "folder" ? viewModeState.mode : null,
+      helpSlug: location.type === "gallery" ? "the-gallery" : "browsing-folders",
     });
-  }, [onStatsChange, visibleItems.length, homeItems.length, drives.length, location.type, summary, viewModeState.mode]);
+  }, [onStatsChange, visibleItems.length, homeItems.length, drives.length, galleryCount, location.type, summary, viewModeState.mode]);
 
   const onFirstPaint = useCallback(() => {
     const bench = benchRef.current;
@@ -2085,7 +2123,33 @@ export default function ExplorerHome({
                 <DriveList drives={drives} states={driveStates} onOpenDrive={goToFolder} />
               ) : null}
 
-              {location.type === "gallery" ? <p className="adp-empty-note">{t("explorer.galleryPlaceholder")}</p> : null}
+              {location.type === "gallery" ? (
+                <Suspense fallback={<Skeleton variant="tiles" count={8} />}>
+                  <GalleryContent
+                    settings={gallery}
+                    active={active}
+                    showHidden={view.show_hidden}
+                    showSystem={false}
+                    showExtensions={view.show_extensions}
+                    onOpenFile={
+                      onOpenFile ??
+                      (async (path) => {
+                        await openItem(path);
+                      })
+                    }
+                    onSettingsChange={
+                      onGallerySettingsChange ??
+                      (async () => {
+                        throw new Error("settings.unavailable");
+                      })
+                    }
+                    onOpenHelp={onOpenHelp}
+                    request={galleryRequest}
+                    onSourceSelected={setGallerySourceSelected}
+                    onCountChange={setGalleryCount}
+                  />
+                </Suspense>
+              ) : null}
               {location.type === "network" ? <p className="adp-empty-note">{t("explorer.networkPlaceholder")}</p> : null}
               {folderContent}
             </section>

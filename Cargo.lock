@@ -124,6 +124,7 @@ dependencies = [
  "data-views",
  "fs-service",
  "infer",
+ "notify",
  "serde",
  "serde_json",
  "tauri",

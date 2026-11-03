@@ -4,9 +4,14 @@ import {
   BACKGROUND_TASK_DEFAULTS, BACKGROUND_TASKS, CACHE_LIMITS_MB,
   type BackgroundSettings, type BackgroundTaskKind, type CacheLimitMb, type CacheSettings,
 } from "./background";
-export type { BackgroundSettings, CacheLimitMb, CacheSettings };
+import {
+  defaultGallerySettings,
+  normalizeGallerySettings,
+  type GallerySettings,
+} from "./gallery";
+export type { BackgroundSettings, CacheLimitMb, CacheSettings, GallerySettings };
 
-export const SETTINGS_SCHEMA_VERSION = 12;
+export const SETTINGS_SCHEMA_VERSION = 13;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -266,6 +271,7 @@ export interface AppSettings {
   templates: TemplateSettings;
   background: BackgroundSettings;
   cache: CacheSettings;
+  gallery: GallerySettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -326,6 +332,7 @@ export function defaultSettings(): AppSettings {
     background: { enabled: true, only_idle: false, only_ac: false, paused: false,
       tasks: { ...BACKGROUND_TASK_DEFAULTS } },
     cache: { max_mb: 512 },
+    gallery: defaultGallerySettings(),
   };
 }
 
@@ -528,6 +535,7 @@ export function normalizeSettings(input: unknown): AppSettings {
     },
     background: normalizeBackground(input.background),
     cache: normalizeCache(input.cache),
+    gallery: normalizeGallerySettings(input.gallery),
   };
 }
 

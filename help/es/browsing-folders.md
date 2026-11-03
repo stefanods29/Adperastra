@@ -16,3 +16,4 @@ La pestaña del Explorador se abre en la página de Inicio. Desde ahí puedes ll
 - Un icono de enlace significa que el elemento es un acceso directo o un enlace a otro lugar.
 - Haz doble clic en un archivo para abrirlo en su app predeterminada de Windows. Los visores integrados llegarán en una versión posterior.
 - Para seleccionar, cambiar nombres o ver detalles, lee «Seleccionar archivos» y «El panel de detalles».
+- Abre **Galería** en el panel de navegación para ver imágenes de las carpetas que elijas. Consulta «La Galería».

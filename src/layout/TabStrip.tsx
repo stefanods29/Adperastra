@@ -142,7 +142,7 @@ export default function TabStrip({
       items={[
         { id: "help", label: t("help.title") },
         { id: "settings", label: t("settings.title") },
-        { id: "gallery", label: t("gallery.title") },
+        { id: "gallery", label: t("tabs.components") },
       ]}
       onSelect={(id) => onNewTab(id as "help" | "settings" | "gallery")}
     />

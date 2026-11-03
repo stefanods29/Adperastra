@@ -56,6 +56,14 @@ mod files;
 mod folder_views;
 mod font_helper;
 mod font_view;
+mod gallery;
+mod gallery_order;
+mod gallery_pages;
+mod gallery_scan;
+mod gallery_sessions;
+mod gallery_source;
+mod gallery_types;
+mod gallery_watch;
 mod helper;
 mod jobs;
 mod links;
@@ -81,7 +89,7 @@ mod transfer_history;
 mod versions;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 12;
+pub const CURRENT_SCHEMA: u32 = 13;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -578,6 +586,8 @@ pub struct Settings {
     pub background: background::BackgroundSettings,
     #[serde(default)]
     pub cache: background::CacheSettings,
+    #[serde(default)]
+    pub gallery: gallery_types::GallerySettings,
 }
 
 impl Default for Settings {
@@ -595,6 +605,7 @@ impl Default for Settings {
             templates: TemplateSettings::default(),
             background: background::BackgroundSettings::default(),
             cache: background::CacheSettings::default(),
+            gallery: gallery_types::GallerySettings::default(),
         }
     }
 }
@@ -776,6 +787,8 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             ))
         })?;
     }
+    gallery_types::validate_gallery_settings(&settings.gallery)
+        .map_err(|code| AppError::Validation(format!("gallery settings: {code}")))?;
     if !matches!(settings.files.paste_image_format.as_str(), "png" | "jpg") {
         return Err(AppError::Validation(format!(
             "unsupported paste_image_format {:?} (expected png or jpg)",
@@ -933,6 +946,7 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         templates: TemplateSettings::default(),
         background: background::BackgroundSettings::default(),
         cache: background::CacheSettings::default(),
+        gallery: gallery_types::GallerySettings::default(),
     }
 }
 
@@ -1003,9 +1017,8 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
-            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) | Some(11) => {
-                Ok(migrate_keep_known(value.clone()))
-            }
+            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) | Some(11)
+            | Some(12) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -3017,6 +3030,7 @@ fn main() {
         .manage(archive::ArchiveSessions::default())
         .manage(archive_passwords::ArchivePasswords::default())
         .manage(data_views::DataSessions::default())
+        .manage(gallery::GallerySessions::default())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -3151,6 +3165,11 @@ fn main() {
             data_views::json_close,
             font_view::font_info_start,
             font_view::font_install,
+            gallery::gallery_start,
+            gallery::gallery_page,
+            gallery::gallery_close,
+            gallery::gallery_active,
+            gallery::gallery_pick_source,
             cache_stamp::file_identity,
             cache::cache_usage,
             cache::cache_clear,
@@ -3228,10 +3247,42 @@ mod tests {
     }
 
     #[test]
+    fn settings_v12_migrates_to_v13_keeping_language_theme_and_background() {
+        let json = serde_json::json!({
+            "schema_version": 12,
+            "language": "es",
+            "theme": { "mode": "dark" },
+            "background": { "enabled": false, "paused": true },
+            "cache": { "max_mb": 256 }
+        });
+        let settings = migrate(json).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(!settings.background.enabled);
+        assert_eq!(settings.cache.max_mb, 256);
+        assert!(settings.gallery.sources.is_empty());
+        assert_eq!(settings.gallery.date_source, "taken");
+    }
+
+    #[test]
+    fn settings_validate_rejects_more_than_32_gallery_sources() {
+        let mut settings = Settings::default();
+        for index in 0..33u32 {
+            settings.gallery.sources.push(gallery_types::GallerySource {
+                id: format!("00000000-0000-4000-8000-{index:012}"),
+                path: format!("C:\\Pictures\\set{index}"),
+                recursive: true,
+            });
+        }
+        assert!(validate(&settings).is_err());
+    }
+
+    #[test]
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 12);
+        assert_eq!(settings.schema_version, 13);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");

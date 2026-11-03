@@ -74,4 +74,9 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
   Fixed the module tree, Arc service injection, duplicate locale block, inert restore and
   clippy findings. Final full gate passed: 584 Rust tests in 51 binaries, 608 UI tests in
   111 files, IPC and translations clean. One 06f JSON test now carries its own 15 s budget
-  because the 600-test suite exceeds the 5 s default under load. Ready to commit.
+  because the 600-test suite exceeds the 5 s default under load. Committed as `0b0880a`.
+- 2026-11-03: 07c Gallery files and shared wiring applied (schema 13, five commands, grid,
+  sources, settings persistence, help/locales). Fixed the missing module declaration, the
+  non-existent fs-service ID call, callback ordering, and two wrong fixture paths in the
+  submitted tests. Final full gate passed: 614 Rust tests in 51 binaries, 639 UI tests in
+  114 files, IPC and translations clean. Ready to commit.

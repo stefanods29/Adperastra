@@ -23,6 +23,7 @@ import {
   FolderInput,
   FolderOpen,
   FolderOutput,
+  FolderMinus,
   FolderPlus,
   FolderSearch,
   Grid2x2,
@@ -116,6 +117,9 @@ export interface ExplorerActions {
   forward: () => void;
   up: () => void;
   refresh: () => void;
+  /** Step 07c: the Gallery's source controls. */
+  galleryAddFolder: () => void;
+  galleryRemoveFolder: () => void;
   openSelected: () => void;
   /** Step 07b: Space on the focused file. */
   quickPreview: () => void;
@@ -265,6 +269,25 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       helpSlug: "browsing-folders",
       enabledWhen: (ctx) => ctx.location === "folder" || ctx.location === "home" || ctx.location === "drives",
       run: () => actions.refresh(),
+    },
+    {
+      id: "gallery.addFolder",
+      labelKey: "gallery.addFolder",
+      icon: FolderPlus,
+      risk: "change",
+      helpSlug: "the-gallery",
+      enabledWhen: (ctx) => ctx.location === "gallery",
+      run: () => actions.galleryAddFolder(),
+    },
+    {
+      id: "gallery.removeFolder",
+      labelKey: "gallery.removeFolder",
+      icon: FolderMinus,
+      risk: "change",
+      helpSlug: "the-gallery",
+      enabledWhen: (ctx) =>
+        ctx.location === "gallery" && ctx.gallerySourceSelected === true,
+      run: () => actions.galleryRemoveFolder(),
     },
     {
       id: "explorer.open",

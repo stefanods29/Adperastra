@@ -5,7 +5,8 @@
     "newTab": "New tab",
     "close": "Close tab",
     "collapse": "Show only icons",
-    "expand": "Show names"
+    "expand": "Show names",
+    "components": "Components"
   },
   "window": {
     "minimize": "Minimize",
@@ -52,7 +53,6 @@
     "driveStillLoading": "Still loading...",
     "driveNotAvailable": "Drive not available",
     "drivesTitle": "This PC",
-    "galleryPlaceholder": "Gallery arrives in a later step.",
     "networkPlaceholder": "Network browsing is not available yet.",
     "favoritesEmpty": "No favorites yet. Right-click a file or folder and choose Add to favorites.",
     "recentEmpty": "No recent items yet.",
@@ -278,6 +278,19 @@
   },
   "gallery": {
     "title": "Gallery",
+    "addFolder": "Add picture folder…",
+    "removeFolder": "Remove folder from Gallery",
+    "sources": "Picture folders",
+    "empty": "Choose a folder to see its pictures here.",
+    "noPictures": "No pictures were found in these folders.",
+    "recursive": "Include subfolders",
+    "dateSource": "Group pictures by",
+    "taken": "Date taken",
+    "modified": "Date modified",
+    "undated": "No date",
+    "partial": "Some pictures could not be listed.",
+    "skipped": "{count, plural, one {# item was skipped.} other {# items were skipped.}}",
+    "loading": "Looking for pictures…",
     "devBadge": "Dev",
     "buttons": "Buttons",
     "primaryAction": "Primary action",
@@ -704,6 +717,13 @@
       "other": "The preview cache couldn't be used.",
       "bad_request": "This cache request is not valid.",
       "unavailable": "The preview cache is not available."
+    },
+    "gallery": {
+      "bad_request": "These Gallery folders are not valid.",
+      "too_many": "Gallery can use up to 32 folders.",
+      "changed": "Gallery changed. Refresh to continue.",
+      "unavailable": "These pictures could not be listed.",
+      "other": "These Gallery folders could not be saved."
     },
     "metadata": {
       "bad_request": "This details request is not valid.",

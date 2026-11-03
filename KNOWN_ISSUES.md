@@ -223,6 +223,12 @@ that fixed it.
 
 ## Fixed
 
+### KI-093 - Incoming Gallery handoff did not compile against the integrated baseline (Major, fixed during 07c integration)
+- **Found in:** first `cargo check` and full gate of the received 07c handoff, 2026-11-03; never accepted into the local baseline in this state.
+- **Cause:** the scan referenced a `gallery_source` module that was not declared, called a non-existent `fs_service::list_dir_with_ids_cancellable`, used Gallery callbacks before their declarations, and two submitted tests named different fixture paths than the list they created. The command metadata test also rejected the guide's documented `gallery.*` label keys.
+- **Fix:** declared the canonical module, used the existing ID-aware `list_dir_cancellable`, moved the callbacks before the stable actions memo, corrected the two expected paths without changing behavior, and allowed the documented Gallery label prefix in the command metadata test. The translation linter false positive and test-only aria-label templates were also rewritten.
+- **Verification:** the 45 focused Gallery/settings tests pass, and the full gate result is recorded in the step report.
+
 ### KI-092 - Incoming quick preview and metadata handoff needed safety wiring (Major, fixed during 07b integration)
 - **Found in:** static review and integration tests of the received 07b handoff, 2026-11-02; never accepted into the local baseline in this state.
 - **Cause:** the submitted files were module fragments with a different managed-state shape, the metadata commands/helper dispatch were not registered, one locale block was inserted at the wrong level and hid the detail labels, and the modal restored `inert` to its previous `undefined` instead of `false`.

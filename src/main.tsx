@@ -25,6 +25,7 @@ import "./styles/templates.css";
 import "./styles/table-view.css";
 import "./styles/font-view.css";
 import "./styles/json-view.css";
+import "./styles/gallery.css";
 
 const container = document.getElementById("root");
 if (!container) {

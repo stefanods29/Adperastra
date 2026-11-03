@@ -96,7 +96,7 @@ export default function App() {
   const [showKeyTips, setShowKeyTips] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const maximizeRef = useRef<HTMLButtonElement | null>(null);
-  const [explorerStats, setExplorerStats] = useState<ExplorerStats>({ total: 0, selected: 0, selectedBytes: 0, selectedFiles: 0, viewMode: null });
+  const [explorerStats, setExplorerStats] = useState<ExplorerStats>({ total: 0, selected: 0, selectedBytes: 0, selectedFiles: 0, viewMode: null, helpSlug: "browsing-folders" });
   const readyRef = useRef(false);
   const tabsRef = useRef(tabsState);
   tabsRef.current = tabsState;
@@ -164,6 +164,17 @@ export default function App() {
       });
       // A rejected save leaves the current folder in memory and on screen.
       settingsRef.current = { ...settingsRef.current, templates: saved.templates };
+      setSettings(settingsRef.current);
+    },
+    [],
+  );
+  const onGallerySettingsChange = useCallback(
+    async (gallery: AppSettings["gallery"]) => {
+      const saved = await saveSettings({
+        ...settingsRef.current,
+        gallery,
+      });
+      settingsRef.current = { ...settingsRef.current, gallery: saved.gallery };
       setSettings(settingsRef.current);
     },
     [],
@@ -355,7 +366,13 @@ export default function App() {
         const state = tabsRef.current;
         const tab = state.tabs.find((entry) => entry.id === state.activeId);
         const handler = tab?.kind === "file" && tab.handler ? handlers.get(tab.handler) : undefined;
-        openTab("help", handler?.helpSlug ?? HELP_SLUGS[tab?.kind ?? "explorer"]);
+        const helpSlug =
+          tab?.kind === "file"
+            ? handler?.helpSlug
+            : tab?.kind === "explorer"
+              ? explorerStats.helpSlug
+              : HELP_SLUGS[tab?.kind ?? "explorer"];
+        openTab("help", helpSlug);
         return;
       }
       if ((event.ctrlKey || event.metaKey) && (event.key === "w" || event.key === "W")) {
@@ -375,7 +392,7 @@ export default function App() {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [closeTab, openTab]);
+  }, [closeTab, openTab, explorerStats.helpSlug]);
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
@@ -437,6 +454,7 @@ export default function App() {
     if (tab.kind === "help") return t("help.title");
     if (tab.kind === "settings") return t("settings.title");
     if (tab.kind === "file") return tab.title ?? t("tabs.file");
+    if (tab.kind === "gallery") return t("tabs.components");
     return t("gallery.title");
   };
   const TabIcon =
@@ -567,6 +585,8 @@ export default function App() {
             templatesFolder={settings.templates?.my_folder ?? ""}
             onTemplatesFolderChange={onTemplatesFolderChange}
             versionsEnabled={settings.versions.enabled}
+            gallery={settings.gallery}
+            onGallerySettingsChange={onGallerySettingsChange}
           />
         </div>
         {tabs

@@ -126,7 +126,8 @@ describe("explorer commands", () => {
       expect(ids).toContain(id);
     }
     for (const command of registry.list()) {
-      expect(command.labelKey).toMatch(/^commands\./);
+      // Gallery commands use their own `gallery.*` labels (Step 07c).
+      expect(command.labelKey).toMatch(/^(commands|gallery)\./);
       expect(command.icon).toBeDefined();
       expect(command.helpSlug).toMatch(/^[a-z-]+$/);
       expect(command.risk).toBeDefined();

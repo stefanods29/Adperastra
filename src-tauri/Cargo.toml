@@ -27,6 +27,8 @@ data-views = { path = "../crates/data-views" }
 ttf-parser = { version = "0.25", default-features = false, features = ["std"] }
 uuid = { version = "1", features = ["v4"] }
 blake3 = "1.8"
+# Gallery source watchers (Step 07c); same locked version as fs-service.
+notify = "8"
 windows-collections = "0.2"
 windows-core = "=0.61.2"
 windows = { version = "0.61", features = [
