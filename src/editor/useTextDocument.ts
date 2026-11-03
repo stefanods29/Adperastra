@@ -40,6 +40,7 @@ export interface TextDocumentOptions {
   /** The tab is visible. */
   active: boolean;
   protectedView: boolean;
+  previewOnly?: boolean;
   /** Parts mode and the current part (text viewer only). */
   paged: boolean;
   part: number;
@@ -95,7 +96,7 @@ async function fetchBytes(url: string, range?: { start: number; end: number }): 
 
 export function useTextDocument(options: TextDocumentOptions): TextDocumentResult {
   const { t } = useTranslation();
-  const { info, url, active, protectedView, paged, part, spellcheck, lang } = options;
+  const { info, url, active, protectedView, paged, part, spellcheck, lang, previewOnly = false } = options;
 
   const hostRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -133,7 +134,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   const [canRedo, setCanRedo] = useState(false);
 
   const readOnly: ReadOnlyReason | null =
-    !loaded || encoding === null
+    previewOnly ? "preview" : !loaded || encoding === null
       ? null
       : readOnlyReason({ paged, protectedView, readOnly: info.read_only, encoding });
   readOnlyRef.current = readOnly;
@@ -148,6 +149,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   }, []);
 
   const applyDirty = useCallback((next: boolean) => {
+    if (live.current.options.previewOnly) return;
     if (dirtyRef.current === next) return;
     dirtyRef.current = next;
     setDirty(next);
@@ -166,7 +168,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
 
   const keepDraft = useCallback(async () => {
     const view = viewRef.current;
-    if (!view || !dirtyRef.current) return;
+    if (live.current.options.previewOnly || !view || !dirtyRef.current) return;
     try {
       await writeDraft(live.current.options.info.path, view.state.doc.toString(), expectedRef.current.modified_unix);
     } catch (error) {
@@ -195,6 +197,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
       state: EditorState.create({
         doc: "",
         extensions: [
+          EditorState.transactionFilter.of(transaction => live.current.options.previewOnly && transaction.docChanged && transaction.annotation(Transaction.userEvent) !== "adp.load" ? [] : transaction),
           c.editable.of(readOnlyExtensions({ phrases: live.current.options.phrases })),
           c.spellcheck.of(spellcheckAttributes(false, "en")),
           ...(live.current.options.extensions ?? []),
@@ -266,7 +269,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
         loadedRef.current = true;
         setLoaded(true);
         applyDirty(false);
-        if (!paged) {
+        if (!paged && !live.current.options.previewOnly) {
           void readDraft(info.path)
             .then((found) => {
               if (cancelled || !found) return;
@@ -306,6 +309,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   }, [active, keepDraft]);
 
   const setSaveEncoding = (next: SaveEncodingId) => {
+    if (live.current.options.previewOnly) return;
     saveEncodingRef.current = next;
     setSaveEncodingState(next);
     const view = viewRef.current;
@@ -313,6 +317,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   };
 
   const setLineEnding = (next: LineEndingChoice) => {
+    if (live.current.options.previewOnly) return;
     lineEndingRef.current = next;
     setLineEndingState(next);
     const view = viewRef.current;
@@ -364,6 +369,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   };
 
   const performSave = async (force: boolean): Promise<boolean> => {
+    if (live.current.options.previewOnly) return false;
     const view = viewRef.current;
     if (!view) return false;
     const doc = view.state.doc;
@@ -385,7 +391,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
       savedEncodingRef.current = encoded.encoding;
       savedEndingRef.current = lineEndingRef.current;
       setExpectation({ modified_unix: result.modified_unix, size: result.size });
-      await deleteDraft(live.current.options.info.path).catch(() => undefined);
+      if (!live.current.options.previewOnly) await deleteDraft(live.current.options.info.path).catch(() => undefined);
       applyDirty(computeDirty(view.state));
       return true;
     } catch (error) {
@@ -422,7 +428,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
         const fresh = await fileDetect(live.current.options.info.path).catch(() => null);
         if (fresh) setExpectation({ modified_unix: fresh.modified_unix, size: fresh.size });
       }
-      await deleteDraft(live.current.options.info.path).catch(() => undefined);
+      if (!live.current.options.previewOnly) await deleteDraft(live.current.options.info.path).catch(() => undefined);
       applyDirty(false);
     } catch {
       setNotice(errorText(live.current.t, "textSave.other", "textSave"));
@@ -430,6 +436,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   };
 
   const resolveConflictNow = (choice: "overwrite" | "reload" | "cancel") => {
+    if (live.current.options.previewOnly) return;
     setConflict(false);
     const resolve = live.current.conflictResolve.current;
     live.current.conflictResolve.current = null;
@@ -446,7 +453,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   };
 
   const save = useCallback(async (): Promise<boolean> => {
-    if (!loadedRef.current || readOnlyRef.current !== null) return false;
+    if (live.current.options.previewOnly || !loadedRef.current || readOnlyRef.current !== null) return false;
     return performSave(false);
     // performSave and the refs above always read the latest state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -454,7 +461,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
 
   const saveAs = useCallback(async (): Promise<boolean> => {
     const view = viewRef.current;
-    if (!view || paged || !loadedRef.current) return false;
+    if (live.current.options.previewOnly || !view || paged || !loadedRef.current) return false;
     const doc = view.state.doc;
     const current = encodingRef.current;
     const chosen = await pickSavePath(
@@ -496,7 +503,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
       savedEncodingRef.current = encoding;
       savedEndingRef.current = lineEndingRef.current;
       setExpectation({ modified_unix: result.modified_unix, size: result.size });
-      await deleteDraft(live.current.options.info.path).catch(() => undefined);
+      if (!live.current.options.previewOnly) await deleteDraft(live.current.options.info.path).catch(() => undefined);
       if (result.path !== live.current.options.info.path) {
         live.current.options.onPathChange?.(result.path);
       }
@@ -510,6 +517,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   }, [paged]);
 
   const discard = useCallback(() => {
+    if (live.current.options.previewOnly) return;
     const view = viewRef.current;
     if (draftTimer.current !== null) window.clearTimeout(draftTimer.current);
     draftTimer.current = null;
@@ -528,6 +536,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
 
   useEffect(() => {
     const options = live.current.options;
+    if (options.previewOnly) return;
     options.registerSave?.({ save: stableSave, discard: stableDiscard });
     return () => {
       live.current.options.registerSave?.(null);
@@ -536,6 +545,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   }, [stableSave, stableDiscard]);
 
   const restoreDraft = () => {
+    if (live.current.options.previewOnly) return;
     const found = draft;
     const view = viewRef.current;
     if (!found || !view) return;
@@ -549,6 +559,7 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
   };
 
   const discardDraft = () => {
+    if (live.current.options.previewOnly) return;
     void deleteDraft(live.current.options.info.path).catch(() => undefined);
     setDraft(null);
   };
@@ -582,11 +593,11 @@ export function useTextDocument(options: TextDocumentOptions): TextDocumentResul
     canRedo,
     undo: () => {
       const view = viewRef.current;
-      if (view) undoCommand(view);
+      if (view && !live.current.options.previewOnly) undoCommand(view);
     },
     redo: () => {
       const view = viewRef.current;
-      if (view) redoCommand(view);
+      if (view && !live.current.options.previewOnly) redoCommand(view);
     },
   };
 }

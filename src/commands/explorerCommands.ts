@@ -117,6 +117,8 @@ export interface ExplorerActions {
   up: () => void;
   refresh: () => void;
   openSelected: () => void;
+  /** Step 07b: Space on the focused file. */
+  quickPreview: () => void;
   goToPath: (path: string) => void;
   togglePin: () => void;
   rename: () => void;
@@ -273,6 +275,30 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       helpSlug: "browsing-folders",
       enabledWhen: (ctx) => hasSelection(ctx) || ctx.selectedPath !== null,
       run: () => actions.openSelected(),
+    },
+    {
+      id: "explorer.quickPreview",
+      labelKey: "commands.quickPreview",
+      icon: Eye,
+      shortcut: "Space",
+      risk: "read-only",
+      helpSlug: "quick-preview",
+      enabledWhen: (ctx) =>
+        ctx.selection.count === 1 &&
+        ctx.selection.folders === 0 &&
+        (ctx.location === "folder" || ctx.location === "home"),
+      run: () => {
+        // The shortcut exists for menus and tooltips; it must never take
+        // Space away from a focused button, link or text field.
+        const active = document.activeElement;
+        if (
+          active instanceof HTMLElement &&
+          active.closest("button, a, input, textarea, select, [contenteditable='true']")
+        ) {
+          return;
+        }
+        actions.quickPreview();
+      },
     },
     {
       id: "explorer.goToPath",

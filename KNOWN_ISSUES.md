@@ -223,6 +223,12 @@ that fixed it.
 
 ## Fixed
 
+### KI-092 - Incoming quick preview and metadata handoff needed safety wiring (Major, fixed during 07b integration)
+- **Found in:** static review and integration tests of the received 07b handoff, 2026-11-02; never accepted into the local baseline in this state.
+- **Cause:** the submitted files were module fragments with a different managed-state shape, the metadata commands/helper dispatch were not registered, one locale block was inserted at the wrong level and hid the detail labels, and the modal restored `inert` to its previous `undefined` instead of `false`.
+- **Fix:** declared the fragments under their canonical parent modules, injected the 07a `Arc` services directly, registered `metadata_read_start`/`metadata_release` and `preview_detect`/`preview_grant`/`preview_revoke` with the isolation allowlist, kept one top-level `metadata` label block plus `errors.metadata`, and restore the real boolean inert state. The dialog also keeps a named export for 07c.
+- **Verification:** the 45 focused 07b UI tests pass, including late-grant revocation, modal shortcut isolation, inert restoration, stale metadata responses and read-only guards; the full gate is recorded in the step report.
+
 ### KI-089 - Incoming preview cache could touch foreign files or exceed its physical budget (Blocker, fixed during 07a integration)
 - **Found in:** review and regression tests of the received 07a handoff, 2026-11-02; never accepted into the local baseline in this state.
 - **Cause:** content-only accounting, filename-based ownership, lookup-to-open and cleanup path races, coercion of corrupt index fields, and helper output written before storage admission.

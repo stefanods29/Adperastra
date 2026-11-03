@@ -70,4 +70,6 @@ Las imágenes locales pueden mostrar miniaturas. Consulta Miniaturas y vistas.
 - El cuadro de búsqueda busca solo en la carpeta abierta; en **Columnas**, es la columna con la selección azul.
 - Las vistas solo cambian cómo se ven los archivos. Elegir una vista nunca cambia tus archivos.
 
+Presiona **Espacio** en un archivo para ver una vista previa rápida. Consulta «Vista previa rápida».
+
 Consulta también: «Seleccionar archivos», «La barra de comandos» y «Explorar carpetas».

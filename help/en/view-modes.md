@@ -68,4 +68,6 @@ In **Settings** > **Views**:
 - The search box looks in the open folder only; in **Columns**, that is the column with the blue selection.
 - Views only change how files look. Choosing a view never changes your files.
 
+Press **Space** on a file to see a quick preview. See “Quick preview”.
+
 See also: "Selecting files", "The command bar" and "Browsing folders".

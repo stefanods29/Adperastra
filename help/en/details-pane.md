@@ -14,4 +14,4 @@ Click **Details** at the right end of the command bar, choose **View** > **Detai
 
 The first facts appear as soon as you click; the dates and attributes follow a moment later. Adperastra reads them without opening the file, so a file stored online only is never downloaded just to show its details.
 
-Previews and richer information (photo and media details, for example) arrive in a later version.
+Picture, music, video and document details appear in the pane. See “File details” for what it shows and “Quick preview” for a look inside a file without opening it.

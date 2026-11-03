@@ -359,6 +359,7 @@
     "up": "Up",
     "refresh": "Refresh",
     "open": "Open",
+    "quickPreview": "Quick preview",
     "goToPath": "Go to path",
     "pinUnpin": "Pin or unpin this folder",
     "pinFolder": "Pin folder",
@@ -442,6 +443,35 @@
     "newPresentation": "Presentation",
     "newFromTemplate": "From template…",
     "versionHistory": "Version history…"
+  },
+  "preview": {
+    "previous": "Previous file",
+    "next": "Next file",
+    "open": "Open",
+    "readOnly": "Preview only",
+    "unavailable": "No preview is available for this file.",
+    "onlineOnly": "Open this online-only file to download it.",
+    "loading": "Preparing preview…"
+  },
+  "metadata": {
+    "width": "Width",
+    "height": "Height",
+    "orientation": "Orientation",
+    "dateTaken": "Date taken",
+    "cameraMake": "Camera manufacturer",
+    "cameraModel": "Camera model",
+    "duration": "Duration",
+    "codec": "Video codec",
+    "frameRate": "Frame rate",
+    "title": "Title",
+    "artist": "Artist",
+    "album": "Album",
+    "author": "Author",
+    "pages": "Pages",
+    "words": "Words",
+    "partial": "Some details are not available.",
+    "pixels": "{count} px",
+    "fps": "{count} fps"
   },
   "errors": {
     "archive": {
@@ -674,6 +704,13 @@
       "other": "The preview cache couldn't be used.",
       "bad_request": "This cache request is not valid.",
       "unavailable": "The preview cache is not available."
+    },
+    "metadata": {
+      "bad_request": "This details request is not valid.",
+      "changed": "The file changed. Select it again.",
+      "too_large": "These details are too large to display.",
+      "failed": "These file details could not be read.",
+      "other": "These file details could not be read."
     }
   },
   "keys": {

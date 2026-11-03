@@ -59,7 +59,7 @@ async function loadSubtitle(path: string): Promise<string> {
 /** Audio and video player (Step 04c): the webview's own player and its
  * controls, plus a ribbon for play, loop, speed and subtitles. It keeps
  * playing while another tab is shown. */
-export default function MediaView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp }: HandlerViewProps) {
+export default function MediaView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, previewOnly = false }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const video = isVideo(info);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
@@ -96,14 +96,21 @@ export default function MediaView({ info, url, active, savedState, onStateChange
   // The player gets the keyboard when it is first ready (Space plays).
   const focused = useRef(false);
   useEffect(() => {
-    if (!ready || !active || focused.current) return;
+    if (previewOnly || !ready || !active || focused.current) return;
     focused.current = true;
     mediaRef.current?.focus({ preventScroll: true });
-  }, [ready, active]);
+  }, [ready, active, previewOnly]);
+
+  useEffect(() => {
+    if (!previewOnly) return;
+    if (!active) mediaRef.current?.pause();
+    const media = mediaRef.current;
+    return () => media?.pause();
+  }, [previewOnly, active, url]);
 
   // Subtitle files next to a video.
   useEffect(() => {
-    if (!video || !isTauriRuntime()) return;
+    if (previewOnly || !video || !isTauriRuntime()) return;
     let cancelled = false;
     mediaSidecars(info.path)
       .then((paths) => {
@@ -113,7 +120,7 @@ export default function MediaView({ info, url, active, savedState, onStateChange
     return () => {
       cancelled = true;
     };
-  }, [video, info.path]);
+  }, [video, info.path, previewOnly]);
 
   // Load the chosen subtitle file.
   useEffect(() => {

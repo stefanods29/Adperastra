@@ -82,6 +82,7 @@ export default function MarkdownView({
   onOpenInWindowsApp,
   find,
   protectedView,
+  previewOnly = false,
   onDirtyChange,
   registerSave,
   onPathChange,
@@ -137,6 +138,7 @@ export default function MarkdownView({
     url,
     active,
     protectedView,
+    previewOnly,
     paged: false,
     part: 0,
     extensions: [languageCompartment.current.of([]), lineNumbers(), EditorView.lineWrapping],
@@ -268,7 +270,7 @@ export default function MarkdownView({
     ready: doc.encoding !== null,
     editable,
     dirty,
-    canSaveAs: true,
+    canSaveAs: !previewOnly,
     canUndo: doc.canUndo,
     canRedo: doc.canRedo,
     spellcheck: settings.spellcheck,
@@ -276,8 +278,8 @@ export default function MarkdownView({
   const commands = useMemo<Command<MarkdownCtx>[]>(
     () => [
       { id: "markdown.save", labelKey: "editor.save", icon: Save, shortcut: "Ctrl+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.dirty, run: () => void doc.save() },
-      { id: "markdown.saveAs", labelKey: "editor.saveAs", icon: SaveAll, shortcut: "Ctrl+Shift+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.ready, run: () => void doc.saveAs() },
-      { id: "markdown.versionHistory", labelKey: "commands.versionHistory", icon: History, risk: "read-only", helpSlug: "version-history", enabledWhen: () => true, run: () => setShowHistory(true) },
+      { id: "markdown.saveAs", labelKey: "editor.saveAs", icon: SaveAll, shortcut: "Ctrl+Shift+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.ready && c.canSaveAs, run: () => void doc.saveAs() },
+      { id: "markdown.versionHistory", labelKey: "commands.versionHistory", icon: History, risk: "read-only", helpSlug: "version-history", enabledWhen: () => !previewOnly, run: () => { if (!previewOnly) setShowHistory(true); } },
       { id: "markdown.undo", labelKey: "editor.undoHint", icon: Undo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canUndo, run: () => doc.undo() },
       { id: "markdown.redo", labelKey: "editor.redoHint", icon: Redo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canRedo, run: () => doc.redo() },
       { id: "markdown.spellcheck", labelKey: "editor.spellcheck", icon: SpellCheck, risk: "read-only", helpSlug: "editing-text-and-code", checkKind: "toggle", checkedWhen: (c) => c.spellcheck, enabledWhen: () => true, run: (c) => update({ spellcheck: !c.spellcheck }) },
@@ -297,7 +299,9 @@ export default function MarkdownView({
   const note =
     readOnly === null
       ? null
-      : readOnly === "protected"
+      : readOnly === "preview"
+        ? t("preview.readOnly")
+        : readOnly === "protected"
         ? t("editor.readOnlyProtected")
         : readOnly === "attribute"
           ? t("editor.readOnlyAttribute")

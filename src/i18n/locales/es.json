@@ -359,6 +359,7 @@
     "up": "Subir",
     "refresh": "Actualizar",
     "open": "Abrir",
+    "quickPreview": "Vista previa rápida",
     "goToPath": "Ir a la ruta",
     "pinUnpin": "Anclar o desanclar esta carpeta",
     "pinFolder": "Anclar carpeta",
@@ -442,6 +443,35 @@
     "newPresentation": "Presentación",
     "newFromTemplate": "Desde plantilla…",
     "versionHistory": "Historial de versiones…"
+  },
+  "preview": {
+    "previous": "Archivo anterior",
+    "next": "Archivo siguiente",
+    "open": "Abrir",
+    "readOnly": "Solo vista previa",
+    "unavailable": "No hay una vista previa disponible para este archivo.",
+    "onlineOnly": "Abre este archivo solo en línea para descargarlo.",
+    "loading": "Preparando la vista previa…"
+  },
+  "metadata": {
+    "width": "Ancho",
+    "height": "Alto",
+    "orientation": "Orientación",
+    "dateTaken": "Fecha de captura",
+    "cameraMake": "Fabricante de la cámara",
+    "cameraModel": "Modelo de cámara",
+    "duration": "Duración",
+    "codec": "Códec de video",
+    "frameRate": "Fotogramas por segundo",
+    "title": "Título",
+    "artist": "Artista",
+    "album": "Álbum",
+    "author": "Autor",
+    "pages": "Páginas",
+    "words": "Palabras",
+    "partial": "Algunos detalles no están disponibles.",
+    "pixels": "{count} px",
+    "fps": "{count} fps"
   },
   "errors": {
     "archive": {
@@ -674,6 +704,13 @@
       "other": "No se pudo usar la caché de vistas previas.",
       "bad_request": "La solicitud de caché no es válida.",
       "unavailable": "La caché de vistas previas no está disponible."
+    },
+    "metadata": {
+      "bad_request": "La solicitud de detalles no es válida.",
+      "changed": "El archivo cambió. Vuelve a seleccionarlo.",
+      "too_large": "Estos detalles son demasiado extensos para mostrarlos.",
+      "failed": "No se pudieron leer los detalles del archivo.",
+      "other": "No se pudieron leer los detalles del archivo."
     }
   },
   "keys": {

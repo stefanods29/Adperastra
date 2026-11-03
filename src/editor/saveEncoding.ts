@@ -29,7 +29,7 @@ export const SAVE_ENCODING_LABELS: Record<SaveEncodingId, string> = {
 
 export type LineEndingChoice = "crlf" | "lf";
 
-export type ReadOnlyReason = "large" | "protected" | "attribute" | "encoding";
+export type ReadOnlyReason = "large" | "protected" | "attribute" | "encoding" | "preview";
 
 const UNSAVABLE: readonly EncodingName[] = ["shift_jis", "gbk", "big5", "euc-kr"];
 const SINGLE_BYTE: readonly SaveEncodingId[] = [

@@ -7,6 +7,8 @@ import "./styles/appearance.css";
 import "./styles/global.css";
 import "./styles/components.css";
 import "./styles/thumbnails.css";
+import "./styles/preview.css";
+import "./styles/metadata.css";
 import "./styles/views.css";
 import "./styles/columns.css";
 import "./styles/filetabs.css";

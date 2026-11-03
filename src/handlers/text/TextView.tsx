@@ -75,6 +75,7 @@ export default function TextView({
   onOpenInWindowsApp,
   find,
   protectedView,
+  previewOnly = false,
   onDirtyChange,
   registerSave,
   onPathChange,
@@ -104,6 +105,7 @@ export default function TextView({
     url,
     active,
     protectedView,
+    previewOnly,
     paged,
     part,
     extensions: [
@@ -197,7 +199,7 @@ export default function TextView({
     parts,
     editable,
     dirty,
-    canSaveAs: !paged,
+    canSaveAs: !paged && !previewOnly,
     canUndo: doc.canUndo,
     canRedo: doc.canRedo,
     spellcheck: settings.spellcheck,
@@ -208,7 +210,7 @@ export default function TextView({
     () => [
       { id: "text.save", labelKey: "editor.save", icon: Save, shortcut: "Ctrl+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.dirty, run: () => void doc.save() },
       { id: "text.saveAs", labelKey: "editor.saveAs", icon: SaveAll, shortcut: "Ctrl+Shift+S", risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.canSaveAs && c.ready, run: () => void doc.saveAs() },
-      { id: "text.versionHistory", labelKey: "commands.versionHistory", icon: History, risk: "read-only", helpSlug: "version-history", enabledWhen: (c) => !c.paged, run: () => setShowHistory(true) },
+      { id: "text.versionHistory", labelKey: "commands.versionHistory", icon: History, risk: "read-only", helpSlug: "version-history", enabledWhen: (c) => !c.paged && !previewOnly, run: () => { if (!previewOnly) setShowHistory(true); } },
       { id: "text.undo", labelKey: "editor.undoHint", icon: Undo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canUndo, run: () => doc.undo() },
       { id: "text.redo", labelKey: "editor.redoHint", icon: Redo2, risk: "change", helpSlug: "editing-text-and-code", enabledWhen: (c) => c.editable && c.canRedo, run: () => doc.redo() },
       { id: "text.spellcheck", labelKey: "editor.spellcheck", icon: SpellCheck, risk: "read-only", helpSlug: "editing-text-and-code", checkKind: "toggle", checkedWhen: (c) => c.spellcheck, enabledWhen: () => true, run: (c) => update({ spellcheck: !c.spellcheck }) },
@@ -229,7 +231,9 @@ export default function TextView({
   const note =
     paged || readOnly === null
       ? null
-      : readOnly === "protected"
+      : readOnly === "preview"
+        ? t("preview.readOnly")
+        : readOnly === "protected"
         ? t("editor.readOnlyProtected")
         : readOnly === "attribute"
           ? t("editor.readOnlyAttribute")

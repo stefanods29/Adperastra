@@ -60,6 +60,16 @@ mod helper;
 mod jobs;
 mod links;
 mod media;
+mod metadata;
+mod metadata_cache;
+mod metadata_helper;
+mod metadata_jobs;
+mod metadata_preview;
+mod metadata_properties;
+mod metadata_providers;
+mod metadata_source;
+mod metadata_types;
+mod metadata_windows;
 mod operation_safety;
 mod recovery;
 mod settings_file;
@@ -2952,6 +2962,11 @@ fn main() {
     if std::env::args().nth(1).as_deref() == Some(thumbnail_helper::HELPER_FLAG) {
         std::process::exit(thumbnail_helper::run_helper());
     }
+    // The metadata helper (Step 07b) reads the fixed Windows property
+    // allowlist in its own memory-limited process.
+    if std::env::args().nth(1).as_deref() == Some(metadata_helper::HELPER_FLAG) {
+        std::process::exit(metadata_helper::run_helper());
+    }
     #[cfg(windows)]
     if std::env::args().nth(1).as_deref() == Some(clipboard_image_helper::HELPER_FLAG) {
         std::process::exit(clipboard_image_helper::run(
@@ -3144,6 +3159,11 @@ fn main() {
             thumbnails::thumbnail_request_start,
             thumbnails::thumbnail_lookup,
             thumbnails::thumbnail_release,
+            metadata_jobs::metadata_read_start,
+            metadata_jobs::metadata_release,
+            metadata_preview::preview_detect,
+            metadata_preview::preview_grant,
+            metadata_preview::preview_revoke,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Adperastra");

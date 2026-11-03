@@ -54,6 +54,7 @@ export default function FontView({
   onStatus,
   onOpenInWindowsApp,
   protectedView,
+  previewOnly = false,
 }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const [sample, setSample] = useState(() => readSaved(savedState).sample ?? t("font.sample"));
@@ -167,6 +168,7 @@ export default function FontView({
   );
 
   const install = useCallback(async () => {
+    if (previewOnly) return;
     setInstallError(null);
     try {
       const started = await fontInstall(info.path);
@@ -175,11 +177,11 @@ export default function FontView({
     } catch (error) {
       setInstallError(errorText(t, error, "font"));
     }
-  }, [info.path, t]);
+  }, [info.path, t, previewOnly]);
 
   const ctx: FontCtx = {
     installable,
-    canInstall: installable && !protectedView,
+    canInstall: installable && !protectedView && !previewOnly,
     protectedView,
   };
   const commands = useMemo<Command<FontCtx>[]>(

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../../components/Button";
 import HelpButton from "../../components/HelpButton";
+import MetadataFacts from "../../metadata/MetadataFacts";
 import { itemDetails, parentPathOf, type ExplorerItem, type ItemDetails } from "../../services/explorer";
 import { formatDate, formatSize } from "../../services/format";
 import { displayName } from "../../services/names";
@@ -19,9 +20,11 @@ export interface DetailsPaneProps {
   showExtensions: boolean;
   typeLabel: (item: ExplorerItem) => string;
   onCopyPath: (path: string) => void;
-  onOpenHelp: () => void;
+  onOpenHelp: (slug?: string) => void;
   /** Open the Version history of one file (Step 06b). */
   onShowHistory?: (path: string) => void;
+  /** The normal open pipeline, for the pane preview (Step 07b). */
+  onOpen?: (item: ExplorerItem) => void;
   /** Where the layout puts the pane (Step 05c). */
   placement?: "right" | "bottom";
 }
@@ -118,6 +121,12 @@ export default function DetailsPane(props: DetailsPaneProps) {
           <dt>{t("explorer.details.attributes")}</dt>
           <dd>{later(attributes)}</dd>
         </dl>
+        <MetadataFacts
+          item={single}
+          variant="details"
+          onOpen={props.onOpen}
+          onOpenHelp={(slug) => props.onOpenHelp(slug)}
+        />
         {single.kind !== "folder" && props.onShowHistory ? (
           <Button variant="subtle" onClick={() => props.onShowHistory?.(single.path)}>
             {t("commands.versionHistory")}

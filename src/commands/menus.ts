@@ -92,6 +92,7 @@ export const ITEM_MENU: MenuEntry[] = [
   { type: "iconRow", ids: ["explorer.cut", "explorer.copy", "explorer.rename", "explorer.share", "explorer.delete"] },
   separator,
   cmd("explorer.open"),
+  cmd("explorer.quickPreview"),
   cmd("explorer.openInWindowsApp"),
   cmd("explorer.openWith"),
   { type: "submenu", id: "openAs", labelKey: "commands.openAs", icon: FileCode, entries: [cmd("explorer.openAsText"), cmd("explorer.openAsHex")] },

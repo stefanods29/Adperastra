@@ -120,6 +120,8 @@ import { fileExtension } from "./explorer/fileTile";
 import HomePage, { type HomeTab } from "./explorer/HomePage";
 import NavPane from "./explorer/NavPane";
 import ItemView from "./explorer/views/ItemView";
+import QuickPreviewDialog from "../preview/QuickPreviewDialog";
+import { useQuickPreview } from "../preview/useQuickPreview";
 import type { ColumnViewOptions } from "./explorer/views/columnTrail";
 import { useColumnNavigation } from "./explorer/views/useColumnNavigation";
 import { useViewMode } from "./explorer/views/useViewMode";
@@ -297,6 +299,11 @@ export default function ExplorerHome({
   const [partialCount, setPartialCount] = useState(0);
   const [skeletonVisible, setSkeletonVisible] = useState(false);
   const [selection, setSelection] = useState<SelectionState>(EMPTY_SELECTION);
+  const {
+    preview: quickPreviewSelection,
+    toggle: toggleQuickPreview,
+    close: closeQuickPreview,
+  } = useQuickPreview();
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [compressRequest, setCompressRequest] = useState<{ sources: string[]; folder: string } | null>(
     null,
@@ -519,8 +526,8 @@ export default function ExplorerHome({
 
   // Actions read the latest state through this ref, so the command list
   // (and every menu built from it) stays stable between renders.
-  const live = useRef({ location, orderPaths, selectedPaths, itemByPath, stateData, sortKey, sortDirection, view, allFavorites, menu });
-  live.current = { location, orderPaths, selectedPaths, itemByPath, stateData, sortKey, sortDirection, view, allFavorites, menu };
+  const live = useRef({ location, orderPaths, selectedPaths, itemByPath, stateData, sortKey, sortDirection, view, allFavorites, menu, listItems, focusedPath: selection.focus });
+  live.current = { location, orderPaths, selectedPaths, itemByPath, stateData, sortKey, sortDirection, view, allFavorites, menu, listItems, focusedPath: selection.focus };
 
   const openOne = useCallback(
     (item: ExplorerItem, background = false) => {
@@ -990,6 +997,11 @@ export default function ExplorerHome({
         for (const item of files.slice(0, OPEN_LIMIT)) openOne(item);
         if (files.length > OPEN_LIMIT) notify(t("explorer.openedFirst", { count: OPEN_LIMIT }));
       },
+      quickPreview: () => {
+        const { focusedPath, itemByPath: byPath, listItems: list } = live.current;
+        const item = focusedPath !== null ? byPath.get(focusedPath) : undefined;
+        if (item && item.kind === "file") toggleQuickPreview(item, list);
+      },
       goToPath: (path: string) => {
         const trimmed = path.trim();
         if (!trimmed) return;
@@ -1210,7 +1222,7 @@ export default function ExplorerHome({
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [archive, archiveCreate, goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat],
+    [archive, archiveCreate, goToFolder, goToLocation, i18n, notify, notifyError, onOpenFileWith, onViewChange, openOne, refresh, t, pasteImageFormat, toggleQuickPreview],
   );
 
   const commands = useMemo(() => createExplorerCommands(actions), [actions]);
@@ -1867,6 +1879,7 @@ export default function ExplorerHome({
     onOpenInBackground: (item: ExplorerItem) => openOne(item, true),
     onContextMenu: openContextMenu,
     onCommandKey: runById,
+    onPreview: (item: ExplorerItem) => toggleQuickPreview(item, listItems),
     onItemMouseDown: (event: ReactMouseEvent, item: ExplorerItem) => {
       if (event.button !== 0) return;
       const selected = live.current.selectedPaths;
@@ -1979,7 +1992,8 @@ export default function ExplorerHome({
             .then(() => notify(t("toast.pathsCopied", { count: 1 })))
             .catch(() => notify(t("errors.copyPath.other")));
         }}
-        onOpenHelp={() => onOpenHelp("details-pane")}
+        onOpenHelp={(slug) => onOpenHelp(slug ?? "details-pane")}
+        onOpen={(item) => openOne(item)}
         onShowHistory={(path) => {
           const item = live.current.itemByPath.get(path);
           if (item && item.kind !== "folder") setHistoryFor(item);
@@ -2080,6 +2094,17 @@ export default function ExplorerHome({
           {layout.details_pane_position === "right" ? detailsPane("right") : null}
         </div>
       </ToolbarDock>
+      {quickPreviewSelection ? (
+        <QuickPreviewDialog
+          selection={quickPreviewSelection}
+          onClose={closeQuickPreview}
+          onOpen={async (path) => {
+            const item = live.current.itemByPath.get(path);
+            if (item) openOne(item);
+          }}
+          onOpenHelp={onOpenHelp}
+        />
+      ) : null}
       {conflictAsk ? (
         <ConflictDialog
           name={conflictAsk.name}

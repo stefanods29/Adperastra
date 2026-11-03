@@ -68,6 +68,10 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
 
 ## Status log
 
-- 2026-11-02: 07a implementation applied on `codex/integrate-handoffs`. Full gate passed:
-  523 Rust tests in 51 binaries, 563 UI tests in 104 files, IPC and translations clean.
-  Fixed one late-lease leak in the thumbnail service found by the UI suite. Ready to commit.
+- 2026-11-02: 07a integrated and committed (`ee65156`): 523 Rust tests in 51 binaries,
+  563 UI tests in 104 files; fixed a late-lease leak in the thumbnail service.
+- 2026-11-02: 07b files, read-only guards, five commands and the metadata helper wired.
+  Fixed the module tree, Arc service injection, duplicate locale block, inert restore and
+  clippy findings. Final full gate passed: 584 Rust tests in 51 binaries, 608 UI tests in
+  111 files, IPC and translations clean. One 06f JSON test now carries its own 15 s budget
+  because the 600-test suite exceeds the 5 s default under load. Ready to commit.

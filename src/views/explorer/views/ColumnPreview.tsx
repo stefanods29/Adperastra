@@ -1,6 +1,7 @@
 import { Cloud } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Button from "../../../components/Button";
+import MetadataFacts from "../../../metadata/MetadataFacts";
 import type { ExplorerItem } from "../../../services/explorer";
 import { formatDate, formatSize } from "../../../services/format";
 import { displayName } from "../../../services/names";
@@ -36,6 +37,7 @@ export default function ColumnPreview({ item, width, showExtensions, typeLabel, 
         <dt>{t("explorer.details.modified")}</dt>
         <dd>{item.modified_unix > 0 ? formatDate(item.modified_unix, i18n.language) : ""}</dd>
       </dl>
+      <MetadataFacts item={item} variant="column" onOpen={onOpen} />
       {item.online_only ? (
         <span className="adp-colview-preview-cloud">
           <Cloud size={12} aria-hidden="true" />

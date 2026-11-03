@@ -359,6 +359,7 @@
     "up": "[Üp ~~]",
     "refresh": "[Rëfrësh ~~~]",
     "open": "[Øpëñ ~~]",
+    "quickPreview": "[Qüïçk prëvïëw ~~~~~]",
     "goToPath": "[Gø tø päth ~~~~]",
     "pinUnpin": "[Pïñ ør üñpïñ thïs føldër ~~~~~~~~]",
     "pinFolder": "[Pïñ føldër ~~~~]",
@@ -442,6 +443,35 @@
     "newPresentation": "[Prësëñtätïøñ ~~~~~]",
     "newFromTemplate": "[Frøm tëmplätë… ~~~~~]",
     "versionHistory": "[Vërsïøñ hïstørÿ… ~~~~~~]"
+  },
+  "preview": {
+    "previous": "[Prëvïøüs fïlë ~~~~~]",
+    "next": "[Ñëxt fïlë ~~~~]",
+    "open": "[Øpëñ ~~]",
+    "readOnly": "[Prëvïëw øñlÿ ~~~~~]",
+    "unavailable": "[Ñø prëvïëw ïs äväïläblë før thïs fïlë. ~~~~~~~~~~~~~]",
+    "onlineOnly": "[Øpëñ thïs øñlïñë-øñlÿ fïlë tø døwñløäd ït. ~~~~~~~~~~~~~~]",
+    "loading": "[Prëpärïñg prëvïëw… ~~~~~~~]"
+  },
+  "metadata": {
+    "width": "[Wïdth ~~]",
+    "height": "[Hëïght ~~~]",
+    "orientation": "[Ørïëñtätïøñ ~~~~~]",
+    "dateTaken": "[Dätë täkëñ ~~~~]",
+    "cameraMake": "[Çämërä mäñüfäçtürër ~~~~~~~~]",
+    "cameraModel": "[Çämërä mødël ~~~~~]",
+    "duration": "[Dürätïøñ ~~~~]",
+    "codec": "[Vïdëø çødëç ~~~~]",
+    "frameRate": "[Främë rätë ~~~~]",
+    "title": "[Tïtlë ~~]",
+    "artist": "[Ärtïst ~~~]",
+    "album": "[Älbüm ~~]",
+    "author": "[Äüthør ~~~]",
+    "pages": "[Pägës ~~]",
+    "words": "[Wørds ~~]",
+    "partial": "[Sømë dëtäïls ärë ñøt äväïläblë. ~~~~~~~~~~~]",
+    "pixels": "[{count} px ~~]",
+    "fps": "[{count} fps ~~]"
   },
   "errors": {
     "archive": {
@@ -674,6 +704,13 @@
       "other": "[Thë prëvïëw çäçhë çøüldñ't bë üsëd. ~~~~~~~~~~~~]",
       "bad_request": "[Thïs çäçhë rëqüëst ïs ñøt välïd. ~~~~~~~~~~~]",
       "unavailable": "[Thë prëvïëw çäçhë ïs ñøt äväïläblë. ~~~~~~~~~~~~]"
+    },
+    "metadata": {
+      "bad_request": "[Thïs dëtäïls rëqüëst ïs ñøt välïd. ~~~~~~~~~~~~]",
+      "changed": "[Thë fïlë çhäñgëd. Sëlëçt ït ägäïñ. ~~~~~~~~~~~]",
+      "too_large": "[Thësë dëtäïls ärë tøø lärgë tø dïspläÿ. ~~~~~~~~~~~~~]",
+      "failed": "[Thësë fïlë dëtäïls çøüld ñøt bë rëäd. ~~~~~~~~~~~~]",
+      "other": "[Thësë fïlë dëtäïls çøüld ñøt bë rëäd. ~~~~~~~~~~~~]"
     }
   },
   "keys": {

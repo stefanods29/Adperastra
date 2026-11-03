@@ -173,6 +173,8 @@ describe("json view", () => {
     expect(rowWith("list")?.getAttribute("aria-expanded")).toBe("false");
   });
 
+  // The 2,500-child page is slow when the whole 600-test suite shares the
+  // machine; keep the assertions and give this one its real budget.
   it("Show more loads the next page", async () => {
     vi.mocked(jsonOpen).mockResolvedValue(
       handle({ ...summary, root: node({ id: 0, kind: "array", child_count: 2_500 }) }),
@@ -187,7 +189,7 @@ describe("json view", () => {
     await act(async () => more?.click());
     await flush();
     expect(vi.mocked(jsonChildren)).toHaveBeenLastCalledWith("s1", 0, 1_000, 1_000);
-  });
+  }, 15_000);
 
   it("find expands to the match", async () => {
     await render();

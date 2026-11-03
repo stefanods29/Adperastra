@@ -45,6 +45,9 @@ export interface ItemViewProps {
   /** Keys that run registry commands (Enter, F2, Alt+Enter, ...); the
    * point says where a keyboard-opened menu should appear. */
   onCommandKey: (commandId: string, point?: { x: number; y: number }) => void;
+  /** Space on a focused file: open the read-only quick preview (Step 07b).
+   * The view never calls Rust itself and never changes selection here. */
+  onPreview?: (item: ExplorerItem) => void;
   /** Mouse-down on a row, for starting a drag (Step 03b). */
   onItemMouseDown?: (event: ReactMouseEvent, item: ExplorerItem) => void;
   onFirstPaint?: () => void;
@@ -219,6 +222,15 @@ export function useItemInteractions(props: ItemViewProps, options: InteractionOp
       const state = typeAhead.current;
       if (event.key === " " && (state.buffer === "" || now - state.at > TYPE_AHEAD_RESET_MS)) {
         event.preventDefault();
+        const focusedIndex =
+          selection.focus !== null ? options.order.indexOf(selection.focus) : -1;
+        const focusedItem =
+          focusedIndex >= 0 ? options.orderItems[focusedIndex] : undefined;
+        if (props.onPreview && focusedItem && focusedItem.kind === "file") {
+          // Space opens the preview; the row stays selected and focused.
+          props.onPreview(focusedItem);
+          return;
+        }
         if (selection.focus !== null && !selection.selected.has(selection.focus)) {
           props.onSelectionChange(toggleFocused(selection));
         }

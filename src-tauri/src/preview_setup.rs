@@ -3,7 +3,10 @@
 use std::sync::Arc;
 use tauri::{App, AppHandle, Manager};
 
-use crate::{background, background_queue, background_windows, cache, files, thumbnail_jobs};
+use crate::{
+    background, background_queue, background_windows, cache, files, metadata_jobs,
+    metadata_preview, thumbnail_jobs,
+};
 use crate::{AppState, Settings};
 
 pub fn initialize(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
@@ -23,6 +26,7 @@ pub fn initialize(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     ));
     scheduler.set_policy(Arc::downgrade(&policy));
     policy.register(background::BackgroundTaskKind::Thumbnails, true)?;
+    metadata_jobs::register_background(&policy)?;
     let grants = Arc::clone(app.state::<Arc<files::FileGrants>>().inner());
     let cache = Arc::new(cache::CacheService::new(data_dir, grants));
     cache.set_limit_bytes(settings.cache.limit_bytes());
@@ -31,10 +35,17 @@ pub fn initialize(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&policy),
         Arc::clone(&scheduler),
     ));
+    let metadata = Arc::new(metadata_jobs::MetadataService::new(
+        Arc::clone(&cache),
+        Arc::clone(&policy),
+        Arc::clone(&scheduler),
+    ));
     app.manage(scheduler);
     app.manage(policy);
     app.manage(cache);
     app.manage(thumbnails);
+    app.manage(metadata);
+    app.manage(Arc::new(metadata_preview::PreviewGrants::default()));
     Ok(())
 }
 
