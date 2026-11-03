@@ -91,4 +91,8 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
 - 2026-11-03: 07e OCR integrated with both missing adapters, schema 14 and the image/PDF
   commands. Final full gate passed: 722 Rust tests in 51 binaries, 692 UI tests in 123 files,
   IPC and translations clean. KI-096 (image/PDF OCR Find routing and the PDF word overlay) is
-  fixed in the follow-up; the final gate for that fix is running before 07e is called complete.
+  fixed in the follow-up and the final gate passed (722 Rust/692 UI tests).
+- 2026-11-03: 07e is complete locally. 07f inventoried but not started: its handoff declares
+  twelve producer/API gaps (book WebView main-thread start, grant cloning, foliate parser
+  surface, mail-parser accessors, SQLite table discovery and others). The reconciliation plan
+  is in `docs/integration/step07f-plan.md`; the tree stays at the green 07e boundary.
