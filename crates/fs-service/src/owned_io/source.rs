@@ -63,6 +63,16 @@ pub struct PinnedSource {
 }
 
 impl PinnedSource {
+    /// Retain an exclusively owned app-created file without reopening its path.
+    /// The owner must cease writes before constructing the immutable backing.
+    pub fn from_owned_file(file: File) -> OwnedIoResult<Self> {
+        if is_reparse(&file)? {
+            return Err(OwnedIoError::ReparseRefused);
+        }
+        let identity = SourceIdentity::of(&file)?;
+        Ok(Self { file, identity })
+    }
+
     /// Open the exact file that was enumerated. A different file at the
     /// same path is refused as `source_changed`.
     pub fn open(path: &Path, expected: &SourceIdentity) -> OwnedIoResult<Self> {

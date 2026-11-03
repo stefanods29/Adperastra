@@ -37,6 +37,19 @@ mod cache_leases;
 mod cache_stamp;
 mod classic_menu;
 mod clipboard;
+mod conversion_settings;
+use conversion_settings::ConversionSettings;
+pub mod convert;
+mod convert_helper;
+mod convert_jobs;
+mod convert_publish;
+mod convert_reports;
+mod export_snapshot_types;
+pub mod export_snapshots;
+mod export_upload;
+mod pdf_export_snapshot_resolver;
+pub mod snapshot_authorities;
+
 mod preview_setup;
 mod psd_raster;
 mod raw_helper;
@@ -138,7 +151,7 @@ mod webview_helper_types;
 mod webview_private;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 15;
+pub const CURRENT_SCHEMA: u32 = 16;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -641,6 +654,8 @@ pub struct Settings {
     pub ocr: ocr_types::OcrSettings,
     #[serde(default)]
     pub reading: book_settings::ReadingSettings,
+    #[serde(default)]
+    pub conversion: ConversionSettings,
 }
 
 impl Default for Settings {
@@ -661,6 +676,7 @@ impl Default for Settings {
             gallery: gallery_types::GallerySettings::default(),
             ocr: ocr_types::OcrSettings::default(),
             reading: book_settings::ReadingSettings::default(),
+            conversion: ConversionSettings::default(),
         }
     }
 }
@@ -733,6 +749,25 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
         .validate()
         .map_err(AppError::Validation)?;
     settings.cache.validate().map_err(AppError::Validation)?;
+    if !matches!(
+        settings.conversion.default_destination.as_str(),
+        "source" | "ask"
+    ) {
+        return Err(AppError::Validation(format!(
+            "unsupported conversion.default_destination {:?}",
+            settings.conversion.default_destination
+        )));
+    }
+    if !(1..=100).contains(&settings.conversion.default_quality) {
+        return Err(AppError::Validation(
+            "conversion.default_quality must be 1-100".to_string(),
+        ));
+    }
+    if !matches!(settings.conversion.concurrent_jobs, 1 | 2) {
+        return Err(AppError::Validation(
+            "conversion.concurrent_jobs must be 1 or 2".to_string(),
+        ));
+    }
     if settings.schema_version != CURRENT_SCHEMA {
         return Err(AppError::Validation(format!(
             "unsupported schema_version {} (expected {CURRENT_SCHEMA})",
@@ -1008,6 +1043,7 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         gallery: gallery_types::GallerySettings::default(),
         ocr: ocr_types::OcrSettings::default(),
         reading: book_settings::ReadingSettings::default(),
+        conversion: ConversionSettings::default(),
     }
 }
 
@@ -1079,7 +1115,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                 }
             }
             Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) | Some(11)
-            | Some(12) | Some(13) | Some(14) => Ok(migrate_keep_known(value.clone())),
+            | Some(12) | Some(13) | Some(14) | Some(15) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -3040,6 +3076,9 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     Ok(())
 }
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some(convert_helper::HELPER_FLAG) {
+        std::process::exit(convert_helper::run_helper());
+    }
     if std::env::args().nth(1).as_deref() == Some(raw_helper::HELPER_FLAG) {
         std::process::exit(raw_helper::run_helper());
     }
@@ -3113,6 +3152,19 @@ fn main() {
     let initial_settings = load_settings(&data_dir);
     let pdf_resolvers = std::sync::Arc::new(pdf_snapshot_resolver::PdfSnapshotResolvers::new());
     let pdf_sessions = pdf_sessions::PdfSessions::new(std::sync::Arc::clone(&pdf_resolvers));
+    let export_snapshots = Arc::new(
+        export_snapshots::ExportSnapshots::new(data_dir.join("export-input"))
+            .expect("initialize export snapshots"),
+    );
+    export_snapshots.cleanup_expired();
+    export_snapshots::ExportSnapshots::start_cleanup(&export_snapshots);
+    pdf_resolvers
+        .register(Arc::new(
+            pdf_export_snapshot_resolver::NativePdfSnapshotResolver::new(Arc::clone(
+                &export_snapshots,
+            )),
+        ))
+        .expect("register snapshot resolver");
     tauri::Builder::default()
         .manage(AppState {
             data_dir,
@@ -3131,6 +3183,9 @@ fn main() {
         .manage(archive_passwords::ArchivePasswords::default())
         .manage(data_views::DataSessions::default())
         .manage(gallery::GallerySessions::default())
+        .manage(export_snapshots)
+        .manage(convert_jobs::ConvertGate::default())
+        .manage(convert_reports::ConversionReports::default())
         .manage(pdf_resolvers)
         .manage(pdf_sessions)
         .manage(ocr::OcrService::new())
@@ -3187,6 +3242,16 @@ fn main() {
         })
         .manage(special_view_session::SpecialViews::default())
         .invoke_handler(tauri::generate_handler![
+            convert_jobs::convert_start,
+            convert_jobs::convert_preview_start,
+            convert_jobs::convert_report_page,
+            export_snapshots::export_snapshot_authorize_file,
+            export_snapshots::export_snapshot_authorize_new,
+            export_snapshots::export_snapshot_begin,
+            export_snapshots::export_snapshot_finish,
+            export_snapshots::export_snapshot_release,
+            export_snapshots::export_snapshot_abort,
+            export_snapshots::export_snapshot_authority_release,
             special_views::special_view_open_start,
             special_views::special_view_scene,
             special_views::special_view_raw_start,
@@ -3425,7 +3490,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 15);
+        assert_eq!(settings.schema_version, 16);
         assert_eq!(settings.reading, book_settings::ReadingSettings::default());
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");

@@ -1,4 +1,4 @@
-import { ArrowUp, FileQuestion, RotateCw, ShieldAlert, X } from "lucide-react";
+import { ArrowUp, Repeat2, FileQuestion, RotateCw, ShieldAlert, X } from "lucide-react";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Breadcrumb from "../components/Breadcrumb";
@@ -12,7 +12,7 @@ import Slider from "../components/Slider";
 import Switch from "../components/Switch";
 import TextInput from "../components/TextInput";
 import { handlers } from "../handlers";
-import type { FileTabStatus, FindRequest, SaveHandle } from "../handlers/types";
+import type { FileTabStatus, FindRequest, SaveHandle, ExportHandle } from "../handlers/types";
 import type { ArchiveExtractRequest } from "../services/archive";
 import { errorCode, errorText } from "../services/errors";
 import { displayPath, openItem, parentPathOf, pathSegments } from "../services/explorer";
@@ -21,6 +21,7 @@ import { isTauriRuntime } from "../services/settings";
 import type { TabState } from "../services/tabs";
 
 export interface FileTabViewProps {
+  onConvert?: (request: Omit<import("../convert/types").ConversionOpenRequest, "nonce">) => void;
   tab: TabState;
   active: boolean;
   /** Show the file in the Explorer tab (folder opened, file selected). */
@@ -76,10 +77,13 @@ export default function FileTabView({
   onConfirmDiscard,
   onOpenFile,
   onExtractArchive,
+  onConvert,
   onOpenAsText,
   ocrLanguage,
 }: FileTabViewProps) {
   const { t } = useTranslation();
+  const exportHandle = useRef<ExportHandle | null>(null);
+  const registerExport = useCallback((handle: ExportHandle | null) => { exportHandle.current = handle; }, []);
   const path = tab.path ?? "";
   const handler = tab.handler ? handlers.get(tab.handler) : undefined;
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
@@ -211,6 +215,19 @@ export default function FileTabView({
       <div className="adp-filetab-nav">
         <IconButton icon={ArrowUp} labelKey="fileTab.showInFolder" shortcut="Alt+Up" onClick={() => onShowInFolder(path)} />
         <IconButton icon={RotateCw} labelKey="fileTab.reload" shortcut="F5" onClick={() => void reload()} />
+        {handler?.id === "image" && phase.kind === "ready" && onConvert ? (
+          <IconButton icon={Repeat2} labelKey="commands.convertTo" onClick={() => {
+            const handle = exportHandle.current;
+            if (!handle) {
+              if (!isDirty) onConvert({ inputs: [{ kind: "file", path }], release: async () => undefined });
+              return;
+            }
+            void handle.capture().then((snapshot) => onConvert({
+              inputs: [{ kind: "snapshot", snapshot_id: snapshot.snapshot_id, document_id: snapshot.document_id, revision: snapshot.revision }],
+              release: async () => { await handle.dispose?.(snapshot.snapshot_id); },
+            })).catch((error: unknown) => setPhase({ kind: "error", message: errorText(t, error, "snapshot") }));
+          }} />
+        ) : null}
         <div className="adp-filetab-address">
           <Breadcrumb segments={segments} onNavigate={(id) => (id ? onOpenFolder(id) : undefined)} />
         </div>
@@ -320,6 +337,7 @@ export default function FileTabView({
               find={viewFind}
               protectedView={protectedView}
               onDirtyChange={onDirtyChange}
+              registerExport={registerExport}
               registerSave={registerSave}
               onPathChange={onPathChange}
               onOpenFile={onOpenFile}

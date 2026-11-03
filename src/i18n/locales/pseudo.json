@@ -365,7 +365,8 @@
     "extracted": "[Ëxträçtëd {name} ~~~~]",
     "extractedMany": "[{count, plural, one {Ëxträçtëd # ärçhïvë} other {Ëxträçtëd # ärçhïvës}} ~~~~~~~]",
     "versionRestored": "[Rëstørëd ä vërsïøñ øf {name} ~~~~~~~~]",
-    "archiveCreated": "[Çrëätëd {name} ~~~]"
+    "archiveCreated": "[Çrëätëd {name} ~~~]",
+    "converted": "[{count, plural, one {Çøñvërtëd # fïlë} other {Çøñvërtëd # fïlës}} ~~~~~~]"
   },
   "commands": {
     "back": "[Bäçk ~~]",
@@ -456,7 +457,8 @@
     "newSpreadsheet": "[Sprëädshëët ~~~~~]",
     "newPresentation": "[Prësëñtätïøñ ~~~~~]",
     "newFromTemplate": "[Frøm tëmplätë… ~~~~~]",
-    "versionHistory": "[Vërsïøñ hïstørÿ… ~~~~~~]"
+    "versionHistory": "[Vërsïøñ hïstørÿ… ~~~~~~]",
+    "convertTo": "[Çøñvërt tø… ~~~~]"
   },
   "preview": {
     "previous": "[Prëvïøüs fïlë ~~~~~]",
@@ -779,6 +781,25 @@
       "corrupt": "[Thïs prëvïëw çøüld ñøt bë rëäd. ~~~~~~~~~~]",
       "unavailable": "[Thïs prëvïëw ïs ñøt äväïläblë. ~~~~~~~~~~]",
       "other": "[Thïs prëvïëw ïs ñøt äväïläblë. ~~~~~~~~~~]"
+    },
+    "convert": {
+      "other": "[Thïs fïlë çøüld ñøt bë çøñvërtëd. ~~~~~~~~~~~]",
+      "warning_required": "[Rëvïëw äñd äççëpt thë lïstëd çhäñgës bëførë çøñvërtïñg. ~~~~~~~~~~~~~~~~~~~]",
+      "bad_request": "[Thësë çøñvërsïøñ øptïøñs ärë ñøt välïd. ~~~~~~~~~~~~~~]",
+      "unsupported": "[Thïs çøñvërsïøñ ïs ñøt süppørtëd. ~~~~~~~~~~~~]",
+      "too_large": "[Thïs fïlë ëxçëëds thë çøñvërsïøñ lïmïts. ~~~~~~~~~~~~~~]",
+      "changed": "[Thë søürçë çhäñgëd. Trÿ ägäïñ. ~~~~~~~~~~]",
+      "metadata_loss": "[Rëvïëw thë mëtädätä çhäñgës bëførë çøñvërtïñg. ~~~~~~~~~~~~~~~~]",
+      "no_space": "[Thërë ïs ñøt ëñøügh späçë før thïs çøñvërsïøñ. ~~~~~~~~~~~~~~~~]",
+      "cancelled": "[Çøñvërsïøñ wäs çäñçëllëd. ~~~~~~~~~]",
+      "io": "[Thïs fïlë çøüld ñøt bë çøñvërtëd. ~~~~~~~~~~~]",
+      "version_failed": "[Ä vërsïøñ çøüld ñøt bë këpt. Thë fïlë wäs ñøt çhäñgëd. ~~~~~~~~~~~~~~~~~]"
+    },
+    "snapshot": {
+      "other": "[Thïs ëxpørt sñäpshøt ïs ñøt välïd. ~~~~~~~~~~~~]",
+      "bad_request": "[Thïs ëxpørt sñäpshøt ïs ñøt välïd. ~~~~~~~~~~~~]",
+      "too_large": "[Thësë üñsävëd çhäñgës ärë tøø lärgë tø ëxpørt. ~~~~~~~~~~~~~~~~]",
+      "changed": "[Thë døçümëñt çhäñgëd. Çäptürë ït ägäïñ. ~~~~~~~~~~~~~]"
     }
   },
   "keys": {
@@ -821,7 +842,8 @@
     "done": "[Døñë ~~]",
     "cancelled": "[Çäñçëllëd ~~~~]",
     "extracting": "[{count, plural, one {Ëxträçtïñg # ärçhïvë} other {Ëxträçtïñg # ärçhïvës}} ~~~~~~~~]",
-    "compressing": "[{count, plural, one {Çrëätïñg # ärçhïvë} other {Çrëätïñg # ärçhïvës}} ~~~~~~~]"
+    "compressing": "[{count, plural, one {Çrëätïñg # ärçhïvë} other {Çrëätïñg # ärçhïvës}} ~~~~~~~]",
+    "converting": "[{count, plural, one {Çøñvërtïñg # fïlë} other {Çøñvërtïñg # fïlës}} ~~~~~~]"
   },
   "dialogs": {
     "conflictTitle": "[Äñ ïtëm wïth thïs ñämë ïs älrëädÿ hërë ~~~~~~~~~~~~~]",
@@ -1421,5 +1443,35 @@
   "psd": {
     "layers": "[Läÿërs ~~~]",
     "noComposite": "[Thïs fïlë häs ñø rëädäblë çømpøsïtë prëvïëw. ~~~~~~~~~~~~~~~]"
+  },
+  "convert": {
+    "title": "[Qüïçk Çøñvërt ~~~~~]",
+    "format": "[Øütpüt førmät ~~~~~]",
+    "quality": "[Qüälïtÿ ~~~]",
+    "width": "[Wïdth ~~]",
+    "height": "[Hëïght ~~~]",
+    "keepAspect": "[Këëp prøpørtïøñs ~~~~~~]",
+    "allowUpscale": "[Älløw ëñlärgëmëñt ~~~~~~~]",
+    "original": "[Ørïgïñäl ~~~~]",
+    "preview": "[Prëvïëw ~~~]",
+    "destination": "[Øütpüt føldër ~~~~~]",
+    "chooseFolder": "[Çhøøsë føldër… ~~~~~]",
+    "keepOriginal": "[Këëp ørïgïñäl ~~~~~]",
+    "keepMetadata": "[Këëp mëtädätä ~~~~~]",
+    "action": "[Çøñvërt ~~~]",
+    "retry": "[Rëtrÿ fäïlëd fïlës ~~~~~~~]",
+    "preparing": "[Prëpärïñg prëvïëw… ~~~~~~~]",
+    "estimate": "[Ëstïmätëd sïzë: {size} ~~~~~~]",
+    "metadataLoss": "[Sømë mëtädätä çäññøt bë këpt ïñ thïs førmät. ~~~~~~~~~~~~~~~]",
+    "transparencyLoss": "[Träñspärëñçÿ wïll bë rëpläçëd wïth thë çhøsëñ bäçkgrøüñd. ~~~~~~~~~~~~~~~~~~~~]",
+    "paletteReduction": "[Çølørs wïll bë rëdüçëd tø äñ ïñdëxëd pälëttë. ~~~~~~~~~~~~~~~]",
+    "layoutLoss": "[Sømë døçümëñt läÿøüt çäññøt bë këpt. ~~~~~~~~~~~~]",
+    "formulaCachedValue": "[Førmülä rësülts üsë sävëd välüës wïthøüt rëçälçülätïøñ. ~~~~~~~~~~~~~~~~~~~~]",
+    "formulaSafetyPrefix": "[Pøtëñtïällÿ äçtïvë tëxt çëlls wïll rëçëïvë ä säfëtÿ prëfïx. ~~~~~~~~~~~~~~~~~~~~]",
+    "sheetSelection": "[Øñlÿ thë sëlëçtëd wørkshëët wïll bë çøñvërtëd. ~~~~~~~~~~~~~~~~]",
+    "firstFrame": "[Øñlÿ thë fïrst främë wïll bë çøñvërtëd. ~~~~~~~~~~~~~]",
+    "lossAccepted": "[Ï äççëpt thë lïstëd çhäñgës. ~~~~~~~~~~]",
+    "replaceUnavailable": "[Çhøøsë ä ñëw fïlë ñämë. Rëpläçïñg fïlës ïs ñøt äväïläblë ÿët. ~~~~~~~~~~~~~~~~~~~~]",
+    "undoUnavailable": "[Çøñvërsïøñ Üñdø ïs üñäväïläblë üñtïl ëxäçt fïlë rëçøvërÿ ïs süppørtëd. ~~~~~~~~~~~~~~~~~~~~~~~~]"
   }
 }

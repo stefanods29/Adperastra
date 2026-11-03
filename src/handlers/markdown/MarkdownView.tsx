@@ -1,3 +1,4 @@
+import { useTextExport } from "../../convert/useTextExport";
 import { Compartment } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { BookOpen, Code, Columns2, History, Redo2, Save, SaveAll, Scan, SpellCheck, Undo2, ZoomIn, ZoomOut } from "lucide-react";
@@ -85,6 +86,7 @@ export default function MarkdownView({
   previewOnly = false,
   onDirtyChange,
   registerSave,
+  registerExport,
   onPathChange,
   onOpenFile,
 }: HandlerViewProps) {
@@ -150,6 +152,7 @@ export default function MarkdownView({
     onPathChange,
     onTextChange,
   });
+  useTextExport(url, doc.viewRef, !previewOnly && !doc.failed, registerExport);
   const { viewRef, readOnly, dirty } = doc;
   const editable = readOnly === null;
 

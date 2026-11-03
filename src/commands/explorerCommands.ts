@@ -43,6 +43,7 @@ import {
   Pin,
   Presentation,
   Redo2,
+  Repeat2,
   RefreshCw,
   Rows3,
   Ruler,
@@ -137,6 +138,7 @@ export interface ExplorerActions {
   extractArchives: (mode: ExtractMode) => void;
   /** Open the Compress to… window for the live selection (Step 06e). */
   compressTo: () => void;
+  convertSelection?: () => void;
   copyPath: () => void;
   toggleFavorite: () => void;
   showInFolder: () => void;
@@ -595,6 +597,16 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       visibleWhen: archivesOnly,
       enabledWhen: archivesOnly,
       run: () => actions.extractArchives("to"),
+    },
+    {
+      id: "explorer.convertTo",
+      labelKey: "commands.convertTo",
+      icon: Repeat2,
+      risk: "change",
+      helpSlug: "converting-files",
+      visibleWhen: (ctx) => ctx.selection.count > 0 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.count > 0 && ctx.selection.folders === 0,
+      run: () => actions.convertSelection?.(),
     },
     {
       id: "explorer.compressTo",

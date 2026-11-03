@@ -1,3 +1,4 @@
+import type { ConversionOpenRequest } from "./convert/types";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -91,6 +92,7 @@ export default function App() {
   const { tabs, activeId } = tabsState;
   const [navigateRequest, setNavigateRequest] = useState<ExplorerNavigateRequest | null>(null);
   const [viewModeRequest, setViewModeRequest] = useState<ExplorerViewModeRequest | null>(null);
+  const [conversionRequest, setConversionRequest] = useState<ConversionOpenRequest | null>(null);
   const [extractRequest, setExtractRequest] = useState<ExplorerExtractRequest | null>(null);
   const [helpSlug, setHelpSlug] = useState("getting-started");
   const [showKeyTips, setShowKeyTips] = useState(false);
@@ -579,6 +581,7 @@ export default function App() {
             navigateRequest={navigateRequest}
             viewModeRequest={viewModeRequest}
             extractRequest={extractRequest}
+            conversionRequest={conversionRequest}
             view={settings.explorer}
             onViewChange={onViewChange}
             pasteImageFormat={settings.files?.paste_image_format ?? "png"}
@@ -614,6 +617,10 @@ export default function App() {
               ocrLanguage={settings.ocr.language}
               onOpenFile={(path) => openFile(path, false)}
               onExtractArchive={extractArchive}
+              onConvert={(request) => {
+                setConversionRequest((previous) => ({ ...request, nonce: (previous?.nonce ?? 0) + 1 }));
+                setTabsState((current) => activateTab(current, "explorer"));
+              }}
               onOpenAsText={() => openFileWith(tab.path ?? "", "text")}
             />
           ))}

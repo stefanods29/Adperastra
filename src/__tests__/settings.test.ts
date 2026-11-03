@@ -38,6 +38,7 @@ describe("normalizeSettings", () => {
       gallery: defaultSettings().gallery,
       ocr: defaultSettings().ocr,
       reading: defaultSettings().reading,
+      conversion: defaultSettings().conversion,
     });
   });
 
@@ -59,7 +60,7 @@ describe("normalizeSettings", () => {
       column_preview: true,
     });
     expect(normalizeSettings({ explorer: { group_by: "type" } }).explorer.group_by).toBe("type");
-    expect(defaultSettings().schema_version).toBe(15);
+    expect(defaultSettings().schema_version).toBe(16);
     expect(defaultSettings().versions).toEqual({ enabled: true, keep_days: 30, max_mb: 1024 });
     expect(defaultSettings().templates).toEqual({ my_folder: "" });
     expect(defaultSettings().files.paste_image_format).toBe("png");

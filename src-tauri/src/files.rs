@@ -427,6 +427,14 @@ pub fn protocol(
         responder.respond(empty(StatusCode::FORBIDDEN));
         return;
     }
+    if request
+        .uri()
+        .path()
+        .starts_with(crate::export_upload::UPLOAD_PATH_PREFIX)
+    {
+        crate::export_upload::protocol(ctx, request, responder);
+        return;
+    }
     let app = ctx.app_handle().clone();
     let method = request.method().clone();
     let request_name = request

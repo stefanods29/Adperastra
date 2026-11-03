@@ -1,3 +1,6 @@
+import QuickConvertDialog from "../convert/QuickConvertDialog";
+import { ConversionProvider } from "../convert/ConversionContext";
+import type { ConversionInput } from "../convert/types";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { supportedLanguages } from "../i18n";
@@ -157,6 +160,7 @@ export interface ExplorerViewModeRequest {
 }
 
 export interface ExplorerHomeProps {
+  conversionRequest?: import("../convert/types").ConversionOpenRequest | null;
   /** False while another tab is shown: shortcuts and drops are ignored. */
   active?: boolean;
   onStatsChange?: (stats: ExplorerStats) => void;
@@ -269,6 +273,7 @@ export default function ExplorerHome({
   onViewChange,
   pasteImageFormat = "png",
   extractRequest = null,
+  conversionRequest = null,
   templatesFolder = "",
   onTemplatesFolderChange,
   versionsEnabled = true,
@@ -328,6 +333,13 @@ export default function ExplorerHome({
   const [busyNote, setBusyNote] = useState<string | null>(null);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   // File operations (Step 03b): undo stack, jobs, and dialogs.
+  const conversionRelease = useRef<(() => Promise<void>) | null>(null);
+  useEffect(() => {
+    if (!conversionRequest) return;
+    conversionRelease.current = conversionRequest.release;
+    setConversionInputs(conversionRequest.inputs);
+  }, [conversionRequest]);
+  const [conversionInputs, setConversionInputs] = useState<ConversionInput[] | null>(null);
   const undoStack = useRef(new UndoStack());
   const [, setUndoVersion] = useState(0);
   const toastEntryRef = useRef(new Map<number, number>());
@@ -1106,6 +1118,10 @@ export default function ExplorerHome({
       },
       extractArchives: (mode) => {
         void archive.extractItems(live.current.selectedPaths, mode);
+      },
+      convertSelection: () => {
+        if (!isTauriRuntime()) return;
+        setConversionInputs(live.current.selectedPaths.filter((path) => live.current.itemByPath.get(path)?.kind === "file").map((path) => ({ kind: "file", path })));
       },
       compressTo: () => {
         const current = live.current.location;
@@ -2282,6 +2298,11 @@ export default function ExplorerHome({
         onDismiss={(id) => setToasts((list) => list.filter((toast) => toast.id !== id))}
         onUndo={undoFromToast}
       />
+      {conversionInputs && conversionInputs.length > 0 ? (
+        <ConversionProvider value={{ trackJob, notify, notifyAction, notifyError, undoStack: undoStack.current, touchUndo, currentFolder: () => live.current.location.type === "folder" ? live.current.location.path : null, showResult }}>
+          <QuickConvertDialog inputs={conversionInputs} onClose={() => { setConversionInputs(null); const release = conversionRelease.current; conversionRelease.current = null; void release?.(); }} onCompleted={() => refresh()} onOpenHelp={onOpenHelp} />
+        </ConversionProvider>
+      ) : null}
       {archivePrompts.dialog}
       {compressRequest ? (
         <CompressDialog

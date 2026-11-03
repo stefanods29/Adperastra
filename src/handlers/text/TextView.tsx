@@ -1,3 +1,4 @@
+import { useTextExport } from "../../convert/useTextExport";
 import { Compartment } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { ChevronLeft, ChevronRight, Hash, History, Redo2, Save, SaveAll, Scan, SpellCheck, Undo2, WrapText, ZoomIn, ZoomOut } from "lucide-react";
@@ -78,6 +79,7 @@ export default function TextView({
   previewOnly = false,
   onDirtyChange,
   registerSave,
+  registerExport,
   onPathChange,
   onOpenFile,
 }: HandlerViewProps) {
@@ -125,6 +127,7 @@ export default function TextView({
     onPathChange,
   });
   const { viewRef, encoding, readOnly, dirty, cursor } = doc;
+  useTextExport(url, doc.viewRef, !previewOnly && !paged && !doc.failed, registerExport);
   const editable = readOnly === null;
 
   // Syntax colors, loaded once per file type.

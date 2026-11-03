@@ -13,6 +13,17 @@
       // before encrypting/sending, so a throw means nothing reaches Core.
       (function () {
         var ALLOWED = new Set([
+          'convert_start',
+          'convert_preview_start',
+          'convert_report_page',
+          'export_snapshot_authorize_file',
+          'export_snapshot_authorize_new',
+          'export_snapshot_begin',
+          'export_snapshot_finish',
+          'export_snapshot_release',
+          'export_snapshot_abort',
+          'export_snapshot_authority_release',
+
           'special_view_open_start', 'special_view_scene', 'special_view_raw_start', 'special_view_layers', 'special_view_close',
           'get_settings', 'set_maximize_rect',
           'save_settings',

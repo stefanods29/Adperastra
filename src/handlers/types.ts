@@ -44,7 +44,13 @@ export interface FindRequest {
   replace?: { text: string; request: number; all: boolean };
 }
 
+export interface ExportHandle {
+  capture: () => Promise<import("../services/exportSnapshots").ExportSnapshot>;
+  dispose?: (snapshotId: string) => Promise<void>;
+}
+
 export interface HandlerViewProps {
+  registerExport?: (handle: ExportHandle | null) => void;
   info: FileTypeInfo;
   /** Where the file's bytes are served (`fileUrl(token, name)`). */
   url: string;

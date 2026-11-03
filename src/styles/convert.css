@@ -1,0 +1,182 @@
+/* Quick Convert dialog and shared conversion queue (Step 08a T6).
+   Every color and radius comes from tokens.css. */
+
+.adp-convert-dialog {
+  width: 760px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+}
+
+.adp-convert-dialog .adp-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-5);
+  max-height: calc(100vh - 96px);
+  overflow: auto;
+}
+
+.adp-convert-format,
+.adp-convert-destination {
+  display: grid;
+  grid-template-columns: 128px 1fr auto;
+  align-items: center;
+  gap: var(--adp-space-3);
+}
+
+.adp-convert-format {
+  grid-template-columns: 128px minmax(160px, 240px) 1fr;
+}
+
+.adp-convert-label {
+  color: var(--adp-color-text-secondary);
+  font-size: 13px;
+}
+
+.adp-convert-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--adp-space-7);
+}
+
+.adp-convert-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  min-width: 0;
+}
+
+.adp-convert-pane-title {
+  color: var(--adp-color-text-secondary);
+  font-size: 13px;
+}
+
+.adp-convert-pane-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  min-width: 240px;
+  padding: var(--adp-space-3);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  overflow: hidden;
+}
+
+.adp-convert-image {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+
+.adp-convert-pane-name {
+  color: var(--adp-color-text-tertiary);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.adp-convert-pane-note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  color: var(--adp-color-text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.adp-convert-estimate {
+  color: var(--adp-color-text-tertiary);
+  font-size: 12px;
+}
+
+.adp-convert-warnings {
+  margin: 0;
+  padding-inline-start: var(--adp-space-5);
+  color: var(--adp-color-text-secondary);
+  font-size: 12px;
+}
+
+.adp-convert-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+}
+
+.adp-convert-row {
+  display: grid;
+  grid-template-columns: 128px 1fr;
+  align-items: center;
+  gap: var(--adp-space-3);
+}
+
+.adp-convert-number {
+  width: 120px;
+}
+
+.adp-convert-note {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: 12px;
+}
+
+.adp-convert-losses {
+  padding: var(--adp-space-3);
+  background: var(--adp-color-status-caution-background);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-convert-loss-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+  margin: var(--adp-space-2) 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.adp-convert-accept {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  margin-top: var(--adp-space-2);
+  font-size: 13px;
+}
+
+.adp-convert-batch {
+  max-height: 168px;
+  overflow: auto;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-convert-batch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-3);
+  height: 28px;
+  padding: 0 var(--adp-space-3);
+  font-size: 12px;
+}
+
+.adp-convert-batch-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-convert-batch-status {
+  color: var(--adp-color-text-tertiary);
+  white-space: nowrap;
+}
+
+.adp-convert-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+}
+
+.adp-convert-spacer {
+  flex: 1;
+}

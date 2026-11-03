@@ -365,7 +365,8 @@
     "extracted": "Se extrajo {name}",
     "extractedMany": "{count, plural, one {Se extrajo # archivo comprimido} other {Se extrajeron # archivos comprimidos}}",
     "versionRestored": "Se restauró una versión de {name}",
-    "archiveCreated": "Se creó {name}"
+    "archiveCreated": "Se creó {name}",
+    "converted": "{count, plural, one {Se convirtió # archivo} other {Se convirtieron # archivos}}"
   },
   "commands": {
     "back": "Atrás",
@@ -456,7 +457,8 @@
     "newSpreadsheet": "Hoja de cálculo",
     "newPresentation": "Presentación",
     "newFromTemplate": "Desde plantilla…",
-    "versionHistory": "Historial de versiones…"
+    "versionHistory": "Historial de versiones…",
+    "convertTo": "Convertir en…"
   },
   "preview": {
     "previous": "Archivo anterior",
@@ -779,6 +781,25 @@
       "corrupt": "No se pudo leer esta vista previa.",
       "unavailable": "Esta vista previa no está disponible.",
       "other": "Esta vista previa no está disponible."
+    },
+    "convert": {
+      "other": "No se pudo convertir este archivo.",
+      "warning_required": "Revisa y acepta los cambios indicados antes de convertir.",
+      "bad_request": "Estas opciones de conversión no son válidas.",
+      "unsupported": "Esta conversión no es compatible.",
+      "too_large": "Este archivo supera los límites de conversión.",
+      "changed": "El archivo de origen cambió. Vuelve a intentarlo.",
+      "metadata_loss": "Revisa los cambios de metadatos antes de convertir.",
+      "no_space": "No hay espacio suficiente para esta conversión.",
+      "cancelled": "Se canceló la conversión.",
+      "io": "No se pudo convertir este archivo.",
+      "version_failed": "No se pudo conservar una versión. El archivo no cambió."
+    },
+    "snapshot": {
+      "other": "Esta copia para exportación no es válida.",
+      "bad_request": "Esta copia para exportación no es válida.",
+      "too_large": "Estos cambios sin guardar son demasiado grandes para exportar.",
+      "changed": "El documento cambió. Vuelve a capturarlo."
     }
   },
   "keys": {
@@ -821,7 +842,8 @@
     "done": "Listo",
     "cancelled": "Cancelado",
     "extracting": "{count, plural, one {Extrayendo # archivo comprimido} other {Extrayendo # archivos comprimidos}}",
-    "compressing": "{count, plural, one {Creando # archivo comprimido} other {Creando # archivos comprimidos}}"
+    "compressing": "{count, plural, one {Creando # archivo comprimido} other {Creando # archivos comprimidos}}",
+    "converting": "{count, plural, one {Convirtiendo # archivo} other {Convirtiendo # archivos}}"
   },
   "dialogs": {
     "conflictTitle": "Ya hay un elemento con este nombre aquí",
@@ -1421,5 +1443,35 @@
   "psd": {
     "layers": "Capas",
     "noComposite": "Este archivo no tiene una vista previa compuesta que se pueda leer."
+  },
+  "convert": {
+    "title": "Conversión rápida",
+    "format": "Formato de destino",
+    "quality": "Calidad",
+    "width": "Ancho",
+    "height": "Alto",
+    "keepAspect": "Conservar proporciones",
+    "allowUpscale": "Permitir ampliar",
+    "original": "Original",
+    "preview": "Vista previa",
+    "destination": "Carpeta de destino",
+    "chooseFolder": "Elegir carpeta…",
+    "keepOriginal": "Conservar el original",
+    "keepMetadata": "Conservar metadatos",
+    "action": "Convertir",
+    "retry": "Reintentar archivos con error",
+    "preparing": "Preparando la vista previa…",
+    "estimate": "Tamaño estimado: {size}",
+    "metadataLoss": "No se pueden conservar algunos metadatos en este formato.",
+    "transparencyLoss": "La transparencia se reemplazará por el fondo elegido.",
+    "paletteReduction": "Los colores se reducirán a una paleta indexada.",
+    "layoutLoss": "No se puede conservar parte del diseño del documento.",
+    "formulaCachedValue": "Los resultados de fórmulas usan valores guardados sin recalcular.",
+    "formulaSafetyPrefix": "Las celdas de texto potencialmente activas recibirán un prefijo de seguridad.",
+    "sheetSelection": "Solo se convertirá la hoja seleccionada.",
+    "firstFrame": "Solo se convertirá el primer fotograma.",
+    "lossAccepted": "Acepto los cambios indicados.",
+    "replaceUnavailable": "Elige un nombre nuevo. Todavía no se pueden reemplazar archivos.",
+    "undoUnavailable": "No se puede deshacer la conversión hasta que se admita la recuperación exacta de archivos."
   }
 }

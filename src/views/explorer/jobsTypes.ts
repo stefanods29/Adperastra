@@ -5,7 +5,7 @@ import type { OpProgress, SkippedItem } from "../../services/fileops";
  * them. */
 
 /** Which area's error texts a skipped item's reason comes from. */
-export type JobReasonArea = "ops" | "archive";
+export type JobReasonArea = "ops" | "archive" | "convert";
 
 /** One job the panel shows, as the caller describes it. */
 export interface TrackJobOptions<T> {

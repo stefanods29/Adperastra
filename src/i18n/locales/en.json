@@ -365,7 +365,8 @@
     "extracted": "Extracted {name}",
     "extractedMany": "{count, plural, one {Extracted # archive} other {Extracted # archives}}",
     "versionRestored": "Restored a version of {name}",
-    "archiveCreated": "Created {name}"
+    "archiveCreated": "Created {name}",
+    "converted": "{count, plural, one {Converted # file} other {Converted # files}}"
   },
   "commands": {
     "back": "Back",
@@ -456,7 +457,8 @@
     "newSpreadsheet": "Spreadsheet",
     "newPresentation": "Presentation",
     "newFromTemplate": "From template…",
-    "versionHistory": "Version history…"
+    "versionHistory": "Version history…",
+    "convertTo": "Convert to…"
   },
   "preview": {
     "previous": "Previous file",
@@ -779,6 +781,25 @@
       "corrupt": "This preview could not be read.",
       "unavailable": "This preview is not available.",
       "other": "This preview is not available."
+    },
+    "convert": {
+      "other": "This file could not be converted.",
+      "warning_required": "Review and accept the listed changes before converting.",
+      "bad_request": "These conversion options are not valid.",
+      "unsupported": "This conversion is not supported.",
+      "too_large": "This file exceeds the conversion limits.",
+      "changed": "The source changed. Try again.",
+      "metadata_loss": "Review the metadata changes before converting.",
+      "no_space": "There is not enough space for this conversion.",
+      "cancelled": "Conversion was cancelled.",
+      "io": "This file could not be converted.",
+      "version_failed": "A version could not be kept. The file was not changed."
+    },
+    "snapshot": {
+      "other": "This export snapshot is not valid.",
+      "bad_request": "This export snapshot is not valid.",
+      "too_large": "These unsaved changes are too large to export.",
+      "changed": "The document changed. Capture it again."
     }
   },
   "keys": {
@@ -821,7 +842,8 @@
     "done": "Done",
     "cancelled": "Cancelled",
     "extracting": "{count, plural, one {Extracting # archive} other {Extracting # archives}}",
-    "compressing": "{count, plural, one {Creating # archive} other {Creating # archives}}"
+    "compressing": "{count, plural, one {Creating # archive} other {Creating # archives}}",
+    "converting": "{count, plural, one {Converting # file} other {Converting # files}}"
   },
   "dialogs": {
     "conflictTitle": "An item with this name is already here",
@@ -1421,5 +1443,35 @@
   "psd": {
     "layers": "Layers",
     "noComposite": "This file has no readable composite preview."
+  },
+  "convert": {
+    "title": "Quick Convert",
+    "format": "Output format",
+    "quality": "Quality",
+    "width": "Width",
+    "height": "Height",
+    "keepAspect": "Keep proportions",
+    "allowUpscale": "Allow enlargement",
+    "original": "Original",
+    "preview": "Preview",
+    "destination": "Output folder",
+    "chooseFolder": "Choose folder…",
+    "keepOriginal": "Keep original",
+    "keepMetadata": "Keep metadata",
+    "action": "Convert",
+    "retry": "Retry failed files",
+    "preparing": "Preparing preview…",
+    "estimate": "Estimated size: {size}",
+    "metadataLoss": "Some metadata cannot be kept in this format.",
+    "transparencyLoss": "Transparency will be replaced with the chosen background.",
+    "paletteReduction": "Colors will be reduced to an indexed palette.",
+    "layoutLoss": "Some document layout cannot be kept.",
+    "formulaCachedValue": "Formula results use saved values without recalculation.",
+    "formulaSafetyPrefix": "Potentially active text cells will receive a safety prefix.",
+    "sheetSelection": "Only the selected worksheet will be converted.",
+    "firstFrame": "Only the first frame will be converted.",
+    "lossAccepted": "I accept the listed changes.",
+    "replaceUnavailable": "Choose a new file name. Replacing files is not available yet.",
+    "undoUnavailable": "Conversion Undo is unavailable until exact file recovery is supported."
   }
 }

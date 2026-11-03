@@ -11,7 +11,7 @@ import {
 } from "./gallery";
 export type { BackgroundSettings, CacheLimitMb, CacheSettings, GallerySettings };
 
-export const SETTINGS_SCHEMA_VERSION = 15;
+export const SETTINGS_SCHEMA_VERSION = 16;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -286,6 +286,13 @@ function normalizeOcrLanguage(value: unknown): string {
     : "auto";
 }
 
+export interface ConversionSettings {
+  default_destination: "source" | "ask";
+  default_quality: number;
+  preserve_metadata: boolean;
+  concurrent_jobs: 1 | 2;
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
@@ -302,6 +309,7 @@ export interface AppSettings {
   gallery: GallerySettings;
   ocr: OcrSettings;
   reading: ReadingSettings;
+  conversion: ConversionSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -313,6 +321,7 @@ const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 export function defaultSettings(): AppSettings {
   return {
     schema_version: SETTINGS_SCHEMA_VERSION,
+    conversion: { default_destination: "source", default_quality: 90, preserve_metadata: true, concurrent_jobs: 2 },
     language: "en",
     theme: {
       mode: "system",
@@ -509,6 +518,7 @@ export function normalizeSettings(input: unknown): AppSettings {
   const versionsInput = isRecord(input.versions) ? input.versions : {};
   const templatesInput = isRecord(input.templates) ? input.templates : {};
   const ocrInput = isRecord(input.ocr) ? input.ocr : {};
+  const conversionInput = isRecord(input.conversion) ? input.conversion : {};
   const readingInput = isRecord(input.reading) ? input.reading : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
@@ -523,6 +533,12 @@ export function normalizeSettings(input: unknown): AppSettings {
 
   return {
     schema_version: schemaVersion,
+    conversion: {
+      default_destination: conversionInput.default_destination === "ask" ? "ask" : "source",
+      default_quality: typeof conversionInput.default_quality === "number" && Number.isInteger(conversionInput.default_quality) && conversionInput.default_quality >= 1 && conversionInput.default_quality <= 100 ? conversionInput.default_quality : defaults.conversion.default_quality,
+      preserve_metadata: flag(conversionInput.preserve_metadata, true),
+      concurrent_jobs: conversionInput.concurrent_jobs === 1 ? 1 : 2,
+    },
     language: pick(input.language, LANGUAGES, defaults.language),
     theme: {
       mode: pick(themeInput.mode, THEME_MODES, defaults.theme.mode),
