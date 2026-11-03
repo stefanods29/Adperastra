@@ -738,6 +738,15 @@
       "snapshot_unavailable": "This unsaved PDF snapshot is not available.",
       "unsupported_feature": "This PDF feature cannot be rendered safely by this viewer."
     },
+    "ocr": {
+      "bad_request": "This recognition request is not valid.",
+      "language_missing": "This recognition language is not installed.",
+      "changed": "The image changed. Try recognition again.",
+      "too_large": "This page exceeds the recognition limits.",
+      "failed": "Text could not be recognized on this page.",
+      "online_only": "Open this online-only file before recognizing text.",
+      "other": "Text recognition did not finish."
+    },
     "helper": {
       "other": "The viewer could not prepare this content.",
       "busy": "The viewer is still handling another request.",
@@ -814,6 +823,17 @@
     "copyTo": "Copy to {name}",
     "moveTo": "Move to {name}",
     "shortcutTo": "Create shortcut in {name}"
+  },
+  "ocr": {
+    "title": "Text recognition (OCR)",
+    "copyAll": "Copy all text",
+    "search": "Search in this image",
+    "language": "Recognition language",
+    "automatic": "Match the app language",
+    "recognizing": "Recognizing text…",
+    "noText": "No text was recognized.",
+    "partial": "Only part of this page could be recognized.",
+    "languageHelp": "Add the recognition language in Windows Settings."
   },
   "pdf": {
     "previous": "Previous page",

@@ -80,6 +80,17 @@ mod metadata_providers;
 mod metadata_source;
 mod metadata_types;
 mod metadata_windows;
+mod ocr;
+mod ocr_cache;
+mod ocr_helper;
+mod ocr_jobs;
+mod ocr_languages;
+mod ocr_pdf;
+mod ocr_pixels;
+#[cfg(test)]
+mod ocr_step07e_tests;
+mod ocr_types;
+mod ocr_windows;
 mod operation_safety;
 mod pdf;
 mod pdf_helper;
@@ -105,7 +116,7 @@ mod webview_helper_types;
 mod webview_private;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 13;
+pub const CURRENT_SCHEMA: u32 = 14;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -604,6 +615,8 @@ pub struct Settings {
     pub cache: background::CacheSettings,
     #[serde(default)]
     pub gallery: gallery_types::GallerySettings,
+    #[serde(default)]
+    pub ocr: ocr_types::OcrSettings,
 }
 
 impl Default for Settings {
@@ -622,6 +635,7 @@ impl Default for Settings {
             background: background::BackgroundSettings::default(),
             cache: background::CacheSettings::default(),
             gallery: gallery_types::GallerySettings::default(),
+            ocr: ocr_types::OcrSettings::default(),
         }
     }
 }
@@ -805,6 +819,7 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
     }
     gallery_types::validate_gallery_settings(&settings.gallery)
         .map_err(|code| AppError::Validation(format!("gallery settings: {code}")))?;
+    settings.ocr.validate().map_err(AppError::Validation)?;
     if !matches!(settings.files.paste_image_format.as_str(), "png" | "jpg") {
         return Err(AppError::Validation(format!(
             "unsupported paste_image_format {:?} (expected png or jpg)",
@@ -963,6 +978,7 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         background: background::BackgroundSettings::default(),
         cache: background::CacheSettings::default(),
         gallery: gallery_types::GallerySettings::default(),
+        ocr: ocr_types::OcrSettings::default(),
     }
 }
 
@@ -1034,7 +1050,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                 }
             }
             Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) | Some(11)
-            | Some(12) => Ok(migrate_keep_known(value.clone())),
+            | Some(12) | Some(13) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -3002,6 +3018,11 @@ fn main() {
     }
     // Other trusted WebView helpers are started by the same host with a
     // static kind argument from this fixed list (never a user string).
+    // The OCR helper (Step 07e) decodes one image and runs Windows OCR in
+    // its own memory-limited process.
+    if std::env::args().nth(1).as_deref() == Some(ocr_helper::HELPER_FLAG) {
+        std::process::exit(ocr_helper::run_helper());
+    }
     if std::env::args().nth(1).as_deref() == Some(webview_helper::HELPER_FLAG) {
         let kind = match std::env::args().nth(2).as_deref() {
             Some("book") => webview_helper_types::WebviewHelperKind::Book,
@@ -3077,6 +3098,7 @@ fn main() {
         .manage(gallery::GallerySessions::default())
         .manage(pdf_resolvers)
         .manage(pdf_sessions)
+        .manage(ocr::OcrService::new())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
         .setup(|app| {
             // The main window is created here, not from tauri.conf.json, so
@@ -3111,6 +3133,10 @@ fn main() {
             let worker = versions::VersionWorker::start(app.handle().clone());
             app.manage(worker);
             preview_setup::initialize(app)?;
+            app.state::<ocr::OcrService>()
+                .register_pdf(std::sync::Arc::new(pdf::PdfOcrAdapter::new(
+                    app.handle().clone(),
+                )))?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -3224,6 +3250,10 @@ fn main() {
             pdf::pdf_outline,
             pdf::pdf_search_start,
             pdf_print::pdf_print_start,
+            ocr::ocr_languages,
+            ocr::ocr_start,
+            ocr::ocr_page,
+            ocr::ocr_release,
             cache_stamp::file_identity,
             cache::cache_usage,
             cache::cache_clear,
@@ -3336,7 +3366,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 13);
+        assert_eq!(settings.schema_version, 14);
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");

@@ -249,6 +249,18 @@ impl HelperProcess {
         stdin.flush().map_err(|_| failed())
     }
 
+    /// Write bounded raw bytes to the helper's stdin after a request line.
+    pub fn write_all(&mut self, bytes: &[u8]) -> Result<(), String> {
+        let stdin = self
+            .stdin
+            .as_mut()
+            .ok_or_else(|| "helper.failed".to_string())?;
+        stdin
+            .write_all(bytes)
+            .map_err(|_| "helper.failed".to_string())?;
+        stdin.flush().map_err(|_| "helper.failed".to_string())
+    }
+
     /// The next thing the helper said, or `None` when it stayed silent.
     pub fn recv(&self, timeout: Duration) -> Option<HelperLine> {
         match self.lines.recv_timeout(timeout) {

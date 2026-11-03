@@ -23,6 +23,6 @@ export const imageHandler: Handler = {
   maxBytes: 256 * 1024 * 1024,
   helpSlug: "viewing-images",
   speedTier: "fast",
-  supportsFind: false,
+  supportsFind: true,
   view: lazy(() => import("./ImageView")),
 };

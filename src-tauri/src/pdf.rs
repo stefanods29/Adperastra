@@ -6,7 +6,7 @@
 //! Hex or base64 of a document never crosses this boundary: pages are PNG
 //! leases and text is bounded runs.
 
-use tauri::{AppHandle, State, WebviewWindow};
+use tauri::{AppHandle, Manager, State, WebviewWindow};
 use uuid::Uuid;
 
 use crate::jobs::{spawn_job, Jobs};
@@ -232,6 +232,84 @@ pub fn pdf_search_start(
 /// The session state the UI polls after an eviction (used by tests).
 pub fn session_or_changed(sessions: &PdfSessions, session: Uuid) -> Result<PdfSession, String> {
     sessions.get(session).map(|entry| entry.session.clone())
+}
+
+/// The 07d side of OCR (Step 07e): live identity, native text and raster
+/// pages through the same session and renderer the PDF viewer uses.
+pub struct PdfOcrAdapter {
+    app: AppHandle,
+}
+
+impl PdfOcrAdapter {
+    pub fn new(app: AppHandle) -> Self {
+        Self { app }
+    }
+}
+
+impl crate::ocr_pdf::OcrPdfPageSource for PdfOcrAdapter {
+    fn identity(&self, session_id: &str) -> Result<crate::pdf_types::PdfSourceIdentity, String> {
+        let id = parse_session(session_id)?;
+        let sessions = self.app.state::<PdfSessions>();
+        Ok(sessions.get(id)?.source().clone())
+    }
+
+    fn native_text(
+        &self,
+        session_id: &str,
+        page: u32,
+    ) -> Result<Option<crate::ocr_pdf::PdfNativeText>, String> {
+        let id = parse_session(session_id)?;
+        let sessions = self.app.state::<PdfSessions>();
+        let entry = sessions.get(id)?;
+        let identity = entry.source().clone();
+        let cancel = fs_service::new_cancellation_token();
+        let text = sessions.with_helper(&entry, &cancel, |helper| {
+            helper.text(page, None, cancel.clone())
+        })?;
+        if text.runs.is_empty() {
+            return Ok(None);
+        }
+        // The native answer has no page metrics; one bounded render supplies
+        // the exact raster geometry, then its lease is released at once.
+        let request = crate::pdf_types::PdfRenderRequest {
+            session_id: id,
+            page,
+            raster: crate::pdf_types::PdfRasterSpec::Bucket { edge: 2048 },
+            rotation: crate::pdf_types::PdfRotation::Deg0,
+            request_revision: 1,
+        };
+        let image = pdf_jobs::render_page(&self.app, &cancel, &request)?;
+        if let Some(cache) = self
+            .app
+            .try_state::<std::sync::Arc<crate::cache::CacheService>>()
+        {
+            let _ = cache.release(&image.image.lease_id);
+        }
+        Ok(Some(crate::ocr_pdf::PdfNativeText {
+            identity: identity.clone(),
+            page,
+            info: image.info,
+            render_width: image.render_width,
+            render_height: image.render_height,
+            resolved_scale: image.resolved_scale,
+            rendered_rotation: image.rendered_rotation,
+            text: crate::pdf_types::PdfTextPage {
+                page,
+                runs: text.runs,
+                next_run: text.next_run,
+                complete: text.complete,
+                source: identity,
+            },
+        }))
+    }
+
+    fn render(
+        &self,
+        request: &crate::pdf_types::PdfRenderRequest,
+        cancel: &fs_service::CancellationToken,
+    ) -> Result<crate::pdf_types::PdfPageImage, String> {
+        pdf_jobs::render_page(&self.app, cancel, request)
+    }
 }
 
 #[cfg(test)]

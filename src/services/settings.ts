@@ -11,7 +11,7 @@ import {
 } from "./gallery";
 export type { BackgroundSettings, CacheLimitMb, CacheSettings, GallerySettings };
 
-export const SETTINGS_SCHEMA_VERSION = 13;
+export const SETTINGS_SCHEMA_VERSION = 14;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -258,6 +258,24 @@ export interface TemplateSettings {
   my_folder: string;
 }
 
+/** OCR settings (schema 14, Step 07e). */
+export interface OcrSettings {
+  /** `auto` or an installed BCP47 tag. */
+  language: string;
+  enabled: boolean;
+}
+
+const OCR_LANGUAGE_TAG = /^[A-Za-z]{1,8}(?:-[A-Za-z0-9]{1,8})*$/;
+
+/** Same rule as Rust `ocr_types::validate_language_preference`. */
+function normalizeOcrLanguage(value: unknown): string {
+  return typeof value === "string" &&
+    value.length <= 64 &&
+    OCR_LANGUAGE_TAG.test(value)
+    ? value
+    : "auto";
+}
+
 export interface AppSettings {
   schema_version: number;
   language: LanguageSetting;
@@ -272,6 +290,7 @@ export interface AppSettings {
   background: BackgroundSettings;
   cache: CacheSettings;
   gallery: GallerySettings;
+  ocr: OcrSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -333,6 +352,7 @@ export function defaultSettings(): AppSettings {
       tasks: { ...BACKGROUND_TASK_DEFAULTS } },
     cache: { max_mb: 512 },
     gallery: defaultGallerySettings(),
+    ocr: { language: "auto", enabled: true },
   };
 }
 
@@ -473,6 +493,7 @@ export function normalizeSettings(input: unknown): AppSettings {
   const appearanceInput = isRecord(input.appearance) ? input.appearance : {};
   const versionsInput = isRecord(input.versions) ? input.versions : {};
   const templatesInput = isRecord(input.templates) ? input.templates : {};
+  const ocrInput = isRecord(input.ocr) ? input.ocr : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
@@ -536,6 +557,10 @@ export function normalizeSettings(input: unknown): AppSettings {
     background: normalizeBackground(input.background),
     cache: normalizeCache(input.cache),
     gallery: normalizeGallerySettings(input.gallery),
+    ocr: {
+      language: normalizeOcrLanguage(ocrInput.language),
+      enabled: flag(ocrInput.enabled, defaults.ocr.enabled),
+    },
   };
 }
 

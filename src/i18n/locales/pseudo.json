@@ -738,6 +738,15 @@
       "snapshot_unavailable": "[Thïs üñsävëd PDF sñäpshøt ïs ñøt äväïläblë. ~~~~~~~~~~~~~~~]",
       "unsupported_feature": "[Thïs PDF fëätürë çäññøt bë rëñdërëd säfëlÿ bÿ thïs vïëwër. ~~~~~~~~~~~~~~~~~~~~]"
     },
+    "ocr": {
+      "bad_request": "[Thïs rëçøgñïtïøñ rëqüëst ïs ñøt välïd. ~~~~~~~~~~~~~]",
+      "language_missing": "[Thïs rëçøgñïtïøñ läñgüägë ïs ñøt ïñställëd. ~~~~~~~~~~~~~~~]",
+      "changed": "[Thë ïmägë çhäñgëd. Trÿ rëçøgñïtïøñ ägäïñ. ~~~~~~~~~~~~~~]",
+      "too_large": "[Thïs pägë ëxçëëds thë rëçøgñïtïøñ lïmïts. ~~~~~~~~~~~~~~]",
+      "failed": "[Tëxt çøüld ñøt bë rëçøgñïzëd øñ thïs pägë. ~~~~~~~~~~~~~~]",
+      "online_only": "[Øpëñ thïs øñlïñë-øñlÿ fïlë bëførë rëçøgñïzïñg tëxt. ~~~~~~~~~~~~~~~~~~]",
+      "other": "[Tëxt rëçøgñïtïøñ dïd ñøt fïñïsh. ~~~~~~~~~~~]"
+    },
     "helper": {
       "other": "[Thë vïëwër çøüld ñøt prëpärë thïs çøñtëñt. ~~~~~~~~~~~~~~]",
       "busy": "[Thë vïëwër ïs stïll häñdlïñg äñøthër rëqüëst. ~~~~~~~~~~~~~~~~]",
@@ -814,6 +823,17 @@
     "copyTo": "[Çøpÿ tø {name} ~~~]",
     "moveTo": "[Møvë tø {name} ~~~]",
     "shortcutTo": "[Çrëätë shørtçüt ïñ {name} ~~~~~~~]"
+  },
+  "ocr": {
+    "title": "[Tëxt rëçøgñïtïøñ (ØÇR) ~~~~~~~~]",
+    "copyAll": "[Çøpÿ äll tëxt ~~~~~]",
+    "search": "[Sëärçh ïñ thïs ïmägë ~~~~~~~]",
+    "language": "[Rëçøgñïtïøñ läñgüägë ~~~~~~~~]",
+    "automatic": "[Mätçh thë äpp läñgüägë ~~~~~~~~]",
+    "recognizing": "[Rëçøgñïzïñg tëxt… ~~~~~~]",
+    "noText": "[Ñø tëxt wäs rëçøgñïzëd. ~~~~~~~~]",
+    "partial": "[Øñlÿ pärt øf thïs pägë çøüld bë rëçøgñïzëd. ~~~~~~~~~~~~~~]",
+    "languageHelp": "[Ädd thë rëçøgñïtïøñ läñgüägë ïñ Wïñdøws Sëttïñgs. ~~~~~~~~~~~~~~~~~]"
   },
   "pdf": {
     "previous": "[Prëvïøüs pägë ~~~~~]",

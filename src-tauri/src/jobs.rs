@@ -150,6 +150,11 @@ impl JobContext {
         &self.token
     }
 
+    /// The app handle of the job (managed state, settings, grants).
+    pub fn app(&self) -> &tauri::AppHandle {
+        &self.app
+    }
+
     pub fn set_progress(&self, progress: &OpProgress) {
         self.app.state::<Jobs>().set_progress(&self.id, progress);
     }

@@ -154,6 +154,13 @@ impl BackgroundPolicy {
         self.reason_for(kind, idle_ms, ac) == BackgroundReason::None
     }
 
+    /// Eligibility for one kind using the shared sampled idle/AC facts.
+    /// `eligible` stays the pure decision; this samples the same
+    /// `WindowsBackgroundState` the owner thread updates.
+    pub fn eligible_now(&self, kind: BackgroundTaskKind) -> bool {
+        self.eligible(kind, self.windows.idle_ms(), self.windows.ac())
+    }
+
     /// E4 export for later providers (07b/12a); no caller in 07a yet.
     pub fn cancel_kind(&self, kind: BackgroundTaskKind) {
         self.scheduler.cancel_kind(kind);

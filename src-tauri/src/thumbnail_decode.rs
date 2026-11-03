@@ -44,6 +44,29 @@ pub fn decode_pixels(
     decode_bytes(&bytes, max_edge, max_pixels)
 }
 
+/// Decode bounded image bytes (a rendered PDF page) with the same WIC path
+/// as `decode_pixels`: EXIF orientation, no upscale, checked product.
+/// Helper-only; raw pixels never cross JSON.
+pub fn decode_pixels_from_memory(
+    bytes: &[u8],
+    max_edge: u32,
+    max_pixels: u64,
+) -> Result<DecodedPixels, String> {
+    if max_edge == 0 || max_edge > MAX_EDGE_LIMIT {
+        return Err("thumbnail.bad_request".to_string());
+    }
+    if max_pixels == 0 || max_pixels > MAX_PIXELS_LIMIT {
+        return Err("thumbnail.bad_request".to_string());
+    }
+    if bytes.is_empty() {
+        return Err("thumbnail.failed".to_string());
+    }
+    if bytes.len() as u64 > MAX_SOURCE_BYTES {
+        return Err("thumbnail.too_large".to_string());
+    }
+    decode_bytes(bytes, max_edge, max_pixels)
+}
+
 fn read_source(source: &File) -> Result<Vec<u8>, String> {
     let mut reader = source
         .try_clone()

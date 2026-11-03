@@ -64,6 +64,8 @@ export interface HandlerViewProps {
   protectedView: boolean;
   /** Read-only, nonpersistent embedded preview (Step07b). */
   previewOnly?: boolean;
+  /** OCR language preference from settings (Step 07e). */
+  ocrLanguage?: string;
   /** The view's unsaved changes changed (Step 06a). */
   onDirtyChange?: (dirty: boolean) => void;
   /** The view hands over how to save or drop its changes (Step 06a). */

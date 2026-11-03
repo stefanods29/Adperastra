@@ -611,6 +611,7 @@ export default function App() {
                 )
               }
               onConfirmDiscard={() => unsaved.confirmClose([tab.id])}
+              ocrLanguage={settings.ocr.language}
               onOpenFile={(path) => openFile(path, false)}
               onExtractArchive={extractArchive}
               onOpenAsText={() => openFileWith(tab.path ?? "", "text")}

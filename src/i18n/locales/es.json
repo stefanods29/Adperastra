@@ -738,6 +738,15 @@
       "snapshot_unavailable": "Esta copia PDF sin guardar no está disponible.",
       "unsupported_feature": "Este visor no puede mostrar esta función PDF de forma segura."
     },
+    "ocr": {
+      "bad_request": "La solicitud de reconocimiento no es válida.",
+      "language_missing": "Este idioma de reconocimiento no está instalado.",
+      "changed": "La imagen cambió. Vuelve a reconocer el texto.",
+      "too_large": "Esta página supera los límites del reconocimiento.",
+      "failed": "No se pudo reconocer texto en esta página.",
+      "online_only": "Abre este archivo solo en línea antes de reconocer el texto.",
+      "other": "El reconocimiento de texto no terminó."
+    },
     "helper": {
       "other": "El visor no pudo preparar este contenido.",
       "busy": "El visor todavía está atendiendo otra solicitud.",
@@ -814,6 +823,17 @@
     "copyTo": "Copiar en {name}",
     "moveTo": "Mover a {name}",
     "shortcutTo": "Crear acceso directo en {name}"
+  },
+  "ocr": {
+    "title": "Reconocimiento de texto (OCR)",
+    "copyAll": "Copiar todo el texto",
+    "search": "Buscar en esta imagen",
+    "language": "Idioma de reconocimiento",
+    "automatic": "Usar el idioma de la aplicación",
+    "recognizing": "Reconociendo texto…",
+    "noText": "No se reconoció texto.",
+    "partial": "Solo se pudo reconocer parte de esta página.",
+    "languageHelp": "Agrega el idioma de reconocimiento en Configuración de Windows."
   },
   "pdf": {
     "previous": "Página anterior",

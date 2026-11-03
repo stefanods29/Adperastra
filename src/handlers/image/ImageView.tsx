@@ -1,4 +1,4 @@
-import { Expand, RotateCcw, RotateCw, Scan, ZoomIn, ZoomOut } from "lucide-react";
+import { Copy, Expand, RotateCcw, RotateCw, Scan, Search, ZoomIn, ZoomOut } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../../components/Button";
@@ -10,6 +10,8 @@ import type { RibbonDef } from "../../ribbon/types";
 import ViewerFrame from "../../ribbon/ViewerFrame";
 import type { HandlerViewProps } from "../types";
 import { clampZoom, fitPercent, MAX_ZOOM, MIN_ZOOM, nextZoom } from "./zoom";
+import OcrOverlay from "../../ocr/OcrOverlay";
+import { useOcr } from "../../ocr/useOcr";
 
 interface SavedImageState {
   mode: "fit" | "manual";
@@ -22,6 +24,7 @@ interface ImageCtx {
   hasImage: boolean;
   mode: "fit" | "manual";
   percent: number;
+  ocrOn: boolean;
 }
 
 function readSaved(state: unknown): SavedImageState {
@@ -56,6 +59,15 @@ const RIBBON: RibbonDef = {
             { type: "button", command: "image.rotateRight", keyTip: "R" },
           ],
         },
+        {
+          id: "text",
+          labelKey: "ocr.title",
+          controls: [
+            { type: "toggle", command: "image.textRecognition", showLabel: false },
+            { type: "button", command: "image.copyAllText", showLabel: false },
+            { type: "button", command: "image.searchText", showLabel: false },
+          ],
+        },
       ],
     },
   ],
@@ -64,7 +76,7 @@ const RIBBON: RibbonDef = {
 /** Image viewer (Steps 04a, 04b): fit to window, zoom with Ctrl+wheel and
  * Ctrl+=/Ctrl+-/Ctrl+0, pan by dragging, rotate the view, checkerboard
  * behind transparency. The browser decodes the image (`decoding="async"`). */
-export default function ImageView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp }: HandlerViewProps) {
+export default function ImageView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, previewOnly = false, ocrLanguage = "auto" }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [natural, setNatural] = useState<{ width: number; height: number } | null>(null);
@@ -72,6 +84,15 @@ export default function ImageView({ info, url, active, savedState, onStateChange
   const [view, setView] = useState<SavedImageState>(() => readSaved(savedState));
   const [failed, setFailed] = useState(false);
   const [slow, setSlow] = useState(false);
+  const [ocrOn, setOcrOn] = useState(false);
+  const ocr = useOcr({
+    input: { kind: "image", path: info.path },
+    language: ocrLanguage,
+    rotation: ((view.turns * 90) % 360) as 0 | 90 | 180 | 270,
+    active,
+    clipboardAllowed: true,
+    previewOnly,
+  });
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
 
   // Track the visible area so "fit" follows window resizes.
@@ -117,7 +138,7 @@ export default function ImageView({ info, url, active, savedState, onStateChange
     onStatus({ items, zoom: natural ? { percent, min: MIN_ZOOM, max: MAX_ZOOM, set: setPercent, fit } : undefined });
   }, [info.size, i18n.language, natural, percent, onStatus, setPercent, fit, t]);
 
-  const ctx: ImageCtx = { hasImage: natural !== null, mode: view.mode, percent };
+  const ctx: ImageCtx = { hasImage: natural !== null, mode: view.mode, percent, ocrOn };
   const commands = useMemo<Command<ImageCtx>[]>(
     () => [
       { id: "image.zoomIn", labelKey: "viewer.zoomIn", icon: ZoomIn, shortcut: "Ctrl+=", risk: "read-only", helpSlug: "viewing-images", enabledWhen: (c) => c.hasImage && c.percent < MAX_ZOOM, run: (c) => setPercent(nextZoom(c.percent, 1)) },
@@ -126,8 +147,26 @@ export default function ImageView({ info, url, active, savedState, onStateChange
       { id: "image.actualSize", labelKey: "viewer.actualSize", icon: Scan, risk: "read-only", helpSlug: "viewing-images", checkKind: "radio", checkedWhen: (c) => c.mode === "manual" && c.percent === 100, enabledWhen: (c) => c.hasImage, run: () => setPercent(100) },
       { id: "image.rotateLeft", labelKey: "viewer.rotateLeft", icon: RotateCcw, risk: "read-only", helpSlug: "viewing-images", enabledWhen: (c) => c.hasImage, run: () => setView((current) => { const next = { ...current, turns: (current.turns + 3) % 4 }; onStateChange(next); return next; }) },
       { id: "image.rotateRight", labelKey: "viewer.rotateRight", icon: RotateCw, risk: "read-only", helpSlug: "viewing-images", enabledWhen: (c) => c.hasImage, run: () => setView((current) => { const next = { ...current, turns: (current.turns + 1) % 4 }; onStateChange(next); return next; }) },
+      {
+        id: "image.textRecognition",
+        labelKey: "ocr.title",
+        icon: Scan,
+        risk: "read-only",
+        helpSlug: "copying-text-from-images",
+        checkKind: "toggle",
+        checkedWhen: (c) => c.ocrOn,
+        enabledWhen: (c) => c.hasImage,
+        run: () => {
+          setOcrOn((current) => {
+            if (!current) void ocr.recognize();
+            return !current;
+          });
+        },
+      },
+      { id: "image.copyAllText", labelKey: "ocr.copyAll", icon: Copy, risk: "read-only", helpSlug: "copying-text-from-images", enabledWhen: (c) => c.hasImage, run: () => { setOcrOn(true); void ocr.copyAll(); } },
+      { id: "image.searchText", labelKey: "ocr.search", icon: Search, risk: "read-only", helpSlug: "copying-text-from-images", enabledWhen: (c) => c.hasImage, run: () => { setOcrOn(true); void ocr.recognize(); } },
     ],
-    [setPercent, fit, onStateChange],
+    [setPercent, fit, onStateChange, ocr],
   );
   useCommandShortcuts(commands, ctx, active);
 
@@ -224,6 +263,16 @@ export default function ImageView({ info, url, active, savedState, onStateChange
             }
             onError={() => setFailed(true)}
           />
+          {ocrOn && ocr.page ? (
+            <OcrOverlay
+              result={ocr.page}
+              viewWidth={stageWidth}
+              viewHeight={stageHeight}
+              rotation={((view.turns * 90) % 360) as 0 | 90 | 180 | 270}
+              zoom={percent / 100}
+              onSelectionText={ocr.setSelectedText}
+            />
+          ) : null}
         </div>
       </div>
     </ViewerFrame>

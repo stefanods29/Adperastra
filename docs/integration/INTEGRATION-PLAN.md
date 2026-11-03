@@ -87,5 +87,8 @@ From `docs/integration/handoff-review.md` (H01-H15) and `step07b-review.md` (07b
   translations clean. Committed as `26bbdf0` with its own deps commit (`ea14385`).
 - 2026-11-03: 07e payload inventoried. It needs two additive producer adapters that its
   payload does not contain: `decode_pixels_from_memory` in `thumbnail_decode.rs` and a
-  `PdfOcrAdapter` implementing `ocr_pdf::OcrPdfPageSource` in `pdf.rs`. The copied files were
-  removed again; the branch stays at the clean, green 07d boundary (`1523bfa`).
+  `PdfOcrAdapter` implementing `ocr_pdf::OcrPdfPageSource` in `pdf.rs`.
+- 2026-11-03: 07e OCR integrated with both missing adapters, schema 14 and the image/PDF
+  commands. Final full gate passed: 722 Rust tests in 51 binaries, 692 UI tests in 123 files,
+  IPC and translations clean. KI-096 records the remaining Major gap: search routing and the
+  PDF word overlay are not complete, so 07e is integrated locally but not accepted.

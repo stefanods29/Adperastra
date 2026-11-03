@@ -13,6 +13,11 @@ import {
   type BackgroundTaskKind,
 } from "../../services/background";
 import type { AppSettings, CacheLimitMb } from "../../services/settings";
+import {
+  normalizeOcrLanguages,
+  ocrLanguages,
+  type OcrLanguage,
+} from "../../services/ocr";
 
 export interface BackgroundSettingsProps {
   settings: AppSettings;
@@ -30,6 +35,19 @@ export default function BackgroundSettings({
   const { t } = useTranslation();
   const background = settings.background;
   const [status, setStatus] = useState<BackgroundStatus | null>(null);
+  const [languages, setLanguages] = useState<OcrLanguage[]>([]);
+  useEffect(() => {
+    if (!active) return;
+    let alive = true;
+    void ocrLanguages()
+      .then((list) => {
+        if (alive) setLanguages(normalizeOcrLanguages(list));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [active]);
 
   useEffect(() => {
     if (!active) return;
@@ -131,6 +149,32 @@ export default function BackgroundSettings({
           ))}
         </select>
       </div>
+      <div className="adp-setting-row">
+        <label className="adp-setting-label" htmlFor="adp-background-ocr-language">
+          {t("ocr.language")}
+        </label>
+        <select
+          id="adp-background-ocr-language"
+          className="adp-defaultapps-select"
+          aria-label={t("ocr.language")}
+          data-background-field="ocr.language"
+          value={settings.ocr.language}
+          onChange={(event) =>
+            onApply({
+              ...settings,
+              ocr: { ...settings.ocr, language: event.target.value },
+            })
+          }
+        >
+          <option value="auto">{t("ocr.automatic")}</option>
+          {languages.map((language) => (
+            <option key={language.tag} value={language.tag}>
+              {language.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="adp-note">{t("ocr.languageHelp")}</p>
       <p className="adp-note" role="status" aria-busy={status === null}>
         {status === null ? t("components.loading") : (waiting ?? "")}
       </p>

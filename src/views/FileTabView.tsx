@@ -47,6 +47,8 @@ export interface FileTabViewProps {
   onExtractArchive?: (request: ArchiveExtractRequest) => void;
   /** Open this file in the text viewer (Step 06f). */
   onOpenAsText?: () => void;
+  /** OCR language preference from settings (Step 07e). */
+  ocrLanguage?: string;
 }
 
 type Phase =
@@ -75,6 +77,7 @@ export default function FileTabView({
   onOpenFile,
   onExtractArchive,
   onOpenAsText,
+  ocrLanguage,
 }: FileTabViewProps) {
   const { t } = useTranslation();
   const path = tab.path ?? "";
@@ -322,6 +325,7 @@ export default function FileTabView({
               onOpenFile={onOpenFile}
               onExtractArchive={onExtractArchive}
               onOpenAsText={onOpenAsText}
+              ocrLanguage={ocrLanguage}
             />
           </Suspense>
         ) : null}

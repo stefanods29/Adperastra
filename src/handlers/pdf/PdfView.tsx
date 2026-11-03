@@ -1,3 +1,4 @@
+import { Copy, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../../components/Button";
@@ -15,6 +16,7 @@ import {
   type PdfSearchMatch,
 } from "../../services/pdf";
 import type { HandlerViewProps } from "../types";
+import { useOcr } from "../../ocr/useOcr";
 import PdfPages from "./PdfPages";
 import PdfPrintDialog from "./PdfPrintDialog";
 import PdfSidebar from "./PdfSidebar";
@@ -40,7 +42,7 @@ const EMPTY_SEARCH: PdfSearchSnapshot = { query: "", matches: [], complete: true
  * Pages and text come from the isolated PDF helper; this component never
  * sees PDF bytes or HTML. The ribbon is the app's normal ribbon, so the PDF
  * toolbar docks with every other toolbar. */
-export default function PdfView({ info, active, savedState, onStateChange, onStatus, find, previewOnly = false }: HandlerViewProps) {
+export default function PdfView({ info, active, savedState, onStateChange, onStatus, find, previewOnly = false, ocrLanguage = "auto" }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
   const doc = usePdfDocument(info.path, active, savedState, onStateChange, previewOnly);
   const [sidebarWidth, setSidebarWidth] = useState(PDF_SIDEBAR_WIDTH);
@@ -153,7 +155,42 @@ export default function PdfView({ info, active, savedState, onStateChange, onSta
     [doc, fitPage, fitWidth, page, previewOnly, session],
   );
 
-  const commands = useMemo<Command<PdfCommandContext>[]>(() => createPdfCommands(actions), [actions]);
+  const ocr = useOcr({
+    input: session ? { kind: "pdf", session_id: session.session_id, page } : null,
+    language: ocrLanguage,
+    rotation: doc.state.rotation as 0 | 90 | 180 | 270,
+    active,
+    clipboardAllowed: session?.permissions.can_copy ?? false,
+    previewOnly,
+  });
+  const commands = useMemo<Command<PdfCommandContext>[]>(
+    () => [
+      ...createPdfCommands(actions),
+      {
+        id: "pdf.copyAllText",
+        labelKey: "ocr.copyAll",
+        icon: Copy,
+        risk: "read-only",
+        helpSlug: "copying-text-from-images",
+        enabledWhen: () => session !== null && (session.permissions.can_copy ?? false),
+        run: () => {
+          void ocr.copyAll();
+        },
+      },
+      {
+        id: "pdf.searchImageText",
+        labelKey: "ocr.search",
+        icon: Search,
+        risk: "read-only",
+        helpSlug: "copying-text-from-images",
+        enabledWhen: () => session !== null,
+        run: () => {
+          void ocr.recognize();
+        },
+      },
+    ],
+    [actions, ocr, session],
+  );
   const ctx: PdfCommandContext = {
     ready: session !== null,
     page,
@@ -234,6 +271,14 @@ export default function PdfView({ info, active, savedState, onStateChange, onSta
       controls: [
         { type: "toggle", command: "pdf.thumbnails", showLabel: false },
         { type: "toggle", command: "pdf.outline", showLabel: false },
+      ],
+    },
+    {
+      id: "text",
+      labelKey: "ocr.title",
+      controls: [
+        { type: "button", command: "pdf.copyAllText", showLabel: false },
+        { type: "button", command: "pdf.searchImageText", showLabel: false },
       ],
     },
   ];

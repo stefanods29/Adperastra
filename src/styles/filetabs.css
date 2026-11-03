@@ -22,7 +22,7 @@
 
 .adp-image-view { flex: 1; min-width: 0; overflow: auto; display: grid; place-items: center; cursor: grab; }
 .adp-image-view:active { cursor: grabbing; }
-.adp-image-stage { flex: none; }
+.adp-image-stage { position: relative; flex: none; }
 .adp-image-checker {
   display: block;
   box-shadow: var(--adp-shadow-image);
