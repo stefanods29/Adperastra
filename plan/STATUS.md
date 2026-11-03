@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `07f` (handoff integration in progress). Steps 07a, 07b, 07c, 07d and 07e are integrated and committed on `codex/integrate-handoffs`; the latest full gate has 722 Rust and 692 UI tests passing. KI-096 was fixed during 07e, so 07e has no open Blocker or Major; its packaged-app checks, speed runs and screenshots remain pending. Packaging and owner checks for the earlier steps, and speed/screenshot evidence, remain pending; tags stay at 03b. The integration order and remaining review defects are tracked in `docs/integration/INTEGRATION-PLAN.md`. All 54 remaining guides and per-step prompts are written; their handoffs are preserved outside Git under `handoff/`.
+**Current step:** `07g` (handoff integration). Steps 07a, 07b, 07c, 07d, 07e and 07f are integrated and committed on `codex/integrate-handoffs`; the latest full gate has 798 Rust and 731 UI tests passing. 07f's own code has no open Blocker; KI-097 (MOBI pictures, Major) and KI-098 (fixed-layout pages, Minor) are open with targets. KI-096 stays fixed from 07e. Packaged-app checks, speed runs, screenshots and owner checks for these steps remain pending. Tags stay at 03b. The integration order and remaining review defects are tracked in `docs/integration/INTEGRATION-PLAN.md`. All 54 remaining guides and per-step prompts are written; their handoffs are preserved outside Git under `handoff/`.
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
@@ -34,12 +34,12 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 | 06d | Archives: open, browse, extract | in progress (speed, screenshots, hand checks left) | v0.0.17-step06d |
 | 06e | Archives: create, passwords, RAR | in progress (speed, screenshots, owner checks, real 7-Zip RAR trial left) | v0.0.18-step06e |
 | 06f | Tables (CSV), JSON, fonts, hex search | in progress (speed, screenshots, owner checks left) | v0.0.19-step06f |
-| 07a | Thumbnails, cache store, helper process, background work v1 | guide | v0.0.20-step07a |
-| 07b | Quick preview and rich file info | guide | v0.0.21-step07b |
-| 07c | Gallery | guide | v0.0.22-step07c |
-| 07d | PDF viewer | guide | v0.0.23-step07d |
-| 07e | Copy text from images and scans (OCR) | guide | v0.0.24-step07e |
-| 07f | More previewers 1: e-books, notebooks, email, subtitles, logs, SQLite | guide | v0.0.25-step07f |
+| 07a | Thumbnails, cache store, helper process, background work v1 | in progress (integrated locally; speed, screenshots, owner checks left) | v0.0.20-step07a |
+| 07b | Quick preview and rich file info | in progress (integrated locally; speed, screenshots, owner checks left) | v0.0.21-step07b |
+| 07c | Gallery | in progress (integrated locally; speed, screenshots, owner checks left) | v0.0.22-step07c |
+| 07d | PDF viewer | in progress (integrated locally; speed, screenshots, owner checks left) | v0.0.23-step07d |
+| 07e | Copy text from images and scans (OCR) | in progress (integrated locally; speed, screenshots, owner checks left) | v0.0.24-step07e |
+| 07f | More previewers 1: e-books, notebooks, email, subtitles, logs, SQLite | in progress (integrated locally; KI-097/098 open; speed, screenshots, owner checks left) | v0.0.25-step07f |
 | 07g | More previewers 2: 3D models, camera RAW, HEIC/AVIF, PSD | guide | v0.0.26-step07g |
 | 08a | Converter 1: Quick Convert, job queue, image formats | guide | v0.0.27-step08a |
 | 08b | Converter 2: PDF, documents, sheets, archives, batch presets | guide | v0.0.28-step08b |
