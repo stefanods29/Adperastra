@@ -1,0 +1,31 @@
+{
+  "binary": "C:\\Users\\stefa\\AppData\\Local\\Temp\\adperastra-target\\debug\\Adperastra.exe",
+  "checks": [
+    {
+      "case": "preview_resize_snapshot",
+      "passed": true,
+      "elapsed_ms": 30.552
+    },
+    {
+      "case": "convert_resize_snapshot",
+      "passed": true,
+      "elapsed_ms": 22.739
+    },
+    {
+      "case": "jpeg_requires_transparency_acknowledgment",
+      "passed": true,
+      "elapsed_ms": 27.597
+    },
+    {
+      "case": "jpeg_with_explicit_loss_acknowledgment",
+      "passed": true,
+      "elapsed_ms": 29.604
+    },
+    {
+      "case": "wrong_snapshot_frame_refused",
+      "passed": true,
+      "elapsed_ms": 25.528
+    }
+  ],
+  "scope": "Real debug helper; synthetic memory snapshots. No packaged UI or performance acceptance."
+}

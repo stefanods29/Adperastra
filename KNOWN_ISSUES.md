@@ -235,6 +235,10 @@ that fixed it.
 
 ## Fixed
 
+### KI-101 - Idle export snapshots could retain the budget until restart (Major, fixed during08a integration)
+
+The staged registry had an expiry cleanup method but no periodic caller. A weak-owned30-second worker now clears expired uploads/snapshots, retains live leases, and releases their budget after the last lease. Native regression confirms retention and eventual budget release.
+
 ### KI-100 - Translated models were rejected or framed at the origin (Major, fixed during07g integration)
 - **Cause:** validators tested the translation column instead of the affine last row; native bounds ignored node transforms.
 - **Fix:** all three validators use column-major affine indices3/7/11/15; bounded native world transforms include parents and per-primitive bounds.

@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step08a: Quick Convert with isolated image/SVG engines, previews, acknowledged format losses, shared jobs, collision-safe new outputs and bounded immutable export snapshots. Conversion Undo remains explicitly unavailable pending exact recovery receipts.
+
 - Step07g: isolated 3D model/PSD previews, RAW and installed-codec image views, AVIF fallback, special thumbnails/metadata and shared helper admission. Model texture keys retain their slots and Fit follows transformed model bounds.
 
 - E-books, notebooks, email, subtitles, logs and SQLite (Step 07f): EPUB, MOBI and AZW3 books open with their table of contents, Next/Previous pages, a chosen font size and a reading theme; pictures inside EPUB books appear, and no book code or remote resource ever runs. Jupyter notebooks show code as text (never run) with saved text/picture outputs and a note for unsafe ones. `.eml` messages show plain text or formatted text with remote images blocked, and an attachment is saved only when you click it. SRT/VTT subtitles show exact cue times with malformed cues counted. Logs of any size open quickly, follow new lines on request, strip color codes and mark a shortened line. SQLite databases open read-only with a table picker, exact numbers, NULL/BLOB labels and a clear message when another app holds the database. All six are read-only, searchable, appear in Default apps, and have English and Spanish help pages.
