@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `07a` (handoff integration and safety fixes in progress). Step 06f is merged into local `testing`, with458 Rust/539 UI tests passing in the latest coordinator gate. KI-068 and KI-079 are fixed in the committed baseline. Other open issues, owner checks and speed runs remain pending; tags stay at03b. All 54 remaining guides and per-step prompts are written and documentation-reviewed under the owner's planning-only instruction; no new step is implemented. Start at `plan/prompts/README.md`.
+**Current step:** `07d` (handoff integration in progress). Steps 07a, 07b and 07c are integrated and committed on `codex/integrate-handoffs`; the latest full gate has 614 Rust and 639 UI tests passing. Packaging, speed runs, screenshots and owner checks remain pending, and tags stay at 03b. The integration order and remaining review defects are tracked in `docs/integration/INTEGRATION-PLAN.md`. All 54 remaining guides and per-step prompts are written; their handoffs are preserved outside Git under `handoff/`.
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
 
