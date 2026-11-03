@@ -2,7 +2,7 @@
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `08b` (document/PDF/table/archive conversion integration). Steps07a–08a are integrated locally on codex/integrate-handoffs. The08a implementation commit is3ba4c4b; final gate passed875Rust and808UI tests, plus5actual debug conversion-helper checks. Packaged-app fidelity, screenshots, speed and real-device checks remain pending. Conversion Undo remains explicitly unavailable until09f exact recovery receipts. Original handoffs are preserved; next repaired sources are handoff/integration-08b/files.
+**Current step:** `08b` (next, paused by owner after08a; no active implementation). Steps07a–08a are integrated locally on codex/integrate-handoffs. The08a implementation commit is3ba4c4b; final gate passed875Rust and808UI tests, plus5actual debug conversion-helper checks. Packaged-app fidelity, screenshots, speed and real-device checks remain pending. Conversion Undo remains explicitly unavailable until09f exact recovery receipts. Original handoffs are preserved. Early08b work was moved to handoff/resume-08b-after-08a/files and the source restored to verified08a. Resume only when the owner asks.
 
 **Last tag:** `v0.0.6-step03b` (local)
 **Next step tag:** `v0.0.7-step04a`
