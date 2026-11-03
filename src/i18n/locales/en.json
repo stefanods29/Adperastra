@@ -769,6 +769,16 @@
       "too_large": "These details are too large to display.",
       "failed": "These file details could not be read.",
       "other": "These file details could not be read."
+    },
+    "special_view": {
+      "bad_request": "This preview request is not valid.",
+      "unsupported": "This format is not supported here.",
+      "too_large": "This file exceeds the preview limits.",
+      "changed": "The file changed. Open it again.",
+      "codec_required": "A compatible codec is not installed.",
+      "corrupt": "This preview could not be read.",
+      "unavailable": "This preview is not available.",
+      "other": "This preview is not available."
     }
   },
   "keys": {
@@ -965,7 +975,11 @@
     "email": "Email",
     "subtitle": "Subtitles",
     "log": "Log",
-    "sqlite": "SQLite database"
+    "sqlite": "SQLite database",
+    "model": "3D model",
+    "raw": "Camera RAW image",
+    "codecImage": "HEIC image",
+    "psd": "Photoshop image"
   },
   "protected": {
     "message": "This file came from the internet, so it opened in protected view.",
@@ -1383,5 +1397,29 @@
   "background": {
     "waitingIdle": "Waiting for inactivity",
     "waitingAc": "Waiting for AC power"
+  },
+  "model": {
+    "orbit": "Orbit",
+    "fit": "Fit model",
+    "wireframe": "Wireframe",
+    "measure": "Measure",
+    "units": "Units",
+    "unitNone": "Source units",
+    "unitMm": "Millimeters",
+    "unitCm": "Centimeters",
+    "unitM": "Meters",
+    "distance": "Distance: {value}",
+    "partial": "Some model resources could not be displayed."
+  },
+  "raw": {
+    "fullResolution": "Load full resolution"
+  },
+  "special_view": {
+    "codec": "A compatible Windows codec is needed for this file.",
+    "codecHelp": "Check installed image codecs in Windows Settings, or open this file in another app."
+  },
+  "psd": {
+    "layers": "Layers",
+    "noComposite": "This file has no readable composite preview."
   }
 }

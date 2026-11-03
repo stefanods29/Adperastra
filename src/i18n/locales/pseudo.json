@@ -769,6 +769,16 @@
       "too_large": "[Thësë dëtäïls ärë tøø lärgë tø dïspläÿ. ~~~~~~~~~~~~~]",
       "failed": "[Thësë fïlë dëtäïls çøüld ñøt bë rëäd. ~~~~~~~~~~~~]",
       "other": "[Thësë fïlë dëtäïls çøüld ñøt bë rëäd. ~~~~~~~~~~~~]"
+    },
+    "special_view": {
+      "bad_request": "[Thïs prëvïëw rëqüëst ïs ñøt välïd. ~~~~~~~~~~~~]",
+      "unsupported": "[Thïs førmät ïs ñøt süppørtëd hërë. ~~~~~~~~~~~~]",
+      "too_large": "[Thïs fïlë ëxçëëds thë prëvïëw lïmïts. ~~~~~~~~~~~~~]",
+      "changed": "[Thë fïlë çhäñgëd. Øpëñ ït ägäïñ. ~~~~~~~~~~]",
+      "codec_required": "[Ä çømpätïblë çødëç ïs ñøt ïñställëd. ~~~~~~~~~~~~]",
+      "corrupt": "[Thïs prëvïëw çøüld ñøt bë rëäd. ~~~~~~~~~~]",
+      "unavailable": "[Thïs prëvïëw ïs ñøt äväïläblë. ~~~~~~~~~~]",
+      "other": "[Thïs prëvïëw ïs ñøt äväïläblë. ~~~~~~~~~~]"
     }
   },
   "keys": {
@@ -965,7 +975,11 @@
     "email": "[Ëmäïl ~~]",
     "subtitle": "[Sübtïtlës ~~~~]",
     "log": "[Løg ~~]",
-    "sqlite": "[SQLïtë dätäbäsë ~~~~~~]"
+    "sqlite": "[SQLïtë dätäbäsë ~~~~~~]",
+    "model": "[3D mødël ~~~]",
+    "raw": "[Çämërä RÄW ïmägë ~~~~~~]",
+    "codecImage": "[HËÏÇ ïmägë ~~~~]",
+    "psd": "[Phøtøshøp ïmägë ~~~~~~]"
   },
   "protected": {
     "message": "[Thïs fïlë çämë frøm thë ïñtërñët, sø ït øpëñëd ïñ prøtëçtëd vïëw. ~~~~~~~~~~~~~~~~~~~~~]",
@@ -1383,5 +1397,29 @@
   "background": {
     "waitingIdle": "[Wäïtïñg før ïñäçtïvïtÿ ~~~~~~~~]",
     "waitingAc": "[Wäïtïñg før ÄÇ pøwër ~~~~~~~]"
+  },
+  "model": {
+    "orbit": "[Ørbït ~~]",
+    "fit": "[Fït mødël ~~~~]",
+    "wireframe": "[Wïrëfrämë ~~~~]",
+    "measure": "[Mëäsürë ~~~]",
+    "units": "[Üñïts ~~]",
+    "unitNone": "[Søürçë üñïts ~~~~~]",
+    "unitMm": "[Mïllïmëtërs ~~~~~]",
+    "unitCm": "[Çëñtïmëtërs ~~~~~]",
+    "unitM": "[Mëtërs ~~~]",
+    "distance": "[Dïstäñçë: {value} ~~~~]",
+    "partial": "[Sømë mødël rësøürçës çøüld ñøt bë dïspläÿëd. ~~~~~~~~~~~~~~~]"
+  },
+  "raw": {
+    "fullResolution": "[Løäd füll rësølütïøñ ~~~~~~~~]"
+  },
+  "special_view": {
+    "codec": "[Ä çømpätïblë Wïñdøws çødëç ïs ñëëdëd før thïs fïlë. ~~~~~~~~~~~~~~~~~]",
+    "codecHelp": "[Çhëçk ïñställëd ïmägë çødëçs ïñ Wïñdøws Sëttïñgs, ør øpëñ thïs fïlë ïñ äñøthër äpp. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
+  },
+  "psd": {
+    "layers": "[Läÿërs ~~~]",
+    "noComposite": "[Thïs fïlë häs ñø rëädäblë çømpøsïtë prëvïëw. ~~~~~~~~~~~~~~~]"
   }
 }

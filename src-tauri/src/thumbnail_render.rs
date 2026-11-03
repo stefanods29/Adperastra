@@ -68,7 +68,7 @@ impl ThumbnailService {
         let Some(provider) = self.registry.resolve(&preview) else {
             return Ok(RenderOutcome::State(ThumbnailState::Unsupported));
         };
-        if provider.id() != key.handler_id
+        if provider.id().replace('_', "-") != key.handler_id
             || provider.version() != key.handler_version
             || preview.mime.is_empty()
             || preview.mime.len() > 128

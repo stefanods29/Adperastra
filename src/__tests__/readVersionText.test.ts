@@ -1,3 +1,4 @@
+import { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readVersionText, VERSION_TEXT_PREVIEW_MAX } from "../versions/readVersionText";
 
@@ -23,6 +24,7 @@ describe("bounded version text reads", () => {
   });
 
   it("stops an oversized response stream and releases its grant", async () => {
+    vi.stubGlobal("ReadableStream", NodeReadableStream);
     const cancelled = vi.fn();
     let chunk = 0;
     const stream = new ReadableStream<Uint8Array>({

@@ -27,6 +27,8 @@ use uuid::Uuid;
 use zeroize::Zeroizing;
 
 use crate::file_grant_backing::GrantedBacking;
+#[path = "webview_helper_admission.rs"]
+mod admission;
 use crate::helper_frames::{read_frame, FramedHelperProcess, HelperFrameEvent};
 use crate::webview_helper_inputs::{ChildGrants, ChildInputState, InputRegistry};
 use crate::webview_helper_protocol::{
@@ -87,6 +89,7 @@ pub struct WebviewHelperSession {
     data_dir: PathBuf,
     closed: bool,
     rendered_once: bool,
+    permit: Option<admission::HelperPermit>,
 }
 
 impl WebviewHelperSession {
@@ -487,6 +490,7 @@ impl WebviewHelperSession {
         self.closed = true;
         self.inputs.abort();
         self.process.kill();
+        self.permit.take();
     }
 
     /// Terminate the child and release everything the session owns.
@@ -496,6 +500,7 @@ impl WebviewHelperSession {
         }
         self.closed = true;
         self.process.kill();
+        self.permit.take();
         self.inputs.abort();
         Ok(())
     }
@@ -713,6 +718,7 @@ pub fn start_webview_helper(
     if config.kind != WebviewHelperKind::Pdf {
         command.arg(config.kind.wire_name());
     }
+    let permit = admission::HelperPermit::acquire()?;
     let process =
         FramedHelperProcess::spawn_command(command, HELPER_MEMORY_LIMIT, HELPER_FRAME_BYTES)
             .map_err(|_| "helper.start_failed".to_string())?;
@@ -726,6 +732,7 @@ pub fn start_webview_helper(
         proof: None,
         closed: false,
         rendered_once: false,
+        permit: Some(permit),
     };
     // Bootstrap carries no source manifest or grant before the private proof.
     let start = encode_control(&HelperControlFrame::Start {

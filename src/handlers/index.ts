@@ -1,3 +1,7 @@
+import { modelHandler } from "./model";
+import { rawHandler } from "./raw";
+import { codecImageHandler } from "./codecImage";
+import { psdHandler } from "./psd";
 import { archiveHandler } from "./archive";
 import { bookHandler } from "./book";
 import { emailHandler } from "./email";
@@ -41,6 +45,10 @@ export function createHandlerRegistry(): HandlerRegistry {
   // The JSON tree before text: ".json" files open as a tree, and a file over
   // its size limit still falls back to the text viewer.
   registry.register(jsonHandler);
+  registry.register(modelHandler);
+  registry.register(rawHandler);
+  registry.register(codecImageHandler);
+  registry.register(psdHandler);
   registry.register(textHandler);
   // Never chosen by itself (no extensions or types): only "Open as hex".
   registry.register(hexHandler);

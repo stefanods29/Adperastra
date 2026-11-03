@@ -769,6 +769,16 @@
       "too_large": "Estos detalles son demasiado extensos para mostrarlos.",
       "failed": "No se pudieron leer los detalles del archivo.",
       "other": "No se pudieron leer los detalles del archivo."
+    },
+    "special_view": {
+      "bad_request": "La solicitud de vista previa no es válida.",
+      "unsupported": "Este formato no es compatible aquí.",
+      "too_large": "Este archivo supera los límites de vista previa.",
+      "changed": "El archivo cambió. Vuelve a abrirlo.",
+      "codec_required": "No hay un códec compatible instalado.",
+      "corrupt": "No se pudo leer esta vista previa.",
+      "unavailable": "Esta vista previa no está disponible.",
+      "other": "Esta vista previa no está disponible."
     }
   },
   "keys": {
@@ -965,7 +975,11 @@
     "email": "Correo electrónico",
     "subtitle": "Subtítulos",
     "log": "Registro",
-    "sqlite": "Base de datos SQLite"
+    "sqlite": "Base de datos SQLite",
+    "model": "Modelo 3D",
+    "raw": "Imagen RAW de cámara",
+    "codecImage": "Imagen HEIC",
+    "psd": "Imagen de Photoshop"
   },
   "protected": {
     "message": "Este archivo proviene de Internet, así que se abrió en vista protegida.",
@@ -1383,5 +1397,29 @@
   "background": {
     "waitingIdle": "Esperando inactividad",
     "waitingAc": "Esperando el cargador"
+  },
+  "model": {
+    "orbit": "Orbitar",
+    "fit": "Ajustar modelo",
+    "wireframe": "Malla de alambre",
+    "measure": "Medir",
+    "units": "Unidades",
+    "unitNone": "Unidades del archivo",
+    "unitMm": "Milímetros",
+    "unitCm": "Centímetros",
+    "unitM": "Metros",
+    "distance": "Distancia: {value}",
+    "partial": "No se pudieron mostrar algunos recursos del modelo."
+  },
+  "raw": {
+    "fullResolution": "Cargar resolución completa"
+  },
+  "special_view": {
+    "codec": "Este archivo necesita un códec de Windows compatible.",
+    "codecHelp": "Revisa los códecs de imágenes instalados en Configuración de Windows o abre el archivo en otra aplicación."
+  },
+  "psd": {
+    "layers": "Capas",
+    "noComposite": "Este archivo no tiene una vista previa compuesta que se pueda leer."
   }
 }

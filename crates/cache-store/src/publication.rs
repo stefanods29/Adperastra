@@ -1,8 +1,6 @@
 //! Stage a bounded immutable result, publish owned bytes, commit the hit last.
 use crate::store::{acquire_file_lock, unix_now};
-use crate::{
-    cleanup, records, schema, CacheError, CacheKey, CacheRecord, CacheStore, MAX_BLOB_BYTES,
-};
+use crate::{cleanup, records, schema, CacheError, CacheKey, CacheRecord, CacheStore};
 use fs_service::owned_io::{OwnedOutput, PinnedDirectory};
 use rusqlite::params;
 use std::fs::File;
@@ -17,7 +15,7 @@ impl CacheStore {
         width: Option<u32>,
         height: Option<u32>,
     ) -> Result<CacheRecord, CacheError> {
-        self.publish_with_cap(key, source, mime, width, height, MAX_BLOB_BYTES)
+        self.publish_with_cap(key, source, mime, width, height, key.kind.blob_cap())
     }
 
     pub fn publish_with_cap(
@@ -31,8 +29,13 @@ impl CacheStore {
     ) -> Result<CacheRecord, CacheError> {
         let hash = crate::key_hash(key)?;
         let before = fs_service::source_stamp::stamp_for_open_file(source)?;
-        // Callers choose a per-kind cap; never accept more than 8 MiB here.
-        let cap = max_bytes.min(8 * 1024 * 1024);
+        // Scene geometry has its own activated, bounded result budget.
+        let ceiling = if key.kind == crate::CacheKind::ModelScene {
+            256 * 1024 * 1024
+        } else {
+            8 * 1024 * 1024
+        };
+        let cap = max_bytes.min(ceiling);
         if before.size_bytes == 0 {
             return Err(CacheError::BadRequest);
         }

@@ -235,6 +235,16 @@ that fixed it.
 
 ## Fixed
 
+### KI-100 - Translated models were rejected or framed at the origin (Major, fixed during07g integration)
+- **Cause:** validators tested the translation column instead of the affine last row; native bounds ignored node transforms.
+- **Fix:** all three validators use column-major affine indices3/7/11/15; bounded native world transforms include parents and per-primitive bounds.
+- **Verification:** translated-node roundtrip/perspective rejection and exact translated world-bounds regressions pass in the829Rust/777UI gate.
+
+### KI-099 - Model textures with equal dimensions reused one cache entry (Major, fixed during07g integration)
+- **Found:** coordinator review,2026-11-03. The image key used model identity/edge but omitted texture slot.
+- **Fix:** include the original texture index in the provider key and retain slot order; publication failure releases already acquired leases instead of shifting material indices.
+- **Verification:** `equal_size_textures_keep_distinct_bytes_and_original_slots` passed with two equal-sized distinct payloads; both leased paths and their exact bytes differ as expected. Final full gate remains required.
+
 ### KI-096 - OCR search routing and the PDF text overlay were incomplete (Major, fixed during 07e integration)
 - **Found in:** integration review of Step 07e, 2026-11-03.
 - **What:** **Copy all text** worked, but the Find row did not search recognized image text, and the PDF viewer had no overlaid word layer, so OCR search had no visible matches.

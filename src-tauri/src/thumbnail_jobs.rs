@@ -56,11 +56,11 @@ impl ThumbnailService {
         cache: Arc<CacheService>,
         policy: Arc<BackgroundPolicy>,
         scheduler: Arc<BackgroundScheduler>,
-    ) -> Self {
-        let registry = Arc::new(crate::thumbnail_providers::default_registry(Arc::clone(
-            &cache,
-        )));
-        Self {
+    ) -> Result<Self, String> {
+        let mut registry = crate::thumbnail_providers::default_registry(Arc::clone(&cache));
+        crate::special_thumbnails::register_special_providers(&mut registry)?;
+        let registry = Arc::new(registry);
+        Ok(Self {
             cache,
             policy,
             scheduler,
@@ -68,7 +68,7 @@ impl ThumbnailService {
             inspector: Arc::new(WindowsSourceInspector),
             groups: Mutex::new(HashMap::new()),
             consumers: consumers::Consumers::default(),
-        }
+        })
     }
     #[cfg(test)]
     pub(crate) fn for_test(
@@ -87,6 +87,23 @@ impl ThumbnailService {
             groups: Mutex::new(HashMap::new()),
             consumers: consumers::Consumers::default(),
         })
+    }
+    pub(super) fn provider_key(
+        &self,
+        stamp: &SourceStamp,
+        path: &str,
+        edge: u32,
+    ) -> Result<CacheKey, String> {
+        let prepared =
+            crate::metadata_source::PreparedMetadataSource::open(Path::new(path), stamp)?;
+        let provider = self
+            .registry
+            .resolve(&prepared.source)
+            .ok_or("thumbnail.failed")?;
+        let mut key = thumbnail_key(stamp, edge);
+        key.handler_id = provider.id().replace('_', "-");
+        key.handler_version = provider.version();
+        Ok(key)
     }
     fn complete(&self, app: &AppHandle, group: &Group, outcome: Result<RenderOutcome, String>) {
         let waiters = {
@@ -195,7 +212,10 @@ impl ThumbnailService {
             .cache
             .source_stamp(Path::new(&request.path))
             .map_err(stamp_code)?;
-        let Some(record) = self.cache.lookup(&thumbnail_key(&expected, request.edge))? else {
+        let Some(record) =
+            self.cache
+                .lookup(&self.provider_key(&expected, &request.path, request.edge)?)?
+        else {
             return Ok(None);
         };
         if consumer.cancelled.load(Ordering::Relaxed) {

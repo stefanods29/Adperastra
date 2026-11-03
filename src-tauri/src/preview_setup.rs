@@ -34,12 +34,12 @@ pub fn initialize(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&cache),
         Arc::clone(&policy),
         Arc::clone(&scheduler),
-    ));
+    )?);
     let metadata = Arc::new(metadata_jobs::MetadataService::new(
         Arc::clone(&cache),
         Arc::clone(&policy),
         Arc::clone(&scheduler),
-    ));
+    )?);
     app.manage(scheduler);
     app.manage(policy);
     app.manage(cache);

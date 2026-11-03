@@ -43,15 +43,17 @@ impl MetadataService {
         cache: Arc<CacheService>,
         policy: Arc<BackgroundPolicy>,
         scheduler: Arc<BackgroundScheduler>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, String> {
+        let mut registry = crate::metadata_providers::default_registry();
+        crate::special_metadata::register_special_metadata(&mut registry)?;
+        Ok(Self {
             cache,
             policy,
             scheduler,
-            registry: Mutex::new(crate::metadata_providers::default_registry()),
+            registry: Mutex::new(registry),
             groups: Mutex::new(HashMap::new()),
             consumers: consumers::Consumers::default(),
-        }
+        })
     }
     #[allow(dead_code)] // Registration API for later preview providers (Step 07g).
     pub fn register_provider(
@@ -62,6 +64,19 @@ impl MetadataService {
             .lock()
             .map_err(|_| "metadata.failed")?
             .register(provider)
+    }
+    pub(super) fn provider_key(&self, stamp: &SourceStamp, path: &str) -> Result<CacheKey, String> {
+        let prepared =
+            crate::metadata_source::PreparedMetadataSource::open(Path::new(path), stamp)?;
+        let provider = self
+            .registry
+            .lock()
+            .map_err(|_| "metadata.failed")?
+            .resolve(&prepared.source)
+            .ok_or("metadata.failed")?;
+        let mut key = cache_key(stamp);
+        key.handler_id = provider.id().replace('_', "-");
+        Ok(key)
     }
     fn complete(&self, app: &AppHandle, group: &Group, outcome: Result<MetadataInfo, String>) {
         let waiters = {

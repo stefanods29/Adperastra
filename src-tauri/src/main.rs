@@ -38,6 +38,20 @@ mod cache_stamp;
 mod classic_menu;
 mod clipboard;
 mod preview_setup;
+mod psd_raster;
+mod raw_helper;
+mod special_3mf;
+mod special_images;
+mod special_metadata;
+pub mod special_model_resources;
+mod special_output;
+pub mod special_scene;
+mod special_thumbnails;
+mod special_view_backend;
+pub mod special_view_jobs;
+mod special_view_session;
+pub mod special_view_types;
+mod special_views;
 mod thumbnail_decode;
 mod thumbnail_encode;
 mod thumbnail_helper;
@@ -3026,6 +3040,9 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     Ok(())
 }
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some(raw_helper::HELPER_FLAG) {
+        std::process::exit(raw_helper::run_helper());
+    }
     // The PDF helper (Step 07d) is this executable with a static flag; it
     // never starts the Explorer and owns one hidden, incognito webview.
     if std::env::args().nth(1).as_deref() == Some(pdf_helper::HELPER_FLAG) {
@@ -3168,7 +3185,13 @@ fn main() {
             ));
             Ok(())
         })
+        .manage(special_view_session::SpecialViews::default())
         .invoke_handler(tauri::generate_handler![
+            special_views::special_view_open_start,
+            special_views::special_view_scene,
+            special_views::special_view_raw_start,
+            special_views::special_view_layers,
+            special_views::special_view_close,
             get_settings,
             save_settings,
             get_session,

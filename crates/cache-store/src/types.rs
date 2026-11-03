@@ -62,7 +62,11 @@ impl CacheKind {
     /// The finite per-kind result cap. Producers with a different cap must
     /// agree on it before their step registers; this build serves thumbnails.
     pub fn blob_cap(&self) -> u64 {
-        MAX_BLOB_BYTES
+        if *self == Self::ModelScene {
+            256 * 1024 * 1024
+        } else {
+            MAX_BLOB_BYTES
+        }
     }
 }
 
@@ -128,7 +132,12 @@ pub struct CacheRecord {
 impl CacheRecord {
     /// Check the fields read from disk before any consumer sees them.
     pub fn validate(&self) -> Result<(), CacheError> {
-        self.validate_with_cap(MAX_BLOB_BYTES)
+        let cap = match self.mime.as_str() {
+            "application/x-adperastra-scene" => 256 * 1024 * 1024,
+            "image/png" => 8 * 1024 * 1024,
+            _ => MAX_BLOB_BYTES,
+        };
+        self.validate_with_cap(cap)
     }
 
     /// The same checks with a per-kind byte cap (Step 07d PDF pages).

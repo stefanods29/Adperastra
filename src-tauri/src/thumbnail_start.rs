@@ -42,7 +42,14 @@ impl ThumbnailService {
         if consumer.cancelled.load(Ordering::Relaxed) {
             return Err("background.cancelled".into());
         }
-        let key = thumbnail_key(&expected, request.edge);
+        let service = Arc::clone(self);
+        let path = request.path.clone();
+        let stamp = expected.clone();
+        let edge = request.edge;
+        let key =
+            tauri::async_runtime::spawn_blocking(move || service.provider_key(&stamp, &path, edge))
+                .await
+                .map_err(|_| "thumbnail.failed")??;
         let hash = key_hash(&key).map_err(|_| "thumbnail.bad_request")?;
         let (group, owner) = {
             let mut groups = self.groups.lock().map_err(|_| "thumbnail.failed")?;

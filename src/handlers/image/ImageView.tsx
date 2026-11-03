@@ -1,5 +1,5 @@
 import { Copy, Expand, RotateCcw, RotateCw, Scan, Search, ZoomIn, ZoomOut } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../../components/Button";
 import type { Command } from "../../commands/registry";
@@ -12,6 +12,9 @@ import type { HandlerViewProps } from "../types";
 import { clampZoom, fitPercent, MAX_ZOOM, MIN_ZOOM, nextZoom } from "./zoom";
 import OcrOverlay from "../../ocr/OcrOverlay";
 import { useOcr } from "../../ocr/useOcr";
+
+import { avifNeedsNativeFallback } from "./codecFallback";
+const CodecImageView = lazy(() => import("../codecImage/CodecImageView"));
 
 interface SavedImageState {
   mode: "fit" | "manual";
@@ -76,13 +79,15 @@ const RIBBON: RibbonDef = {
 /** Image viewer (Steps 04a, 04b): fit to window, zoom with Ctrl+wheel and
  * Ctrl+=/Ctrl+-/Ctrl+0, pan by dragging, rotate the view, checkerboard
  * behind transparency. The browser decodes the image (`decoding="async"`). */
-export default function ImageView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, find, previewOnly = false, ocrLanguage = "auto" }: HandlerViewProps) {
+export default function ImageView(props: HandlerViewProps) {
+  const { info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, find, previewOnly = false, ocrLanguage = "auto" } = props;
   const { t, i18n } = useTranslation();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [natural, setNatural] = useState<{ width: number; height: number } | null>(null);
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [view, setView] = useState<SavedImageState>(() => readSaved(savedState));
   const [failed, setFailed] = useState(false);
+  const [codecFallback, setCodecFallback] = useState(false);
   const [slow, setSlow] = useState(false);
   const [ocrOn, setOcrOn] = useState(false);
   const ocr = useOcr({
@@ -233,6 +238,10 @@ export default function ImageView({ info, url, active, savedState, onStateChange
 
   const ribbon = <Ribbon def={RIBBON} ctx={ctx} commands={commands} accent="image" active={active} />;
 
+  if (codecFallback) {
+    return <Suspense fallback={<div className="adp-viewer-message" role="status">{t("preview.loading")}</div>}><CodecImageView {...props} /></Suspense>;
+  }
+
   if (failed) {
     return (
       <ViewerFrame ribbon={ribbon}>
@@ -281,7 +290,7 @@ export default function ImageView({ info, url, active, savedState, onStateChange
               // SVGs without a size report 0: show them at 800 x 600.
               setNatural({ width: event.currentTarget.naturalWidth || 800, height: event.currentTarget.naturalHeight || 600 })
             }
-            onError={() => setFailed(true)}
+            onError={() => { if (avifNeedsNativeFallback(info)) setCodecFallback(true); else setFailed(true); }}
           />
           {ocrOn && ocr.page ? (
             <OcrOverlay

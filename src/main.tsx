@@ -34,6 +34,9 @@ import "./styles/email.css";
 import "./styles/subtitle.css";
 import "./styles/log.css";
 import "./styles/sqlite.css";
+import "./styles/model.css";
+import "./styles/specialImage.css";
+import "./styles/psd.css";
 
 const container = document.getElementById("root");
 if (!container) {

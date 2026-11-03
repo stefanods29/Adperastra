@@ -53,6 +53,10 @@ describe("default apps", () => {
       "markdown",
       "table",
       "json",
+      "model",
+      "raw",
+      "codecImage",
+      "psd",
       "text",
       "archive",
     ]);
@@ -81,7 +85,7 @@ describe("default apps", () => {
     root = createRoot(container);
     await act(async () => root?.render(<OpeningFilesSettings open={open} onChange={onChange} onOpenHelp={() => undefined} />));
     const groupSelects = container.querySelectorAll<HTMLSelectElement>(".adp-defaultapps-head select");
-    expect(groupSelects).toHaveLength(15);
+    expect(groupSelects).toHaveLength(19);
     await act(async () => {
       groupSelects[1].value = "windows";
       groupSelects[1].dispatchEvent(new Event("change", { bubbles: true }));
