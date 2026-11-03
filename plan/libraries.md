@@ -89,7 +89,7 @@ Owner scope2026-11-02 includes AI and a Local AI/API-key assistant with Meta pri
 
 | Dependency | Exact pin | License / earliest producer | Required scope and evidence |
 |---|---|---|---|
-| fflate |0.8.2 |MIT;07f |Bounded streaming Unzlib adapter forMOBI; parserhelperonly, output/memorycapsmandatory, no generalZIPfrontendparser |
+| fflate |0.8.3 (guide said 0.8.2; 0.8.3 fixes GHSA-px8p-9vwx-vf98, an unbounded loop on malformed ZIP64) |MIT;07f |Bounded streaming Unzlib adapter forMOBI; parserhelperonly, output/memorycapsmandatory, no generalZIPfrontendparser |
 | @pdf-lib/fontkit |1.1.1 |MIT;08b |registerFontkit/embedFont for approvedInter assets. Audit embedded/transitivecopyright notices aswellaspackage license; no unverifiedsystemfontsubstitution |
 | Inter fonts |4.1 officialreleasearchive; exact4TTF/licensehashesinAPI-EVIDENCE |SILOFL1.1;08b |Provisionassets/fonts/inter-4.1;noexistingbaselinefontbinaryassumed,noOSinstallation/Microsoftfontbundling |
 | regex |1.13.1 defaultfeaturesoff,std/perf/unicode |MIT OR Apache-2.0;09e/11a |Rust1.65;RegexBuilder compiledsize/DFAcache/nestlimits;noJSregexforuntrustedbulk/indexpatterns |

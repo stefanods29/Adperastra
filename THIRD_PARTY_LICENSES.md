@@ -68,7 +68,10 @@ file lists everything that ships inside the app folder.
 - **csv** 1.4 (Unlicense OR MIT) with **csv-core** 0.1 (Unlicense OR MIT) - reads CSV and TSV files into the table viewer (Step 06f).
 - **ttf-parser** 0.25 (MIT OR Apache-2.0) - reads font names and the character map in a separate helper process (Step 06f).
 - **bzip2** 0.6.1 (MIT OR Apache-2.0) with **libbz2-rs-sys** 0.2.6 (bzip2-1.0.6, the library's own permissive license, allowed by the owner) - reads and writes bzip2 data, .tar.bz2 streams and bzip2-compressed zip/7z entries (Step 06e). The password writer and reader features of zip 9.1.3 and sevenz-rust2 0.24 pull in **aes** 0.9 (MIT OR Apache-2.0), **hmac** 0.13, **pbkdf2** 0.13, **sha1** 0.11 (MIT OR Apache-2.0), **zeroize** 1.9 (Apache-2.0 OR MIT), **constant_time_eq** 0.6.1 (CC0-1.0 OR MIT-0 OR Apache-2.0), **cmov** 0.5.4 and **ctutils** 0.4.7 (Apache-2.0 OR MIT); **blake3** 1.8 also verifies a created archive's spool (Step 06e).
-- **rusqlite** 0.41 (MIT) with the bundled SQLite (public domain) - the index of kept file versions (Step 06b).
+- **rusqlite** 0.41 (MIT) with the bundled SQLite (public domain) - the index of kept file versions (Step 06b) and read-only SQLite previews (Step 07f).
+- **mail-parser** 0.11.9 (Apache-2.0 OR MIT) - reads .eml headers, bodies and attachment metadata in the email viewer (Step 07f). MIME content is never executed.
+- **foliate-js** 1.0.1 (MIT) - parses EPUB/MOBI structure in the book helper only (Step 07f); its renderer and remote-resource code are not imported.
+- **fflate** 0.8.3 (MIT) - bounded MOBI Unzlib decompression in the book helper (Step 07f). 0.8.3 fixes GHSA-px8p-9vwx-vf98; it replaced the guide's 0.8.2.
 - **blake3** 1.8 (CC0-1.0 OR Apache-2.0) - recognizes identical versions so they are stored once (Step 06b).
 - **zstd** 0.14 (BSD-3-Clause) - compresses kept versions (Step 06b).
 - Version-store dependencies: **arrayvec** 0.7.8 (MIT OR Apache-2.0), **constant_time_eq** 0.4.2 (CC0-1.0 OR MIT-0 OR Apache-2.0), **fallible-iterator** 0.3.0 and **fallible-streaming-iterator** 0.1.9 (MIT OR Apache-2.0), **hashlink** 0.12.2 (MIT OR Apache-2.0), and **libsqlite3-sys** 0.39.1 (MIT, its bundled SQLite is public domain). These license declarations were checked in the installed packages' manifests; Windows does not build the SQLite WASM/VFS dependencies.

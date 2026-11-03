@@ -36,7 +36,8 @@ Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unli
 | PDF edit (14a) | pdf-lib (MIT) | lopdf (MIT); qpdf external | Standard annotations |
 | Image editing (14b/18) | Fabric.js or Konva (MIT) + image crate | PixiJS (MIT); miniPaint (MIT, reference) | 18a needs tiled/GPU path |
 | PSD (07c/18b) | ag-psd (MIT) | flattened composite only | - |
-| E-books/3D (07c) | foliate-js (MIT); three.js (MIT) | epub.js (BSD-2) | Sandboxed frames |
+| E-books/3D (07c) | foliate-js 1.0.1 (MIT, parser only in the book helper, Step 07f); fflate 0.8.3 (MIT, bounded MOBI Unzlib; 0.8.3 replaces the guide's 0.8.2 for GHSA-px8p-9vwx-vf98); three.js (MIT) | epub.js (BSD-2) | Sandboxed frames; no renderer or remote resources |
+| Extra viewers (07f) | mail-parser 0.11.9 (Apache-2.0 OR MIT); rusqlite 0.41 (MIT, bundled SQLite public domain); uuid 1 (MIT/Apache-2.0) in data-views | hand-written MIME/SQL | Read-only; MIME and SQL are data, never executed |
 | Sheet quick view (13) | ExcelJS (MIT) | SheetJS CE (Apache-2.0) | SheetJS only pinned by SHA-256 in manifest, no unpinned CDN fetch |
 | Office conversion (12b) | LibreOffice headless, separate program (MPL-2.0 core, LGPL parts separate) | mammoth.js (BSD-2) + turndown (MIT); user-installed Pandoc detected, not included | ADR 0003. Never ONLYOFFICE/SuperDoc (AGPL) |
 | Office editing (20a) | LibreOffice-based engine in a pack via adapter (spikes decide) | Univer open core (Apache-2.0) + own OOXML; user's chosen app | Univer Pro (paid) never; ZetaOffice terms re-check |
