@@ -51,6 +51,7 @@ file lists everything that ships inside the app folder.
 - **React** (MIT) - user interface components.
 - **i18next + i18next-icu** (MIT) - translations with locale-aware messages.
 - **markdown-it** (MIT) + **DOMPurify** (Apache-2.0) - safe rendering of help pages.
+- **pdfjs-dist** 6.4.299 (Apache-2.0) - renders PDF pages, text and search results in the isolated PDF helper webview (Step 07d). PDF JavaScript actions are disabled and the files never run scripts.
 - **Lucide icons** (ISC) - icons in the interface.
 - **axe-core** 4.14.0 (MPL-2.0) - accessibility check in development only; never shipped with the app.
 - **egui** (MIT / Apache-2.0) - setup window. Built without egui's bundled default fonts (Ubuntu Font Licence, not on the allowed list); the window uses Inter, or the Windows UI font installed on the PC (read at run time, never bundled).

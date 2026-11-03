@@ -25,10 +25,15 @@ infer = "0.22"
 data-views = { path = "../crates/data-views" }
 # Font details are read in the font helper process (Step 06f).
 ttf-parser = { version = "0.25", default-features = false, features = ["std"] }
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 blake3 = "1.8"
 # Gallery source watchers (Step 07c); same locked version as fs-service.
 notify = "8"
+# Step 07d: memory sinks, framed-pipe hashes, the private-profile preflight.
+zeroize = "1.9.1"
+sha2 = "0.10"
+webview2-com = "=0.39.1"
+windows-core-webview = { package = "windows-core", version = "=0.62.2", default-features = true }
 windows-collections = "0.2"
 windows-core = "=0.61.2"
 windows = { version = "0.61", features = [
