@@ -1,0 +1,33 @@
+[package]
+name = "convert"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+fs-service = { path = "../fs-service" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+# Step 08a D1: exact engine pins, default features off, only the approved
+# raster formats. AVIF output is deliberately absent.
+image = { version = "=0.25.10", default-features = false, features = [
+    "png",
+    "jpeg",
+    "gif",
+    "webp",
+    "bmp",
+    "tiff",
+    "ico",
+] }
+# No system fonts, no raster image decoding and no SVGZ: an SVG can only
+# render with resources supplied by our own code (none yet).
+resvg = { version = "=0.49.0", default-features = false, features = ["text"] }
+little_exif = "=0.6.23"
+# Already an approved direct dependency of setup-core (plan/libraries.md);
+# reused here for OutputMetadata.hash_sha256.
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tempfile = "3"

@@ -81,6 +81,8 @@ file lists everything that ships inside the app folder.
 - **ag-psd** 34.1.0 (MIT) — isolated PSD composite/layer reader. License: https://github.com/Agamnentzar/ag-psd/blob/master/LICENSE
 - PSD dependencies: **base64-js** 1.5.1 (MIT) and **pako** 2.1.0 (MIT AND Zlib), bundled by ag-psd.
 
+- **image** 0.25.10 (MIT OR Apache-2.0), **resvg** 0.49.0 (Apache-2.0 OR MIT), **little_exif** 0.6.23 (MIT OR Apache-2.0) — bounded image conversion, isolated SVG rasterization and metadata preservation (Step 08a).
+
 ## Development tools (not shipped)
 
 - **vcpkg** 0.2.15 (MIT OR Apache-2.0) - SQLite build integration, not shipped as an app dependency.
