@@ -340,6 +340,7 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "close": "Cerrar",
+    "retry": "Reintentar",
     "undo": "Deshacer",
     "search": "Buscar",
     "ready": "Listo",
@@ -738,6 +739,16 @@
       "snapshot_unavailable": "Esta copia PDF sin guardar no está disponible.",
       "unsupported_feature": "Este visor no puede mostrar esta función PDF de forma segura."
     },
+    "extra_view": {
+      "bad_request": "La solicitud del visor no es válida.",
+      "unsupported": "Este formato no es compatible aquí.",
+      "too_large": "Este archivo supera los límites del visor.",
+      "changed": "El archivo cambió. Vuelve a abrirlo.",
+      "corrupt": "No se pudo leer este archivo.",
+      "read_only": "Este visor no puede cambiar el archivo.",
+      "unavailable": "Este visor no está disponible.",
+      "other": "Este visor no pudo terminar. Vuelve a intentarlo."
+    },
     "ocr": {
       "bad_request": "La solicitud de reconocimiento no es válida.",
       "language_missing": "Este idioma de reconocimiento no está instalado.",
@@ -824,6 +835,80 @@
     "moveTo": "Mover a {name}",
     "shortcutTo": "Crear acceso directo en {name}"
   },
+  "extra_view": {
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "contents": "Tabla de contenido",
+    "fontSize": "Tamaño de fuente",
+    "theme": "Tema de lectura",
+    "source": "Código fuente",
+    "output": "Resultado",
+    "unsupportedOutput": "Este resultado no se puede mostrar de forma segura.",
+    "from": "De",
+    "to": "Para",
+    "subject": "Asunto",
+    "attachments": "Archivos adjuntos",
+    "plainText": "Texto sin formato",
+    "remoteBlocked": "Las imágenes remotas están bloqueadas.",
+    "start": "Inicio",
+    "end": "Fin",
+    "level": "Nivel",
+    "tail": "Seguir líneas nuevas",
+    "tables": "Tablas",
+    "columns": "Columnas",
+    "partial": "Se omitió o acortó parte del contenido.",
+    "wal": "Cierra la base de datos en la otra aplicación o abre una copia segura.",
+    "page": "Página {page} de {count}",
+    "themeApp": "Aplicación",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro"
+  },
+  "notebook": {
+    "cells": "{count, plural, one {# celda} other {# celdas}}",
+    "expandAll": "Expandir todo",
+    "collapseAll": "Contraer todo",
+    "loadMore": "Cargar más celdas",
+    "kind_markdown": "Markdown",
+    "kind_code": "Código",
+    "kind_raw": "Sin formato",
+    "sourceCut": "El código fuente de esta celda es más largo; solo se muestra el comienzo.",
+    "imageOutput": "Imagen guardada {index}"
+  },
+  "email": {
+    "attachmentCount": "{count, plural, one {# archivo adjunto} other {# archivos adjuntos}}",
+    "body": "Cuerpo del mensaje",
+    "cc": "Cc",
+    "date": "Fecha",
+    "htmlBody": "Texto con formato",
+    "noAttachments": "Este mensaje no tiene archivos adjuntos."
+  },
+  "subtitle": {
+    "cueCount": "{count, plural, one {# subtítulo} other {# subtítulos}}",
+    "label": "Subtítulos de {name}",
+    "text": "Texto"
+  },
+  "log": {
+    "lineCount": "{count, plural, one {# línea} other {# líneas}}",
+    "label": "Registro {name}",
+    "level_trace": "Rastreo",
+    "level_debug": "Depuración",
+    "level_info": "Información",
+    "level_warn": "Advertencia",
+    "level_error": "Error",
+    "level_fatal": "Fatal",
+    "level_none": "Sin nivel"
+  },
+  "sqlite": {
+    "columnCount": "{count, plural, one {# columna} other {# columnas}}",
+    "rowCount": "{count, plural, one {# fila mostrada} other {# filas mostradas}}",
+    "reload": "Volver a cargar tablas",
+    "readOnly": "Este visor es de solo lectura. No ejecuta SQL ni edita datos.",
+    "label": "Tabla {name}",
+    "empty": "Esta tabla no tiene filas.",
+    "noTables": "Esta base de datos no tiene tablas físicas.",
+    "null": "NULL",
+    "blob": "BLOB"
+  },
   "ocr": {
     "title": "Reconocimiento de texto (OCR)",
     "copyAll": "Copiar todo el texto",
@@ -874,7 +959,13 @@
     "json": "JSON",
     "font": "Fuente",
     "archive": "Archivo comprimido",
-    "pdf": "Documento PDF"
+    "pdf": "Documento PDF",
+    "book": "Libro electrónico",
+    "notebook": "Cuaderno",
+    "email": "Correo electrónico",
+    "subtitle": "Subtítulos",
+    "log": "Registro",
+    "sqlite": "Base de datos SQLite"
   },
   "protected": {
     "message": "Este archivo proviene de Internet, así que se abrió en vista protegida.",

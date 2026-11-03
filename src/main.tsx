@@ -28,6 +28,12 @@ import "./styles/json-view.css";
 import "./styles/gallery.css";
 import "./styles/pdf.css";
 import "./styles/ocr.css";
+import "./styles/book.css";
+import "./styles/notebook.css";
+import "./styles/email.css";
+import "./styles/subtitle.css";
+import "./styles/log.css";
+import "./styles/sqlite.css";
 
 const container = document.getElementById("root");
 if (!container) {

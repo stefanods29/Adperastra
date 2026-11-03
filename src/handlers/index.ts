@@ -1,5 +1,11 @@
 import { archiveHandler } from "./archive";
+import { bookHandler } from "./book";
+import { emailHandler } from "./email";
 import { fontHandler } from "./font";
+import { logHandler } from "./log";
+import { notebookHandler } from "./notebook";
+import { subtitleHandler } from "./subtitle";
+import { sqliteHandler } from "./sqlite";
 import { hexHandler } from "./hex";
 import { jsonHandler } from "./json";
 import { imageHandler } from "./image";
@@ -19,6 +25,14 @@ export function createHandlerRegistry(): HandlerRegistry {
   registry.register(fontHandler);
   // PDF wins before any text fallback (Step 07d).
   registry.register(pdfHandler);
+  // Extra read-only viewers before the generic text/JSON/table handlers:
+  // their extension lists overlap text/JSON (Step 07f T7).
+  registry.register(bookHandler);
+  registry.register(notebookHandler);
+  registry.register(emailHandler);
+  registry.register(subtitleHandler);
+  registry.register(logHandler);
+  registry.register(sqliteHandler);
   // Markdown before text: ties on ".md" go to the Markdown viewer.
   registry.register(markdownHandler);
   // The table viewer before text: ".csv" and ".tsv" go to the table, and a

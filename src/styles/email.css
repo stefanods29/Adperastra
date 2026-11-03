@@ -1,0 +1,26 @@
+/* Saved email (Step 07f): header labels 104px, content padding 16px. */
+.adp-email { flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: var(--adp-space-4); background: var(--adp-color-surface-window); }
+.adp-email-message { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--adp-space-3); }
+.adp-email-headers { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: var(--adp-space-1) var(--adp-space-3); margin: 0; }
+.adp-email-headers dt { color: var(--adp-color-text-secondary); font-size: var(--adp-font-small); }
+.adp-email-headers dd { margin: 0; color: var(--adp-color-text-primary); overflow-wrap: anywhere; }
+.adp-email-frame { width: 100%; min-height: 320px; flex: 1; border: 1px solid var(--adp-color-border-subtle); border-radius: var(--adp-radius-sm); background: var(--adp-color-surface-window); }
+.adp-email-text {
+  margin: 0;
+  padding: var(--adp-space-3);
+  min-height: 200px;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-pane);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: var(--adp-font-body);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.adp-email-attachments { border-top: 1px solid var(--adp-color-border-subtle); padding-top: var(--adp-space-3); }
+.adp-email-attachments h2 { margin: 0 0 var(--adp-space-2); font-size: var(--adp-font-body); }
+.adp-email-attachments ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--adp-space-1); }
+.adp-email-attachments li { display: flex; align-items: center; gap: var(--adp-space-2); min-height: 28px; }
+.adp-email-attachment-name { overflow-wrap: anywhere; }
+.adp-email-attachment-meta { color: var(--adp-color-text-secondary); font-size: var(--adp-font-small); margin-inline-end: auto; }

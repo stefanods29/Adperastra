@@ -91,6 +91,15 @@ export interface Handler {
   accent: HandlerAccent;
   /** Lower-case extensions without the dot. */
   extensions: readonly string[];
+  /** Extensions that identify this handler even when the detected MIME is a
+   * generic `text/plain`, `application/json` or
+   * `application/octet-stream`. The specific viewer wins over the generic
+   * text/JSON handler (Step 07f T7). */
+  priorityExtensions?: readonly string[];
+  /** Extensions claimed only when the detected content type also matches
+   * `mimeTypes`; `.db` uses this so a mislabelled file stays in the user's
+   * chosen app (Step 07f T7). */
+  contentExtensions?: readonly string[];
   /** Content types recognized from the file's first bytes. A content match
    * wins over an extension match. */
   mimeTypes: readonly string[];

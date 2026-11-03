@@ -340,6 +340,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
+    "retry": "Retry",
     "undo": "Undo",
     "search": "Search",
     "ready": "Ready",
@@ -738,6 +739,16 @@
       "snapshot_unavailable": "This unsaved PDF snapshot is not available.",
       "unsupported_feature": "This PDF feature cannot be rendered safely by this viewer."
     },
+    "extra_view": {
+      "bad_request": "This viewer request is not valid.",
+      "unsupported": "This format is not supported here.",
+      "too_large": "This file exceeds the viewing limits.",
+      "changed": "The file changed. Open it again.",
+      "corrupt": "This file could not be read.",
+      "read_only": "This viewer cannot change the file.",
+      "unavailable": "This viewer is not available.",
+      "other": "This viewer could not finish. Try again."
+    },
     "ocr": {
       "bad_request": "This recognition request is not valid.",
       "language_missing": "This recognition language is not installed.",
@@ -824,6 +835,80 @@
     "moveTo": "Move to {name}",
     "shortcutTo": "Create shortcut in {name}"
   },
+  "extra_view": {
+    "previous": "Previous",
+    "next": "Next",
+    "contents": "Table of contents",
+    "fontSize": "Font size",
+    "theme": "Reading theme",
+    "source": "Source",
+    "output": "Output",
+    "unsupportedOutput": "This output cannot be displayed safely.",
+    "from": "From",
+    "to": "To",
+    "subject": "Subject",
+    "attachments": "Attachments",
+    "plainText": "Plain text",
+    "remoteBlocked": "Remote images are blocked.",
+    "start": "Start",
+    "end": "End",
+    "level": "Level",
+    "tail": "Follow new lines",
+    "tables": "Tables",
+    "columns": "Columns",
+    "partial": "Some content was skipped or shortened.",
+    "wal": "Close the database in its other app or open a safe copy.",
+    "page": "Page {page} of {count}",
+    "themeApp": "App",
+    "themeLight": "Light",
+    "themeDark": "Dark"
+  },
+  "notebook": {
+    "cells": "{count, plural, one {# cell} other {# cells}}",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "loadMore": "Load more cells",
+    "kind_markdown": "Markdown",
+    "kind_code": "Code",
+    "kind_raw": "Raw",
+    "sourceCut": "This cell's source is longer; only the beginning is shown.",
+    "imageOutput": "Saved image {index}"
+  },
+  "email": {
+    "attachmentCount": "{count, plural, one {# attachment} other {# attachments}}",
+    "body": "Message body",
+    "cc": "Cc",
+    "date": "Date",
+    "htmlBody": "Formatted text",
+    "noAttachments": "This message has no attachments."
+  },
+  "subtitle": {
+    "cueCount": "{count, plural, one {# cue} other {# cues}}",
+    "label": "Subtitles in {name}",
+    "text": "Text"
+  },
+  "log": {
+    "lineCount": "{count, plural, one {# line} other {# lines}}",
+    "label": "Log {name}",
+    "level_trace": "Trace",
+    "level_debug": "Debug",
+    "level_info": "Info",
+    "level_warn": "Warning",
+    "level_error": "Error",
+    "level_fatal": "Fatal",
+    "level_none": "None"
+  },
+  "sqlite": {
+    "columnCount": "{count, plural, one {# column} other {# columns}}",
+    "rowCount": "{count, plural, one {# row shown} other {# rows shown}}",
+    "reload": "Reload tables",
+    "readOnly": "This viewer is read-only. It cannot run SQL or edit data.",
+    "label": "Table {name}",
+    "empty": "This table has no rows.",
+    "noTables": "This database has no physical tables.",
+    "null": "NULL",
+    "blob": "BLOB"
+  },
   "ocr": {
     "title": "Text recognition (OCR)",
     "copyAll": "Copy all text",
@@ -874,7 +959,13 @@
     "json": "JSON",
     "font": "Font",
     "archive": "Archive",
-    "pdf": "PDF document"
+    "pdf": "PDF document",
+    "book": "E-book",
+    "notebook": "Notebook",
+    "email": "Email",
+    "subtitle": "Subtitles",
+    "log": "Log",
+    "sqlite": "SQLite database"
   },
   "protected": {
     "message": "This file came from the internet, so it opened in protected view.",

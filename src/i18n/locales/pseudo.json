@@ -340,6 +340,7 @@
     "save": "[Sävë ~~]",
     "cancel": "[Çäñçël ~~~]",
     "close": "[Çløsë ~~]",
+    "retry": "[Rëtrÿ ~~]",
     "undo": "[Üñdø ~~]",
     "search": "[Sëärçh ~~~]",
     "ready": "[Rëädÿ ~~]",
@@ -738,6 +739,16 @@
       "snapshot_unavailable": "[Thïs üñsävëd PDF sñäpshøt ïs ñøt äväïläblë. ~~~~~~~~~~~~~~~]",
       "unsupported_feature": "[Thïs PDF fëätürë çäññøt bë rëñdërëd säfëlÿ bÿ thïs vïëwër. ~~~~~~~~~~~~~~~~~~~~]"
     },
+    "extra_view": {
+      "bad_request": "[Thïs vïëwër rëqüëst ïs ñøt välïd. ~~~~~~~~~~~]",
+      "unsupported": "[Thïs førmät ïs ñøt süppørtëd hërë. ~~~~~~~~~~~~]",
+      "too_large": "[Thïs fïlë ëxçëëds thë vïëwïñg lïmïts. ~~~~~~~~~~~~~]",
+      "changed": "[Thë fïlë çhäñgëd. Øpëñ ït ägäïñ. ~~~~~~~~~~]",
+      "corrupt": "[Thïs fïlë çøüld ñøt bë rëäd. ~~~~~~~~~]",
+      "read_only": "[Thïs vïëwër çäññøt çhäñgë thë fïlë. ~~~~~~~~~~~~]",
+      "unavailable": "[Thïs vïëwër ïs ñøt äväïläblë. ~~~~~~~~~~]",
+      "other": "[Thïs vïëwër çøüld ñøt fïñïsh. Trÿ ägäïñ. ~~~~~~~~~~~~~]"
+    },
     "ocr": {
       "bad_request": "[Thïs rëçøgñïtïøñ rëqüëst ïs ñøt välïd. ~~~~~~~~~~~~~]",
       "language_missing": "[Thïs rëçøgñïtïøñ läñgüägë ïs ñøt ïñställëd. ~~~~~~~~~~~~~~~]",
@@ -824,6 +835,80 @@
     "moveTo": "[Møvë tø {name} ~~~]",
     "shortcutTo": "[Çrëätë shørtçüt ïñ {name} ~~~~~~~]"
   },
+  "extra_view": {
+    "previous": "[Prëvïøüs ~~~~]",
+    "next": "[Ñëxt ~~]",
+    "contents": "[Täblë øf çøñtëñts ~~~~~~]",
+    "fontSize": "[Føñt sïzë ~~~~]",
+    "theme": "[Rëädïñg thëmë ~~~~~]",
+    "source": "[Søürçë ~~~]",
+    "output": "[Øütpüt ~~~]",
+    "unsupportedOutput": "[Thïs øütpüt çäññøt bë dïspläÿëd säfëlÿ. ~~~~~~~~~~~~~~]",
+    "from": "[Frøm ~~]",
+    "to": "[Tø ~~]",
+    "subject": "[Sübjëçt ~~~]",
+    "attachments": "[Ättäçhmëñts ~~~~~]",
+    "plainText": "[Pläïñ tëxt ~~~~]",
+    "remoteBlocked": "[Rëmøtë ïmägës ärë bløçkëd. ~~~~~~~~~]",
+    "start": "[Stärt ~~]",
+    "end": "[Ëñd ~~]",
+    "level": "[Lëvël ~~]",
+    "tail": "[Følløw ñëw lïñës ~~~~~~]",
+    "tables": "[Täblës ~~~]",
+    "columns": "[Çølümñs ~~~]",
+    "partial": "[Sømë çøñtëñt wäs skïppëd ør shørtëñëd. ~~~~~~~~~~~~~]",
+    "wal": "[Çløsë thë dätäbäsë ïñ ïts øthër äpp ør øpëñ ä säfë çøpÿ. ~~~~~~~~~~~~~~~~~~]",
+    "page": "[Pägë {page} øf {count} ~~~]",
+    "themeApp": "[Äpp ~~]",
+    "themeLight": "[Lïght ~~]",
+    "themeDark": "[Därk ~~]"
+  },
+  "notebook": {
+    "cells": "[{count, plural, one {# çëll} other {# çëlls}} ~~]",
+    "expandAll": "[Ëxpäñd äll ~~~~]",
+    "collapseAll": "[Çølläpsë äll ~~~~~]",
+    "loadMore": "[Løäd mørë çëlls ~~~~~~]",
+    "kind_markdown": "[Märkdøwñ ~~~~]",
+    "kind_code": "[Çødë ~~]",
+    "kind_raw": "[Räw ~~]",
+    "sourceCut": "[Thïs çëll's søürçë ïs løñgër; øñlÿ thë bëgïññïñg ïs shøwñ. ~~~~~~~~~~~~~~~~~~~]",
+    "imageOutput": "[Sävëd ïmägë {index} ~~~~]"
+  },
+  "email": {
+    "attachmentCount": "[{count, plural, one {# ättäçhmëñt} other {# ättäçhmëñts}} ~~~~~]",
+    "body": "[Mëssägë bødÿ ~~~~~]",
+    "cc": "[Çç ~~]",
+    "date": "[Dätë ~~]",
+    "htmlBody": "[Førmättëd tëxt ~~~~~~]",
+    "noAttachments": "[Thïs mëssägë häs ñø ättäçhmëñts. ~~~~~~~~~~~]"
+  },
+  "subtitle": {
+    "cueCount": "[{count, plural, one {# çüë} other {# çüës}} ~~]",
+    "label": "[Sübtïtlës ïñ {name} ~~~~~]",
+    "text": "[Tëxt ~~]"
+  },
+  "log": {
+    "lineCount": "[{count, plural, one {# lïñë} other {# lïñës}} ~~]",
+    "label": "[Løg {name} ~~]",
+    "level_trace": "[Träçë ~~]",
+    "level_debug": "[Dëbüg ~~]",
+    "level_info": "[Ïñfø ~~]",
+    "level_warn": "[Wärñïñg ~~~]",
+    "level_error": "[Ërrør ~~]",
+    "level_fatal": "[Fätäl ~~]",
+    "level_none": "[Ñøñë ~~]"
+  },
+  "sqlite": {
+    "columnCount": "[{count, plural, one {# çølümñ} other {# çølümñs}} ~~~]",
+    "rowCount": "[{count, plural, one {# røw shøwñ} other {# røws shøwñ}} ~~~~]",
+    "reload": "[Rëløäd täblës ~~~~~]",
+    "readOnly": "[Thïs vïëwër ïs rëäd-øñlÿ. Ït çäññøt rüñ SQL ør ëdït dätä. ~~~~~~~~~~~~~~~~~~]",
+    "label": "[Täblë {name} ~~]",
+    "empty": "[Thïs täblë häs ñø røws. ~~~~~~~~]",
+    "noTables": "[Thïs dätäbäsë häs ñø phÿsïçäl täblës. ~~~~~~~~~~~~~]",
+    "null": "[ÑÜLL ~~]",
+    "blob": "[BLØB ~~]"
+  },
   "ocr": {
     "title": "[Tëxt rëçøgñïtïøñ (ØÇR) ~~~~~~~~]",
     "copyAll": "[Çøpÿ äll tëxt ~~~~~]",
@@ -874,7 +959,13 @@
     "json": "[JSØÑ ~~]",
     "font": "[Føñt ~~]",
     "archive": "[Ärçhïvë ~~~]",
-    "pdf": "[PDF døçümëñt ~~~~~]"
+    "pdf": "[PDF døçümëñt ~~~~~]",
+    "book": "[Ë-bøøk ~~]",
+    "notebook": "[Ñøtëbøøk ~~~~]",
+    "email": "[Ëmäïl ~~]",
+    "subtitle": "[Sübtïtlës ~~~~]",
+    "log": "[Løg ~~]",
+    "sqlite": "[SQLïtë dätäbäsë ~~~~~~]"
   },
   "protected": {
     "message": "[Thïs fïlë çämë frøm thë ïñtërñët, sø ït øpëñëd ïñ prøtëçtëd vïëw. ~~~~~~~~~~~~~~~~~~~~~]",

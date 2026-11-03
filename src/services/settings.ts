@@ -11,7 +11,7 @@ import {
 } from "./gallery";
 export type { BackgroundSettings, CacheLimitMb, CacheSettings, GallerySettings };
 
-export const SETTINGS_SCHEMA_VERSION = 14;
+export const SETTINGS_SCHEMA_VERSION = 15;
 export const SETTINGS_STORAGE_KEY = "adperastra-settings";
 
 export type LanguageSetting = "en" | "es" | "pseudo";
@@ -258,6 +258,16 @@ export interface TemplateSettings {
   my_folder: string;
 }
 
+/** Reading settings of the e-book viewer (schema 15, Step 07f). */
+export type ReadingTheme = "app" | "light" | "dark";
+
+export interface ReadingSettings {
+  /** Whole pixels, 12-32, default 18. */
+  font_px: number;
+  /** App follows the app theme; light/dark force the reading page. */
+  theme: ReadingTheme;
+}
+
 /** OCR settings (schema 14, Step 07e). */
 export interface OcrSettings {
   /** `auto` or an installed BCP47 tag. */
@@ -291,6 +301,7 @@ export interface AppSettings {
   cache: CacheSettings;
   gallery: GallerySettings;
   ocr: OcrSettings;
+  reading: ReadingSettings;
 }
 
 const LANGUAGES: readonly LanguageSetting[] = ["en", "es", "pseudo"];
@@ -353,6 +364,10 @@ export function defaultSettings(): AppSettings {
     cache: { max_mb: 512 },
     gallery: defaultGallerySettings(),
     ocr: { language: "auto", enabled: true },
+    reading: {
+      font_px: 18,
+      theme: "app",
+    },
   };
 }
 
@@ -494,6 +509,7 @@ export function normalizeSettings(input: unknown): AppSettings {
   const versionsInput = isRecord(input.versions) ? input.versions : {};
   const templatesInput = isRecord(input.templates) ? input.templates : {};
   const ocrInput = isRecord(input.ocr) ? input.ocr : {};
+  const readingInput = isRecord(input.reading) ? input.reading : {};
   const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
   const accentCustom =
     typeof themeInput.accent_custom === "string" && HEX_COLOR_RE.test(themeInput.accent_custom)
@@ -560,6 +576,16 @@ export function normalizeSettings(input: unknown): AppSettings {
     ocr: {
       language: normalizeOcrLanguage(ocrInput.language),
       enabled: flag(ocrInput.enabled, defaults.ocr.enabled),
+    },
+    reading: {
+      font_px:
+        typeof readingInput.font_px === "number" &&
+        Number.isInteger(readingInput.font_px) &&
+        readingInput.font_px >= 12 &&
+        readingInput.font_px <= 32
+          ? readingInput.font_px
+          : defaults.reading.font_px,
+      theme: pick(readingInput.theme, ["app", "light", "dark"] as const, defaults.reading.theme),
     },
   };
 }

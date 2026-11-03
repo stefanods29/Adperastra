@@ -46,11 +46,19 @@ mod thumbnail_providers;
 mod thumbnails;
 #[cfg(windows)]
 pub(crate) use clipboard::bounded_stream;
+mod book_backend;
+mod book_loader;
+mod book_settings;
 #[cfg(windows)]
 mod clipboard_image_helper;
 mod data_views;
 mod drag;
 mod explorer;
+mod extra_view_backend;
+mod extra_view_helper;
+mod extra_view_sessions;
+mod extra_view_types;
+mod extra_views;
 mod file_dialogs;
 mod file_grant_backing;
 mod files;
@@ -116,7 +124,7 @@ mod webview_helper_types;
 mod webview_private;
 mod zone;
 
-pub const CURRENT_SCHEMA: u32 = 14;
+pub const CURRENT_SCHEMA: u32 = 15;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -617,6 +625,8 @@ pub struct Settings {
     pub gallery: gallery_types::GallerySettings,
     #[serde(default)]
     pub ocr: ocr_types::OcrSettings,
+    #[serde(default)]
+    pub reading: book_settings::ReadingSettings,
 }
 
 impl Default for Settings {
@@ -636,6 +646,7 @@ impl Default for Settings {
             cache: background::CacheSettings::default(),
             gallery: gallery_types::GallerySettings::default(),
             ocr: ocr_types::OcrSettings::default(),
+            reading: book_settings::ReadingSettings::default(),
         }
     }
 }
@@ -820,6 +831,9 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
     gallery_types::validate_gallery_settings(&settings.gallery)
         .map_err(|code| AppError::Validation(format!("gallery settings: {code}")))?;
     settings.ocr.validate().map_err(AppError::Validation)?;
+    if let Some(error) = settings.reading.validate() {
+        return Err(AppError::Validation(format!("reading: {error}")));
+    }
     if !matches!(settings.files.paste_image_format.as_str(), "png" | "jpg") {
         return Err(AppError::Validation(format!(
             "unsupported paste_image_format {:?} (expected png or jpg)",
@@ -979,6 +993,7 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         cache: background::CacheSettings::default(),
         gallery: gallery_types::GallerySettings::default(),
         ocr: ocr_types::OcrSettings::default(),
+        reading: book_settings::ReadingSettings::default(),
     }
 }
 
@@ -1050,7 +1065,7 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                 }
             }
             Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) | Some(11)
-            | Some(12) | Some(13) => Ok(migrate_keep_known(value.clone())),
+            | Some(12) | Some(13) | Some(14) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -3020,6 +3035,9 @@ fn main() {
     // static kind argument from this fixed list (never a user string).
     // The OCR helper (Step 07e) decodes one image and runs Windows OCR in
     // its own memory-limited process.
+    if std::env::args().nth(1).as_deref() == Some(extra_view_helper::HELPER_FLAG) {
+        std::process::exit(extra_view_helper::run_helper());
+    }
     if std::env::args().nth(1).as_deref() == Some(ocr_helper::HELPER_FLAG) {
         std::process::exit(ocr_helper::run_helper());
     }
@@ -3137,6 +3155,17 @@ fn main() {
                 .register_pdf(std::sync::Arc::new(pdf::PdfOcrAdapter::new(
                     app.handle().clone(),
                 )))?;
+            let extra_app = app.handle().clone();
+            app.manage(extra_view_sessions::ExtraViewSessions::new(
+                Box::new(book_backend::ExtraViewFactory {
+                    native: extra_view_backend::NativeBackendFactory {
+                        app: extra_app.clone(),
+                    },
+                    book: book_backend::BookBackendFactory { app: extra_app },
+                }),
+                Box::new(extra_view_sessions::FsStampProvider),
+                resolve_data_dir().join("extra-view-open"),
+            ));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -3254,6 +3283,13 @@ fn main() {
             ocr::ocr_start,
             ocr::ocr_page,
             ocr::ocr_release,
+            extra_views::extra_view_open_start,
+            extra_views::extra_view_page,
+            extra_views::extra_view_close,
+            extra_views::extra_view_attachment_start,
+            extra_views::extra_view_subtitles,
+            extra_views::extra_view_sqlite_tables,
+            extra_views::extra_view_book_contents,
             cache_stamp::file_identity,
             cache::cache_usage,
             cache::cache_clear,
@@ -3366,7 +3402,8 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 14);
+        assert_eq!(settings.schema_version, 15);
+        assert_eq!(settings.reading, book_settings::ReadingSettings::default());
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
         assert_eq!(settings.theme.accent_source, "design");
@@ -3686,6 +3723,29 @@ mod tests {
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.versions.keep_days, 90);
         assert_eq!(settings.templates.my_folder, "");
+    }
+
+    #[test]
+    fn schema14_keeps_language_and_dark_theme_and_adds_reading_defaults() {
+        let value = serde_json::json!({
+            "schema_version": 14,
+            "language": "es",
+            "theme": { "mode": "dark", "accent_source": "design", "accent_custom": "#0067C0" },
+            "ocr": { "language": "auto", "enabled": true }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, CURRENT_SCHEMA);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(
+            settings.ocr,
+            ocr_types::OcrSettings {
+                language: "auto".to_string(),
+                enabled: true
+            }
+        );
+        assert_eq!(settings.reading.font_px, 18);
+        assert_eq!(settings.reading.theme, book_settings::ReadingTheme::App);
     }
 
     #[test]

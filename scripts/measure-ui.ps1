@@ -94,7 +94,7 @@ if (-not $scopedReview -and -not (Test-Path $archives)) {
 $dataDir = Join-Path $env:TEMP ("adperastra-ui-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force $dataDir | Out-Null
 $settings = @{
-  schema_version = 14; language = $Language
+  schema_version = 15; language = $Language
   files = @{ paste_image_format = "png" }
   open = @{ protected_view = $true; open_with = @{} }
   theme = @{ mode = $Theme; accent_source = "design"; accent_custom = "#0067C0"; light_theme = "light"; dark_theme = "dark" }
@@ -107,6 +107,7 @@ $settings = @{
   cache = @{ max_mb = 512 }
   gallery = @{ sources = @(); date_source = "taken" }
   ocr = @{ language = "auto"; enabled = true }
+  reading = @{ font_px = 18; theme = "app" }
 }
 [IO.File]::WriteAllText((Join-Path $dataDir "settings.json"), ($settings | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding($false)))
 
