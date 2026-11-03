@@ -103,6 +103,7 @@ pub const MAX_BOOK_SECTION_BYTES: u64 = 4 * 1024 * 1024;
 pub const MAX_BOOK_PAGE_SCALARS: usize = 4_000;
 pub const MAX_BOOK_PAGE_BLOCKS: usize = 24;
 pub const MAX_BOOK_CONTENTS_ITEMS: usize = 5_000;
+pub const MAX_BOOK_SECTIONS: usize = 5_000;
 pub const MAX_BOOK_CONTENTS_DEPTH: usize = 32;
 pub const MAX_BOOK_RESOURCES: usize = 32;
 pub const MAX_BOOK_IMAGE_ENCODED_BYTES: u64 = 4 * 1024 * 1024;

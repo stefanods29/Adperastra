@@ -137,6 +137,28 @@ fn book_action(action: &str) -> Result<HelperAction, String> {
     }
 }
 
+/// foliate's parser and the native OPF loader both walk the spine in reading
+/// order, but the native loader keeps only HTML/XML items. A different count
+/// means one of them skipped an item the other kept, so a section index would
+/// name the wrong chapter; refuse instead of showing the wrong text. MOBI has
+/// no native sections: the parser discovers them while reading its ranges.
+fn check_section_count(
+    format: BookFormat,
+    helper_count: usize,
+    native_count: usize,
+) -> Result<(), String> {
+    if helper_count == 0 {
+        return Err("extra_view.corrupt".to_string());
+    }
+    if helper_count > crate::extra_view_types::MAX_BOOK_SECTIONS {
+        return Err("extra_view.too_large".to_string());
+    }
+    if format == BookFormat::Epub && helper_count != native_count {
+        return Err("extra_view.unsupported".to_string());
+    }
+    Ok(())
+}
+
 pub struct BookBackend {
     host: Box<dyn BookHost>,
     app: AppHandle,
@@ -157,6 +179,11 @@ impl BookBackend {
         reply: BookOpenReply,
     ) -> Result<Self, String> {
         let section_count = reply.section_count as usize;
+        check_section_count(
+            preparation.format,
+            section_count,
+            preparation.sections.len(),
+        )?;
         let initial_grants = preparation.grants.clone();
         let initial_entries = preparation.grant_entries.clone();
         Ok(Self {
@@ -412,5 +439,40 @@ impl ExtraViewBackendFactory for ExtraViewFactory {
         } else {
             self.native.open(kind, path, stamp, session_id, work_dir)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn refuses_a_book_with_no_sections() {
+        assert_eq!(
+            check_section_count(BookFormat::Epub, 0, 0),
+            Err("extra_view.corrupt".to_string())
+        );
+    }
+
+    #[test]
+    fn refuses_more_than_five_thousand_sections() {
+        assert_eq!(
+            check_section_count(BookFormat::Mobi, 5_001, 0),
+            Err("extra_view.too_large".to_string())
+        );
+    }
+
+    #[test]
+    fn refuses_a_spine_the_native_loader_did_not_keep() {
+        assert_eq!(
+            check_section_count(BookFormat::Epub, 3, 2),
+            Err("extra_view.unsupported".to_string())
+        );
+    }
+
+    #[test]
+    fn accepts_matching_epub_and_mobi_counts() {
+        assert_eq!(check_section_count(BookFormat::Epub, 2, 2), Ok(()));
+        assert_eq!(check_section_count(BookFormat::Mobi, 7, 0), Ok(()));
     }
 }
