@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/setup-core", "crates/setup", "crates/fs-service", "src-tauri"]
+members = ["crates/setup-core", "crates/setup", "crates/fs-service", "crates/archive", "crates/version-store", "crates/data-views", "crates/cache-store", "crates/convert", "crates/privacy", "crates/bulk-rename", "crates/locked-store", "crates/search-index", "crates/storage-scan", "crates/pack-store", "crates/image-edit", "crates/ai-runtime", "crates/ai-eval", "src-tauri", "tools/office-edit-preflight"]
 
 [workspace.package]
 edition = "2021"
@@ -10,3 +10,13 @@ license = "MIT"
 lto = "thin"
 codegen-units = 1
 strip = true
+
+# Keep the real password work factors in tests and development, while
+# compiling the expensive KDF itself with the same optimization as release.
+[profile.dev.package.scrypt]
+opt-level = 3
+
+# Upstream 0.6.23 still pins an XML parser with two published DoS advisories.
+# Preserve its implementation while using the patched, API-compatible reader.
+[patch.crates-io]
+little_exif = { path = "crates/vendor/little_exif" }

@@ -1,0 +1,26 @@
+/* Inline writing suggestions (Step 17d T6). The ghost is plain text, muted,
+ * never selectable and never announced word by word. */
+
+.adp-inline-ghost {
+  color: var(--adp-color-text-tertiary);
+  font-style: italic;
+  white-space: pre-wrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.adp-inline-available {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  min-height: 24px;
+  padding: 0 var(--adp-space-2);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adp-inline-ghost {
+    transition: none;
+  }
+}

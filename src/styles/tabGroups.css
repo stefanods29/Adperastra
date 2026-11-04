@@ -1,0 +1,236 @@
+/* Tab groups and saved groups (Step 09b). Colors come only from the
+   accent tokens (D4): purple=group, blue=explorer, green=excel,
+   teal=image, orange=powerpoint, red=pdf. */
+
+.adp-tab-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  max-width: 220px;
+  padding: 0 8px;
+  border: none;
+  border-bottom: 3px solid var(--adp-accent-group);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adp-tab-group-label--purple { border-bottom-color: var(--adp-accent-group); }
+.adp-tab-group-label--blue { border-bottom-color: var(--adp-accent-explorer); }
+.adp-tab-group-label--green { border-bottom-color: var(--adp-accent-excel); }
+.adp-tab-group-label--teal { border-bottom-color: var(--adp-accent-image); }
+.adp-tab-group-label--orange { border-bottom-color: var(--adp-accent-powerpoint); }
+.adp-tab-group-label--red { border-bottom-color: var(--adp-accent-pdf); }
+
+.adp-tab-group-label:focus-visible,
+.adp-tab-group-menu-item:focus-visible,
+.adp-tab-group-color:focus-visible,
+.adp-saved-group-row:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 1px;
+}
+
+.adp-tab-group-label--active {
+  background: var(--adp-color-surface-window);
+}
+
+.adp-tab-group-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--adp-accent-group);
+}
+
+.adp-tab-group-label--purple .adp-tab-group-dot,
+.adp-tab-group-color--purple .adp-tab-group-dot { background: var(--adp-accent-group); }
+.adp-tab-group-label--blue .adp-tab-group-dot,
+.adp-tab-group-color--blue .adp-tab-group-dot { background: var(--adp-accent-explorer); }
+.adp-tab-group-label--green .adp-tab-group-dot,
+.adp-tab-group-color--green .adp-tab-group-dot { background: var(--adp-accent-excel); }
+.adp-tab-group-label--teal .adp-tab-group-dot,
+.adp-tab-group-color--teal .adp-tab-group-dot { background: var(--adp-accent-image); }
+.adp-tab-group-label--orange .adp-tab-group-dot,
+.adp-tab-group-color--orange .adp-tab-group-dot { background: var(--adp-accent-powerpoint); }
+.adp-tab-group-label--red .adp-tab-group-dot,
+.adp-tab-group-color--red .adp-tab-group-dot { background: var(--adp-accent-pdf); }
+
+.adp-tab-group-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-tab-group-count {
+  color: var(--adp-color-text-secondary);
+  white-space: nowrap;
+}
+
+.adp-tab-group-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 200px;
+  max-width: calc(100vw - 32px);
+  padding: 4px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: 6px;
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 24%);
+}
+
+.adp-tab-group-menu-item {
+  display: block;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.adp-tab-group-menu-item:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-tab-group-colors {
+  display: flex;
+  gap: 4px;
+  padding: 4px 8px;
+}
+
+.adp-tab-group-color {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.adp-tab-group-color[aria-checked="true"] {
+  border-color: var(--adp-color-text-primary);
+}
+
+.adp-tab-group-dialog {
+  width: 400px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-saved-groups {
+  width: 520px;
+  max-width: calc(100vw - 32px);
+  padding: 12px;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-saved-groups-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adp-saved-groups-title {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+}
+
+.adp-saved-groups-error {
+  color: var(--adp-accent-pdf);
+}
+
+.adp-saved-groups-empty {
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-saved-groups-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.adp-saved-groups-list--virtual {
+  height: 360px;
+  overflow-y: auto;
+}
+
+.adp-saved-group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.adp-saved-group-row--selected {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-saved-group-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--adp-accent-group);
+}
+
+.adp-saved-group-dot[data-color="purple"] { background: var(--adp-accent-group); }
+.adp-saved-group-dot[data-color="blue"] { background: var(--adp-accent-explorer); }
+.adp-saved-group-dot[data-color="green"] { background: var(--adp-accent-excel); }
+.adp-saved-group-dot[data-color="teal"] { background: var(--adp-accent-image); }
+.adp-saved-group-dot[data-color="orange"] { background: var(--adp-accent-powerpoint); }
+.adp-saved-group-dot[data-color="red"] { background: var(--adp-accent-pdf); }
+
+.adp-saved-group-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-saved-group-meta {
+  color: var(--adp-color-text-secondary);
+  white-space: nowrap;
+}
+
+.adp-saved-group-edit,
+.adp-saved-group-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.adp-saved-groups-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+/* The saved-groups catalog opens in a standard Dialog; the panel keeps
+   its own 520px width and the dialog adds only the frame (Step 09b). */
+.adp-dialog.adp-saved-groups-dialog {
+  width: 568px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-saved-groups-dialog .adp-dialog-body {
+  padding: 0;
+}
+
+.adp-tab-group-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

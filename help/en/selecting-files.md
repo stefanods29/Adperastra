@@ -23,7 +23,7 @@ Select files and folders to work with them: the command bar, the right-click men
 - Press **Enter** or click elsewhere to save, or **Escape** to cancel.
 - If Windows doesn't allow the name, or another item already has it, a message explains why and nothing is changed. Renaming never replaces another file.
 - Renaming a Windows system item shows a warning first; press **Enter** again to rename it anyway, or **Escape** to cancel.
-- Undo for renaming arrives in the next version.
+- Renaming can be undone with Ctrl+Z or the Undo button in the message that follows (see "Undo").
 
 ## The status bar
 

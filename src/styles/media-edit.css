@@ -1,0 +1,188 @@
+/* Media editing surfaces (Step 15). Colors and sizes come from tokens.css. */
+
+.adp-media-editor {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 300px;
+  grid-template-rows: minmax(0, 1fr) 28px;
+  min-height: 0;
+  height: 100%;
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-media-rail {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--adp-space-1);
+  padding: var(--adp-space-2) 0;
+  border-right: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-media-stage {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.adp-media-player {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+  background: var(--adp-color-surface-canvas-media);
+}
+
+.adp-media-transport {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  height: 48px;
+  padding: 0 var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-subtle);
+  background: var(--adp-color-surface-chrome);
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-media-transport .adp-progress {
+  flex: 1;
+}
+
+.adp-media-waveform {
+  display: grid;
+  grid-template-rows: 128px auto auto;
+  gap: var(--adp-space-1);
+  height: 160px;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-subtle);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-media-waveform canvas {
+  width: 100%;
+  height: 128px;
+  color: var(--adp-accent-explorer);
+  background: var(--adp-color-surface-canvas-media);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-media-waveform input[type="range"] {
+  width: 100%;
+  accent-color: var(--adp-accent-explorer);
+}
+
+.adp-media-waveform-note {
+  margin: 0;
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-media-properties {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  width: 300px;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--adp-space-3);
+  border-left: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-media-section {
+  display: grid;
+  gap: var(--adp-space-2);
+  padding-bottom: var(--adp-space-3);
+  margin-bottom: var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-media-section h3 {
+  margin: 0;
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-media-field {
+  display: grid;
+  gap: var(--adp-space-1);
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-media-field .adp-input,
+.adp-media-field select {
+  width: 100%;
+  min-height: 28px;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-media-crop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--adp-space-2);
+}
+
+.adp-media-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+}
+
+.adp-media-note {
+  margin: 0;
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-media-error {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0;
+  padding: 0 var(--adp-space-3);
+  line-height: 28px;
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-status-caution);
+  background: var(--adp-color-status-caution-background);
+}
+
+.adp-media-dialog {
+  display: grid;
+  gap: var(--adp-space-3);
+  width: min(640px, calc(100vw - 32px));
+  max-width: 640px;
+}
+
+.adp-media-editor :focus-visible,
+.adp-media-dialog :focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .adp-media-editor {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .adp-media-properties {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    border-left: 0;
+    border-top: 1px solid var(--adp-color-border-panel);
+  }
+
+  .adp-media-error {
+    grid-row: 3;
+  }
+}

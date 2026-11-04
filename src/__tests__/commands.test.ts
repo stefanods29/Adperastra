@@ -1,12 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
-import { createExplorerCommands, type ExplorerActions } from "../commands/explorerCommands";
-import { BACKGROUND_MENU, COMMAND_BAR, ITEM_MENU, resolveMenu, type MenuEntry } from "../commands/menus";
+import { VIEW_MODE_COMMANDS, createExplorerCommands, type ExplorerActions } from "../commands/explorerCommands";
+import {
+  BACKGROUND_MENU,
+  COMMAND_BAR,
+  ITEM_MENU,
+  NEW_MENU,
+  VIEW_MENU,
+  backgroundMenuFor,
+  commandBarFor,
+  resolveMenu,
+  viewMenuFor,
+  type MenuEntry,
+} from "../commands/menus";
 import {
   CommandRegistry,
   commandLabelKey,
   isCommandEnabled,
+  isCommandVisible,
   type CommandContext,
 } from "../commands/registry";
+import { VIEW_MODE_IDS } from "../services/settings";
 import {
   canGoBack,
   canGoForward,
@@ -17,6 +30,7 @@ import {
   type ExplorerLocation,
 } from "../services/navigation";
 import { displayPath, parentPathOf, pathSegments } from "../services/explorer";
+import en from "../i18n/locales/en.json";
 
 const folder = (path: string): ExplorerLocation => ({ type: "folder", path });
 
@@ -93,9 +107,13 @@ const baseCtx: CommandContext = {
     groupBy: "none",
     sortKey: "name",
     sortDirection: "ascending",
+    viewMode: "details",
+    hiddenViewModes: [],
   },
   allFavorites: false,
   selectionInCurrentFolder: true,
+  canUndo: false,
+  canRedo: false,
 };
 
 const oneFile = { paths: ["C:\\Users\\a.txt"], count: 1, files: 1, folders: 0 };
@@ -108,8 +126,18 @@ describe("explorer commands", () => {
     for (const id of ["explorer.back", "explorer.forward", "explorer.up", "explorer.refresh", "explorer.open", "explorer.goToPath", "explorer.togglePin"]) {
       expect(ids).toContain(id);
     }
+    // Later steps add feature label namespaces (`gallery.*`, `convert.*`,
+    // `keyboard.*`, ...); every label must still resolve in the catalog.
+    const labelExists = (key: string) =>
+      key.split(".").reduce<unknown>(
+        (value, part) =>
+          value !== null && typeof value === "object"
+            ? (value as Record<string, unknown>)[part]
+            : undefined,
+        en,
+      ) !== undefined;
     for (const command of registry.list()) {
-      expect(command.labelKey).toMatch(/^commands\./);
+      expect(labelExists(command.labelKey), command.labelKey).toBe(true);
       expect(command.icon).toBeDefined();
       expect(command.helpSlug).toMatch(/^[a-z-]+$/);
       expect(command.risk).toBeDefined();
@@ -133,13 +161,137 @@ describe("explorer commands", () => {
     expect(isCommandEnabled(byId["explorer.goToPath"], { ...baseCtx, location: "home", currentPath: null })).toBe(true);
   });
 
-  it("keeps not-yet-built commands disabled even with a selection", () => {
+  it("version history needs one file", () => {
     const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
-    for (const id of ["explorer.cut", "explorer.copy", "explorer.paste", "explorer.delete", "explorer.newFolder", "explorer.viewList"]) {
-      expect(byId[id].pending).toBe(true);
-      expect(isCommandEnabled(byId[id], { ...baseCtx, selection: oneFile })).toBe(false);
+    const command = byId["explorer.versionHistory"];
+    expect(isCommandEnabled(command, { ...baseCtx, selection: oneFile })).toBe(true);
+    expect(
+      isCommandVisible(command, { ...baseCtx, selection: { paths: ["d"], count: 1, files: 0, folders: 1 } }),
+    ).toBe(false);
+    expect(
+      isCommandVisible(command, {
+        ...baseCtx,
+        selection: { paths: ["a", "b"], count: 2, files: 2, folders: 0 },
+      }),
+    ).toBe(false);
+    const ids = ITEM_MENU.map((entry) => (entry.type === "command" ? entry.id : entry.type));
+    expect(ids.indexOf("explorer.versionHistory")).toBe(ids.indexOf("explorer.properties") + 1);
+  });
+
+  it("view mode commands are live and follow the settings", () => {
+    const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
+    for (const mode of VIEW_MODE_IDS) {
+      const command = byId[VIEW_MODE_COMMANDS[mode]];
+      expect(command, mode).toBeDefined();
+      expect(command.pending, mode).toBeFalsy();
+      expect(command.checkKind, mode).toBe("radio");
+      expect(command.helpSlug, mode).toBe("view-modes");
     }
-    expect(isCommandEnabled(byId["explorer.viewDetails"], baseCtx)).toBe(true);
+    expect(isCommandEnabled(byId["explorer.viewList"], baseCtx)).toBe(true);
+    expect(isCommandEnabled(byId["explorer.viewList"], { ...baseCtx, location: "home", currentPath: null })).toBe(false);
+    const tiles = { ...baseCtx, view: { ...baseCtx.view, viewMode: "tiles" as const } };
+    expect(byId["explorer.viewTiles"].checkedWhen?.(tiles)).toBe(true);
+    expect(byId["explorer.viewDetails"].checkedWhen?.(tiles)).toBe(false);
+    expect(
+      isCommandVisible(byId["explorer.viewList"], { ...baseCtx, view: { ...baseCtx.view, hiddenViewModes: ["list"] } }),
+    ).toBe(false);
+    expect(byId["explorer.viewExtraLargeIcons"].shortcut).toBe("Ctrl+Shift+1");
+    expect(byId["explorer.viewDetails"].shortcut).toBe("Ctrl+Shift+6");
+    expect(byId["explorer.viewContent"].shortcut).toBe("Ctrl+Shift+8");
+    const actions = makeActions();
+    createExplorerCommands(actions)
+      .find((c) => c.id === "explorer.viewContent")
+      ?.run(baseCtx);
+    expect(actions.setViewMode).toHaveBeenCalledWith("content");
+    expect(byId["explorer.viewColumns"].shortcut).toBeUndefined();
+    const columnActions = makeActions();
+    createExplorerCommands(columnActions)
+      .find((c) => c.id === "explorer.viewColumns")
+      ?.run(baseCtx);
+    expect(columnActions.setViewMode).toHaveBeenCalledWith("columns");
+  });
+
+  it("file operations are live and follow their rules (Step 03b)", () => {
+    const byId = Object.fromEntries(createExplorerCommands(makeActions()).map((c) => [c.id, c]));
+    for (const id of ["explorer.cut", "explorer.copy", "explorer.paste", "explorer.pasteAsFile", "explorer.delete", "explorer.deletePermanently", "explorer.newFolder", "explorer.newTextFile"]) {
+      expect(byId[id].pending).toBeFalsy();
+    }
+    expect(isCommandEnabled(byId["explorer.cut"], baseCtx)).toBe(false);
+    expect(isCommandEnabled(byId["explorer.cut"], { ...baseCtx, selection: oneFile })).toBe(true);
+    expect(isCommandEnabled(byId["explorer.paste"], { ...baseCtx, location: "home", currentPath: null })).toBe(false);
+    expect(isCommandEnabled(byId["explorer.paste"], baseCtx)).toBe(true);
+    expect(byId["explorer.delete"].risk).toBe("recycle");
+    expect(byId["explorer.deletePermanently"].risk).toBe("irreversible");
+    expect(byId["explorer.undo"].shortcut).toBe("Ctrl+Z");
+    expect(isCommandEnabled(byId["explorer.undo"], baseCtx)).toBe(false);
+    expect(isCommandEnabled(byId["explorer.undo"], { ...baseCtx, canUndo: true })).toBe(true);
+    expect(isCommandEnabled(byId["explorer.redo"], { ...baseCtx, canRedo: true })).toBe(true);
+    // Menu data names only registered commands (checked for all menus above).
+    expect(resolveMenu(BACKGROUND_MENU, baseCtx, (id) => byId[id]).flatMap((e) => (e.type === "command" ? [e.id] : []))).toContain("explorer.pasteAsFile");
+  });
+
+  it("the New menu creates files", () => {
+    const actions = makeActions();
+    const byId = Object.fromEntries(createExplorerCommands(actions).map((c) => [c.id, c]));
+    const ids = [
+      "explorer.newMarkdown",
+      "explorer.newCsv",
+      "explorer.newDocument",
+      "explorer.newSpreadsheet",
+      "explorer.newPresentation",
+      "explorer.newFromTemplate",
+    ];
+    for (const id of ids) {
+      expect(byId[id], id).toBeDefined();
+      expect(byId[id].helpSlug, id).toBe("templates");
+      expect(isCommandEnabled(byId[id], baseCtx), id).toBe(true);
+      expect(isCommandEnabled(byId[id], { ...baseCtx, location: "home", currentPath: null }), id).toBe(false);
+    }
+    byId["explorer.newDocument"].run(baseCtx);
+    expect(actions.newBlank).toHaveBeenCalledWith("document");
+    byId["explorer.newFromTemplate"].run(baseCtx);
+    expect(actions.newFromTemplate).toHaveBeenCalled();
+    expect(NEW_MENU.map((entry) => (entry.type === "command" ? entry.id : entry.type))).toEqual([
+      "explorer.newFolder",
+      "explorer.newTextFile",
+      "explorer.newMarkdown",
+      "explorer.newCsv",
+      "explorer.newDocument",
+      "explorer.newSpreadsheet",
+      "explorer.newPresentation",
+      "separator",
+      "explorer.newFromTemplate",
+    ]);
+  });
+
+  it("extract commands appear only for archives", () => {
+    const actions = makeActions();
+    const byId = Object.fromEntries(createExplorerCommands(actions).map((c) => [c.id, c]));
+    const archives = ["explorer.extractToFolder", "explorer.extractHere", "explorer.extractTo"];
+    const zip = { paths: ["C:\\D\\a.zip"], count: 1, files: 1, folders: 0 };
+    for (const id of archives) {
+      expect(isCommandVisible(byId[id], { ...baseCtx, selection: zip }), id).toBe(true);
+      expect(isCommandEnabled(byId[id], { ...baseCtx, selection: zip }), id).toBe(true);
+    }
+    const text = { paths: ["C:\\D\\a.txt"], count: 1, files: 1, folders: 0 };
+    const withFolder = { paths: ["C:\\D\\a.zip", "C:\\D\\docs"], count: 2, files: 1, folders: 1 };
+    for (const id of archives) {
+      expect(isCommandVisible(byId[id], { ...baseCtx, selection: text }), id).toBe(false);
+      expect(isCommandVisible(byId[id], { ...baseCtx, selection: withFolder }), id).toBe(false);
+    }
+    byId["explorer.extractHere"].run({ ...baseCtx, selection: zip });
+    expect(actions.extractArchives).toHaveBeenCalledWith("here");
+
+    const menu = ITEM_MENU.find((entry) => entry.type === "submenu" && entry.id === "extract");
+    expect(menu && menu.type === "submenu" ? menu.entries : null).toEqual([
+      { type: "command", id: "explorer.extractToFolder" },
+      { type: "command", id: "explorer.extractHere" },
+      { type: "command", id: "explorer.extractTo" },
+    ]);
+    // The command bar offers "Extract all" right after Delete.
+    const bar = COMMAND_BAR.map((entry) => (entry.type === "command" ? entry.id : entry.type));
+    const deleteAt = bar.indexOf("explorer.delete");
+    expect(bar[deleteAt + 1]).toBe("explorer.extractToFolder");
   });
 
   it("labels and checks follow the context", () => {
@@ -208,5 +360,19 @@ describe("menus from commands", () => {
       lookup,
     );
     expect(ids(resolved)).toEqual(["explorer.refresh"]);
+  });
+
+  it("the View menu follows the chosen order", () => {
+    const order = ["details", "list", "extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "tiles", "content"] as const;
+    const menu = viewMenuFor(order);
+    expect(menu.slice(0, 2)).toEqual([
+      { type: "command", id: "explorer.viewDetails" },
+      { type: "command", id: "explorer.viewList" },
+    ]);
+    expect(VIEW_MENU[0]).toEqual({ type: "command", id: "explorer.viewExtraLargeIcons" });
+    const barView = commandBarFor(order).find((entry) => entry.type === "menu" && entry.id === "view");
+    expect(barView && barView.type === "menu" ? barView.entries : null).toEqual(viewMenuFor(order));
+    const backgroundView = backgroundMenuFor(order).find((entry) => entry.type === "submenu" && entry.id === "view");
+    expect(backgroundView && backgroundView.type === "submenu" ? backgroundView.entries : null).toEqual(viewMenuFor(order));
   });
 });

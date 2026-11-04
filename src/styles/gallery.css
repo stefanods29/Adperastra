@@ -1,0 +1,317 @@
+/* Photo Gallery (Step 07c): source controls, date groups and the 184x216
+   virtualized grid. Colors and spacing come from tokens.css only. */
+
+.adp-gallery-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  min-height: 0;
+  height: 100%;
+}
+
+.adp-gallery-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-4);
+}
+
+.adp-gallery-sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  padding: var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-gallery-source-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--adp-space-3);
+}
+
+.adp-gallery-date-label {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-gallery-dates {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--adp-space-3);
+}
+
+.adp-gallery-date {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  font-size: var(--adp-font-body);
+  color: var(--adp-color-text-primary);
+  cursor: pointer;
+}
+
+.adp-gallery-date input {
+  accent-color: var(--adp-accent-current);
+  margin: 0;
+}
+
+.adp-gallery-source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  max-height: 120px;
+  overflow: auto;
+}
+
+.adp-gallery-source {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-width: 0;
+  padding: 2px var(--adp-space-2);
+  border-radius: var(--adp-radius-sm);
+  cursor: default;
+}
+
+.adp-gallery-source--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-gallery-source-path {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-gallery-partial,
+.adp-gallery-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-default);
+  border-left: 3px solid var(--adp-accent-pdf);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-selected);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-gallery-partial {
+  border-left-color: var(--adp-accent-current);
+}
+
+.adp-gallery-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  min-height: 0;
+}
+
+.adp-gallery-grid {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.adp-gallery-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 16px;
+  position: relative;
+}
+
+.adp-gallery-scroll:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-gallery-inner {
+  position: relative;
+  width: 100%;
+}
+
+.adp-gallery-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.adp-gallery-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  width: 100%;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-section);
+}
+
+.adp-gallery-count {
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-gallery-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--adp-color-border-default);
+}
+
+.adp-gallery-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--adp-space-1);
+  padding: var(--adp-space-1);
+  border-radius: var(--adp-radius-sm);
+  user-select: none;
+  cursor: default;
+}
+
+.adp-gallery-cell--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-gallery-cell--focused {
+  box-shadow: inset 0 0 0 1px var(--adp-accent-current);
+}
+
+.adp-gallery-cell--hidden {
+  opacity: 0.6;
+}
+
+.adp-gallery-thumb {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.adp-gallery-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-gallery-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: var(--adp-font-small);
+}
+
+.adp-gallery-badge {
+  position: absolute;
+  top: var(--adp-space-2);
+  right: var(--adp-space-2);
+}
+
+.adp-gallery-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--adp-space-4);
+  padding: var(--adp-space-8);
+  color: var(--adp-color-text-secondary);
+  text-align: center;
+}
+
+.adp-gallery-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  min-height: 0;
+}
+
+.adp-gallery-details {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  max-height: 160px;
+  padding-top: var(--adp-space-2);
+  border-top: 1px solid var(--adp-color-border-default);
+  overflow: auto;
+}
+
+.adp-gallery-details-title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--adp-font-section);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-gallery-details-note {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-gallery-facts {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: var(--adp-space-2);
+  margin: 0;
+  font-size: var(--adp-font-small);
+}
+
+.adp-gallery-facts dt {
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-gallery-facts dd {
+  margin: 0;
+  color: var(--adp-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .adp-gallery-details {
+    max-height: 120px;
+  }
+}

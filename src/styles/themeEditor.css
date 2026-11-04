@@ -1,0 +1,363 @@
+/* Theme editor, day/night and wallpaper accents (Step 10a).
+ * Colors only through tokens; sizes from the guide. */
+
+.adp-dialog.adp-theme-editor {
+  display: flex;
+  flex-direction: column;
+  width: min(960px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  height: calc(100vh - 32px);
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+}
+
+.adp-dialog.adp-theme-editor .adp-dialog-header {
+  flex: none;
+}
+
+.adp-dialog.adp-theme-editor .adp-dialog-body {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  display: flex;
+}
+
+.adp-theme-editor-body {
+  display: flex;
+  flex-direction: row;
+  gap: var(--adp-space-7);
+  min-height: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.adp-theme-editor-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  width: 320px;
+  flex: none;
+  min-width: 0;
+  overflow-y: auto;
+  padding-inline-end: var(--adp-space-2);
+}
+
+.adp-theme-editor-preview-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 280px;
+  gap: var(--adp-space-3);
+  min-height: 0;
+}
+
+.adp-theme-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-3);
+}
+
+.adp-theme-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-theme-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.adp-theme-fieldset > legend {
+  padding: 0;
+  font-size: var(--adp-font-small);
+  font-weight: 600;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-theme-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--adp-space-2);
+  min-height: 32px;
+  padding: 0 var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  font-size: var(--adp-font-body);
+  cursor: pointer;
+}
+
+.adp-theme-choice[aria-pressed="true"] {
+  border-color: var(--adp-accent-current);
+  outline: 1px solid var(--adp-accent-current);
+  outline-offset: -1px;
+}
+
+.adp-theme-choice:focus-visible,
+.adp-theme-select:focus-visible,
+.adp-theme-token-row input:focus-visible,
+.adp-theme-style-row input:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: 2px;
+}
+
+.adp-theme-choice:disabled {
+  color: var(--adp-color-text-tertiary);
+  cursor: default;
+}
+
+.adp-theme-select {
+  min-height: 32px;
+  min-width: 0;
+  padding: 0 var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  font-size: var(--adp-font-body);
+}
+
+.adp-theme-token-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.adp-theme-token-row {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-height: 32px;
+}
+
+.adp-theme-token-swatch {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+}
+
+.adp-theme-token-hex {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: var(--adp-font-caption);
+  text-transform: uppercase;
+}
+
+.adp-theme-style-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) 72px 20px 32px;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 32px;
+}
+
+.adp-theme-style-value {
+  min-height: 32px;
+}
+
+.adp-theme-style-unit {
+  font-size: var(--adp-font-caption);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-theme-background-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+}
+
+.adp-theme-preview-surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 280px;
+  overflow: hidden;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-theme-preview-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.adp-theme-preview-chrome {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: color-mix(in srgb, var(--adp-color-surface-window) 85%, transparent);
+}
+
+.adp-theme-preview-title {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--adp-space-4);
+  background: var(--adp-color-surface-chrome);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+  font-size: var(--adp-font-small);
+}
+
+.adp-theme-preview-tabs {
+  display: flex;
+  gap: 2px;
+  padding: var(--adp-space-2) var(--adp-space-3) 0;
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-theme-preview-tab {
+  display: inline-flex;
+  align-items: center;
+  min-width: 64px;
+  height: 28px;
+  padding: 0 var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-default);
+  border-bottom: none;
+  border-start-start-radius: var(--adp-radius-sm);
+  border-start-end-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-tab-inactive);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-theme-preview-tab--active {
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-theme-preview-command {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  height: 32px;
+  padding: 0 var(--adp-space-4);
+  background: var(--adp-color-surface-header);
+  border-block: 1px solid var(--adp-color-border-panel);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-theme-preview-command-item {
+  width: 32px;
+  height: 4px;
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-color-text-secondary);
+  opacity: 0.7;
+}
+
+.adp-theme-preview-files {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--adp-space-3);
+  overflow: hidden;
+}
+
+.adp-theme-preview-file {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  height: 28px;
+  padding: 0 var(--adp-space-2);
+  border-radius: var(--adp-radius-xs);
+  font-size: var(--adp-font-body);
+}
+
+.adp-theme-preview-file .adp-theme-preview-line {
+  flex: 1;
+  max-width: 60%;
+}
+
+.adp-theme-preview-file:nth-child(2n) {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-theme-preview-dot {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-accent-current);
+}
+
+.adp-theme-message {
+  margin: 0;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+}
+
+/* Tab shape and icon mode are data attributes, never raw CSS. */
+[data-tab-shape="square"] .adp-tab,
+[data-tab-shape="square"] .adp-theme-preview-tab {
+  border-radius: 0;
+}
+
+[data-tab-shape="pill"] .adp-tab,
+[data-tab-shape="pill"] .adp-theme-preview-tab {
+  border-radius: var(--adp-radius-pill);
+}
+
+.adp-theme-schedule-times {
+  display: flex;
+  flex-direction: row;
+  gap: var(--adp-space-4);
+}
+
+.adp-theme-accent-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+}
+
+.adp-theme-accent-swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  cursor: pointer;
+}
+
+.adp-theme-accent-swatch:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: 2px;
+}
+
+.adp-theme-accent-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--adp-space-3);
+}
+
+.adp-theme-accent-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  font-size: var(--adp-font-small);
+}

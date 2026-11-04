@@ -1,0 +1,144 @@
+import type { LucideIcon } from "lucide-react";
+import type { ComponentType, LazyExoticComponent } from "react";
+import type { ArchiveExtractRequest } from "../services/archive";
+import type { FileTypeInfo } from "../services/files";
+import type { SerializableViewState, VirtualViewComponent } from "../documents/types";
+
+/** File-type handlers (contract 13, Step 04a). A handler shows one kind of
+ * file inside a file tab. Later steps add a ribbon (04b), an editor (06a)
+ * and more fields; existing fields never change meaning. */
+
+/** Suffix of the accent token: `var(--adp-accent-<accent>)`. */
+export type HandlerAccent = "explorer" | "word" | "excel" | "pdf" | "image" | "powerpoint";
+
+/** What a file tab's status bar shows (texts are already translated). */
+export interface FileTabStatus {
+  items: string[];
+  zoom?: {
+    percent: number;
+    min: number;
+    max: number;
+    set: (percent: number) => void;
+    fit: () => void;
+  };
+}
+
+/** A file tab's save handle (Step 06a): save the unsaved changes, or drop
+ * them and their recovery copy. */
+export interface SaveHandle {
+  /** True when the file was saved. */
+  save: () => Promise<boolean>;
+  /** Forget the unsaved changes and their recovery copy. */
+  discard: () => void;
+}
+
+/** The file tab's search box (Step 04b): the text to find, and a counter
+ * that grows each time the user asks for the next (or previous) match. */
+export interface FindRequest {
+  text: string;
+  request: number;
+  backwards: boolean;
+  /** Match case and whole word (Step 06a). */
+  options?: { caseSensitive: boolean; wholeWord: boolean };
+  /** A replace request: a new `request` number asks for one replacement,
+   * or all of them when `all` (Step 06a). */
+  replace?: { text: string; request: number; all: boolean };
+}
+
+export interface ExportHandle {
+  capture: () => Promise<import("../services/exportSnapshots").ExportSnapshot>;
+  dispose?: (snapshotId: string) => Promise<void>;
+}
+
+export interface HandlerViewProps {
+  registerExport?: (handle: ExportHandle | null) => void;
+  info: FileTypeInfo;
+  /** Shared document identity for this view; runtime only, never persisted. */
+  documentId?: string;
+  /** Stable split-leaf identity used by scroll synchronization (Step 09i). */
+  syncViewId?: string;
+  /** Open the app's Help center at a specific page. */
+  onOpenHelp?: (slug: string) => void;
+  /** Where the file's bytes are served (`fileUrl(token, name)`). */
+  url: string;
+  /** True while this tab is the visible one; views pause work when false. */
+  active: boolean;
+  /** State the view saved earlier (zoom, scroll position), or null. */
+  savedState: unknown;
+  /** Save small view state; it comes back as `savedState` (contract 13 tab_state). */
+  onStateChange: (state: unknown) => void;
+  onStatus: (status: FileTabStatus) => void;
+  /** Open this file in its Windows default app (used by error states). */
+  onOpenInWindowsApp: () => void;
+  /** What the search box asks for; views with `supportsFind` follow it. */
+  find: FindRequest;
+  /** The file came from the internet and protected view is on (Step 04c):
+   * views keep links off (and, from Step 06a, start without editing). */
+  protectedView: boolean;
+  /** Read-only, nonpersistent embedded preview (Step07b). */
+  previewOnly?: boolean;
+  /** OCR language preference from settings (Step 07e). */
+  ocrLanguage?: string;
+  /** The view's unsaved changes changed (Step 06a). */
+  onDirtyChange?: (dirty: boolean) => void;
+  /** The view hands over how to save or drop its changes (Step 06a). */
+  registerSave?: (handle: SaveHandle | null) => void;
+  /** The file was saved under a new name (Step 06a). */
+  onPathChange?: (path: string) => void;
+  /** Open another file in a new tab; the archive tab opens a file that lives
+   * inside it this way (Step 06d). Rejects with a `files.*` code. */
+  onOpenFile?: (path: string) => Promise<void>;
+  /** Extract through the Explorer's jobs panel (Step 06d). */
+  onExtractArchive?: (request: ArchiveExtractRequest) => void;
+  /** Open this file in the text viewer (Step 06f). */
+  onOpenAsText?: () => void;
+  /** Open this media as a new editable recipe while the source stays
+   * untouched (Step 15). `subtitlePath` carries the subtitle the player is
+   * showing, so the recipe can start with those cues. */
+  onEditMedia?: (subtitlePath?: string) => void;
+}
+
+export interface Handler {
+  id: string;
+  /** Bump when what the handler shows changes (cache keys from Step 07a). */
+  version: number;
+  /** Translation key of the type name, for example "handlers.image". */
+  labelKey: string;
+  icon: LucideIcon;
+  accent: HandlerAccent;
+  /** Lower-case extensions without the dot. */
+  extensions: readonly string[];
+  /** Extensions that identify this handler even when the detected MIME is a
+   * generic `text/plain`, `application/json` or
+   * `application/octet-stream`. The specific viewer wins over the generic
+   * text/JSON handler (Step 07f T7). */
+  priorityExtensions?: readonly string[];
+  /** Extensions claimed only when the detected content type also matches
+   * `mimeTypes`; `.db` uses this so a mislabelled file stays in the user's
+   * chosen app (Step 07f T7). */
+  contentExtensions?: readonly string[];
+  /** Content types recognized from the file's first bytes. A content match
+   * wins over an extension match. */
+  mimeTypes: readonly string[];
+  /** Larger files open in the Windows default app instead. */
+  maxBytes: number;
+  helpSlug: string;
+  speedTier: "fast" | "waiting";
+  /** True when the view can search its content: the file tab shows its
+   * search box and Ctrl+F focuses it. */
+  supportsFind: boolean;
+  /** The view can edit and save its file (Step 06a). */
+  editable?: boolean;
+  /** The view follows replace requests from the search row (Step 06a). */
+  supportsReplace?: boolean;
+  view: LazyExoticComponent<ComponentType<HandlerViewProps>>;
+  /** Source-aware presenter used by shared document providers (Step 09a).
+   * Read-only Office viewers may expose this without becoming editable.
+   * Lazy components keep the viewer out of the startup bundle. */
+  virtualView?: VirtualViewComponent | LazyExoticComponent<VirtualViewComponent>;
+  /** Optional bounded session codec. Registries normally use
+   * `registerViewStateCodec`; these fields let a handler carry the same
+   * contract without changing existing disk-view props. */
+  encodeViewState?: (state: unknown) => SerializableViewState | null;
+  decodeViewState?: (state: SerializableViewState) => unknown | null;
+}

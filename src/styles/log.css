@@ -1,0 +1,37 @@
+/* Streamed log rows (Step 07f): level is a text label as well as a tint. */
+.adp-log { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--adp-color-surface-window); }
+.adp-log-grid { flex: 1; min-height: 0; overflow: auto; position: relative; outline: none; }
+.adp-log-grid:focus-visible { outline: 2px solid var(--adp-accent-current); outline-offset: -2px; }
+.adp-log-body { position: relative; }
+.adp-log-row {
+  position: absolute;
+  inset-inline: 0;
+  display: grid;
+  grid-template-columns: 72px 64px minmax(0, 1fr) auto;
+  gap: var(--adp-space-2);
+  align-items: center;
+  padding: 0 var(--adp-space-4);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+}
+.adp-log-row:nth-child(even) { background: var(--adp-color-surface-pane); }
+.adp-log-row--selected { background: var(--adp-color-surface-selected-row); }
+.adp-log-number { color: var(--adp-color-text-secondary); text-align: end; font-variant-numeric: tabular-nums; }
+.adp-log-level {
+  text-align: center;
+  border-radius: var(--adp-radius-sm);
+  padding: 0 var(--adp-space-1);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-secondary);
+  border: 1px solid var(--adp-color-border-subtle);
+}
+.adp-log-level--trace, .adp-log-level--debug { color: var(--adp-color-text-secondary); }
+.adp-log-level--info { color: var(--adp-accent-explorer); border-color: var(--adp-accent-explorer); }
+.adp-log-level--warn { color: var(--adp-syntax-number); border-color: var(--adp-syntax-number); }
+.adp-log-level--error, .adp-log-level--fatal { color: var(--adp-accent-pdf); border-color: var(--adp-accent-pdf); }
+.adp-log-text { white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.adp-log-cut { color: var(--adp-color-text-secondary); font-size: 10px; }

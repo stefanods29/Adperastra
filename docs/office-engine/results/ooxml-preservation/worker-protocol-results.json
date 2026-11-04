@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "created_utc": "2026-11-04T16:24:22.443376+00:00",
+  "worker_sha256": "abaa42e052a8b850b6265bde7daaf14511f241e6b58975fdd63a3557b6a02cd5",
+  "source_inventory": [
+    {
+      "path": "src-tauri/src/office_edit_worker_protocol.rs",
+      "sha256": "77f40990bcd4f1205d57cb88d9f1c15118d9d705285ee6c8474235904bae7fdf"
+    },
+    {
+      "path": "src-tauri/src/office_edit_worker_protocol_tests.rs",
+      "sha256": "0a3224c860546ed95516bb845ea5aa3895fae8c79a4588e4c8325865bbe9c9d4"
+    },
+    {
+      "path": "tools/office-edit-preflight/Cargo.lock",
+      "sha256": "d18efbc711752686e0ad11bba1133908bd7c83b5d26debbdc3cf0d9b288908fe"
+    },
+    {
+      "path": "tools/office-edit-preflight/Cargo.toml",
+      "sha256": "a89089e39a6b4175e92cdeb7fec80e46e770a8e160d5048be302f6b510a64a2c"
+    },
+    {
+      "path": "tools/office-edit-preflight/src/main.rs",
+      "sha256": "ed2dfc072c0789edc9c9a9d43a4c5291c903d9dad0d79c1acdbe913f2d353b7d"
+    },
+    {
+      "path": "tools/office-edit-preflight/src/parts.rs",
+      "sha256": "e287d3436089bd53b75e56ea4bdf89831bc2e1a8036f7c8b13d065c368dfb638"
+    },
+    {
+      "path": "tools/office-edit-preflight/src/protocol.rs",
+      "sha256": "ae44994567562e3136c73b8c181115f61e8839df04136bdcad5616aaa8fe769d"
+    },
+    {
+      "path": "tools/office-edit-preflight/src/session.rs",
+      "sha256": "06ab4f30e91a60ff1f759ceca0f95d75b2e64a748f6d60850b57c4e7ac419aed"
+    },
+    {
+      "path": "tools/office-edit-preflight/src/targets.rs",
+      "sha256": "ec12012524f0b37b478371ddb2f010ac07d52fd0d2b09c5c4f25f89eeb368622"
+    },
+    {
+      "path": "tools/office-edit-preflight/windows/confined_protocol.rs",
+      "sha256": "9f87caee30d3a1716b67999e3ba688f93b8ee96c63fadc993e5e7813c462eaca"
+    }
+  ],
+  "native_codec_tests": {
+    "passed": 5
+  },
+  "standalone_tests": {
+    "worker_passed": 6,
+    "driver_passed": 13,
+    "driver_includes_native_codec_tests": true
+  },
+  "launch_policy": {
+    "appcontainer": "actual application engine_security launcher",
+    "memory_limit_bytes": 268435456,
+    "reply_deadline_seconds": 10,
+    "network_capabilities": 0,
+    "network_probe_performed": false
+  },
+  "runs": [
+    {
+      "format": "docx",
+      "source_sha256": "f815894561b59c45d707eb3efc81f2dd0b6d674545fb673c68142fde37437403",
+      "copy_sha256": "94b30d8b76877e12ca155af87acdad1c4c9836033161cb1bc2f7971d16b0d432",
+      "changed_parts": [
+        "word/document.xml"
+      ],
+      "matches_independently_reopened_reference": true,
+      "source_matches_worker_input_copy": true,
+      "stale_edit_refused": true,
+      "undo_redo_passed": true,
+      "second_capture_refused": true,
+      "foreign_read_refused": true,
+      "foreign_write_refused": true,
+      "lifecycle_sample_ms": 700
+    },
+    {
+      "format": "xlsx",
+      "source_sha256": "3bd7f5606d5bdeb07495ae44dbd24dc7dab928385893a67ceeecfe8d7c8400e9",
+      "copy_sha256": "e317ad92cf4286b8a44cd4b5144f5a111186f2acfc35dfe11212cbe99d3dc918",
+      "changed_parts": [
+        "xl/worksheets/sheet1.xml"
+      ],
+      "matches_independently_reopened_reference": true,
+      "source_matches_worker_input_copy": true,
+      "stale_edit_refused": true,
+      "undo_redo_passed": true,
+      "second_capture_refused": true,
+      "foreign_read_refused": true,
+      "foreign_write_refused": true,
+      "lifecycle_sample_ms": 694
+    },
+    {
+      "format": "pptx",
+      "source_sha256": "f0e508408afdb8aedc83928f966fbeb6aaf9fdaaf1201c173d63545eafcd4b94",
+      "copy_sha256": "cfc857f616c74a02145fba2d8f3b667e9886b9862f1889f7b2ea1c8cb7313961",
+      "changed_parts": [
+        "ppt/slides/slide1.xml"
+      ],
+      "matches_independently_reopened_reference": true,
+      "source_matches_worker_input_copy": true,
+      "stale_edit_refused": true,
+      "undo_redo_passed": true,
+      "second_capture_refused": true,
+      "foreign_read_refused": true,
+      "foreign_write_refused": true,
+      "lifecycle_sample_ms": 692
+    }
+  ],
+  "application_binding_enabled": false,
+  "timing_limitations": "One parallel lifecycle sample per family during project checks; not cold/warm benchmarking or a performance acceptance result.",
+  "project_gate": {
+    "passed": true,
+    "ui_test_files_passed": 405,
+    "ui_tests_passed": 2241,
+    "rust_test_phase_seconds": 723,
+    "packaged_app_tested": false,
+    "log": "%TEMP%/adperastra-office-worker-protocol-gate.log"
+  }
+}

@@ -1,7 +1,15 @@
-import { Copy, Files, Folder } from "lucide-react";
+import { Copy, Files, Folder, FolderCog } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import MountedImageActions from "../../clipboard/MountedImageActions";
+import Button from "../../components/Button";
 import HelpButton from "../../components/HelpButton";
+import FolderCustomizeDialog from "../../folders/FolderCustomizeDialog";
+import { FolderGlyph } from "../../folders/FolderGlyph";
+import { invalidateFolderDecorations, useFolderDecoration } from "../../folders/folderDecorationState";
+import MetadataFacts from "../../metadata/MetadataFacts";
+import { canMountDiskImage } from "../../services/diskImages";
+import { customizeFolders, resetFoldersAtPaths, type FolderCustomizeRequest } from "../../services/folderCustomization";
 import { itemDetails, parentPathOf, type ExplorerItem, type ItemDetails } from "../../services/explorer";
 import { formatDate, formatSize } from "../../services/format";
 import { displayName } from "../../services/names";
@@ -18,7 +26,19 @@ export interface DetailsPaneProps {
   showExtensions: boolean;
   typeLabel: (item: ExplorerItem) => string;
   onCopyPath: (path: string) => void;
-  onOpenHelp: () => void;
+  onOpenHelp: (slug?: string) => void;
+  /** Open the Version history of one file (Step 06b). */
+  onShowHistory?: (path: string) => void;
+  /** The normal open pipeline, for the pane preview (Step 07b). */
+  onOpen?: (item: ExplorerItem) => void;
+  /** Open a mounted image's drive through the normal folder route. */
+  onOpenDrive?: (root: string) => void;
+  /** Where the layout puts the pane (Step 05c). */
+  placement?: "right" | "bottom";
+  /** Settings > Views: offer manual column sets in Customize folder. */
+  columnSetsEnabled?: boolean;
+  /** Optional background folder size text (Step 11c T6). */
+  folderSizeText?: (path: string) => string | null;
 }
 
 /** What still has to come from `item_details`: shown as a skeleton line
@@ -60,9 +80,30 @@ function useItemDetails(path: string | null): { details: ItemDetails | null; fai
  * listing instantly; created/accessed dates and attributes follow. */
 export default function DetailsPane(props: DetailsPaneProps) {
   const { t, i18n } = useTranslation();
+  const placement = props.placement ?? "right";
   const single = props.selected.length === 1 ? props.selected[0] : null;
   const detailsPath = single ? single.path : props.selected.length === 0 && props.folder ? props.folder.path : null;
   const { details, failed, slow } = useItemDetails(detailsPath);
+  const folderPath = single?.kind === "folder" ? single.path : props.selected.length === 0 && props.folder ? props.folder.path : null;
+  const folderSize = folderPath ? props.folderSizeText?.(folderPath) ?? null : null;
+  const folderDecoration = useFolderDecoration(folderPath);
+  const [customizing, setCustomizing] = useState(false);
+  // A different folder must never inherit the open draft.
+  useEffect(() => { setCustomizing(false); }, [folderPath]);
+
+  const finishCustomize = async (handle: Awaited<ReturnType<typeof customizeFolders>>) => {
+    const result = await handle.completion;
+    invalidateFolderDecorations();
+    if (!result.complete || result.failures.length) {
+      throw new Error(result.failures[0]?.code ?? "folder_custom.changed");
+    }
+    setCustomizing(false);
+  };
+  const applyCustomization = async (request: FolderCustomizeRequest) => finishCustomize(await customizeFolders(request));
+  const resetCustomization = async () => {
+    if (!folderPath) return;
+    await finishCustomize(await resetFoldersAtPaths([folderPath]));
+  };
 
   const date = (unix: number | undefined) => (unix ? formatDate(unix, i18n.language) : "");
   const pending = <span className="adp-details-skeleton" aria-label={t("explorer.details.loading")} />;
@@ -82,7 +123,7 @@ export default function DetailsPane(props: DetailsPaneProps) {
       <>
         <div className="adp-details-hero">
           <span className={`adp-details-tile adp-file-tile--${tile.tone}`}>
-            <Icon size={24} aria-hidden="true" />
+            {single.kind === "folder" ? <FolderGlyph decoration={folderDecoration} size={24} /> : <Icon size={24} aria-hidden="true" />}
           </span>
           <div className="adp-details-title">
             <span className="adp-details-name">{displayName(single.name, single.kind, props.showExtensions)}</span>
@@ -94,6 +135,11 @@ export default function DetailsPane(props: DetailsPaneProps) {
             <>
               <dt>{t("explorer.details.size")}</dt>
               <dd>{formatSize(single.size, i18n.language)}</dd>
+            </>
+          ) : folderSize ? (
+            <>
+              <dt>{t("explorer.details.size")}</dt>
+              <dd>{folderSize}</dd>
             </>
           ) : null}
           <dt>{t("explorer.details.location")}</dt>
@@ -112,6 +158,31 @@ export default function DetailsPane(props: DetailsPaneProps) {
           <dt>{t("explorer.details.attributes")}</dt>
           <dd>{later(attributes)}</dd>
         </dl>
+        <MetadataFacts
+          item={single}
+          variant="details"
+          onOpen={props.onOpen}
+          onOpenHelp={(slug) => props.onOpenHelp(slug)}
+        />
+        {single.kind !== "folder" && props.onShowHistory ? (
+          <Button variant="subtle" onClick={() => props.onShowHistory?.(single.path)}>
+            {t("commands.versionHistory")}
+          </Button>
+        ) : null}
+        {single.kind !== "folder" && canMountDiskImage(single.name) ? (
+          <MountedImageActions
+            path={single.path}
+            name={single.name}
+            onOpenDrive={props.onOpenDrive}
+            openOnMount={false}
+          />
+        ) : null}
+        {single.kind === "folder" ? (
+          <Button variant="subtle" onClick={() => setCustomizing(true)}>
+            <FolderCog size={14} aria-hidden="true" />
+            {t("folderCustom.title")}
+          </Button>
+        ) : null}
       </>
     );
   } else if (props.selected.length > 1) {
@@ -138,7 +209,7 @@ export default function DetailsPane(props: DetailsPaneProps) {
       <>
         <div className="adp-details-hero">
           <span className="adp-details-tile adp-file-tile--folder">
-            <Folder size={24} aria-hidden="true" />
+            {folderDecoration ? <FolderGlyph decoration={folderDecoration} size={24} /> : <Folder size={24} aria-hidden="true" />}
           </span>
           <div className="adp-details-title">
             <span className="adp-details-name">{props.folder.name}</span>
@@ -146,6 +217,12 @@ export default function DetailsPane(props: DetailsPaneProps) {
           </div>
         </div>
         <dl className="adp-details-grid">
+          {folderSize ? (
+            <>
+              <dt>{t("explorer.details.size")}</dt>
+              <dd>{folderSize}</dd>
+            </>
+          ) : null}
           <dt>{t("explorer.details.location")}</dt>
           <dd className="adp-details-path">
             <span>{parentPathOf(props.folder.path) ?? props.folder.path}</span>
@@ -155,6 +232,10 @@ export default function DetailsPane(props: DetailsPaneProps) {
           <dt>{t("explorer.details.created")}</dt>
           <dd>{later(date(details?.created_unix))}</dd>
         </dl>
+        <Button variant="subtle" onClick={() => setCustomizing(true)}>
+          <FolderCog size={14} aria-hidden="true" />
+          {t("folderCustom.title")}
+        </Button>
       </>
     );
   } else {
@@ -162,12 +243,28 @@ export default function DetailsPane(props: DetailsPaneProps) {
   }
 
   return (
-    <aside className="adp-details-pane" aria-label={t("explorer.details.title")}>
-      <div className="adp-details-header">
-        <span>{t("explorer.details.title")}</span>
-        <HelpButton onOpenHelp={props.onOpenHelp} />
-      </div>
-      {body}
-    </aside>
+    <>
+      <aside
+        className={`adp-details-pane${placement === "bottom" ? " adp-details-pane--bottom" : ""}`}
+        aria-label={t("explorer.details.title")}
+      >
+        <div className="adp-details-header">
+          <span>{t("explorer.details.title")}</span>
+          <HelpButton onOpenHelp={props.onOpenHelp} />
+        </div>
+        {body}
+      </aside>
+      {customizing && folderPath ? (
+        <FolderCustomizeDialog
+          paths={[folderPath]}
+          initial={folderDecoration ? [folderDecoration] : []}
+          columnSetsEnabled={props.columnSetsEnabled === true}
+          onApply={applyCustomization}
+          onReset={resetCustomization}
+          onClose={() => setCustomizing(false)}
+          onOpenHelp={() => props.onOpenHelp("customizing-folders")}
+        />
+      ) : null}
+    </>
   );
 }

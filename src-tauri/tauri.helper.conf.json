@@ -1,0 +1,27 @@
+{
+  "productName": "Adperastra",
+  "version": "0.1.0",
+  "identifier": "app.adperastra.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": "default-src 'none'; script-src 'self'; worker-src 'self'; connect-src 'self' http://adpfile.localhost; img-src 'self' blob: http://adpfile.localhost; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'",
+      "pattern": {
+        "use": "isolation",
+        "options": {
+          "dir": "../src-tauri/isolation-helper"
+        }
+      },
+      "capabilities": [
+        "webview-helper"
+      ]
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}

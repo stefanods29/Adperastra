@@ -1,0 +1,58 @@
+# Per-step assignments
+
+The former A–L/non-AI briefs are superseded. All54 steps have individual prompts; assign any worker one step. Read [parallel workflow](README.md) and [ownership](OWNERSHIP.md).
+
+- Step **07a**: [Thumbnails, cache store, helper process, background work v1](../prompts/step-07a.md); [complete guide](../steps/step-07a.md).
+- Step **07b**: [Quick preview and rich file info](../prompts/step-07b.md); [complete guide](../steps/step-07b.md).
+- Step **07c**: [Gallery](../prompts/step-07c.md); [complete guide](../steps/step-07c.md).
+- Step **07d**: [PDF viewer](../prompts/step-07d.md); [complete guide](../steps/step-07d.md).
+- Step **07e**: [Copy text from images and scans (OCR)](../prompts/step-07e.md); [complete guide](../steps/step-07e.md).
+- Step **07f**: [More previewers 1: e-books, notebooks, email, subtitles, logs, SQLite](../prompts/step-07f.md); [complete guide](../steps/step-07f.md).
+- Step **07g**: [More previewers 2: 3D models, camera RAW, HEIC/AVIF, PSD](../prompts/step-07g.md); [complete guide](../steps/step-07g.md).
+- Step **08a**: [Converter 1: Quick Convert, job queue, image formats](../prompts/step-08a.md); [complete guide](../steps/step-08a.md).
+- Step **08b**: [Converter 2: PDF, documents, sheets, archives, batch presets](../prompts/step-08b.md); [complete guide](../steps/step-08b.md).
+- Step **08c**: [Privacy cleaner](../prompts/step-08c.md); [complete guide](../steps/step-08c.md).
+- Step **08d**: [First release (v0.1)](../prompts/step-08d.md); [complete guide](../steps/step-08d.md).
+- Step **09a**: [More tabs and sessions](../prompts/step-09a.md); [complete guide](../steps/step-09a.md).
+- Step **09b**: [Tab groups and saved groups](../prompts/step-09b.md); [complete guide](../steps/step-09b.md).
+- Step **09c**: [Dragging between tabs, content between tabs, opening files from Windows](../prompts/step-09c.md); [complete guide](../steps/step-09c.md).
+- Step **09d**: [Explorer extras and the command palette](../prompts/step-09d.md); [complete guide](../steps/step-09d.md).
+- Step **09e**: [Bulk rename and batch actions](../prompts/step-09e.md); [complete guide](../steps/step-09e.md).
+- Step **09f**: [Copy window and conflict window](../prompts/step-09f.md); [complete guide](../steps/step-09f.md).
+- Step **09g**: ["What's using this file?" and the shelf](../prompts/step-09g.md); [complete guide](../steps/step-09g.md).
+- Step **09h**: [Crash recovery, report a problem, safe mode](../prompts/step-09h.md); [complete guide](../steps/step-09h.md).
+- Step **09i**: [Split view](../prompts/step-09i.md); [complete guide](../steps/step-09i.md).
+- Step **09j**: [Disk images and clipboard history](../prompts/step-09j.md); [complete guide](../steps/step-09j.md).
+- Step **09k**: [Locked folders](../prompts/step-09k.md); [complete guide](../steps/step-09k.md).
+- Step **10a**: [Themes: editor, day and night, wallpaper accent](../prompts/step-10a.md); [complete guide](../steps/step-10a.md).
+- Step **10b**: [Toolbar and keyboard customization](../prompts/step-10b.md); [complete guide](../steps/step-10b.md).
+- Step **10c**: [Tab options, date and size formats, behavior, profiles, portable mode](../prompts/step-10c.md); [complete guide](../steps/step-10c.md).
+- Step **10d**: [Folder colors, icons, backgrounds, column sets](../prompts/step-10d.md); [complete guide](../steps/step-10d.md).
+- Step **10e**: [Menu editor, Home, sidebar and status bar customization, setup files](../prompts/step-10e.md); [complete guide](../steps/step-10e.md).
+- Step **10f**: [Accessibility (v0.2)](../prompts/step-10f.md); [complete guide](../steps/step-10f.md).
+- Step **11a**: [Search index, search modes, speed pass](../prompts/step-11a.md); [complete guide](../steps/step-11a.md).
+- Step **11b**: [Tags, smart folders, views](../prompts/step-11b.md); [complete guide](../steps/step-11b.md).
+- Step **11c**: [Storage view, duplicate finder, folder sizes](../prompts/step-11c.md); [complete guide](../steps/step-11c.md).
+- Step **12a**: [Pack manager, App storage, Background work page](../prompts/step-12a.md); [complete guide](../steps/step-12a.md).
+- Step **12b**: [Converter 3 (media, documents), privacy cleaner 2](../prompts/step-12b.md); [complete guide](../steps/step-12b.md).
+- Step **13**: [Accurate Office viewers (v0.3)](../prompts/step-13.md); [complete guide](../steps/step-13.md).
+- Step **14a**: [PDF tools](../prompts/step-14a.md); [complete guide](../steps/step-14a.md).
+- Step **14b**: [Basic image editor](../prompts/step-14b.md); [complete guide](../steps/step-14b.md).
+- Step **14c**: [Local AI runtime and AI upscaling](../prompts/step-14c.md); [complete guide](../steps/step-14c.md).
+- Step **15**: [Audio and video basics](../prompts/step-15.md); [complete guide](../steps/step-15.md).
+- Step **16**: [Windows integration and release polish (v0.4)](../prompts/step-16.md); [complete guide](../steps/step-16.md).
+- Step **17a**: [AI assistant: core, safety, models, evaluation](../prompts/step-17a.md); [complete guide](../steps/step-17a.md).
+- Step **17b**: [Local AI actions](../prompts/step-17b.md); [complete guide](../steps/step-17b.md).
+- Step **17c**: [AI search and organizing](../prompts/step-17c.md); [complete guide](../steps/step-17c.md).
+- Step **17d**: [AI for scans and PDFs, writing suggestions (v0.5)](../prompts/step-17d.md); [complete guide](../steps/step-17d.md).
+- Step **18a**: [Advanced image editor: layers and selections](../prompts/step-18a.md); [complete guide](../steps/step-18a.md).
+- Step **18b**: [Advanced image editor: painting, filters, project format](../prompts/step-18b.md); [complete guide](../steps/step-18b.md).
+- Step **19a**: [Video timeline: tracks and clips](../prompts/step-19a.md); [complete guide](../steps/step-19a.md).
+- Step **19b**: [Video timeline: effects, audio, export](../prompts/step-19b.md); [complete guide](../steps/step-19b.md).
+- Step **20a**: [Office editing: engine spikes and integration](../prompts/step-20a.md); [complete guide](../steps/step-20a.md).
+- Step **20b**: [Word-style editing](../prompts/step-20b.md); [complete guide](../steps/step-20b.md).
+- Step **20c**: [AI for documents](../prompts/step-20c.md); [complete guide](../steps/step-20c.md).
+- Step **21a**: [Excel-style editing](../prompts/step-21a.md); [complete guide](../steps/step-21a.md).
+- Step **21b**: [AI for sheets](../prompts/step-21b.md); [complete guide](../steps/step-21b.md).
+- Step **22a**: [PowerPoint-style editing](../prompts/step-22a.md); [complete guide](../steps/step-22a.md).
+- Step **22b**: [AI for decks and the style library (v1.0)](../prompts/step-22b.md); [complete guide](../steps/step-22b.md).

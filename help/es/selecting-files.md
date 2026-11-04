@@ -23,7 +23,7 @@ Selecciona archivos y carpetas para trabajar con ellos: la barra de comandos, el
 - Presiona **Entrar** o haz clic en otro lugar para guardar, o **Esc** para cancelar.
 - Si Windows no permite el nombre, o ya hay otro elemento con ese nombre, un mensaje explica por qué y no se cambia nada. Cambiar un nombre nunca reemplaza otro archivo.
 - Al cambiar el nombre de un elemento del sistema de Windows aparece primero una advertencia; presiona **Entrar** otra vez para cambiarlo de todos modos, o **Esc** para cancelar.
-- La opción de deshacer un cambio de nombre llega en la próxima versión.
+- El cambio de nombre se puede deshacer con Ctrl+Z o con el botón Deshacer del mensaje que aparece (consulta «Deshacer»).
 
 ## La barra de estado
 

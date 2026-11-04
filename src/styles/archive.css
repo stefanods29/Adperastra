@@ -1,0 +1,10 @@
+/* Archive tab (Step 06d). Colors only through tokens. */
+.adp-archive { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; background: var(--adp-color-surface-window); }
+.adp-archive-bar { display: flex; flex-direction: row; align-items: center; gap: var(--adp-space-3); height: 40px; padding: 0 var(--adp-space-7); border-bottom: 1px solid var(--adp-color-border-subtle); }
+.adp-archive-searchnote { margin-left: auto; color: var(--adp-color-text-secondary); font-size: var(--adp-font-small); }
+.adp-archive-note { display: flex; flex-direction: row; align-items: center; gap: var(--adp-space-3); min-height: 32px; padding: var(--adp-space-2) var(--adp-space-7); background: var(--adp-color-status-caution-background); border-bottom: 1px solid var(--adp-color-border-subtle); color: var(--adp-color-text-primary); font-size: var(--adp-font-body); }
+.adp-archive-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.adp-archive-reading,
+.adp-archive-empty { padding: var(--adp-space-7); color: var(--adp-color-text-secondary); }
+.adp-archive-strip { display: flex; flex-direction: row; align-items: center; gap: var(--adp-space-4); height: 40px; padding: 0 var(--adp-space-7); border-top: 1px solid var(--adp-color-border-subtle); background: var(--adp-color-surface-chrome); }
+.adp-archive-strip .adp-progress { width: 160px; }

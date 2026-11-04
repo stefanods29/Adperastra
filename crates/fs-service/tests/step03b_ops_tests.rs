@@ -1,0 +1,803 @@
+//! Step 03b: the file-operation engine (create, copy, move, recycle,
+//! restore, permanent delete) on real temp folders.
+
+use fs_service::{
+    check_conflicts, copy_items, create_item, delete_permanently, move_items,
+    new_cancellation_token, recycle_items, restore_bin_items, restore_items, unique_destination,
+    ConflictPolicy, CreateKind, OpReport,
+};
+use std::fs;
+use std::path::PathBuf;
+
+fn no_progress(_: &fs_service::OpProgress) {}
+
+fn tree(root: &std::path::Path) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        for entry in fs::read_dir(&dir).unwrap() {
+            let path = entry.unwrap().path();
+            out.push(
+                path.strip_prefix(root)
+                    .unwrap()
+                    .to_string_lossy()
+                    .replace('\\', "/"),
+            );
+            if path.is_dir() {
+                stack.push(path);
+            }
+        }
+    }
+    out.sort();
+    out
+}
+
+#[test]
+fn unique_destination_numbers_from_one() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::write(dir.path().join("notes.txt"), b"x").unwrap();
+    assert_eq!(
+        unique_destination(dir.path(), "notes.txt"),
+        dir.path().join("notes (1).txt")
+    );
+    fs::write(dir.path().join("notes (1).txt"), b"x").unwrap();
+    assert_eq!(
+        unique_destination(dir.path(), "notes.txt"),
+        dir.path().join("notes (2).txt")
+    );
+    fs::create_dir(dir.path().join("Trips")).unwrap();
+    assert_eq!(
+        unique_destination(dir.path(), "Trips"),
+        dir.path().join("Trips (1)")
+    );
+}
+
+#[test]
+fn create_item_makes_unique_empty_items() {
+    let dir = tempfile::tempdir().unwrap();
+    let folder = create_item(dir.path(), "New folder", CreateKind::Folder).unwrap();
+    assert!(folder.is_dir());
+    let again = create_item(dir.path(), "New folder", CreateKind::Folder).unwrap();
+    assert_eq!(again, dir.path().join("New folder (1)"));
+    let file = create_item(dir.path(), "New text file.txt", CreateKind::File).unwrap();
+    assert_eq!(fs::read(&file).unwrap(), Vec::<u8>::new());
+    assert!(create_item(dir.path(), "a/b.txt", CreateKind::File).is_err());
+}
+
+#[test]
+fn copy_copies_files_and_trees_and_reports_totals() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("a.txt"), b"hello").unwrap();
+    fs::create_dir(src.path().join("sub")).unwrap();
+    fs::write(src.path().join("sub/b.bin"), vec![7u8; 1000]).unwrap();
+
+    let mut last = None;
+    let report = copy_items(
+        &[src.path().join("a.txt"), src.path().join("sub")],
+        dst.path(),
+        ConflictPolicy::Skip,
+        &new_cancellation_token(),
+        &mut |p| last = Some(p.clone()),
+    )
+    .unwrap();
+    assert!(!report.cancelled);
+    assert_eq!(report.completed.len(), 2);
+    assert!(report.skipped.is_empty());
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"hello");
+    assert_eq!(fs::read(dst.path().join("sub/b.bin")).unwrap().len(), 1000);
+    let progress = last.unwrap();
+    // Progress counts every file and folder in the plan (a.txt, sub,
+    // sub/b.bin), not just the two top-level items.
+    assert_eq!(progress.items_total, 3);
+    assert_eq!(progress.items_done, 3);
+    assert_eq!(progress.bytes_total, 1005);
+    assert_eq!(progress.bytes_done, 1005);
+}
+
+#[test]
+fn copy_never_overwrites_without_replace() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("a.txt"), b"new").unwrap();
+    fs::write(dst.path().join("a.txt"), b"old").unwrap();
+
+    let skipped = copy_items(
+        &[src.path().join("a.txt")],
+        dst.path(),
+        ConflictPolicy::Skip,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(skipped.completed.len(), 0);
+    assert_eq!(skipped.skipped.len(), 1);
+    assert_eq!(skipped.skipped[0].reason, "exists");
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"old");
+
+    let kept = copy_items(
+        &[src.path().join("a.txt")],
+        dst.path(),
+        ConflictPolicy::KeepBoth,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(kept.completed[0].to, dst.path().join("a - Copy.txt"));
+    assert_eq!(fs::read(dst.path().join("a - Copy.txt")).unwrap(), b"new");
+
+    let replaced = copy_items(
+        &[src.path().join("a.txt")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(replaced.completed.len(), 1);
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"new");
+}
+
+#[test]
+fn merge_keeps_existing_files_and_copies_new_ones() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::create_dir(src.path().join("A")).unwrap();
+    fs::write(src.path().join("A/same.txt"), b"new same").unwrap();
+    fs::write(src.path().join("A/new.txt"), b"new").unwrap();
+    fs::create_dir(dst.path().join("A")).unwrap();
+    fs::write(dst.path().join("A/same.txt"), b"old same").unwrap();
+    fs::write(dst.path().join("A/mine.txt"), b"mine").unwrap();
+    let report = copy_items(
+        &[src.path().join("A")],
+        dst.path(),
+        ConflictPolicy::Merge,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1, "{report:?}");
+    assert!(report.replaced.is_empty());
+    assert_eq!(
+        fs::read(dst.path().join("A/same.txt")).unwrap(),
+        b"old same"
+    );
+    assert_eq!(fs::read(dst.path().join("A/new.txt")).unwrap(), b"new");
+    assert_eq!(fs::read(dst.path().join("A/mine.txt")).unwrap(), b"mine");
+    assert!(report
+        .skipped
+        .iter()
+        .any(|item| { item.reason == "exists" && item.path.ends_with("same.txt") }));
+    assert!(report
+        .created
+        .iter()
+        .any(|item| item.to.ends_with("new.txt")));
+    assert!(!report
+        .created
+        .iter()
+        .any(|item| item.to.ends_with("same.txt")));
+}
+
+#[cfg(windows)]
+#[test]
+fn merge_never_writes_through_a_destination_junction() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    let outside = tempfile::tempdir().unwrap();
+    fs::create_dir_all(src.path().join("A").join("link")).unwrap();
+    fs::write(src.path().join("A").join("link").join("new.txt"), b"new").unwrap();
+    fs::create_dir(dst.path().join("A")).unwrap();
+    fs::write(outside.path().join("keep.txt"), b"outside").unwrap();
+    let status = std::process::Command::new("cmd")
+        .args(["/C", "mklink", "/J"])
+        .arg(dst.path().join("A").join("link"))
+        .arg(outside.path())
+        .status()
+        .unwrap();
+    assert!(status.success());
+    let report = copy_items(
+        &[src.path().join("A")],
+        dst.path(),
+        ConflictPolicy::Merge,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(!outside.path().join("new.txt").exists());
+    assert_eq!(
+        fs::read(outside.path().join("keep.txt")).unwrap(),
+        b"outside"
+    );
+    assert!(report
+        .skipped
+        .iter()
+        .any(|item| item.reason == "link_not_supported"));
+    fs::remove_dir(dst.path().join("A").join("link")).unwrap();
+}
+
+#[test]
+fn merge_into_a_file_target_is_skipped_without_touching_it() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("a.txt"), b"new").unwrap();
+    fs::write(dst.path().join("a.txt"), b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("a.txt")],
+        dst.path(),
+        ConflictPolicy::Merge,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert!(report.replaced.is_empty());
+    assert_eq!(report.skipped[0].reason, "exists");
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"old");
+}
+
+#[test]
+fn move_merge_keeps_conflicting_sources_and_undoes_only_what_moved() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::create_dir(src.path().join("A")).unwrap();
+    fs::write(src.path().join("A/same.txt"), b"new same").unwrap();
+    fs::write(src.path().join("A/new.txt"), b"new").unwrap();
+    fs::create_dir(dst.path().join("A")).unwrap();
+    fs::write(dst.path().join("A/same.txt"), b"old same").unwrap();
+    let report = move_items(
+        &[src.path().join("A")],
+        dst.path(),
+        ConflictPolicy::Merge,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty(), "{report:?}");
+    assert!(report.replaced.is_empty());
+    assert_eq!(
+        fs::read(dst.path().join("A/same.txt")).unwrap(),
+        b"old same"
+    );
+    assert_eq!(fs::read(dst.path().join("A/new.txt")).unwrap(), b"new");
+    assert_eq!(
+        fs::read(src.path().join("A/same.txt")).unwrap(),
+        b"new same"
+    );
+    assert!(!src.path().join("A/new.txt").exists());
+    fs_service::ops::apply_transfer(
+        &report.transfer,
+        true,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(fs::read(src.path().join("A/new.txt")).unwrap(), b"new");
+    assert_eq!(
+        fs::read(src.path().join("A/same.txt")).unwrap(),
+        b"new same"
+    );
+    assert_eq!(
+        fs::read(dst.path().join("A/same.txt")).unwrap(),
+        b"old same"
+    );
+    assert!(!dst.path().join("A/new.txt").exists());
+}
+
+#[test]
+fn copy_into_the_same_folder_uses_the_copy_name() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("report.txt");
+    fs::write(&file, b"data").unwrap();
+    let report = copy_items(
+        &[file],
+        dir.path(),
+        ConflictPolicy::KeepBoth,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed[0].to, dir.path().join("report - Copy.txt"));
+    assert_eq!(
+        fs::read(dir.path().join("report - Copy.txt")).unwrap(),
+        b"data"
+    );
+}
+
+#[test]
+fn move_keep_both_uses_a_number_not_the_copy_name() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("report.txt"), b"new").unwrap();
+    fs::write(dst.path().join("report.txt"), b"old").unwrap();
+    let report = move_items(
+        &[src.path().join("report.txt")],
+        dst.path(),
+        ConflictPolicy::KeepBoth,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed[0].to, dst.path().join("report (1).txt"));
+    assert_eq!(fs::read(dst.path().join("report.txt")).unwrap(), b"old");
+    assert_eq!(fs::read(dst.path().join("report (1).txt")).unwrap(), b"new");
+}
+
+#[test]
+fn a_cancelled_copy_leaves_no_partial_file() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    let big = src.path().join("big.bin");
+    fs::write(&big, vec![1u8; 4 * 1024 * 1024]).unwrap();
+    let token = new_cancellation_token();
+    token.store(true, std::sync::atomic::Ordering::Relaxed);
+    let report = copy_items(
+        &[big],
+        dst.path(),
+        ConflictPolicy::Skip,
+        &token,
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.cancelled);
+    assert!(report.completed.is_empty());
+    assert_eq!(tree(dst.path()), Vec::<String>::new());
+}
+
+#[test]
+fn move_renames_then_removes_the_source() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::create_dir(src.path().join("folder")).unwrap();
+    fs::write(src.path().join("folder/inner.txt"), b"in").unwrap();
+    let report = move_items(
+        &[src.path().join("folder")],
+        dst.path(),
+        ConflictPolicy::Skip,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1);
+    assert!(!src.path().join("folder").exists());
+    assert_eq!(
+        fs::read(dst.path().join("folder/inner.txt")).unwrap(),
+        b"in"
+    );
+}
+
+#[test]
+fn check_conflicts_lists_existing_targets_and_their_kind() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("here.txt"), b"1").unwrap();
+    fs::write(src.path().join("gone.txt"), b"2").unwrap();
+    fs::create_dir(src.path().join("folder")).unwrap();
+    fs::write(dst.path().join("here.txt"), b"old").unwrap();
+    fs::create_dir(dst.path().join("folder")).unwrap();
+    let conflicts = check_conflicts(
+        &[
+            src.path().join("here.txt"),
+            src.path().join("gone.txt"),
+            src.path().join("folder"),
+        ],
+        dst.path(),
+    );
+    assert_eq!(conflicts.len(), 2);
+    assert_eq!(conflicts[0].path, dst.path().join("here.txt"));
+    assert!(!conflicts[0].is_dir);
+    assert_eq!(conflicts[1].path, dst.path().join("folder"));
+    assert!(conflicts[1].is_dir);
+}
+
+#[test]
+fn permanent_delete_removes_files_and_trees() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::create_dir(dir.path().join("tree")).unwrap();
+    fs::write(dir.path().join("tree/leaf.txt"), b"x").unwrap();
+    let report = delete_permanently(
+        &[dir.path().join("tree")],
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1);
+    assert!(!dir.path().join("tree").exists());
+}
+
+#[cfg(windows)]
+#[test]
+fn recycle_then_restore_brings_the_item_back() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("bring-me-back.txt");
+    fs::write(&file, b"roundtrip").unwrap();
+    let recycled = recycle_items(
+        std::slice::from_ref(&file),
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(recycled.completed.len(), 1);
+    assert!(!file.exists());
+
+    let restored = restore_items(std::slice::from_ref(&file)).unwrap();
+    assert_eq!(restored.completed.len(), 1);
+    assert_eq!(fs::read(&file).unwrap(), b"roundtrip");
+
+    // Leave nothing behind in the real Recycle Bin.
+    let again = recycle_items(
+        std::slice::from_ref(&file),
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(again.completed.len(), 1);
+    let _ = delete_permanently_from_bin(&file);
+}
+
+#[cfg(windows)]
+fn delete_permanently_from_bin(original: &std::path::Path) -> bool {
+    // Restore once more and delete permanently so the test leaves the bin
+    // as it found it.
+    if restore_items(std::slice::from_ref(&original.to_path_buf())).is_ok() && original.exists() {
+        delete_permanently(
+            std::slice::from_ref(&original.to_path_buf()),
+            &new_cancellation_token(),
+            &mut no_progress,
+        )
+        .is_ok()
+    } else {
+        false
+    }
+}
+
+#[test]
+fn a_failed_replace_copy_keeps_the_destination() {
+    // The source vanishes after the user chose Replace: the old
+    // destination must survive (the replacement is written aside first
+    // and only swapped in once it is complete).
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    let source = src.path().join("a.txt");
+    fs::write(&source, b"new").unwrap();
+    fs::write(dst.path().join("a.txt"), b"old").unwrap();
+    fs::remove_file(&source).unwrap();
+    // Recreate it as a folder: a folder never replaces a file.
+    fs::create_dir(&source).unwrap();
+    let report = copy_items(
+        &[source],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"old");
+}
+
+#[test]
+fn copying_a_file_onto_a_same_named_folder_never_deletes_the_folder() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("README"), b"file").unwrap();
+    fs::create_dir(dst.path().join("README")).unwrap();
+    fs::write(dst.path().join("README/keep.txt"), b"keep").unwrap();
+    let report = copy_items(
+        &[src.path().join("README")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(
+        fs::read(dst.path().join("README/keep.txt")).unwrap(),
+        b"keep"
+    );
+
+    // And the other way around: a folder onto a same-named file.
+    let report = move_items(
+        &[src.path().join("README")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(
+        fs::read(dst.path().join("README/keep.txt")).unwrap(),
+        b"keep"
+    );
+}
+
+#[test]
+fn permanent_delete_and_recycle_refuse_a_drive_root() {
+    let root = PathBuf::from("C:\\");
+    let report = delete_permanently(
+        std::slice::from_ref(&root),
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(report.skipped.len(), 1);
+    let report = recycle_items(&[root], &new_cancellation_token(), &mut no_progress).unwrap();
+    assert!(report.completed.is_empty());
+    assert_eq!(report.skipped.len(), 1);
+}
+
+#[cfg(windows)]
+#[test]
+fn restore_brings_back_same_stem_files_without_swapping_them() {
+    // photo.jpg and photo.png share a stem; with "hide extensions" on,
+    // the bin shows both as "photo". Each must come back with its own
+    // contents (the bin's $I records keep the full original paths).
+    let dir = tempfile::tempdir().unwrap();
+    let jpg = dir.path().join("photo.jpg");
+    let png = dir.path().join("photo.png");
+    fs::write(&jpg, b"JPEG-DATA").unwrap();
+    fs::write(&png, b"PNG-DATA!").unwrap();
+    let recycled = recycle_items(
+        &[jpg.clone(), png.clone()],
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(recycled.completed.len(), 2);
+    let restored = restore_items(&[jpg.clone(), png.clone()]).unwrap();
+    assert_eq!(restored.completed.len(), 2, "{restored:?}");
+    assert_eq!(fs::read(&jpg).unwrap(), b"JPEG-DATA");
+    assert_eq!(fs::read(&png).unwrap(), b"PNG-DATA!");
+    // Leave the bin as we found it.
+    let again = recycle_items(&[jpg, png], &new_cancellation_token(), &mut no_progress).unwrap();
+    assert_eq!(again.completed.len(), 2);
+}
+
+#[test]
+fn a_replace_copy_swaps_in_the_new_file_and_leaves_no_partial_file() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("a.txt"), b"new").unwrap();
+    fs::write(dst.path().join("a.txt"), b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("a.txt")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1);
+    assert_eq!(fs::read(dst.path().join("a.txt")).unwrap(), b"new");
+    let names: Vec<_> = fs::read_dir(dst.path())
+        .unwrap()
+        .flatten()
+        .map(|e| e.file_name())
+        .collect();
+    assert_eq!(names.len(), 1, "{names:?}");
+    purge_replaced(&report);
+}
+
+/// Put back a Replace's old files and delete them for good, so a test
+/// leaves the Recycle Bin as it found it.
+fn purge_replaced(report: &OpReport) {
+    for item in &report.replaced {
+        let _ = fs::remove_file(&item.path);
+    }
+    if restore_bin_items(&report.replaced).is_ok() {
+        let paths: Vec<PathBuf> = report.replaced.iter().map(|i| i.path.clone()).collect();
+        let _ = delete_permanently(&paths, &new_cancellation_token(), &mut no_progress);
+    }
+}
+
+#[cfg(windows)]
+#[test]
+fn undoing_a_replace_brings_back_the_replaced_file() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    let target = dst.path().join("note.txt");
+    fs::write(src.path().join("note.txt"), b"new").unwrap();
+    fs::write(&target, b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("note.txt")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.replaced.len(), 1, "{report:?}");
+    assert!(report.replaced[0].bin_id.is_some(), "{report:?}");
+    // Undo: the copy goes to the bin (same original path as the replaced
+    // file), then the exact replaced entry comes back - not the copy.
+    let recycled = recycle_items(
+        std::slice::from_ref(&target),
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(recycled.completed.len(), 1);
+    let restored = restore_bin_items(&report.replaced).unwrap();
+    assert_eq!(restored.completed.len(), 1, "{restored:?}");
+    assert_eq!(fs::read(&target).unwrap(), b"old");
+    // Leave the bin as we found it (the recycled copy).
+    fs::remove_file(&target).unwrap();
+    let _ = delete_permanently_from_bin(&target);
+}
+
+#[cfg(windows)]
+#[test]
+fn a_replacing_move_sends_the_old_file_to_the_bin() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::write(src.path().join("m.txt"), b"new").unwrap();
+    fs::write(dst.path().join("m.txt"), b"old").unwrap();
+    let report = move_items(
+        &[src.path().join("m.txt")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1);
+    assert_eq!(fs::read(dst.path().join("m.txt")).unwrap(), b"new");
+    assert_eq!(report.replaced.len(), 1);
+    purge_replaced(&report);
+}
+
+#[test]
+fn a_merge_reports_only_the_new_items_so_undo_keeps_what_was_there() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::create_dir_all(src.path().join("A/new-sub")).unwrap();
+    fs::write(src.path().join("A/new-sub/x.txt"), b"x").unwrap();
+    fs::write(src.path().join("A/new.txt"), b"n").unwrap();
+    fs::write(src.path().join("A/same.txt"), b"s").unwrap();
+    fs::create_dir(dst.path().join("A")).unwrap();
+    fs::write(dst.path().join("A/mine.txt"), b"keep").unwrap();
+    fs::write(dst.path().join("A/same.txt"), b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("A")],
+        dst.path(),
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1);
+    let mut created: Vec<String> = report
+        .created
+        .iter()
+        .map(|item| {
+            item.to
+                .strip_prefix(dst.path())
+                .unwrap()
+                .to_string_lossy()
+                .replace('\\', "/")
+        })
+        .collect();
+    created.sort();
+    // The existing folder and mine.txt are not "created"; new-sub covers
+    // x.txt; the replaced same.txt went to the bin.
+    assert_eq!(created, ["A/new-sub", "A/new.txt", "A/same.txt"]);
+    assert_eq!(fs::read(dst.path().join("A/mine.txt")).unwrap(), b"keep");
+    assert_eq!(report.replaced.len(), 1);
+    purge_replaced(&report);
+}
+
+#[test]
+fn copying_a_folder_with_a_link_loop_terminates() {
+    let dir = tempfile::tempdir().unwrap();
+    let dst = tempfile::tempdir().unwrap();
+    fs::create_dir(dir.path().join("root")).unwrap();
+    fs::write(dir.path().join("root/real.txt"), b"real").unwrap();
+    // A directory link pointing at its own parent would loop forever if
+    // followed. Creating one needs privileges on some PCs; skip then.
+    #[cfg(windows)]
+    let linked =
+        std::os::windows::fs::symlink_dir(dir.path().join("root"), dir.path().join("root/loop"))
+            .is_ok();
+    #[cfg(not(windows))]
+    let linked =
+        std::os::unix::fs::symlink(dir.path().join("root"), dir.path().join("root/loop")).is_ok();
+    if !linked {
+        return;
+    }
+    let report = copy_items(
+        &[dir.path().join("root")],
+        dst.path(),
+        ConflictPolicy::Skip,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(fs::read(dst.path().join("root/real.txt")).unwrap(), b"real");
+    assert!(report
+        .skipped
+        .iter()
+        .any(|item| item.reason == "link_loop" || item.reason == "exists"));
+    let _ = PathBuf::new();
+}
+
+#[cfg(windows)]
+fn short_path(path: &std::path::Path) -> PathBuf {
+    use std::os::windows::ffi::{OsStrExt, OsStringExt};
+    use windows::core::PCWSTR;
+    use windows::Win32::Storage::FileSystem::GetShortPathNameW;
+
+    let input: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+    let mut output = vec![0u16; 32_768];
+    // SAFETY: both buffers remain live for the call and the output slice
+    // describes its complete writable allocation.
+    let length = unsafe { GetShortPathNameW(PCWSTR(input.as_ptr()), Some(&mut output)) };
+    assert!(length > 0 && (length as usize) < output.len());
+    PathBuf::from(std::ffi::OsString::from_wide(&output[..length as usize]))
+}
+
+#[cfg(windows)]
+#[test]
+fn restore_accepts_a_short_parent_path_without_swapping_extensions() {
+    let dir = tempfile::Builder::new()
+        .prefix("adperastra-long-recycle-parent-")
+        .tempdir()
+        .unwrap();
+    let parent = short_path(dir.path());
+    let jpg = parent.join("photo.jpg");
+    let png = parent.join("photo.png");
+    fs::write(&jpg, b"JPEG-DATA").unwrap();
+    fs::write(&png, b"PNG-DATA!").unwrap();
+    let recycled = recycle_items(
+        &[jpg.clone(), png.clone()],
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(recycled.completed.len(), 2, "{recycled:?}");
+    let restored = restore_items(&[jpg.clone(), png.clone()]).unwrap();
+    assert_eq!(
+        restored.completed.len(),
+        2,
+        "{restored:?}; long parent: {:?}",
+        dir.path()
+    );
+    assert_eq!(fs::read(&jpg).unwrap(), b"JPEG-DATA");
+    assert_eq!(fs::read(&png).unwrap(), b"PNG-DATA!");
+}
+
+#[cfg(windows)]
+#[test]
+fn replacing_with_a_short_parent_path_keeps_the_exact_undo_entry() {
+    let src = tempfile::tempdir().unwrap();
+    let dst = tempfile::Builder::new()
+        .prefix("adperastra-long-replace-parent-")
+        .tempdir()
+        .unwrap();
+    let parent = short_path(dst.path());
+    let target = parent.join("note.txt");
+    fs::write(src.path().join("note.txt"), b"new").unwrap();
+    fs::write(&target, b"old").unwrap();
+    let report = copy_items(
+        &[src.path().join("note.txt")],
+        &parent,
+        ConflictPolicy::Replace,
+        &new_cancellation_token(),
+        &mut no_progress,
+    )
+    .unwrap();
+    assert_eq!(report.completed.len(), 1, "{report:?}");
+    assert_eq!(report.replaced.len(), 1, "{report:?}");
+    assert!(
+        report.replaced[0].bin_id.is_some(),
+        "{report:?}; long parent: {:?}",
+        dst.path()
+    );
+    // Removing the new copy leaves only the old replacement in the bin;
+    // restoring its exact ID must preserve its contents and extension.
+    fs::remove_file(&target).unwrap();
+    let restored = restore_bin_items(&report.replaced).unwrap();
+    assert_eq!(restored.completed.len(), 1, "{restored:?}");
+    assert_eq!(fs::read(&target).unwrap(), b"old");
+}

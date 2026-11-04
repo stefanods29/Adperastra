@@ -1,0 +1,13 @@
+.adp-command-palette { width: 680px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); background: var(--adp-color-surface-pane); color: var(--adp-color-text-primary); }
+.adp-command-palette .adp-dialog-body { min-height: 0; overflow: auto; }
+.adp-command-palette .adp-search { display: flex; width: 100%; height: 44px; box-sizing: border-box; }
+.adp-command-palette .adp-search-input { flex: 1; min-width: 0; }
+.adp-palette-list { position: relative; max-height: min(420px, calc(100vh - 200px)); overflow: auto; }
+.adp-palette-inner { position: relative; }
+.adp-palette-row { position: absolute; inset-inline: 0; top: 0; height: 40px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding-inline: 12px; border-bottom: 1px solid var(--adp-color-border-subtle); }
+.adp-palette-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adp-palette-description { color: var(--adp-color-text-secondary); max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adp-palette-row[aria-selected="true"] { background: var(--adp-color-surface-selected-row); outline: 2px solid var(--adp-accent-explorer); outline-offset: -2px; }
+.adp-palette-row[aria-disabled="true"] { color: var(--adp-color-text-secondary); }
+.adp-palette-reason { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.adp-command-palette :focus-visible, .adp-column-chooser :focus-visible { outline: 2px solid var(--adp-accent-explorer); outline-offset: 2px; }

@@ -1,0 +1,600 @@
+/* Timeline editor (Step 19a). Colors only through tokens. */
+
+.adp-timeline-editor {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 280px 28px;
+  min-height: 0;
+  height: 100%;
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  font-family: var(--adp-font-family);
+  font-size: var(--adp-font-body);
+  position: relative;
+}
+
+.adp-timeline-editor:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: -2px;
+}
+
+.adp-timeline-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.adp-timeline-preview {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--adp-color-surface-canvas-media);
+  overflow: hidden;
+}
+
+.adp-timeline-preview-surface {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.adp-timeline-preview-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  background: var(--adp-color-surface-canvas-media);
+}
+
+.adp-timeline-preview-video {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.adp-timeline-preview-empty {
+  position: absolute;
+  margin: 0;
+  max-width: 320px;
+  text-align: center;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-timeline-proxy-note {
+  position: absolute;
+  right: var(--adp-space-3);
+  bottom: var(--adp-space-3);
+  margin: 0;
+  padding: var(--adp-space-1) var(--adp-space-3);
+  border-radius: var(--adp-radius-pill);
+  background: var(--adp-color-surface-header);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-timeline-properties {
+  width: 300px;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--adp-space-3);
+  border-left: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-pane);
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+}
+
+.adp-timeline-properties-title {
+  margin: 0;
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+}
+
+.adp-timeline-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--adp-space-1) var(--adp-space-2);
+  align-items: center;
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-timeline-field > span {
+  grid-column: 1 / -1;
+}
+
+.adp-timeline-field input[type="number"],
+.adp-timeline-field input[type="range"] {
+  min-width: 0;
+  background: var(--adp-color-surface-header);
+  color: var(--adp-color-text-primary);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  padding: var(--adp-space-0) var(--adp-space-1);
+  font: inherit;
+}
+
+.adp-timeline-field output,
+.adp-timeline-readout,
+.adp-timeline-source {
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-timeline-source {
+  margin: 0;
+}
+
+.adp-timeline-hint,
+.adp-timeline-notice {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-timeline-add-tracks {
+  display: flex;
+  gap: var(--adp-space-2);
+  flex-wrap: wrap;
+}
+
+.adp-timeline-bottom {
+  display: flex;
+  flex-direction: column;
+  min-height: 160px;
+  max-height: 60vh;
+  border-top: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-pane);
+  overflow: hidden;
+}
+
+.adp-timeline-transport {
+  height: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  padding: 0 var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-timeline-zoom,
+.adp-timeline-scroll {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-timeline-zoom input,
+.adp-timeline-scroll input {
+  width: 96px;
+}
+
+.adp-timeline-tracks {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.adp-timeline-ruler {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background: var(--adp-color-surface-header);
+  border-bottom: 1px solid var(--adp-color-border-default);
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-tiny);
+}
+
+.adp-timeline-tick {
+  position: absolute;
+  top: 4px;
+  transform: translateX(2px);
+  white-space: nowrap;
+}
+
+.adp-timeline-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--adp-accent-explorer);
+  pointer-events: none;
+}
+
+.adp-timeline-track-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.adp-timeline-track {
+  position: relative;
+  display: flex;
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-timeline-track.is-active {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-timeline-track-header {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  gap: var(--adp-space-0);
+  align-content: center;
+  padding: var(--adp-space-1) var(--adp-space-2);
+  border-right: 1px solid var(--adp-color-border-default);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-timeline-track-name {
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.adp-timeline-track-buttons,
+.adp-timeline-track-order {
+  display: flex;
+  gap: var(--adp-space-0);
+}
+
+.adp-timeline-track-order {
+  justify-content: flex-end;
+}
+
+.adp-timeline-icon-button {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--adp-radius-sm);
+  background: none;
+  color: var(--adp-color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.adp-timeline-icon-button:hover:not(:disabled) {
+  background: var(--adp-color-surface-selected);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-timeline-icon-button:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 1px;
+}
+
+.adp-timeline-lane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.adp-timeline-clip {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  min-width: 2px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  padding: 0 var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-selected);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+  cursor: grab;
+  box-sizing: border-box;
+}
+
+.adp-timeline-clip-audio {
+  background: var(--adp-color-surface-segment-track);
+}
+
+.adp-timeline-clip.is-selected {
+  border: 2px solid var(--adp-accent-explorer);
+  background: var(--adp-color-surface-selected-row);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-timeline-clip:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 1px;
+}
+
+.adp-timeline-clip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-timeline-clip-check {
+  flex: 0 0 auto;
+}
+
+.adp-timeline-clip-thumb {
+  height: 32px;
+  width: auto;
+  flex: 0 0 auto;
+  object-fit: cover;
+}
+
+.adp-timeline-statusbar {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-3);
+  padding: 0 var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-timeline-error {
+  position: absolute;
+  left: var(--adp-space-3);
+  right: var(--adp-space-3);
+  bottom: 36px;
+  margin: 0;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-timeline-load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--adp-space-3);
+  min-height: 240px;
+  padding: var(--adp-space-6);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-timeline-thumbnails {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+.adp-timeline-thumbnail img {
+  display: block;
+  object-fit: contain;
+}
+
+.adp-timeline-waveform {
+  position: relative;
+  background: var(--adp-color-surface-pane);
+  overflow: hidden;
+}
+
+.adp-timeline-waveform-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.adp-timeline-waveform-range {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.adp-timeline-waveform-range:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 1px;
+}
+
+/* Effects, audio, title and transition inspector tabs (Step 19b). */
+.adp-timeline-tabs {
+  display: flex;
+  gap: var(--adp-space-0);
+  min-height: 34px;
+  height: 34px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-bottom: 1px solid var(--adp-color-border-panel);
+  scrollbar-width: thin;
+}
+
+.adp-timeline-tab {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 var(--adp-space-2);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--adp-color-text-secondary);
+  font: inherit;
+  font-size: var(--adp-font-small);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.adp-timeline-tab[aria-selected="true"] {
+  color: var(--adp-color-text-primary);
+  border-bottom-color: var(--adp-accent-explorer);
+  font-weight: 600;
+}
+
+.adp-timeline-tab:focus-visible,
+.adp-timeline-commandbar .adp-icon-btn:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 1px;
+}
+
+.adp-timeline-tabpanel {
+  display: grid;
+  gap: var(--adp-space-2);
+  min-width: 0;
+}
+
+.adp-timeline-commandbar {
+  flex: 0 0 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  padding: 0 var(--adp-space-2);
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  background: var(--adp-color-surface-pane);
+  scrollbar-width: thin;
+}
+
+.adp-timeline-effect-list {
+  display: grid;
+  gap: var(--adp-space-0);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.adp-timeline-effect-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-1);
+  min-width: 0;
+}
+
+.adp-timeline-effect-row > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-timeline-effect-row input[type="number"] {
+  width: 52px;
+  min-width: 0;
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-timeline-effect-actions,
+.adp-timeline-effect-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-1);
+}
+
+/* Title and transition markers in the track lanes. */
+.adp-timeline-title {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  z-index: 2;
+  min-width: 2px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 var(--adp-space-1);
+  border: 1px dashed var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-selected);
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  font-size: var(--adp-font-tiny);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.adp-timeline-transition {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 24px;
+  min-width: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.adp-timeline-transition::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: 16px;
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-accent-explorer);
+  opacity: 0.85;
+}
+
+.adp-timeline-title:focus-visible,
+.adp-timeline-transition:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 1px;
+}
+
+@media (max-height: 620px) {
+  .adp-timeline-editor {
+    grid-template-rows: minmax(0, 1fr) 160px 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adp-timeline-clip,
+  .adp-timeline-icon-button {
+    transition: none;
+  }
+}

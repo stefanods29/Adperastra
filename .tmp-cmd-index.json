@@ -1,0 +1,3090 @@
+{
+"accessibility_system_state": {
+"module": "accessibility_system",
+"params": []
+},
+"activation_ready": {
+"module": "activation_pipe",
+"params": []
+},
+"activity_status": {
+"module": "activity",
+"params": []
+},
+"activity_list": {
+"module": "activity",
+"params": [
+"cursor"
+]
+},
+"activity_clear": {
+"module": "activity",
+"params": []
+},
+"activity_set_paused": {
+"module": "activity",
+"params": [
+"paused"
+]
+},
+"ai_action_start": {
+"module": "ai_actions",
+"params": [
+"request_id",
+"request"
+]
+},
+"ai_mask_artifact_create": {
+"module": "ai_actions",
+"params": [
+"width",
+"height",
+"spec",
+"expected_content_id"
+]
+},
+"ai_action_result": {
+"module": "ai_actions",
+"params": [
+"id"
+]
+},
+"ai_action_result_release": {
+"module": "ai_actions",
+"params": [
+"id"
+]
+},
+"ai_action_result_export_start": {
+"module": "ai_action_export",
+"params": [
+"request_id",
+"id",
+"request"
+]
+},
+"ai_action_sources": {
+"module": "ai_action_sources",
+"params": [
+"inputs",
+"scope_id"
+]
+},
+"ai_eval_start": {
+"module": "ai_eval_commands",
+"params": [
+"request_id",
+"suite_id"
+]
+},
+"ai_eval_page": {
+"module": "ai_eval_commands",
+"params": [
+"suite_id",
+"offset",
+"limit"
+]
+},
+"ai_extract_prepare_start": {
+"module": "ai_extraction_commands",
+"params": [
+"request_id",
+"request"
+]
+},
+"ai_extract_start": {
+"module": "ai_extraction_commands",
+"params": [
+"request_id",
+"request",
+"prepared_id",
+"outbound_consent_id"
+]
+},
+"ai_extract_page": {
+"module": "ai_extraction_commands",
+"params": [
+"review_id",
+"cursor"
+]
+},
+"ai_extract_correct": {
+"module": "ai_extraction_commands",
+"params": [
+"review_id",
+"expected_revision",
+"corrections"
+]
+},
+"ai_extract_capture_start": {
+"module": "ai_extraction_commands",
+"params": [
+"request_id",
+"request"
+]
+},
+"ai_extract_release": {
+"module": "ai_extraction_commands",
+"params": [
+"review_id"
+]
+},
+"ai_inline_start": {
+"module": "ai_extraction_commands",
+"params": [
+"request_id",
+"request"
+]
+},
+"ai_names_suggest_start": {
+"module": "ai_name_suggestions",
+"params": [
+"request_id",
+"inputs",
+"pattern",
+"prepared_id",
+"outbound_consent_id"
+]
+},
+"ai_query_preview_start": {
+"module": "ai_query_preview",
+"params": [
+"request_id",
+"request",
+"prepared_id",
+"outbound_consent_id"
+]
+},
+"ai_semantic_search_start": {
+"module": "ai_semantic_search",
+"params": [
+"request_id",
+"query"
+]
+},
+"ai_semantic_status": {
+"module": "ai_semantic_search",
+"params": []
+},
+"ai_semantic_rebuild_start": {
+"module": "ai_semantic_search",
+"params": [
+"request_id",
+"root_ids"
+]
+},
+"ai_sort_history_reset": {
+"module": "ai_sort_history",
+"params": [
+"expected_revision"
+]
+},
+"ai_sort_suggest_start": {
+"module": "ai_sort_suggestions",
+"params": [
+"request_id",
+"input",
+"prepared_id",
+"outbound_consent_id"
+]
+},
+"appearance_set_zoom": {
+"module": "appearance",
+"params": [
+"scale"
+]
+},
+"archive_open_start": {
+"module": "archive",
+"params": [
+"request_id",
+"path",
+"auth"
+]
+},
+"archive_folder": {
+"module": "archive",
+"params": [
+"session",
+"folder",
+"sort_key",
+"sort_direction"
+]
+},
+"archive_search": {
+"module": "archive",
+"params": [
+"session",
+"text"
+]
+},
+"archive_close": {
+"module": "archive",
+"params": [
+"session"
+]
+},
+"archive_open_entry_start": {
+"module": "archive",
+"params": [
+"request_id",
+"request",
+"auth"
+]
+},
+"archive_extract_start": {
+"module": "archive",
+"params": [
+"request_id",
+"request",
+"auth"
+]
+},
+"archive_pick_folder": {
+"module": "archive",
+"params": [
+"title"
+]
+},
+"archive_create_start": {
+"module": "archive_create",
+"params": [
+"request_id",
+"request"
+]
+},
+"archive_rar_status": {
+"module": "archive_rar",
+"params": []
+},
+"assistant_chat_create": {
+"module": "assistant",
+"params": [
+"backend"
+]
+},
+"assistant_messages": {
+"module": "assistant",
+"params": [
+"chat_id",
+"after_message_id"
+]
+},
+"assistant_turn_start": {
+"module": "assistant",
+"params": [
+"request_id",
+"request"
+]
+},
+"assistant_turn_stop": {
+"module": "assistant",
+"params": [
+"job_id"
+]
+},
+"assistant_scope_request": {
+"module": "assistant",
+"params": [
+"chat_id",
+"root_path",
+"recursive",
+"read_contents"
+]
+},
+"assistant_scope": {
+"module": "assistant",
+"params": [
+"chat_id"
+]
+},
+"assistant_scope_revoke": {
+"module": "assistant",
+"params": [
+"scope_id"
+]
+},
+"assistant_action_preview": {
+"module": "assistant_actions",
+"params": [
+"chat_id",
+"request"
+]
+},
+"assistant_action_apply": {
+"module": "assistant_actions",
+"params": [
+"request_id",
+"draft_id"
+]
+},
+"assistant_action_cancel": {
+"module": "assistant_actions",
+"params": [
+"draft_id"
+]
+},
+"assistant_history_list": {
+"module": "assistant_history",
+"params": []
+},
+"assistant_history_clear": {
+"module": "assistant_history",
+"params": []
+},
+"assistant_history_export": {
+"module": "assistant_history",
+"params": [
+"dest_path"
+]
+},
+"assistant_inference_prepare": {
+"module": "assistant_outbound",
+"params": [
+"request"
+]
+},
+"assistant_outbound_confirm": {
+"module": "assistant_outbound",
+"params": [
+"preview_id"
+]
+},
+"assistant_credential_status": {
+"module": "assistant_provider",
+"params": [
+"provider_id"
+]
+},
+"assistant_credential_edit": {
+"module": "assistant_provider",
+"params": [
+"provider_id"
+]
+},
+"assistant_credential_remove": {
+"module": "assistant_provider",
+"params": [
+"provider_id"
+]
+},
+"assistant_provider_models": {
+"module": "assistant_provider",
+"params": [
+"provider_id"
+]
+},
+"assistant_provider_test": {
+"module": "assistant_provider",
+"params": [
+"provider_id"
+]
+},
+"assistant_endpoint_configure": {
+"module": "assistant_provider",
+"params": [
+"base_url",
+"model_id"
+]
+},
+"assistant_endpoint_status": {
+"module": "assistant_provider",
+"params": []
+},
+"assistant_endpoint_probe": {
+"module": "assistant_provider",
+"params": [
+"endpoint_id",
+"probe"
+]
+},
+"assistant_recycle_confirm": {
+"module": "assistant_recycle",
+"params": [
+"draft_id",
+"stage"
+]
+},
+"background_status": {
+"module": "background",
+"params": []
+},
+"background_tasks": {
+"module": "background",
+"params": []
+},
+"background_pause_all": {
+"module": "background",
+"params": [
+"paused"
+]
+},
+"rename_preview_start": {
+"module": "bulk_rename",
+"params": [
+"request_id",
+"request"
+]
+},
+"rename_preview_page": {
+"module": "bulk_rename",
+"params": [
+"cursor"
+]
+},
+"rename_execute_start": {
+"module": "bulk_rename",
+"params": [
+"request_id",
+"plan_id",
+"request_revision"
+]
+},
+"rename_report_page": {
+"module": "bulk_rename",
+"params": [
+"cursor"
+]
+},
+"rename_plan_release": {
+"module": "bulk_rename",
+"params": [
+"plan_id"
+]
+},
+"cache_usage": {
+"module": "cache",
+"params": []
+},
+"cache_clear": {
+"module": "cache",
+"params": [
+"kind"
+]
+},
+"cache_release": {
+"module": "cache",
+"params": [
+"lease_id"
+]
+},
+"file_identity": {
+"module": "cache_stamp",
+"params": [
+"path"
+]
+},
+"clipboard_history_list": {
+"module": "clipboard_history_commands",
+"params": [
+"query",
+"cursor"
+]
+},
+"clipboard_history_patch": {
+"module": "clipboard_history_commands",
+"params": [
+"patch"
+]
+},
+"clipboard_history_resolve": {
+"module": "clipboard_history_commands",
+"params": [
+"id",
+"target_document_id"
+]
+},
+"clipboard_history_record": {
+"module": "clipboard_history_commands",
+"params": [
+"transfer_id"
+]
+},
+"transfer_create": {
+"module": "content_transfer",
+"params": [
+"source_document_id",
+"payload"
+]
+},
+"transfer_get": {
+"module": "content_transfer",
+"params": [
+"transfer_id"
+]
+},
+"transfer_release": {
+"module": "content_transfer",
+"params": [
+"transfer_id"
+]
+},
+"doc_blocks_start": {
+"module": "conversion_documents",
+"params": [
+"request_id",
+"input"
+]
+},
+"doc_blocks_page": {
+"module": "conversion_documents",
+"params": [
+"cursor"
+]
+},
+"conversion_presets_list": {
+"module": "conversion_presets",
+"params": []
+},
+"conversion_preset_save": {
+"module": "conversion_presets",
+"params": [
+"preset"
+]
+},
+"conversion_preset_remove": {
+"module": "conversion_presets",
+"params": [
+"id"
+]
+},
+"conversion_presets_replace": {
+"module": "conversion_presets",
+"params": [
+"catalog"
+]
+},
+"conversion_presets_import": {
+"module": "conversion_presets",
+"params": [
+"catalog_json"
+]
+},
+"convert_start": {
+"module": "convert_jobs",
+"params": [
+"request_id",
+"request"
+]
+},
+"convert_preview_start": {
+"module": "convert_jobs",
+"params": [
+"request_id",
+"request"
+]
+},
+"convert_report_page": {
+"module": "convert_jobs",
+"params": [
+"cursor"
+]
+},
+"theme_list": {
+"module": "custom_theme_store",
+"params": []
+},
+"theme_read": {
+"module": "custom_theme_store",
+"params": [
+"id"
+]
+},
+"theme_save": {
+"module": "custom_theme_store",
+"params": [
+"theme"
+]
+},
+"theme_remove": {
+"module": "custom_theme_store",
+"params": [
+"id"
+]
+},
+"table_open_start": {
+"module": "data_views",
+"params": [
+"request_id",
+"path"
+]
+},
+"table_view_start": {
+"module": "data_views",
+"params": [
+"request_id",
+"session",
+"request"
+]
+},
+"table_rows": {
+"module": "data_views",
+"params": [
+"session",
+"view",
+"start",
+"count"
+]
+},
+"table_close": {
+"module": "data_views",
+"params": [
+"session"
+]
+},
+"json_open_start": {
+"module": "data_views",
+"params": [
+"request_id",
+"path"
+]
+},
+"json_children": {
+"module": "data_views",
+"params": [
+"session",
+"node",
+"start",
+"count"
+]
+},
+"json_find": {
+"module": "data_views",
+"params": [
+"session",
+"text",
+"case_sensitive",
+"after",
+"backwards"
+]
+},
+"json_copy": {
+"module": "data_views",
+"params": [
+"session",
+"node"
+]
+},
+"json_close": {
+"module": "data_views",
+"params": [
+"session"
+]
+},
+"deck_styles_list": {
+"module": "deck_styles",
+"params": []
+},
+"deck_styles_save": {
+"module": "deck_styles",
+"params": [
+"style",
+"expected_revision"
+]
+},
+"deck_styles_remove": {
+"module": "deck_styles",
+"params": [
+"id",
+"expected_revision"
+]
+},
+"deck_style_prepare": {
+"module": "deck_style_application",
+"params": [
+"request"
+]
+},
+"deck_style_apply": {
+"module": "deck_style_application",
+"params": [
+"preview_id",
+"acknowledged_warning_ids"
+]
+},
+"deck_style_file_import_start": {
+"module": "deck_style_exchange",
+"params": [
+"request_id",
+"input"
+]
+},
+"deck_style_file_export_start": {
+"module": "deck_style_exchange",
+"params": [
+"request_id",
+"style_id",
+"dest_path"
+]
+},
+"deck_style_import_start": {
+"module": "deck_style_import",
+"params": [
+"request_id",
+"input",
+"name",
+"font_map"
+]
+},
+"diagnostics_open_issue": {
+"module": "diagnostics_archive",
+"params": [
+"title",
+"issue_codes"
+]
+},
+"diagnostics_create_start": {
+"module": "diagnostics_sessions",
+"params": [
+"request_id",
+"options"
+]
+},
+"diagnostics_edit": {
+"module": "diagnostics_sessions",
+"params": [
+"session_id",
+"edits"
+]
+},
+"diagnostics_save_start": {
+"module": "diagnostics_sessions",
+"params": [
+"request_id",
+"session_id",
+"dest_path"
+]
+},
+"diagnostics_close": {
+"module": "diagnostics_sessions",
+"params": [
+"session_id"
+]
+},
+"disk_mount_start": {
+"module": "disk_mounts_commands",
+"params": [
+"request_id",
+"request"
+]
+},
+"disk_eject_start": {
+"module": "disk_mounts_commands",
+"params": [
+"request_id",
+"mount_id"
+]
+},
+"disk_mounts": {
+"module": "disk_mounts_commands",
+"params": []
+},
+"document_open": {
+"module": "documents",
+"params": [
+"source"
+]
+},
+"document_release": {
+"module": "documents",
+"params": [
+"document_id"
+]
+},
+"document_snapshot_begin": {
+"module": "documents",
+"params": [
+"request"
+]
+},
+"document_commit_start": {
+"module": "document_commit",
+"params": [
+"request_id",
+"request"
+]
+},
+"document_save_as_new_start": {
+"module": "document_rebind",
+"params": [
+"request_id",
+"request"
+]
+},
+"duplicates_page": {
+"module": "duplicates",
+"params": [
+"scan_id",
+"cursor"
+]
+},
+"duplicates_release": {
+"module": "duplicates",
+"params": [
+"scan_id"
+]
+},
+"duplicates_cleanup_prepare": {
+"module": "duplicates",
+"params": [
+"scan_id",
+"selected",
+"keepers"
+]
+},
+"duplicates_cleanup_start": {
+"module": "duplicates",
+"params": [
+"request_id",
+"plan_id"
+]
+},
+"engines_capabilities": {
+"module": "engine_process",
+"params": []
+},
+"export_snapshot_authorize_file": {
+"module": "export_snapshot_commands",
+"params": [
+"token"
+]
+},
+"export_snapshot_authorize_new": {
+"module": "export_snapshot_commands",
+"params": [
+"name",
+"mime"
+]
+},
+"export_snapshot_begin": {
+"module": "export_snapshot_commands",
+"params": [
+"metadata"
+]
+},
+"export_snapshot_finish": {
+"module": "export_snapshot_commands",
+"params": [
+"snapshot_id"
+]
+},
+"export_snapshot_release": {
+"module": "export_snapshot_commands",
+"params": [
+"snapshot_id"
+]
+},
+"export_snapshot_abort": {
+"module": "export_snapshot_commands",
+"params": [
+"snapshot_id"
+]
+},
+"export_snapshot_authority_release": {
+"module": "export_snapshot_commands",
+"params": [
+"document_id"
+]
+},
+"extra_view_open_start": {
+"module": "extra_views",
+"params": [
+"request_id",
+"path",
+"kind"
+]
+},
+"extra_view_page": {
+"module": "extra_views",
+"params": [
+"request"
+]
+},
+"extra_view_close": {
+"module": "extra_views",
+"params": [
+"session_id"
+]
+},
+"extra_view_attachment_start": {
+"module": "extra_views",
+"params": [
+"request_id",
+"session_id",
+"attachment_id"
+]
+},
+"extra_view_subtitles": {
+"module": "extra_views",
+"params": [
+"session_id",
+"cursor"
+]
+},
+"extra_view_sqlite_tables": {
+"module": "extra_views",
+"params": [
+"session_id"
+]
+},
+"extra_view_book_contents": {
+"module": "extra_views",
+"params": [
+"session_id",
+"cursor"
+]
+},
+"file_detect": {
+"module": "files",
+"params": [
+"path"
+]
+},
+"file_grant": {
+"module": "files",
+"params": [
+"path"
+]
+},
+"file_revoke": {
+"module": "files",
+"params": [
+"token"
+]
+},
+"locks_inspect_start": {
+"module": "file_locks",
+"params": [
+"request_id",
+"paths"
+]
+},
+"locks_close_start": {
+"module": "file_locks",
+"params": [
+"request_id",
+"request"
+]
+},
+"folder_decorations": {
+"module": "folder_customization_store",
+"params": [
+"paths"
+]
+},
+"folder_customize_start": {
+"module": "folder_customization_store",
+"params": [
+"request_id",
+"request"
+]
+},
+"folder_reset_start": {
+"module": "folder_customization_store",
+"params": [
+"request_id",
+"paths",
+"expected_keys"
+]
+},
+"column_sets_list": {
+"module": "folder_customization_store",
+"params": []
+},
+"column_set_save": {
+"module": "folder_customization_store",
+"params": [
+"value"
+]
+},
+"column_set_remove": {
+"module": "folder_customization_store",
+"params": [
+"id"
+]
+},
+"folder_presentation_get": {
+"module": "folder_presentation_store",
+"params": [
+"path"
+]
+},
+"folder_presentation_set": {
+"module": "folder_presentation_store",
+"params": [
+"path",
+"presentation"
+]
+},
+"folder_presentation_clear": {
+"module": "folder_presentation_store",
+"params": []
+},
+"folder_size_request": {
+"module": "folder_sizes",
+"params": [
+"consumer"
+]
+},
+"folder_size_release": {
+"module": "folder_sizes",
+"params": [
+"consumer_id"
+]
+},
+"folder_views_get": {
+"module": "folder_views",
+"params": []
+},
+"folder_view_set": {
+"module": "folder_views",
+"params": [
+"path",
+"mode"
+]
+},
+"folder_views_clear": {
+"module": "folder_views",
+"params": []
+},
+"font_info_start": {
+"module": "font_view",
+"params": [
+"request_id",
+"path"
+]
+},
+"font_install": {
+"module": "font_view",
+"params": [
+"path"
+]
+},
+"gallery_start": {
+"module": "gallery",
+"params": [
+"request"
+]
+},
+"gallery_page": {
+"module": "gallery",
+"params": [
+"generation",
+"cursor"
+]
+},
+"gallery_close": {
+"module": "gallery",
+"params": [
+"generation"
+]
+},
+"gallery_active": {
+"module": "gallery",
+"params": [
+"generation",
+"active"
+]
+},
+"gallery_pick_source": {
+"module": "gallery",
+"params": []
+},
+"geo_points_start": {
+"module": "geo_points",
+"params": [
+"request_id",
+"query",
+"cursor"
+]
+},
+"image_encode_plan": {
+"module": "image_encode",
+"params": [
+"request"
+]
+},
+"image_encode": {
+"module": "image_encode",
+"params": [
+"request"
+]
+},
+"image_project_open_start": {
+"module": "image_project_jobs",
+"params": [
+"request_id",
+"input"
+]
+},
+"image_project_payload_start": {
+"module": "image_project_jobs",
+"params": [
+"request_id",
+"input"
+]
+},
+"image_project_payload_page": {
+"module": "image_project_jobs",
+"params": [
+"handle",
+"offset",
+"max_bytes"
+]
+},
+"image_project_payload_release": {
+"module": "image_project_jobs",
+"params": [
+"handle"
+]
+},
+"image_project_capture_start": {
+"module": "image_project_jobs",
+"params": [
+"request_id",
+"document_id",
+"revision",
+"content_id"
+]
+},
+"image_project_psd_scan_start": {
+"module": "image_project_jobs",
+"params": [
+"request_id",
+"path"
+]
+},
+"image_project_psd_import_start": {
+"module": "image_project_jobs",
+"params": [
+"request_id",
+"path",
+"expected_sha256",
+"accept_flattened"
+]
+},
+"indexed_view_start": {
+"module": "indexed_views",
+"params": [
+"request_id",
+"request"
+]
+},
+"windows_integration_status": {
+"module": "integration_commands",
+"params": []
+},
+"windows_integration_apply": {
+"module": "integration_commands",
+"params": [
+"request"
+]
+},
+"windows_integration_open_defaults": {
+"module": "integration_commands",
+"params": []
+},
+"job_poll": {
+"module": "jobs",
+"params": [
+"request_id"
+]
+},
+"job_cancel": {
+"module": "jobs",
+"params": [
+"request_id"
+]
+},
+"open_external_url": {
+"module": "links",
+"params": [
+"url"
+]
+},
+"ai_capabilities": {
+"module": "local_ai",
+"params": []
+},
+"ai_hardware": {
+"module": "local_ai",
+"params": []
+},
+"ai_task_start": {
+"module": "local_ai",
+"params": [
+"request_id",
+"request"
+]
+},
+"ai_text_page": {
+"module": "local_ai",
+"params": [
+"job_id",
+"after_sequence"
+]
+},
+"ai_shutdown": {
+"module": "local_ai",
+"params": []
+},
+"ai_input_acquire": {
+"module": "local_ai",
+"params": [
+"input"
+]
+},
+"ai_document_input_acquire": {
+"module": "local_ai",
+"params": [
+"document_id"
+]
+},
+"ai_input_release": {
+"module": "local_ai",
+"params": [
+"id"
+]
+},
+"ai_artifact_describe": {
+"module": "local_ai_artifacts",
+"params": [
+"id"
+]
+},
+"ai_artifact_read": {
+"module": "local_ai_artifacts",
+"params": [
+"request"
+]
+},
+"ai_artifact_release": {
+"module": "local_ai_artifacts",
+"params": [
+"id"
+]
+},
+"locked_create_start": {
+"module": "locked_create",
+"params": [
+"request_id",
+"request"
+]
+},
+"locked_unlock_start": {
+"module": "locked_create",
+"params": [
+"request_id",
+"request"
+]
+},
+"locked_pick_recovery_path": {
+"module": "locked_create",
+"params": [
+"title",
+"filter_name"
+]
+},
+"locked_persist_start": {
+"module": "locked_lock",
+"params": [
+"request_id",
+"request"
+]
+},
+"locked_lock_start": {
+"module": "locked_lock",
+"params": [
+"request_id",
+"request"
+]
+},
+"locked_save_copy_start": {
+"module": "locked_lock",
+"params": [
+"request_id",
+"request"
+]
+},
+"locked_recovery_list": {
+"module": "locked_lock",
+"params": [
+"session_id"
+]
+},
+"locked_recovery_choose": {
+"module": "locked_lock",
+"params": [
+"request_id",
+"session_id",
+"recovery_id",
+"action"
+]
+},
+"locked_mark_dirty": {
+"module": "locked_lock",
+"params": [
+"session_id",
+"entry_id",
+"dirty"
+]
+},
+"locked_touch": {
+"module": "locked_lock",
+"params": [
+"session_id"
+]
+},
+"locked_idle_check": {
+"module": "locked_lock",
+"params": [
+"request_id"
+]
+},
+"locked_list": {
+"module": "locked_provider",
+"params": [
+"session_id",
+"parent_id",
+"cursor"
+]
+},
+"locked_entry_info": {
+"module": "locked_provider",
+"params": [
+"session_id",
+"entry_id"
+]
+},
+"locked_entry_grant": {
+"module": "locked_provider",
+"params": [
+"session_id",
+"entry_id",
+"offset",
+"length"
+]
+},
+"locked_entry_release": {
+"module": "locked_provider",
+"params": [
+"session_id",
+"token"
+]
+},
+"locked_export_start": {
+"module": "locked_provider",
+"params": [
+"request_id",
+"request"
+]
+},
+"set_maximize_rect": {
+"module": "main",
+"params": [
+"x",
+"y",
+"width",
+"height"
+]
+},
+"get_settings": {
+"module": "main",
+"params": []
+},
+"save_settings": {
+"module": "main",
+"params": [
+"settings"
+]
+},
+"keyboard_map_save": {
+"module": "main",
+"params": [
+"map"
+]
+},
+"get_session": {
+"module": "main",
+"params": []
+},
+"startup_ready": {
+"module": "main",
+"params": []
+},
+"save_session": {
+"module": "main",
+"params": [
+"session"
+]
+},
+"list_help": {
+"module": "main",
+"params": [
+"lang"
+]
+},
+"get_help_page": {
+"module": "main",
+"params": [
+"lang",
+"slug"
+]
+},
+"search_help": {
+"module": "main",
+"params": [
+"lang",
+"query"
+]
+},
+"get_windows_accent": {
+"module": "main",
+"params": []
+},
+"open_help_window": {
+"module": "main",
+"params": [
+"slug"
+]
+},
+"list_dir_start": {
+"module": "main",
+"params": [
+"path",
+"sort_key",
+"sort_direction",
+"request_id"
+]
+},
+"list_dir_poll": {
+"module": "main",
+"params": [
+"request_id"
+]
+},
+"list_dir_cancel": {
+"module": "main",
+"params": [
+"request_id"
+]
+},
+"fs_stat": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"list_known_folders": {
+"module": "main",
+"params": []
+},
+"list_drives": {
+"module": "main",
+"params": []
+},
+"drive_info": {
+"module": "main",
+"params": [
+"root"
+]
+},
+"list_recent_items": {
+"module": "main",
+"params": [
+"limit"
+]
+},
+"explorer_state_get": {
+"module": "main",
+"params": []
+},
+"pin_folder": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"unpin_folder": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"record_recent_folder": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"item_details": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"rename_item": {
+"module": "main",
+"params": [
+"path",
+"new_name"
+]
+},
+"check_conflicts": {
+"module": "main",
+"params": [
+"sources",
+"dest_dir"
+]
+},
+"create_item": {
+"module": "main",
+"params": [
+"parent",
+"name",
+"kind"
+]
+},
+"create_text_file": {
+"module": "main",
+"params": [
+"parent",
+"name",
+"contents"
+]
+},
+"file_op_start": {
+"module": "main",
+"params": [
+"request",
+"request_id"
+]
+},
+"file_op_poll": {
+"module": "main",
+"params": [
+"request_id"
+]
+},
+"file_op_cancel": {
+"module": "main",
+"params": [
+"request_id"
+]
+},
+"add_favorite": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"remove_favorite": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"list_favorite_items": {
+"module": "main",
+"params": []
+},
+"open_item": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"open_with_dialog": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"show_properties": {
+"module": "main",
+"params": [
+"paths"
+]
+},
+"open_in_terminal": {
+"module": "main",
+"params": [
+"folder"
+]
+},
+"clipboard_set_files": {
+"module": "main",
+"params": [
+"paths",
+"cut"
+]
+},
+"clipboard_read": {
+"module": "main",
+"params": []
+},
+"clipboard_text": {
+"module": "main",
+"params": []
+},
+"clipboard_image_file": {
+"module": "main",
+"params": [
+"parent",
+"base_name",
+"format"
+]
+},
+"clipboard_clear": {
+"module": "main",
+"params": []
+},
+"start_external_drag": {
+"module": "main",
+"params": [
+"paths"
+]
+},
+"create_shortcut": {
+"module": "main",
+"params": [
+"target",
+"folder",
+"name"
+]
+},
+"share_items": {
+"module": "main",
+"params": [
+"paths",
+"title"
+]
+},
+"show_classic_menu": {
+"module": "main",
+"params": [
+"paths",
+"background",
+"x",
+"y"
+]
+},
+"watch_start": {
+"module": "main",
+"params": [
+"path"
+]
+},
+"watch_stop": {
+"module": "main",
+"params": []
+},
+"map_view_open": {
+"module": "map_tiles",
+"params": []
+},
+"map_view_close": {
+"module": "map_tiles",
+"params": [
+"view_id"
+]
+},
+"map_tile_get": {
+"module": "map_tiles",
+"params": [
+"request"
+]
+},
+"map_tile_release": {
+"module": "map_tiles",
+"params": [
+"lease_id"
+]
+},
+"map_tile_clear": {
+"module": "map_tiles",
+"params": []
+},
+"media_sidecars": {
+"module": "media",
+"params": [
+"path"
+]
+},
+"media_preview_start": {
+"module": "media_preview",
+"params": [
+"request_id",
+"input",
+"options"
+]
+},
+"media_probe_start": {
+"module": "media_probe",
+"params": [
+"request_id",
+"input"
+]
+},
+"media_recipe_export_start": {
+"module": "media_recipe_export",
+"params": [
+"request_id",
+"snapshot_id",
+"request"
+]
+},
+"metadata_read_start": {
+"module": "metadata_jobs",
+"params": [
+"request_id",
+"request"
+]
+},
+"metadata_release": {
+"module": "metadata_jobs",
+"params": [
+"consumer_id"
+]
+},
+"preview_detect": {
+"module": "metadata_preview",
+"params": [
+"path",
+"background"
+]
+},
+"preview_grant": {
+"module": "metadata_preview",
+"params": [
+"path",
+"background"
+]
+},
+"preview_revoke": {
+"module": "metadata_preview",
+"params": [
+"token"
+]
+},
+"ocr_languages": {
+"module": "ocr",
+"params": []
+},
+"ocr_start": {
+"module": "ocr",
+"params": [
+"request_id",
+"request"
+]
+},
+"ocr_page": {
+"module": "ocr",
+"params": [
+"consumer_id",
+"after_word"
+]
+},
+"ocr_release": {
+"module": "ocr",
+"params": [
+"consumer_id"
+]
+},
+"office_ai_context_release": {
+"module": "office_ai",
+"params": [
+"context_id"
+]
+},
+"office_ai_proposal_page": {
+"module": "office_ai",
+"params": [
+"preview_id",
+"cursor"
+]
+},
+"office_ai_proposal_release": {
+"module": "office_ai",
+"params": [
+"preview_id"
+]
+},
+"office_ai_proposal_confirm": {
+"module": "office_ai",
+"params": [
+"preview_id"
+]
+},
+"office_ai_proposal_apply": {
+"module": "office_ai",
+"params": [
+"request"
+]
+},
+"office_deck_template_inspect_start": {
+"module": "office_deck_template",
+"params": [
+"request_id",
+"input"
+]
+},
+"office_deck_template_import": {
+"module": "office_deck_template",
+"params": [
+"inspection_id",
+"theme_id",
+"name",
+"font_mappings"
+]
+},
+"office_draft_create_start": {
+"module": "office_drafts",
+"params": [
+"request_id",
+"family",
+"theme",
+"source_references"
+]
+},
+"office_blank_draft_create_start": {
+"module": "office_drafts",
+"params": [
+"request_id",
+"family"
+]
+},
+"office_edit_open_start": {
+"module": "office_edit",
+"params": [
+"request_id",
+"document_id",
+"family"
+]
+},
+"office_edit_close": {
+"module": "office_edit",
+"params": [
+"session_id"
+]
+},
+"office_edit_state": {
+"module": "office_edit",
+"params": [
+"session_id"
+]
+},
+"office_edit_transact": {
+"module": "office_edit",
+"params": [
+"session_id",
+"transaction"
+]
+},
+"office_edit_undo": {
+"module": "office_edit",
+"params": [
+"session_id",
+"expected_revision",
+"transaction_id"
+]
+},
+"office_edit_redo": {
+"module": "office_edit",
+"params": [
+"session_id",
+"expected_revision",
+"transaction_id"
+]
+},
+"office_edit_mode": {
+"module": "office_edit",
+"params": [
+"session_id",
+"mode"
+]
+},
+"office_edit_discard_saved": {
+"module": "office_edit",
+"params": [
+"session_id",
+"saved_content_id",
+"expected_revision",
+"expected_content_id"
+]
+},
+"office_edit_items": {
+"module": "office_edit",
+"params": [
+"session_id",
+"kind",
+"cursor"
+]
+},
+"office_edit_formatting": {
+"module": "office_edit",
+"params": [
+"session_id",
+"selection"
+]
+},
+"office_edit_release_lease": {
+"module": "office_edit",
+"params": [
+"lease_id"
+]
+},
+"office_edit_cell_window": {
+"module": "office_edit",
+"params": [
+"session_id",
+"range"
+]
+},
+"office_edit_formula_parse": {
+"module": "office_edit",
+"params": [
+"session_id",
+"text",
+"locale"
+]
+},
+"office_edit_formula_format": {
+"module": "office_edit",
+"params": [
+"session_id",
+"canonical",
+"locale"
+]
+},
+"office_edit_find": {
+"module": "office_edit",
+"params": [
+"session_id",
+"query",
+"cursor"
+]
+},
+"office_edit_spelling": {
+"module": "office_edit",
+"params": [
+"session_id",
+"span",
+"cursor"
+]
+},
+"office_edit_document_stats": {
+"module": "office_edit",
+"params": [
+"session_id"
+]
+},
+"office_edit_functions": {
+"module": "office_edit",
+"params": [
+"session_id",
+"locale",
+"cursor"
+]
+},
+"office_edit_print_start": {
+"module": "office_edit",
+"params": [
+"request_id",
+"session_id",
+"expected_revision",
+"ranges",
+"sheet_settings"
+]
+},
+"office_edit_capture_start": {
+"module": "office_edit_capture",
+"params": [
+"request_id",
+"session_id",
+"expected_revision"
+]
+},
+"office_edit_export_start": {
+"module": "office_edit_capture",
+"params": [
+"request_id",
+"session_id",
+"expected_revision",
+"format",
+"ranges"
+]
+},
+"office_edit_render_start": {
+"module": "office_edit_render",
+"params": [
+"request_id",
+"session_id",
+"viewport"
+]
+},
+"office_view_open_start": {
+"module": "office_view",
+"params": [
+"request_id",
+"input"
+]
+},
+"office_view_page_start": {
+"module": "office_view",
+"params": [
+"request_id",
+"session_id",
+"section_id",
+"page",
+"scale"
+]
+},
+"office_view_sections": {
+"module": "office_view",
+"params": [
+"session_id",
+"cursor"
+]
+},
+"office_view_comments": {
+"module": "office_view",
+"params": [
+"session_id",
+"section_id",
+"cursor"
+]
+},
+"office_view_cells": {
+"module": "office_view",
+"params": [
+"session_id",
+"section_id",
+"row_start",
+"row_count",
+"column_start",
+"column_count"
+]
+},
+"office_view_close": {
+"module": "office_view",
+"params": [
+"session_id"
+]
+},
+"pack_list": {
+"module": "packs",
+"params": []
+},
+"catalog_refresh_start": {
+"module": "packs",
+"params": [
+"request_id"
+]
+},
+"install_start": {
+"module": "packs",
+"params": [
+"request_id",
+"id",
+"version"
+]
+},
+"download_pause": {
+"module": "packs",
+"params": [
+"id"
+]
+},
+"download_resume_start": {
+"module": "packs",
+"params": [
+"request_id",
+"id"
+]
+},
+"remove_start": {
+"module": "packs",
+"params": [
+"request_id",
+"id"
+]
+},
+"pdf_open_start": {
+"module": "pdf",
+"params": [
+"request_id",
+"path",
+"password"
+]
+},
+"pdf_open_input_start": {
+"module": "pdf",
+"params": [
+"request_id",
+"input",
+"password"
+]
+},
+"pdf_close": {
+"module": "pdf",
+"params": [
+"session_id"
+]
+},
+"pdf_render_start": {
+"module": "pdf",
+"params": [
+"request_id",
+"request"
+]
+},
+"pdf_text_page": {
+"module": "pdf",
+"params": [
+"session_id",
+"page",
+"after_run"
+]
+},
+"pdf_outline": {
+"module": "pdf",
+"params": [
+"session_id",
+"cursor"
+]
+},
+"pdf_search_start": {
+"module": "pdf",
+"params": [
+"request_id",
+"session_id",
+"query",
+"match_case",
+"cursor"
+]
+},
+"pdf_edit_inspect_start": {
+"module": "pdf_edit",
+"params": [
+"request_id",
+"request"
+]
+},
+"pdf_edit_serialize_start": {
+"module": "pdf_edit",
+"params": [
+"request_id",
+"request"
+]
+},
+"pdf_print_start": {
+"module": "pdf_print",
+"params": [
+"request_id",
+"session_id",
+"first_page",
+"last_page"
+]
+},
+"portable_copy_start": {
+"module": "portable_copy",
+"params": [
+"request_id",
+"request"
+]
+},
+"office_presentation_displays": {
+"module": "presentation",
+"params": []
+},
+"office_presentation_start": {
+"module": "presentation",
+"params": [
+"session_id",
+"request"
+]
+},
+"office_presentation_navigate": {
+"module": "presentation",
+"params": [
+"presentation_id",
+"intent"
+]
+},
+"office_presentation_end": {
+"module": "presentation",
+"params": [
+"presentation_id"
+]
+},
+"privacy_inspect_start": {
+"module": "privacy_jobs",
+"params": [
+"request_id",
+"inputs",
+"categories"
+]
+},
+"privacy_inspection_page": {
+"module": "privacy_jobs",
+"params": [
+"cursor"
+]
+},
+"privacy_effective_categories": {
+"module": "privacy_jobs",
+"params": [
+"inspection_ids",
+"categories"
+]
+},
+"privacy_clean_start": {
+"module": "privacy_jobs",
+"params": [
+"request_id",
+"request"
+]
+},
+"privacy_release": {
+"module": "privacy_jobs",
+"params": [
+"inspection_id"
+]
+},
+"profiles_list": {
+"module": "profile_catalog",
+"params": []
+},
+"profile_create": {
+"module": "profile_catalog",
+"params": [
+"name",
+"expected_revision"
+]
+},
+"profile_rename": {
+"module": "profile_catalog",
+"params": [
+"id",
+"name",
+"expected_revision"
+]
+},
+"profile_root": {
+"module": "profile_root",
+"params": []
+},
+"profile_switch_prepare": {
+"module": "profile_switch",
+"params": [
+"target_id"
+]
+},
+"profile_switch_commit": {
+"module": "profile_switch",
+"params": [
+"plan_id"
+]
+},
+"media_proxy_start": {
+"module": "proxy",
+"params": [
+"request_id",
+"source",
+"quality"
+]
+},
+"read_voices": {
+"module": "read_aloud",
+"params": []
+},
+"read_aloud_start": {
+"module": "read_aloud",
+"params": [
+"request"
+]
+},
+"read_aloud_chunk": {
+"module": "read_aloud",
+"params": [
+"session_id",
+"sequence"
+]
+},
+"read_aloud_stop": {
+"module": "read_aloud",
+"params": [
+"session_id"
+]
+},
+"recovery_open_start": {
+"module": "recovery_open",
+"params": [
+"request_id",
+"record_id"
+]
+},
+"recovery_save_start": {
+"module": "recovery_store",
+"params": [
+"request_id",
+"snapshot_id",
+"metadata"
+]
+},
+"recovery_list": {
+"module": "recovery_store",
+"params": [
+"cursor"
+]
+},
+"recovery_legacy_count": {
+"module": "recovery_store",
+"params": []
+},
+"recovery_legacy_import_start": {
+"module": "recovery_store",
+"params": [
+"request_id"
+]
+},
+"recovery_discard": {
+"module": "recovery_store",
+"params": [
+"ids"
+]
+},
+"recovery_legacy_read": {
+"module": "recovery_store",
+"params": [
+"path"
+]
+},
+"rename_presets_list": {
+"module": "rename_presets",
+"params": []
+},
+"rename_preset_write": {
+"module": "rename_presets",
+"params": [
+"preset",
+"expected_revision"
+]
+},
+"rename_preset_remove": {
+"module": "rename_presets",
+"params": [
+"id",
+"expected_revision"
+]
+},
+"resident_status": {
+"module": "resident",
+"params": []
+},
+"resident_set": {
+"module": "resident",
+"params": [
+"enabled",
+"start_with_windows"
+]
+},
+"resident_show": {
+"module": "resident",
+"params": []
+},
+"resident_close_confirmed": {
+"module": "resident",
+"params": [
+"reason"
+]
+},
+"resident_tray_labels": {
+"module": "resident",
+"params": [
+"labels"
+]
+},
+"safe_mode_status": {
+"module": "safe_mode",
+"params": []
+},
+"restart_normal": {
+"module": "safe_mode",
+"params": []
+},
+"saved_groups_list": {
+"module": "saved_group_store",
+"params": []
+},
+"saved_group_write": {
+"module": "saved_group_store",
+"params": [
+"request"
+]
+},
+"saved_group_remove": {
+"module": "saved_group_store",
+"params": [
+"id",
+"expected_revision"
+]
+},
+"saved_groups_export": {
+"module": "saved_group_transfer",
+"params": [
+"ids",
+"dest_path"
+]
+},
+"saved_groups_import": {
+"module": "saved_group_transfer",
+"params": [
+"path",
+"expected_revision"
+]
+},
+"saved_groups_pick_import": {
+"module": "saved_group_transfer",
+"params": [
+"title",
+"filter_name"
+]
+},
+"search_start": {
+"module": "search_index",
+"params": [
+"request_id",
+"query"
+]
+},
+"search_page_start": {
+"module": "search_index",
+"params": [
+"request_id",
+"cursor"
+]
+},
+"index_status": {
+"module": "search_index",
+"params": []
+},
+"index_rebuild_start": {
+"module": "search_index",
+"params": [
+"request_id",
+"root_ids"
+]
+},
+"index_pause": {
+"module": "search_index",
+"params": [
+"paused"
+]
+},
+"saved_searches_list": {
+"module": "search_index",
+"params": []
+},
+"saved_search_save": {
+"module": "search_index",
+"params": [
+"search"
+]
+},
+"saved_search_remove": {
+"module": "search_index",
+"params": [
+"id"
+]
+},
+"settings_export": {
+"module": "settings_file",
+"params": [
+"title",
+"file_name",
+"filter_name"
+]
+},
+"settings_import": {
+"module": "settings_file",
+"params": [
+"title",
+"filter_name"
+]
+},
+"setup_preview_start": {
+"module": "setups",
+"params": [
+"request_id",
+"path"
+]
+},
+"setup_apply_start": {
+"module": "setups",
+"params": [
+"request_id",
+"request"
+]
+},
+"setup_release": {
+"module": "setups",
+"params": [
+"preview_id"
+]
+},
+"setup_export_start": {
+"module": "setups",
+"params": [
+"request_id",
+"request"
+]
+},
+"shelf_get": {
+"module": "shelf_store",
+"params": []
+},
+"shelf_patch": {
+"module": "shelf_store",
+"params": [
+"patch",
+"expected_revision"
+]
+},
+"shelf_refresh_start": {
+"module": "shelf_store",
+"params": [
+"request_id",
+"ids"
+]
+},
+"smart_folders_list": {
+"module": "smart_folders",
+"params": []
+},
+"smart_folder_save": {
+"module": "smart_folders",
+"params": [
+"folder"
+]
+},
+"smart_folder_remove": {
+"module": "smart_folders",
+"params": [
+"id",
+"remove_saved_query"
+]
+},
+"special_view_open_start": {
+"module": "special_views",
+"params": [
+"request_id",
+"path",
+"kind"
+]
+},
+"special_view_scene": {
+"module": "special_views",
+"params": [
+"session_id"
+]
+},
+"special_view_raw_start": {
+"module": "special_views",
+"params": [
+"request_id",
+"session_id",
+"edge"
+]
+},
+"special_view_layers": {
+"module": "special_views",
+"params": [
+"session_id",
+"cursor"
+]
+},
+"special_view_close": {
+"module": "special_views",
+"params": [
+"session_id"
+]
+},
+"speech_transcribe_start": {
+"module": "speech",
+"params": [
+"request_id",
+"request"
+]
+},
+"speech_captions_start": {
+"module": "speech",
+"params": [
+"request_id",
+"input",
+"language",
+"start_us",
+"generation"
+]
+},
+"speech_transcript_page": {
+"module": "speech",
+"params": [
+"id",
+"first"
+]
+},
+"speech_transcript_release": {
+"module": "speech",
+"params": [
+"id"
+]
+},
+"speech_dictation_start": {
+"module": "speech_dictation",
+"params": [
+"request"
+]
+},
+"speech_dictation_stop": {
+"module": "speech_dictation",
+"params": [
+"session_id"
+]
+},
+"speech_dictation_cancel": {
+"module": "speech_dictation",
+"params": [
+"session_id"
+]
+},
+"storage_report": {
+"module": "storage",
+"params": []
+},
+"storage_clear_start": {
+"module": "storage",
+"params": [
+"request_id",
+"category"
+]
+},
+"storage_set_limit": {
+"module": "storage",
+"params": [
+"category",
+"bytes"
+]
+},
+"storage_scan_start": {
+"module": "storage_scan",
+"params": [
+"request_id",
+"request"
+]
+},
+"storage_page": {
+"module": "storage_scan",
+"params": [
+"scan_id",
+"parent_id",
+"cursor"
+]
+},
+"storage_release": {
+"module": "storage_scan",
+"params": [
+"scan_id"
+]
+},
+"tag_identity_apply": {
+"module": "tag_identity_effects",
+"params": [
+"events"
+]
+},
+"tags_catalog": {
+"module": "tag_transactions",
+"params": []
+},
+"tag_save": {
+"module": "tag_transactions",
+"params": [
+"tag",
+"expected_catalog_revision"
+]
+},
+"tag_merge": {
+"module": "tag_transactions",
+"params": [
+"from_id",
+"to_id",
+"expected_revision"
+]
+},
+"tag_delete": {
+"module": "tag_transactions",
+"params": [
+"id",
+"expected_revision"
+]
+},
+"tag_assignments": {
+"module": "tag_transactions",
+"params": [
+"keys"
+]
+},
+"tag_mutate_start": {
+"module": "tag_transactions",
+"params": [
+"request_id",
+"request"
+]
+},
+"tag_undo": {
+"module": "tag_transactions",
+"params": [
+"history_id",
+"reverse"
+]
+},
+"tags_import_preview": {
+"module": "tag_transfer",
+"params": [
+"path"
+]
+},
+"tags_import_apply": {
+"module": "tag_transfer",
+"params": [
+"preview_id",
+"choices",
+"allow_paths"
+]
+},
+"tags_export_start": {
+"module": "tag_transfer",
+"params": [
+"request_id",
+"dest_path",
+"include_paths"
+]
+},
+"tags_write_start": {
+"module": "tag_transfer",
+"params": [
+"request_id",
+"paths",
+"dest_dir"
+]
+},
+"tags_pick_import": {
+"module": "tag_transfer",
+"params": [
+"title",
+"filter_name"
+]
+},
+"tags_pick_export": {
+"module": "tag_transfer",
+"params": [
+"title",
+"file_name",
+"filter_name"
+]
+},
+"templates_list": {
+"module": "templates",
+"params": [
+"lang"
+]
+},
+"template_create": {
+"module": "templates",
+"params": [
+"template_path",
+"dest_dir",
+"name"
+]
+},
+"templates_pick_folder": {
+"module": "templates",
+"params": [
+"title"
+]
+},
+"template_create_start": {
+"module": "template_jobs",
+"params": [
+"request_id",
+"request"
+]
+},
+"text_save": {
+"module": "text_save",
+"params": [
+"request"
+]
+},
+"text_pick_save_path": {
+"module": "text_save",
+"params": [
+"title",
+"file_name",
+"filter_name"
+]
+},
+"theme_background_import": {
+"module": "theme_assets",
+"params": [
+"path"
+]
+},
+"theme_background_lease": {
+"module": "theme_assets",
+"params": [
+"asset_id"
+]
+},
+"theme_pick_background": {
+"module": "theme_assets",
+"params": [
+"title",
+"filter_name"
+]
+},
+"theme_system_fonts": {
+"module": "theme_fonts",
+"params": []
+},
+"theme_apply_material": {
+"module": "theme_material",
+"params": [
+"material"
+]
+},
+"theme_import": {
+"module": "theme_transfer",
+"params": [
+"path"
+]
+},
+"theme_export": {
+"module": "theme_transfer",
+"params": [
+"id",
+"dest_path",
+"include_image"
+]
+},
+"theme_pick_import": {
+"module": "theme_transfer",
+"params": [
+"title",
+"filter_name"
+]
+},
+"theme_pick_export": {
+"module": "theme_transfer",
+"params": [
+"id",
+"include_image",
+"title",
+"file_name",
+"filter_name"
+]
+},
+"theme_wallpaper_palette": {
+"module": "theme_wallpaper",
+"params": []
+},
+"thumbnail_request_start": {
+"module": "thumbnails",
+"params": [
+"request_id",
+"request"
+]
+},
+"thumbnail_lookup": {
+"module": "thumbnails",
+"params": [
+"request"
+]
+},
+"thumbnail_release": {
+"module": "thumbnails",
+"params": [
+"consumer_id"
+]
+},
+"timeline_export_preview_start": {
+"module": "timeline_export",
+"params": [
+"request_id",
+"request",
+"graph"
+]
+},
+"timeline_export_start": {
+"module": "timeline_export",
+"params": [
+"request_id",
+"request",
+"graph"
+]
+},
+"timeline_proxy_start": {
+"module": "timeline_proxy",
+"params": [
+"request_id",
+"source",
+"quality"
+]
+},
+"timeline_proxy_release": {
+"module": "timeline_proxy",
+"params": [
+"lease_id"
+]
+},
+"timeline_open_start": {
+"module": "timeline_types",
+"params": [
+"request_id",
+"input"
+]
+},
+"transfer_start": {
+"module": "transfer_commands",
+"params": [
+"request_id",
+"request"
+]
+},
+"transfer_state": {
+"module": "transfer_commands",
+"params": [
+"job_id"
+]
+},
+"transfer_control": {
+"module": "transfer_commands",
+"params": [
+"job_id",
+"control"
+]
+},
+"transfer_decide": {
+"module": "transfer_commands",
+"params": [
+"job_id",
+"decision"
+]
+},
+"transfer_replay_check": {
+"module": "transfer_commands",
+"params": [
+"transfer_id",
+"reverse"
+]
+},
+"transfer_report_page": {
+"module": "transfer_commands",
+"params": [
+"cursor"
+]
+},
+"update_check": {
+"module": "updates",
+"params": [
+"manual"
+]
+},
+"update_mark_seen": {
+"module": "updates",
+"params": [
+"version"
+]
+},
+"update_open_page": {
+"module": "updates",
+"params": []
+},
+"versions_list": {
+"module": "versions",
+"params": [
+"path",
+"before_id"
+]
+},
+"versions_extract": {
+"module": "versions",
+"params": [
+"id",
+"file_name"
+]
+},
+"versions_restore": {
+"module": "versions",
+"params": [
+"path",
+"id"
+]
+},
+"versions_save_copy": {
+"module": "versions",
+"params": [
+"id",
+"title",
+"file_name",
+"filter_name"
+]
+},
+"versions_delete_all": {
+"module": "versions",
+"params": []
+},
+"versions_store_size": {
+"module": "versions",
+"params": []
+},
+"watch_subscribe": {
+"module": "watcher_sessions",
+"params": [
+"path",
+"options"
+]
+},
+"watch_unsubscribe": {
+"module": "watcher_sessions",
+"params": [
+"subscription_id"
+]
+},
+"media_waveform_page": {
+"module": "waveforms",
+"params": [
+"source",
+"channel",
+"first_bucket"
+]
+},
+"helper_reply": {
+"module": "webview_helper",
+"params": [
+"reply"
+]
+},
+"helper_ready": {
+"module": "webview_helper",
+"params": []
+},
+"file_unblock": {
+"module": "zone",
+"params": [
+"path"
+]
+}
+}

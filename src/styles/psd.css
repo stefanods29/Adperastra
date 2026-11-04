@@ -1,0 +1,22 @@
+/* PSD composite and layer panel (Step 07g). */
+.adp-psd-view { display:flex; height:100%; min-height:0; position:relative; background:var(--adp-color-surface-canvas-media); }
+.adp-psd-main { flex:1; min-width:0; display:flex; flex-direction:column; }
+.adp-psd-toolbar { display:flex; align-items:center; gap:var(--adp-space-2); padding:var(--adp-space-2) var(--adp-space-4); border-bottom:1px solid var(--adp-color-border-panel); background:var(--adp-color-surface-chrome); }
+.adp-psd-stage { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:auto; padding:var(--adp-space-6); }
+.adp-psd-composite { max-width:100%; max-height:100%; object-fit:contain; background:var(--adp-color-surface-pane); }
+.adp-psd-loading { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--adp-space-3); }
+.adp-psd-skeleton { width:min(60%,420px); aspect-ratio:4/3; }
+.adp-psd-layers { width:240px; max-width:calc(100vw - 320px); min-width:160px; display:flex; flex-direction:column; border-left:1px solid var(--adp-color-border-panel); background:var(--adp-color-surface-sidebar); overflow:hidden; }
+.adp-psd-layers-header { padding:var(--adp-space-3) var(--adp-space-4); font-weight:600; font-size:var(--adp-font-section); }
+.adp-psd-search { display:flex; align-items:center; gap:var(--adp-space-2); padding:0 var(--adp-space-3) var(--adp-space-2); color:var(--adp-color-text-secondary); }
+.adp-psd-search .adp-input { width:100%; min-width:0; }
+.adp-psd-layer-list { list-style:none; margin:0; padding:0; overflow:auto; flex:1; }
+.adp-psd-layer-row { display:flex; align-items:center; gap:var(--adp-space-2); height:28px; padding-right:var(--adp-space-3); font-size:var(--adp-font-body); color:var(--adp-color-text-primary); }
+.adp-psd-layer-row:hover { background:var(--adp-color-surface-selected); }
+.adp-psd-layer-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.adp-psd-layer-opacity { color:var(--adp-color-text-tertiary); font-size:var(--adp-font-small); }
+.adp-psd-eye { width:8px; height:8px; border-radius:50%; background:var(--adp-accent-image); flex:none; }
+.adp-psd-eye--hidden { background:transparent; border:1px solid var(--adp-color-border-input); }
+.adp-psd-note { margin:var(--adp-space-2) var(--adp-space-4); color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); }
+.adp-psd-paused { position:absolute; inset:0; pointer-events:none; }
+.adp-psd-view button:focus-visible, .adp-psd-view input:focus-visible { outline:2px solid var(--adp-accent-image); outline-offset:2px; }

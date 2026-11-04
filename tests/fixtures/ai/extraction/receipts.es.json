@@ -1,0 +1,22 @@
+[
+  {"id":"rec-es-01","locale":"es","fields":{"date":"2026-11-03","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"100.00","tax":"18.00","total":"118.00"}},
+  {"id":"rec-es-02","locale":"es","fields":{"date":"2026-10-28","vendor":"Suministros Norte","tax_id":"004571","currency":"USD","subtotal":"40.00","tax":"4.00","total":"44.00"}},
+  {"id":"rec-es-03","locale":"es","fields":{"date":"2026-09-30","vendor":"Papelera","tax_id":"778812","currency":"EUR","subtotal":"80.00","tax":"16.80","total":"96.80"}},
+  {"id":"rec-es-04","locale":"es","fields":{"date":"2026-11-01","vendor":"Librería Central","tax_id":"000987","currency":"GBP","subtotal":"25.00","tax":"5.00","total":"30.00"}},
+  {"id":"rec-es-05","locale":"es","fields":{"date":"03/04/2026","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"100.00","tax":"18.00","total":"118.00"}},
+  {"id":"rec-es-06","locale":"es","fields":{"date":"2026-12-01","vendor":"Transportes Sur","tax_id":"112233","currency":"MXN","subtotal":"250.00","tax":"40.00","total":"290.00"}},
+  {"id":"rec-es-07","locale":"es","fields":{"date":"2026-11-02","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"100.00","tax":"18.00","total":"117.98"}},
+  {"id":"rec-es-08","locale":"es","fields":{"date":"2026-08-14","vendor":"Repuestos Tokio","tax_id":"556677","currency":"JPY","subtotal":"1000","tax":"80","total":"1080"}},
+  {"id":"rec-es-09","locale":"es","fields":{"date":"2026-07-19","vendor":"Mercado Andes","tax_id":"000045","currency":"PEN","subtotal":"60.00","tax":"10.80","total":"70.80"}},
+  {"id":"rec-es-10","locale":"es","fields":{"date":"13/04/2026","vendor":"Café Puerto","tax_id":"006677","currency":"USD","subtotal":"12.00","tax":"1.20","total":"13.20"}},
+  {"id":"rec-es-11","locale":"es","fields":{"date":"04/13/2026","vendor":"Café Puerto","tax_id":"006677","currency":"USD","subtotal":"20.00","tax":"2.00","total":"22.00"}},
+  {"id":"rec-es-12","locale":"es","fields":{"date":"2026-06-05","vendor":"Energía Verde","tax_id":"000321","currency":"EUR","subtotal":"64.20","tax":"0.00","total":"64.20"}},
+  {"id":"rec-es-13","locale":"es","fields":{"date":"2026-05-21","vendor":"Agua Azul","tax_id":"000654","currency":"PEN","subtotal":"21.10","tax":"3.80","total":"24.90"}},
+  {"id":"rec-es-14","locale":"es","fields":{"date":"2026-04-02","vendor":"Oficina Total","tax_id":"000888","currency":"USD","subtotal":"300.00","tax":"45.00","total":"345.00"}},
+  {"id":"rec-es-15","locale":"es","fields":{"date":"2026-03-30","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"15.00","tax":"2.70","total":"17.70"}},
+  {"id":"rec-es-16","locale":"es","fields":{"date":"2026-02-11","vendor":"Imprenta Metro","tax_id":"000777","currency":"EUR","subtotal":"48.50","tax":"8.73","total":"57.23"}},
+  {"id":"rec-es-17","locale":"es","fields":{"date":"2026-01-09","vendor":"Hotel Lago","tax_id":"000222","currency":"USD","subtotal":"390.00","tax":"70.20","total":"460.20"}},
+  {"id":"rec-es-18","locale":"es","fields":{"date":"2026-11-04","vendor":"Tienda Esquina","tax_id":"000999","currency":"GBP","subtotal":"9.99","tax":"1.80","total":"11.79"}},
+  {"id":"rec-es-19","locale":"es","fields":{"date":"2026-11-05","vendor":"Proveedor Desconocido","tax_id":"000001","currency":"","subtotal":"100.00","tax":"18.00","total":"118.00"}},
+  {"id":"rec-es-20","locale":"es","fields":{"date":"2026-11-06","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"1.00","tax":"0.00","total":"1.00"}}
+]

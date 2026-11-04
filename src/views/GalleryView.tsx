@@ -76,7 +76,7 @@ export default function GalleryView({ onOpenHelp }: GalleryViewProps) {
   return (
     <div className="adp-gallery">
       <div className="adp-view-header">
-        <h2 className="adp-heading">{t("gallery.title")}</h2>
+        <h2 className="adp-heading">{t("tabs.components")}</h2>
         <span className="adp-badge">{t("gallery.devBadge")}</span>
         <HelpButton onOpenHelp={onOpenHelp} />
       </div>

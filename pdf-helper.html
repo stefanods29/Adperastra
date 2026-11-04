@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- The native helper policy owns CSP. Tauri adds its exact runtime
+         isolation origin; a second static meta policy would block it. -->
+    <title>Adperastra PDF helper</title>
+  </head>
+  <body>
+    <div id="pdf-helper-root"></div>
+    <script type="module" src="/src/pdf-helper/main.ts"></script>
+  </body>
+</html>

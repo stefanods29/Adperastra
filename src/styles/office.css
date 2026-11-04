@@ -1,0 +1,492 @@
+/* Read-only Office viewers (Step 13). All colors come from tokens. */
+.adp-office-host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 100%;
+  min-width: 0;
+}
+
+.adp-office-preview {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  min-width: 0;
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-office-layout-note {
+  margin: 0;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-office-header {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-height: 40px;
+  padding: 0 var(--adp-space-5);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-office-family-icon {
+  color: var(--adp-accent-current);
+  flex: none;
+}
+
+.adp-office-title {
+  margin: 0;
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adp-office-header-spacer {
+  flex: 1;
+}
+
+.adp-office-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 var(--adp-space-3);
+  border-radius: var(--adp-radius-pill);
+  background: var(--adp-color-surface-selected);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+  white-space: nowrap;
+}
+
+.adp-office-badge--readonly {
+  background: var(--adp-accent-light-explorer);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-office-preview-grid {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  min-height: 0;
+  flex: 1;
+}
+
+.adp-office-preview-grid--comments {
+  grid-template-columns: 196px minmax(0, 1fr) 300px;
+}
+
+.adp-office-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  width: 196px;
+  min-width: 0;
+  padding: var(--adp-space-5);
+  border-right: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-sidebar);
+}
+
+.adp-office-navigation-heading {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+  font-weight: 600;
+}
+
+.adp-office-section-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  overflow: auto;
+  min-height: 0;
+}
+
+.adp-office-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border: none;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.adp-office-section:hover,
+.adp-office-section:focus-visible {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-office-section--active {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-office-section-name {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-office-section-meta {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-office-navigation-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  margin-top: auto;
+}
+
+.adp-office-page-status,
+.adp-office-grid-status {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-office-surface {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--adp-space-7);
+  outline: none;
+  background: var(--adp-color-surface-canvas-doc);
+}
+
+.adp-office-surface:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-office-viewport .adp-office-node {
+  opacity: 0;
+}
+
+.adp-office-viewport .adp-office-node:focus-visible {
+  opacity: 1;
+  background: transparent;
+  outline: 2px solid currentColor;
+}
+
+.adp-office-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--adp-space-4);
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.adp-office-page img {
+  max-width: 100%;
+  height: auto;
+  background: var(--adp-color-surface-window);
+  box-shadow: var(--adp-shadow-page);
+}
+
+.adp-office-page-caption {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-office-document-pages {
+  position: relative;
+}
+
+.adp-main-body:has(.adp-office-host--continuous) {
+  height: 100%;
+}
+
+.adp-office-host--continuous,
+.adp-office-host--continuous > .adp-office-preview {
+  flex: 1;
+  min-height: 0;
+}
+
+.adp-office-zoom {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+.adp-office-document-page-row {
+  position: absolute;
+  inset: 0 0 auto;
+  padding-bottom: var(--adp-space-7);
+}
+
+.adp-office-document-page-placeholder {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: var(--adp-color-surface-window);
+}
+
+.adp-office-document-page-row img {
+  width: 100%;
+}
+
+.adp-office-page-controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--adp-space-3);
+  padding-top: var(--adp-space-5);
+}
+
+.adp-office-grid-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-width: 0;
+}
+
+.adp-office-formula-note,
+.adp-office-keyboard-hint {
+  margin: 0;
+  color: var(--adp-color-status-caution);
+  font-size: var(--adp-font-small);
+}
+
+.adp-office-grid {
+  position: relative;
+  overflow: auto;
+  max-height: calc(100vh - 220px);
+  border: 1px solid var(--adp-color-border-default);
+  background: var(--adp-color-surface-window);
+  outline: none;
+}
+
+.adp-office-grid:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-office-grid-canvas {
+  position: relative;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.adp-office-grid-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 26px;
+  border-bottom: 1px solid var(--adp-color-border-default);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-office-grid-corner {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 44px;
+  height: 26px;
+  border-right: 1px solid var(--adp-color-border-default);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-office-grid-column {
+  position: absolute;
+  top: 0;
+  height: 26px;
+  padding: 0 var(--adp-space-2);
+  border-right: 1px solid var(--adp-color-border-subtle);
+  overflow: hidden;
+  background: var(--adp-color-surface-header);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+  line-height: 26px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-office-grid-row {
+  position: absolute;
+  left: 0;
+  height: 28px;
+}
+
+.adp-office-grid-row-header {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 44px;
+  height: 28px;
+  padding: 0 var(--adp-space-2);
+  border-right: 1px solid var(--adp-color-border-default);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  background: var(--adp-color-surface-header);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-office-cell {
+  position: absolute;
+  min-width: 0;
+  padding: 0 var(--adp-space-2);
+  border-right: 1px solid var(--adp-color-border-subtle);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--adp-font-body);
+  line-height: 26px;
+}
+
+.adp-office-cell--formula {
+  color: var(--adp-color-text-secondary);
+  font-style: italic;
+}
+
+.adp-office-cell-note {
+  margin-left: var(--adp-space-2);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-office-grid-empty {
+  position: absolute;
+  top: 26px;
+  left: 44px;
+  padding: var(--adp-space-5);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-office-comments {
+  width: 300px;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--adp-space-5);
+  border-left: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-office-comments:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-office-panel-title {
+  margin: 0 0 var(--adp-space-3);
+  font-size: var(--adp-font-section);
+}
+
+.adp-office-comment-list,
+.adp-office-comment-replies {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-office-comment-replies {
+  margin-left: var(--adp-space-5);
+}
+
+.adp-office-comment {
+  padding: var(--adp-space-3) 0;
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-office-comment-meta {
+  display: flex;
+  gap: var(--adp-space-2);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-office-comment-author {
+  font-weight: 600;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-office-comment-text {
+  margin: var(--adp-space-1) 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--adp-font-body);
+}
+
+.adp-office-empty,
+.adp-office-error,
+.adp-office-loading {
+  padding: var(--adp-space-6);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-office-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-office-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--adp-space-4);
+  max-width: 480px;
+  margin: 10vh auto;
+  padding: var(--adp-space-6);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-lg);
+  background: var(--adp-color-surface-pane);
+  text-align: center;
+}
+
+.adp-office-present-hint {
+  margin: var(--adp-space-3) var(--adp-space-5);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 899px) {
+  .adp-office-preview-grid,
+  .adp-office-preview-grid--comments {
+    grid-template-columns: 196px minmax(0, 1fr);
+  }
+
+  .adp-office-comments {
+    position: absolute;
+    right: 0;
+    top: 40px;
+    bottom: 0;
+    z-index: 20;
+    width: min(300px, 86vw);
+    box-shadow: var(--adp-shadow-card);
+  }
+
+  .adp-office-navigation {
+    position: absolute;
+    left: 0;
+    top: 40px;
+    bottom: 0;
+    z-index: 19;
+    width: min(196px, 70vw);
+  }
+}

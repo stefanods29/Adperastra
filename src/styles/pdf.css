@@ -1,0 +1,337 @@
+/* PDF viewer (Step 07d). Colors and sizes come from tokens.css and
+ * plan/design-spec.md section 9; nothing here is hard-coded except the fixed
+ * page gap the virtualization also uses (24 px, see pdfState.ts). */
+
+.adp-pdf {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--adp-color-surface-canvas-media);
+}
+
+.adp-pdf-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+}
+
+.adp-pdf-canvas {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 24px;
+  background: var(--adp-color-surface-canvas-media);
+}
+
+.adp-pdf-message,
+.adp-pdf-password {
+  margin: auto;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  align-items: center;
+  text-align: center;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-pdf-password {
+  padding: var(--adp-space-9);
+}
+
+.adp-pdf-error {
+  color: var(--adp-accent-pdf);
+}
+
+/* Sidebar ------------------------------------------------------------------ */
+
+.adp-pdf-sidebar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  background: var(--adp-color-surface-sidebar);
+  border-right: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-pdf-sidebar-title {
+  padding: var(--adp-space-4) var(--adp-space-6) var(--adp-space-2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-pdf-sidebar-resize {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.adp-pdf-thumbnails {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--adp-space-6) var(--adp-space-6);
+}
+
+.adp-pdf-thumbnails-inner {
+  position: relative;
+  width: 100%;
+}
+
+.adp-pdf-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--adp-space-1);
+  padding: 0 0 var(--adp-space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.adp-pdf-thumb-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 132px;
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-default);
+  overflow: hidden;
+}
+
+.adp-pdf-thumb--selected .adp-pdf-thumb-frame {
+  border: 2px solid var(--adp-accent-pdf);
+}
+
+.adp-pdf-thumb-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.adp-pdf-thumb-number {
+  font-size: 11px;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-pdf-thumb--selected .adp-pdf-thumb-number {
+  color: var(--adp-accent-pdf);
+  font-weight: 600;
+}
+
+/* Outline ------------------------------------------------------------------ */
+
+.adp-pdf-outline {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--adp-space-3) var(--adp-space-6);
+}
+
+.adp-pdf-outline--message {
+  padding: var(--adp-space-6);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-pdf-outline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.adp-pdf-outline-item {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.adp-pdf-outline-button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: var(--adp-space-1) var(--adp-space-2);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-text-primary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.adp-pdf-outline-button:hover,
+.adp-pdf-outline-button:focus-visible {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-pdf-outline-label {
+  padding: var(--adp-space-1) var(--adp-space-2);
+  font-size: 12px;
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-pdf-outline-note {
+  margin: var(--adp-space-3) 0 0;
+  font-size: 11px;
+  color: var(--adp-color-text-secondary);
+}
+
+/* Pages -------------------------------------------------------------------- */
+
+.adp-pdf-scroll {
+  height: 100%;
+  overflow: auto;
+  outline: none;
+}
+
+.adp-pdf-scroll:focus-visible {
+  outline: 2px solid var(--adp-accent-pdf);
+  outline-offset: -2px;
+}
+
+.adp-pdf-pages {
+  position: relative;
+  width: 100%;
+}
+
+.adp-pdf-page-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--adp-space-1);
+}
+
+.adp-pdf-page {
+  position: relative;
+  background: var(--adp-color-surface-window);
+  box-shadow: var(--adp-shadow-page);
+  overflow: hidden;
+}
+
+.adp-pdf-page-image {
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.adp-pdf-page-number {
+  font-size: 11px;
+  color: var(--adp-color-text-secondary);
+}
+
+/* Text layer: invisible text over the page image, selectable and placed with
+ * the exact viewport transform (never PDF HTML). */
+.adp-pdf-text {
+  position: absolute;
+  inset: 0;
+  user-select: text;
+  -webkit-user-select: text;
+  line-height: 1;
+}
+
+.adp-pdf-text-run {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  transform-origin: 0 0;
+  cursor: text;
+}
+
+.adp-pdf-text-run::selection,
+.adp-pdf-text-run *::selection {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-pdf-text-run--found {
+  background: rgba(255, 214, 10, 0.35);
+}
+
+/* Find results ------------------------------------------------------------- */
+
+.adp-pdf-find {
+  position: absolute;
+  right: var(--adp-space-7);
+  bottom: var(--adp-space-7);
+  padding: var(--adp-space-2) var(--adp-space-5);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  color: var(--adp-color-text-secondary);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* Ribbon extras ------------------------------------------------------------ */
+
+.adp-pdf-pagebox {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  font-size: 12px;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-pdf-pageinput {
+  width: 64px;
+  height: 27px;
+  padding: 0 var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  text-align: center;
+}
+
+.adp-pdf-count {
+  font-size: 12px;
+  color: var(--adp-color-text-secondary);
+  white-space: nowrap;
+}
+
+/* Print dialog ------------------------------------------------------------- */
+
+.adp-pdf-print-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--adp-space-4);
+}
+
+.adp-pdf-print-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  font-size: 12px;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-pdf-print-field .adp-input {
+  width: 96px;
+}
+
+.adp-pdf-print-limit,
+.adp-pdf-print-note,
+.adp-pdf-print-status {
+  font-size: 12px;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-pdf-print-error {
+  color: var(--adp-accent-pdf);
+  font-size: 12px;
+}

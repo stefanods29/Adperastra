@@ -1,0 +1,257 @@
+/* Basic image editor (Step 14b). Colors come only from tokens; image colors
+   are document data and never define the app's chrome. */
+.adp-image-editor {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 48px minmax(0, 1fr) 300px;
+  grid-template-rows: 40px minmax(0, 1fr) 28px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--adp-color-surface-canvas-media);
+  color: var(--adp-color-text-primary);
+  font: var(--adp-font-body) var(--adp-font-family);
+  container-type: inline-size;
+}
+.adp-image-top {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  padding: 0 var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+  min-width: 0;
+}
+.adp-image-top-spacer { flex: 1; min-width: var(--adp-space-2); }
+.adp-image-segmented {
+  display: inline-flex;
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  overflow: hidden;
+}
+.adp-image-seg {
+  border: 0;
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  padding: var(--adp-space-1) var(--adp-space-5);
+  font: var(--adp-font-command) var(--adp-font-family);
+  cursor: pointer;
+}
+.adp-image-seg[aria-pressed="true"] {
+  background: var(--adp-accent-light-image);
+  color: var(--adp-color-text-primary);
+}
+.adp-image-rail {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--adp-space-1);
+  padding: var(--adp-space-2) 0;
+  border-right: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+}
+.adp-image-rail-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  cursor: pointer;
+}
+.adp-image-rail-btn[aria-pressed="true"] {
+  border-color: var(--adp-accent-image);
+  background: var(--adp-accent-light-image);
+}
+.adp-image-canvas-wrap {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--adp-space-4);
+}
+.adp-image-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+  background: var(--adp-color-surface-canvas-media);
+  box-shadow: var(--adp-shadow-image);
+  touch-action: none;
+}
+.adp-image-canvas[role="application"] { cursor: crosshair; }
+.adp-image-sections {
+  grid-column: 2;
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  padding: 0 var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+  min-width: 0;
+  overflow-x: auto;
+}
+.adp-image-section-btn {
+  width: 32px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  cursor: pointer;
+}
+.adp-image-section-btn[aria-pressed="true"] {
+  border-color: var(--adp-accent-image);
+  background: var(--adp-accent-light-image);
+}
+.adp-image-properties {
+  grid-column: 3;
+  grid-row: 2 / 4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-5);
+  padding: var(--adp-space-7);
+  border-left: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-pane);
+  overflow-y: auto;
+  min-height: 0;
+}
+.adp-image-props-section { display: flex; flex-direction: column; gap: var(--adp-space-5); }
+.adp-image-props-section h3 {
+  margin: 0;
+  font: var(--adp-font-section) var(--adp-font-family);
+  color: var(--adp-color-text-primary);
+}
+.adp-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  font: var(--adp-font-small) var(--adp-font-family);
+  color: var(--adp-color-text-secondary);
+}
+.adp-image-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--adp-space-3); }
+.adp-image-input {
+  min-width: 0;
+  padding: var(--adp-space-1) var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  font: var(--adp-font-body) var(--adp-font-family);
+}
+.adp-image-color { width: 100%; height: 28px; border: 1px solid var(--adp-color-border-input); border-radius: var(--adp-radius-sm); background: var(--adp-color-surface-window); }
+.adp-image-check { display: flex; align-items: center; gap: var(--adp-space-2); color: var(--adp-color-text-body-muted); font: var(--adp-font-small) var(--adp-font-family); }
+.adp-image-actions { display: flex; flex-wrap: wrap; gap: var(--adp-space-2); }
+.adp-image-filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--adp-space-2); }
+.adp-image-filter {
+  padding: var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  cursor: pointer;
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+.adp-image-warning { margin: 0; color: var(--adp-color-status-caution); background: var(--adp-color-status-caution-background); border-radius: var(--adp-radius-sm); padding: var(--adp-space-2); font: var(--adp-font-small) var(--adp-font-family); }
+.adp-image-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.adp-image-toast {
+  position: absolute;
+  inset-inline: var(--adp-space-7);
+  bottom: var(--adp-space-7);
+  margin: 0;
+  padding: var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-header);
+  color: var(--adp-color-text-primary);
+  box-shadow: var(--adp-shadow-card);
+}
+.adp-crop-overlay { position: absolute; inset: 0; pointer-events: none; }
+.adp-crop-box {
+  position: absolute;
+  border: 1px solid var(--adp-accent-image);
+  box-shadow: 0 0 0 9999px color-mix(in srgb, var(--adp-color-surface-canvas-media) 65%, transparent);
+  pointer-events: auto;
+  cursor: move;
+  touch-action: none;
+}
+.adp-crop-line { position: absolute; background: color-mix(in srgb, var(--adp-accent-image) 70%, transparent); }
+.adp-crop-line--v1, .adp-crop-line--v2 { top: 0; bottom: 0; width: 1px; }
+.adp-crop-line--v1 { left: 33.333%; }
+.adp-crop-line--v2 { left: 66.666%; }
+.adp-crop-line--h1, .adp-crop-line--h2 { left: 0; right: 0; height: 1px; }
+.adp-crop-line--h1 { top: 33.333%; }
+.adp-crop-line--h2 { top: 66.666%; }
+.adp-crop-handle { position: absolute; width: 8px; height: 8px; background: var(--adp-accent-image); border-radius: var(--adp-radius-xs); pointer-events: auto; touch-action: none; }
+.adp-crop-handle--nw, .adp-crop-handle--se { cursor: nwse-resize; }
+.adp-crop-handle--ne, .adp-crop-handle--sw { cursor: nesw-resize; }
+.adp-crop-handle--nw { left: -4px; top: -4px; }
+.adp-crop-handle--ne { right: -4px; top: -4px; }
+.adp-crop-handle--sw { left: -4px; bottom: -4px; }
+.adp-crop-handle--se { right: -4px; bottom: -4px; }
+.adp-crop-label, .adp-crop-size {
+  position: absolute;
+  padding: 0 var(--adp-space-1);
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-color-surface-header);
+  color: var(--adp-color-text-primary);
+  font: var(--adp-font-caption) var(--adp-font-family);
+  white-space: nowrap;
+}
+.adp-image-editor button:focus-visible,
+.adp-image-editor input:focus-visible,
+.adp-image-editor canvas:focus-visible {
+  outline: 2px solid var(--adp-accent-image);
+  outline-offset: 2px;
+}
+
+@container (max-width: 900px) {
+  .adp-image-editor { grid-template-columns: 48px minmax(0, 1fr); }
+  .adp-image-properties {
+    position: absolute;
+    inset-block: 40px 0;
+    inset-inline-end: 0;
+    width: min(300px, 80%);
+    z-index: 4;
+    box-shadow: var(--adp-shadow-page);
+  }
+}
+
+@media (max-width: 900px) {
+  .adp-image-editor { grid-template-columns: 48px minmax(0, 1fr); }
+  .adp-image-properties {
+    position: absolute;
+    inset-block: 40px 0;
+    inset-inline-end: 0;
+    width: min(300px, 80%);
+    z-index: 4;
+    box-shadow: var(--adp-shadow-page);
+  }
+}

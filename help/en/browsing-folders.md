@@ -16,3 +16,4 @@ The Explorer tab opens on the Home page. From there you can reach every folder o
 - A link icon means the item is a shortcut or link to somewhere else.
 - Double-click a file to open it in its Windows default app. Built-in viewers arrive in a later version.
 - To select, rename, or see details, read "Selecting files" and "The Details pane".
+- Open **Gallery** in the navigation pane to see pictures from folders you choose. See “The Gallery”.

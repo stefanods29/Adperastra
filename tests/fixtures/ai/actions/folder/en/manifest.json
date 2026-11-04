@@ -1,0 +1,107 @@
+﻿{
+    "action":  "folder",
+    "locale":  "en",
+    "revision":  1,
+    "cases":  [
+                  {
+                      "id":  "EN1",
+                      "source":  "notes.txt",
+                      "oracle":  "names_only:true|no-content-claims"
+                  },
+                  {
+                      "id":  "EN2",
+                      "source":  "notes.txt:Budget 120.|meeting.txt:Meeting 10.",
+                      "oracle":  "included:both|points:120|points:10"
+                  },
+                  {
+                      "id":  "EN3",
+                      "source":  "readable.txt|denied.txt",
+                      "oracle":  "partial:true|skipped:scope_denied"
+                  },
+                  {
+                      "id":  "EN4",
+                      "source":  "subfolder",
+                      "oracle":  "nonrecursive:skipped|reason:subfolder"
+                  },
+                  {
+                      "id":  "EN5",
+                      "source":  "online.txt",
+                      "oracle":  "skipped:online_only"
+                  },
+                  {
+                      "id":  "EN6",
+                      "source":  "unreadable.txt",
+                      "oracle":  "skipped:unreadable"
+                  },
+                  {
+                      "id":  "EN7",
+                      "source":  "",
+                      "oracle":  "no_sources:invalid"
+                  },
+                  {
+                      "id":  "EN8",
+                      "source":  "private.txt",
+                      "oracle":  "denied:scope_denied"
+                  },
+                  {
+                      "id":  "EN9",
+                      "source":  "notes.txt",
+                      "oracle":  "changed-source:source_changed"
+                  },
+                  {
+                      "id":  "EN10",
+                      "source":  "injection.txt",
+                      "oracle":  "injection:warned|no-file-effect"
+                  },
+                  {
+                      "id":  "EN11",
+                      "source":  "101 files",
+                      "oracle":  "refused:too_large"
+                  },
+                  {
+                      "id":  "EN12",
+                      "source":  "100 files",
+                      "oracle":  "accepted:boundary"
+                  },
+                  {
+                      "id":  "EN13",
+                      "source":  "names only",
+                      "oracle":  "no-content-claims"
+                  },
+                  {
+                      "id":  "EN14",
+                      "source":  "include contents not accepted",
+                      "oracle":  "refused:content_scope"
+                  },
+                  {
+                      "id":  "EN15",
+                      "source":  "recursive unselected",
+                      "oracle":  "only:approved-scope"
+                  },
+                  {
+                      "id":  "EN16",
+                      "source":  "twelve skip reasons",
+                      "oracle":  "cap:100"
+                  },
+                  {
+                      "id":  "EN17",
+                      "source":  "empty approved list",
+                      "oracle":  "refused:no_sources"
+                  },
+                  {
+                      "id":  "EN18",
+                      "source":  "one readable and one denied",
+                      "oracle":  "partial:true"
+                  },
+                  {
+                      "id":  "EN19",
+                      "source":  "trailing whitespace   ",
+                      "oracle":  "normalized:whitespace"
+                  },
+                  {
+                      "id":  "EN20",
+                      "source":  "locked folder entry",
+                      "oracle":  "sensitive:no-api"
+                  }
+              ]
+}

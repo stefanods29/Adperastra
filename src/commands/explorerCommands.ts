@@ -1,4 +1,5 @@
 import {
+  AlignJustify,
   AppWindow,
   ArrowDownAZ,
   ArrowDownWideNarrow,
@@ -7,61 +8,161 @@ import {
   ArrowRight,
   ArrowUp,
   ArrowUpNarrowWide,
+  Binary,
+  Bug,
   CalendarDays,
+  ClipboardList,
   ClipboardPaste,
+  Columns3,
   Copy,
+  Database,
+  Disc as Disk,
   EllipsisVertical,
+  ExternalLink,
   Eye,
   FilePlus,
+  Files,
+  FileSpreadsheet,
+  FileText,
   FileType,
+  FolderInput,
   FolderOpen,
+  FolderOutput,
+  FolderClock,
+  FolderMinus,
   FolderPlus,
   FolderSearch,
   Grid2x2,
+  History,
   Grid3x3,
   Group,
+  HardDrive,
   Info,
+  Keyboard,
   LayoutGrid,
+  LayoutList,
+  LayoutTemplate,
   Link,
   List,
   ListChecks,
+  ListFilter,
+  LogOut,
+  MoveRight,
+  NotebookPen,
+  PackageOpen,
+  PanelBottom,
   PanelRight,
+  Pause,
   Pin,
+  Presentation,
+  Redo2,
+  Repeat2,
   RefreshCw,
   Rows3,
   Ruler,
   Scissors,
+  Search,
+  SearchCheck,
+  Settings2,
   Shapes,
   Share,
+  ShieldCheck,
   Square,
   SquareCheck,
   SquareTerminal,
   Star,
+  Table,
   TextCursorInput,
   Trash2,
+  Undo2,
 } from "lucide-react";
+import { isArchivePath, type ExtractMode } from "../archive/archiveFiles";
 import type { SortDirection, SortKey } from "../services/explorer";
 import type { GroupBy } from "../services/grouping";
+import { VIEW_MODE_IDS, type ViewModeId } from "../services/settings";
+import type { BlankKind } from "../templates/catalog";
+import { createFeatureCommands, type FeatureCommandActions } from "./featureCommands";
 import type { Command, CommandContext } from "./registry";
 
 export type ViewToggle = "detailsPane" | "showHidden" | "showExtensions" | "itemCheckboxes";
 
+/** Command id, label key and icon per view mode (Step 05a). */
+export const VIEW_MODE_COMMANDS: Record<ViewModeId, string> = {
+  extraLargeIcons: "explorer.viewExtraLargeIcons",
+  largeIcons: "explorer.viewLargeIcons",
+  mediumIcons: "explorer.viewMediumIcons",
+  smallIcons: "explorer.viewSmallIcons",
+  list: "explorer.viewList",
+  details: "explorer.viewDetails",
+  tiles: "explorer.viewTiles",
+  content: "explorer.viewContent",
+  columns: "explorer.viewColumns",
+};
+
+export const VIEW_MODE_LABEL_KEYS: Record<ViewModeId, string> = {
+  extraLargeIcons: "commands.viewExtraLargeIcons",
+  largeIcons: "commands.viewLargeIcons",
+  mediumIcons: "commands.viewMediumIcons",
+  smallIcons: "commands.viewSmallIcons",
+  list: "commands.viewList",
+  details: "commands.viewDetails",
+  tiles: "commands.viewTiles",
+  content: "commands.viewContent",
+  columns: "commands.viewColumns",
+};
+
+export const VIEW_MODE_ICONS: Record<ViewModeId, Command["icon"]> = {
+  extraLargeIcons: Square,
+  largeIcons: LayoutGrid,
+  mediumIcons: Grid2x2,
+  smallIcons: Grid3x3,
+  list: Rows3,
+  details: List,
+  tiles: LayoutList,
+  content: AlignJustify,
+  columns: Columns3,
+};
+
+/** Ctrl+Shift+1 to Ctrl+Shift+8, by the mode's position in `VIEW_MODE_IDS`.
+ * Column view has no shortcut (Step 05b D1). */
+export function viewModeShortcut(mode: ViewModeId): string | undefined {
+  if (mode === "columns") return undefined;
+  return `Ctrl+Shift+${VIEW_MODE_IDS.indexOf(mode) + 1}`;
+}
+
 /** Actions the Explorer view injects; commands never touch state directly. */
-export interface ExplorerActions {
+export interface ExplorerActions extends FeatureCommandActions {
   back: () => void;
   forward: () => void;
   up: () => void;
   refresh: () => void;
+  /** Step 07c: the Gallery's source controls. */
+  galleryAddFolder: () => void;
+  galleryRemoveFolder: () => void;
   openSelected: () => void;
+  /** Step 07b: Space on the focused file. */
+  quickPreview: () => void;
   goToPath: (path: string) => void;
   togglePin: () => void;
   rename: () => void;
   share: () => void;
   openWith: () => void;
+  /** Open the selected files in their Windows default apps (Step 04a). */
+  openInWindowsApp: () => void;
+  /** Open the selected files in the text or hex viewer (Step 04c). */
+  openAsText: () => void;
+  openAsHex: () => void;
+  /** Extract the selected archives (Step 06d). */
+  extractArchives: (mode: ExtractMode) => void;
+  /** Open the Compress to… window for the live selection (Step 06e). */
+  compressTo: () => void;
+  convertSelection?: () => void;
   copyPath: () => void;
   toggleFavorite: () => void;
   showInFolder: () => void;
   properties: () => void;
+  /** Open the Version history window (Step 06b). */
+  versionHistory: () => void;
   openInTerminal: () => void;
   selectAll: () => void;
   selectNone: () => void;
@@ -70,11 +171,58 @@ export interface ExplorerActions {
   setSortDirection: (direction: SortDirection) => void;
   setGroupBy: (groupBy: GroupBy) => void;
   toggleView: (option: ViewToggle) => void;
+  /** Step 05a: remember the folder's view or change the default one. */
+  setViewMode: (mode: ViewModeId) => void;
   showMoreOptions: () => void;
+  newFolder: () => void;
+  newTextFile: () => void;
+  /** Step 06c: a blank Markdown, CSV or Office file. */
+  newBlank: (kind: BlankKind) => void;
+  /** Step 06c: the template window. */
+  newFromTemplate: () => void;
+  cut: () => void;
+  copy: () => void;
+  paste: () => void;
+  pasteAsFile: () => void;
+  deleteItems: () => void;
+  deletePermanently: () => void;
+  undo: () => void;
+  redo: () => void;
+  recentActions: () => void;
+  /** Optional shared hosts. A missing real host keeps its command disabled. */
+  runConversionPreset?: () => void;
+  removeHiddenInfo?: () => void;
+  chooseColumns?: () => void;
+  addToShelf?: (paths: readonly string[]) => void;
+  showFileLocks?: (paths: readonly string[]) => void;
+  reportProblem?: () => void;
+  openRecovery?: () => void;
+  mountImage?: () => void;
+  ejectImage?: () => void;
+  canMountImage?: (ctx: CommandContext) => boolean;
+  canEjectImage?: (ctx: CommandContext) => boolean;
+  openClipboardHistory?: () => void;
+  openSearch?: (ctx: CommandContext) => void;
+  openIndexSettings?: () => void;
+  copyToFolder?: () => void;
+  moveToFolder?: () => void;
+  commandPalette?: () => void;
+  customizeToolbar?: () => void;
+  customizeShortcuts?: () => void;
+  openStorageView?: (root: string) => void;
+  openDuplicates?: (roots: string[]) => void;
+  openFolderSizes?: () => void;
+  openAppStorage?: () => void;
+  pauseBackground?: () => void;
 }
 
 const inList = (ctx: CommandContext) => ctx.location === "folder" || ctx.location === "home";
 const hasSelection = (ctx: CommandContext) => ctx.selection.count > 0;
+/** Only archives can be extracted, and only when no folder is selected. */
+const archivesOnly = (ctx: CommandContext) =>
+  ctx.selection.count > 0 &&
+  ctx.selection.folders === 0 &&
+  ctx.selection.paths.every((path) => isArchivePath(path));
 
 export function createExplorerCommands(actions: ExplorerActions): Command[] {
   const sortBy = (id: string, key: SortKey, labelKey: string, icon: Command["icon"]): Command => ({
@@ -99,18 +247,18 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
     enabledWhen: (ctx) => ctx.location === "folder",
     run: () => actions.setGroupBy(value),
   });
-  const viewMode = (id: string, labelKey: string, icon: Command["icon"], current: boolean): Command => ({
-    id,
-    labelKey,
-    icon,
+  const viewMode = (mode: ViewModeId): Command => ({
+    id: VIEW_MODE_COMMANDS[mode],
+    labelKey: VIEW_MODE_LABEL_KEYS[mode],
+    icon: VIEW_MODE_ICONS[mode],
+    shortcut: viewModeShortcut(mode),
     risk: "read-only",
-    helpSlug: "command-bar",
+    helpSlug: "view-modes",
     checkKind: "radio",
-    checkedWhen: () => current,
-    enabledWhen: () => true,
-    // List and icon views arrive with the view modes in Step 05.
-    pending: !current,
-    run: () => undefined,
+    checkedWhen: (ctx) => ctx.view.viewMode === mode,
+    enabledWhen: (ctx) => ctx.location === "folder",
+    visibleWhen: (ctx) => !ctx.view.hiddenViewModes.includes(mode),
+    run: () => actions.setViewMode(mode),
   });
   const viewToggle = (id: string, option: ViewToggle, labelKey: string, icon: Command["icon"], shortcut?: string): Command => ({
     id,
@@ -124,18 +272,7 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
     enabledWhen: () => true,
     run: () => actions.toggleView(option),
   });
-  // File operations arrive with the job runner and undo stack in Step 03b.
-  const fileOperation = (id: string, labelKey: string, icon: Command["icon"], shortcut: string, risk: Command["risk"], needsSelection: boolean): Command => ({
-    id,
-    labelKey,
-    icon,
-    shortcut,
-    risk,
-    helpSlug: "command-bar",
-    pending: true,
-    enabledWhen: (ctx) => (needsSelection ? hasSelection(ctx) : ctx.location === "folder"),
-    run: () => undefined,
-  });
+  const inFolder = (ctx: CommandContext) => ctx.location === "folder";
 
   return [
     {
@@ -179,6 +316,25 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       run: () => actions.refresh(),
     },
     {
+      id: "gallery.addFolder",
+      labelKey: "gallery.addFolder",
+      icon: FolderPlus,
+      risk: "change",
+      helpSlug: "the-gallery",
+      enabledWhen: (ctx) => ctx.location === "gallery",
+      run: () => actions.galleryAddFolder(),
+    },
+    {
+      id: "gallery.removeFolder",
+      labelKey: "gallery.removeFolder",
+      icon: FolderMinus,
+      risk: "change",
+      helpSlug: "the-gallery",
+      enabledWhen: (ctx) =>
+        ctx.location === "gallery" && ctx.gallerySourceSelected === true,
+      run: () => actions.galleryRemoveFolder(),
+    },
+    {
       id: "explorer.open",
       labelKey: "commands.open",
       icon: FolderOpen,
@@ -187,6 +343,30 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       helpSlug: "browsing-folders",
       enabledWhen: (ctx) => hasSelection(ctx) || ctx.selectedPath !== null,
       run: () => actions.openSelected(),
+    },
+    {
+      id: "explorer.quickPreview",
+      labelKey: "commands.quickPreview",
+      icon: Eye,
+      shortcut: "Space",
+      risk: "read-only",
+      helpSlug: "quick-preview",
+      enabledWhen: (ctx) =>
+        ctx.selection.count === 1 &&
+        ctx.selection.folders === 0 &&
+        (ctx.location === "folder" || ctx.location === "home"),
+      run: () => {
+        // The shortcut exists for menus and tooltips; it must never take
+        // Space away from a focused button, link or text field.
+        const active = document.activeElement;
+        if (
+          active instanceof HTMLElement &&
+          active.closest("button, a, input, textarea, select, [contenteditable='true']")
+        ) {
+          return;
+        }
+        actions.quickPreview();
+      },
     },
     {
       id: "explorer.goToPath",
@@ -210,12 +390,224 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       enabledWhen: (ctx) => ctx.location === "folder" && ctx.currentPath !== null,
       run: () => actions.togglePin(),
     },
-    fileOperation("explorer.newFolder", "commands.newFolder", FolderPlus, "Ctrl+Shift+N", "change", false),
-    fileOperation("explorer.newTextFile", "commands.newTextFile", FilePlus, "", "change", false),
-    fileOperation("explorer.cut", "commands.cut", Scissors, "Ctrl+X", "change", true),
-    fileOperation("explorer.copy", "commands.copy", Copy, "Ctrl+C", "read-only", true),
-    fileOperation("explorer.paste", "commands.paste", ClipboardPaste, "Ctrl+V", "change", false),
-    fileOperation("explorer.delete", "commands.delete", Trash2, "Delete", "recycle", true),
+    {
+      id: "explorer.newFolder",
+      labelKey: "commands.newFolder",
+      icon: FolderPlus,
+      shortcut: "Ctrl+Shift+N",
+      risk: "change",
+      helpSlug: "copying-and-moving",
+      enabledWhen: inFolder,
+      run: () => actions.newFolder(),
+    },
+    {
+      id: "explorer.newTextFile",
+      labelKey: "commands.newTextFile",
+      icon: FilePlus,
+      risk: "change",
+      helpSlug: "copying-and-moving",
+      enabledWhen: inFolder,
+      run: () => actions.newTextFile(),
+    },
+    {
+      id: "explorer.newMarkdown",
+      labelKey: "commands.newMarkdown",
+      icon: NotebookPen,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("markdown"),
+    },
+    {
+      id: "explorer.newCsv",
+      labelKey: "commands.newCsv",
+      icon: Table,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("csv"),
+    },
+    {
+      id: "explorer.newDocument",
+      labelKey: "commands.newDocument",
+      icon: FileText,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("document"),
+    },
+    {
+      id: "explorer.newSpreadsheet",
+      labelKey: "commands.newSpreadsheet",
+      icon: FileSpreadsheet,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("spreadsheet"),
+    },
+    {
+      id: "explorer.newPresentation",
+      labelKey: "commands.newPresentation",
+      icon: Presentation,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newBlank("presentation"),
+    },
+    {
+      id: "explorer.newFromTemplate",
+      labelKey: "commands.newFromTemplate",
+      icon: LayoutTemplate,
+      risk: "change",
+      helpSlug: "templates",
+      enabledWhen: inFolder,
+      run: () => actions.newFromTemplate(),
+    },
+    {
+      id: "explorer.cut",
+      labelKey: "commands.cut",
+      icon: Scissors,
+      shortcut: "Ctrl+X",
+      risk: "change",
+      helpSlug: "copying-and-moving",
+      enabledWhen: (ctx) => hasSelection(ctx) && inList(ctx),
+      run: () => actions.cut(),
+    },
+    {
+      id: "explorer.copy",
+      labelKey: "commands.copy",
+      icon: Copy,
+      shortcut: "Ctrl+C",
+      risk: "read-only",
+      helpSlug: "copying-and-moving",
+      enabledWhen: (ctx) => hasSelection(ctx) && inList(ctx),
+      run: () => actions.copy(),
+    },
+    {
+      id: "explorer.paste",
+      labelKey: "commands.paste",
+      icon: ClipboardPaste,
+      shortcut: "Ctrl+V",
+      risk: "change",
+      helpSlug: "copying-and-moving",
+      enabledWhen: inFolder,
+      run: () => actions.paste(),
+    },
+    {
+      id: "explorer.pasteAsFile",
+      labelKey: "commands.pasteAsFile",
+      icon: ClipboardPaste,
+      risk: "change",
+      helpSlug: "paste-as-file",
+      enabledWhen: inFolder,
+      run: () => actions.pasteAsFile(),
+    },
+    {
+      id: "explorer.delete",
+      labelKey: "commands.delete",
+      icon: Trash2,
+      shortcut: "Delete",
+      risk: "recycle",
+      helpSlug: "deleting-and-the-recycle-bin",
+      enabledWhen: (ctx) => hasSelection(ctx) && inList(ctx),
+      run: () => actions.deleteItems(),
+    },
+    {
+      id: "explorer.deletePermanently",
+      labelKey: "commands.deletePermanently",
+      icon: Trash2,
+      shortcut: "Shift+Delete",
+      risk: "irreversible",
+      helpSlug: "deleting-and-the-recycle-bin",
+      enabledWhen: (ctx) => hasSelection(ctx) && inList(ctx),
+      run: () => actions.deletePermanently(),
+    },
+    {
+      id: "explorer.undo",
+      labelKey: "commands.undo",
+      icon: Undo2,
+      shortcut: "Ctrl+Z",
+      risk: "change",
+      helpSlug: "undo",
+      enabledWhen: (ctx) => ctx.canUndo,
+      run: () => actions.undo(),
+    },
+    {
+      id: "explorer.redo",
+      labelKey: "commands.redo",
+      icon: Redo2,
+      shortcut: "Ctrl+Y",
+      risk: "change",
+      helpSlug: "undo",
+      enabledWhen: (ctx) => ctx.canRedo,
+      run: () => actions.redo(),
+    },
+    {
+      id: "explorer.recentActions",
+      labelKey: "commands.recentActions",
+      icon: History,
+      risk: "read-only",
+      helpSlug: "undo",
+      enabledWhen: () => true,
+      run: () => actions.recentActions(),
+    },
+    {
+      id: "app.reportProblem",
+      labelKey: "commands.reportProblem",
+      icon: Bug,
+      risk: "read-only",
+      helpSlug: "reporting-a-problem",
+      enabledWhen: () => actions.reportProblem !== undefined,
+      run: () => actions.reportProblem?.(),
+    },
+    {
+      id: "app.recovery",
+      labelKey: "commands.recovery",
+      icon: History,
+      risk: "read-only",
+      helpSlug: "recovering-after-a-crash",
+      enabledWhen: () => actions.openRecovery !== undefined,
+      run: () => actions.openRecovery?.(),
+    },
+    {
+      id: "app.clipboardHistory",
+      labelKey: "commands.clipboardHistory",
+      icon: ClipboardList,
+      shortcut: "Ctrl+Shift+V",
+      risk: "read-only",
+      helpSlug: "clipboard-history",
+      enabledWhen: () => actions.openClipboardHistory !== undefined,
+      run: () => actions.openClipboardHistory?.(),
+    },
+    {
+      id: "app.search",
+      labelKey: "commands.search",
+      icon: Search,
+      shortcut: "Ctrl+F",
+      risk: "read-only",
+      helpSlug: "searching",
+      enabledWhen: () => actions.openSearch !== undefined,
+      run: (ctx) => actions.openSearch?.(ctx),
+    },
+    {
+      id: "app.indexSettings",
+      labelKey: "commands.indexSettings",
+      icon: Database,
+      risk: "read-only",
+      helpSlug: "indexing-and-privacy",
+      enabledWhen: () => actions.openIndexSettings !== undefined,
+      run: () => actions.openIndexSettings?.(),
+    },
+    {
+      id: "app.commandPalette",
+      labelKey: "commands.commandPalette",
+      icon: Search,
+      shortcut: "Ctrl+K",
+      risk: "read-only",
+      helpSlug: "command-palette",
+      enabledWhen: () => actions.commandPalette !== undefined,
+      run: () => actions.commandPalette?.(),
+    },
     {
       id: "explorer.rename",
       labelKey: "commands.rename",
@@ -237,6 +629,16 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       run: () => actions.share(),
     },
     {
+      id: "explorer.openInWindowsApp",
+      labelKey: "commands.openInWindowsApp",
+      icon: ExternalLink,
+      risk: "read-only",
+      helpSlug: "opening-files",
+      visibleWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      run: () => actions.openInWindowsApp(),
+    },
+    {
       id: "explorer.openWith",
       labelKey: "commands.openWith",
       icon: AppWindow,
@@ -245,6 +647,112 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       visibleWhen: (ctx) => ctx.selection.count === 1 && ctx.selection.files === 1,
       enabledWhen: (ctx) => ctx.selection.count === 1 && ctx.selection.files === 1,
       run: () => actions.openWith(),
+    },
+    {
+      id: "explorer.openAsText",
+      labelKey: "commands.openAsText",
+      icon: FileText,
+      risk: "read-only",
+      helpSlug: "open-as-text-or-hex",
+      visibleWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      run: () => actions.openAsText(),
+    },
+    {
+      id: "explorer.openAsHex",
+      labelKey: "commands.openAsHex",
+      icon: Binary,
+      risk: "read-only",
+      helpSlug: "open-as-text-or-hex",
+      visibleWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.files > 0 && ctx.selection.folders === 0,
+      run: () => actions.openAsHex(),
+    },
+    {
+      id: "explorer.extractToFolder",
+      labelKey: "commands.extractAll",
+      icon: PackageOpen,
+      risk: "change",
+      helpSlug: "archives",
+      visibleWhen: archivesOnly,
+      enabledWhen: archivesOnly,
+      run: () => actions.extractArchives("newFolder"),
+    },
+    {
+      id: "explorer.extractHere",
+      labelKey: "commands.extractHere",
+      icon: FolderInput,
+      risk: "change",
+      helpSlug: "archives",
+      visibleWhen: archivesOnly,
+      enabledWhen: archivesOnly,
+      run: () => actions.extractArchives("here"),
+    },
+    {
+      id: "explorer.extractTo",
+      labelKey: "commands.extractTo",
+      icon: FolderOutput,
+      risk: "change",
+      helpSlug: "archives",
+      visibleWhen: archivesOnly,
+      enabledWhen: archivesOnly,
+      run: () => actions.extractArchives("to"),
+    },
+    {
+      id: "explorer.convertTo",
+      labelKey: "commands.convertTo",
+      icon: Repeat2,
+      risk: "change",
+      helpSlug: "converting-files",
+      visibleWhen: (ctx) => ctx.selection.count > 0 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.count > 0 && ctx.selection.folders === 0,
+      run: () => actions.convertSelection?.(),
+    },
+    {
+      id: "explorer.runConversionPreset",
+      labelKey: "convert.preset",
+      icon: ListFilter,
+      risk: "change",
+      helpSlug: "batch-conversion-and-presets",
+      enabledWhen: (ctx) => actions.runConversionPreset !== undefined && ctx.selection.count > 0 && ctx.selection.folders === 0,
+      run: () => actions.runConversionPreset?.(),
+    },
+    {
+      id: "explorer.removeHiddenInfo",
+      labelKey: "commands.removeHiddenInfo",
+      icon: ShieldCheck,
+      risk: "change",
+      helpSlug: "removing-hidden-information",
+      enabledWhen: (ctx) => actions.removeHiddenInfo !== undefined && hasSelection(ctx),
+      run: () => actions.removeHiddenInfo?.(),
+    },
+    {
+      id: "explorer.compressTo",
+      labelKey: "commands.compressTo",
+      icon: PackageOpen,
+      risk: "change",
+      helpSlug: "creating-archives",
+      visibleWhen: (ctx) => ctx.location === "folder" && ctx.currentPath !== null,
+      enabledWhen: (ctx) => ctx.location === "folder" && ctx.selection.count > 0,
+      run: () => actions.compressTo(),
+    },
+    {
+      id: "explorer.copyToFolder",
+      labelKey: "keyboard.copyTo",
+      icon: Copy,
+      risk: "change",
+      helpSlug: "keyboard-styles",
+      enabledWhen: (ctx) => actions.copyToFolder !== undefined && ctx.selectionInCurrentFolder && hasSelection(ctx),
+      run: () => actions.copyToFolder?.(),
+    },
+    {
+      id: "explorer.moveToFolder",
+      labelKey: "keyboard.moveTo",
+      icon: MoveRight,
+      risk: "change",
+      helpSlug: "keyboard-styles",
+      enabledWhen: (ctx) => actions.moveToFolder !== undefined && ctx.selectionInCurrentFolder && hasSelection(ctx),
+      run: () => actions.moveToFolder?.(),
     },
     {
       id: "explorer.copyPath",
@@ -285,6 +793,52 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       helpSlug: "right-click-menu",
       enabledWhen: (ctx) => hasSelection(ctx) || ctx.location === "folder",
       run: () => actions.properties(),
+    },
+    {
+      id: "explorer.versionHistory",
+      labelKey: "commands.versionHistory",
+      icon: History,
+      risk: "read-only",
+      helpSlug: "version-history",
+      visibleWhen: (ctx) => ctx.selection.count === 1 && ctx.selection.folders === 0,
+      enabledWhen: (ctx) => ctx.selection.count === 1 && ctx.selection.folders === 0,
+      run: () => actions.versionHistory(),
+    },
+    {
+      id: "explorer.addToShelf",
+      labelKey: "shelf.add",
+      icon: PanelBottom,
+      risk: "change",
+      helpSlug: "the-shelf",
+      enabledWhen: (ctx) => actions.addToShelf !== undefined && hasSelection(ctx),
+      run: (ctx) => actions.addToShelf?.(ctx.selection.paths),
+    },
+    {
+      id: "explorer.fileLocks",
+      labelKey: "locks.inspect",
+      icon: SearchCheck,
+      risk: "read-only",
+      helpSlug: "files-in-use",
+      enabledWhen: (ctx) => actions.showFileLocks !== undefined && hasSelection(ctx),
+      run: (ctx) => actions.showFileLocks?.(ctx.selection.paths),
+    },
+    {
+      id: "explorer.mountImage",
+      labelKey: "commands.mountImage",
+      icon: Disk,
+      risk: "change",
+      helpSlug: "mounting-disk-images",
+      enabledWhen: (ctx) => actions.mountImage !== undefined && actions.canMountImage?.(ctx) === true,
+      run: () => actions.mountImage?.(),
+    },
+    {
+      id: "explorer.ejectImage",
+      labelKey: "commands.ejectImage",
+      icon: LogOut,
+      risk: "change",
+      helpSlug: "mounting-disk-images",
+      enabledWhen: (ctx) => actions.ejectImage !== undefined && actions.canEjectImage?.(ctx) === true,
+      run: () => actions.ejectImage?.(),
     },
     {
       id: "explorer.openInTerminal",
@@ -355,15 +909,83 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
     groupBy("explorer.groupByModified", "modified", "commands.sortModified"),
     groupBy("explorer.groupByType", "type", "commands.sortType"),
     groupBy("explorer.groupBySize", "size", "commands.sortSize"),
-    viewMode("explorer.viewDetails", "commands.viewDetails", List, true),
-    viewMode("explorer.viewList", "commands.viewList", Rows3, false),
-    viewMode("explorer.viewSmallIcons", "commands.viewSmallIcons", Grid3x3, false),
-    viewMode("explorer.viewMediumIcons", "commands.viewMediumIcons", Grid2x2, false),
-    viewMode("explorer.viewLargeIcons", "commands.viewLargeIcons", LayoutGrid, false),
+    ...VIEW_MODE_IDS.map((mode) => viewMode(mode)),
     viewToggle("explorer.toggleDetailsPane", "detailsPane", "commands.detailsPane", PanelRight, "Alt+Shift+P"),
     viewToggle("explorer.toggleHiddenItems", "showHidden", "commands.hiddenItems", Eye),
     viewToggle("explorer.toggleExtensions", "showExtensions", "commands.fileExtensions", FileType),
     viewToggle("explorer.toggleCheckboxes", "itemCheckboxes", "commands.itemCheckboxes", SquareCheck),
+    {
+      id: "explorer.chooseColumns",
+      labelKey: "columns.choose",
+      icon: Columns3,
+      risk: "read-only",
+      helpSlug: "folder-columns",
+      enabledWhen: (ctx) => actions.chooseColumns !== undefined && ctx.location === "folder" && ctx.view.viewMode === "details",
+      run: () => actions.chooseColumns?.(),
+    },
+    {
+      id: "app.customizeToolbar",
+      labelKey: "toolbarCustom.title",
+      icon: Settings2,
+      risk: "change",
+      helpSlug: "customizing-toolbars",
+      enabledWhen: () => actions.customizeToolbar !== undefined,
+      run: () => actions.customizeToolbar?.(),
+    },
+    {
+      id: "app.customizeShortcuts",
+      labelKey: "keyboard.title",
+      icon: Keyboard,
+      risk: "change",
+      helpSlug: "keyboard-styles",
+      enabledWhen: () => actions.customizeShortcuts !== undefined,
+      run: () => actions.customizeShortcuts?.(),
+    },
+    {
+      id: "app.storageView",
+      labelKey: "storage.title",
+      icon: HardDrive,
+      risk: "read-only",
+      helpSlug: "storage-view",
+      enabledWhen: (ctx) => actions.openStorageView !== undefined && ctx.currentPath !== null,
+      run: (ctx) => { if (ctx.currentPath) actions.openStorageView?.(ctx.currentPath); },
+    },
+    {
+      id: "app.duplicates",
+      labelKey: "duplicates.title",
+      icon: Files,
+      risk: "read-only",
+      helpSlug: "finding-duplicates",
+      enabledWhen: (ctx) => actions.openDuplicates !== undefined && ctx.currentPath !== null,
+      run: (ctx) => { if (ctx.currentPath) actions.openDuplicates?.([ctx.currentPath]); },
+    },
+    {
+      id: "explorer.folderSizes",
+      labelKey: "folderSizes.title",
+      icon: FolderClock,
+      risk: "read-only",
+      helpSlug: "folder-sizes",
+      enabledWhen: () => actions.openFolderSizes !== undefined,
+      run: () => actions.openFolderSizes?.(),
+    },
+    {
+      id: "app.openStorage",
+      labelKey: "storage.title",
+      icon: HardDrive,
+      risk: "read-only",
+      helpSlug: "app-storage",
+      enabledWhen: () => actions.openAppStorage !== undefined,
+      run: () => actions.openAppStorage?.(),
+    },
+    {
+      id: "app.pauseBackground",
+      labelKey: "background.pause",
+      icon: Pause,
+      risk: "read-only",
+      helpSlug: "background-work",
+      enabledWhen: () => actions.pauseBackground !== undefined,
+      run: () => actions.pauseBackground?.(),
+    },
     {
       id: "explorer.showMoreOptions",
       labelKey: "commands.showMoreOptions",
@@ -375,5 +997,8 @@ export function createExplorerCommands(actions: ExplorerActions): Command[] {
       enabledWhen: (ctx) => hasSelection(ctx) || ctx.location === "folder",
       run: () => actions.showMoreOptions(),
     },
+    // Commands whose hosts arrived in later steps. Each one is absent until
+    // its real host is supplied, so the registry never holds a duplicate.
+    ...createFeatureCommands(actions),
   ];
 }

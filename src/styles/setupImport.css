@@ -1,0 +1,91 @@
+/* Setup import preview (Step 10e T5). */
+
+.adp-setup-import {
+  width: 760px;
+  max-width: calc(100vw - 32px);
+  min-width: 0;
+}
+
+.adp-setup-import__parts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 45vh;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-setup-import__part {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 36px;
+  padding-inline: var(--adp-space-2);
+  border-block-end: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-setup-import__check {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.adp-setup-import__check input:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: 2px;
+}
+
+.adp-setup-import__count {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.adp-setup-import__warning {
+  color: var(--adp-color-status-caution);
+  font-size: var(--adp-font-small);
+}
+
+.adp-setup-import__warnings {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--adp-space-1);
+  min-width: 0;
+}
+
+.adp-setup-import__result {
+  margin-block: var(--adp-space-3);
+  padding: var(--adp-space-3);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-status-caution-background);
+}
+
+.adp-setup-import__notices {
+  margin: 0;
+  padding-inline-start: var(--adp-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  list-style: disc;
+}
+
+.adp-setup-import__personal {
+  margin-block: var(--adp-space-3);
+  padding: var(--adp-space-3);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-status-caution-background);
+}
+
+.adp-setup-import__error {
+  margin: 0;
+  color: var(--adp-accent-pdf);
+  font-size: var(--adp-font-body);
+}

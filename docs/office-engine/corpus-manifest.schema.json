@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Retained Office comparison corpus",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "corpus_revision", "fixtures"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "corpus_revision": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "fixtures": {
+      "type": "array", "maxItems": 1000,
+      "items": { "$ref": "#/$defs/fixture" }
+    }
+  },
+  "$defs": {
+    "relative_path": {
+      "type": "string", "minLength": 1, "maxLength": 1024,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[:\\\\]).+$"
+    },
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "reference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relative_path" },
+        "sha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "fixture": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "family", "format", "path", "sha256", "byte_len", "features", "reference_status", "expected_source_unchanged"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,127}$" },
+        "family": { "enum": ["document", "sheet", "deck"] },
+        "format": { "enum": ["docx", "xlsx", "pptx", "odt", "ods", "odp", "rtf", "doc", "xls", "ppt"] },
+        "path": { "$ref": "#/$defs/relative_path" },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "byte_len": { "type": "integer", "minimum": 0, "maximum": 536870912 },
+        "features": {
+          "type": "array", "maxItems": 256, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+        },
+        "reference_status": { "enum": ["supplied", "pending", "not_applicable"] },
+        "reference_pdf": { "$ref": "#/$defs/reference" },
+        "expected_source_unchanged": { "const": true },
+        "expected_error": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "notes": { "type": "string", "maxLength": 4096 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "reference_status": { "const": "supplied" } } },
+          "then": { "required": ["reference_pdf"] },
+          "else": { "not": { "required": ["reference_pdf"] } }
+        }
+      ]
+    }
+  }
+}

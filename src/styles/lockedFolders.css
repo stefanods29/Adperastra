@@ -1,0 +1,319 @@
+/* Locked folders (Step 09k). Colors and sizes come from tokens only. */
+
+.adp-locked-create-dialog {
+  width: 600px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-locked-unlock-dialog {
+  width: 440px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-locked-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-width: 0;
+}
+
+.adp-locked-heading-row {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  font: var(--adp-font-section) var(--adp-font-family);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-locked-heading-row .adp-icon-btn {
+  margin-inline-start: auto;
+}
+
+.adp-locked-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  min-width: 0;
+  font: var(--adp-font-body) var(--adp-font-family);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-locked-field small,
+.adp-locked-note {
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+  overflow-wrap: anywhere;
+}
+
+.adp-locked-path-row {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-width: 0;
+}
+
+.adp-locked-path-row .adp-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.adp-locked-warning {
+  padding: var(--adp-space-3);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-status-caution);
+  font: var(--adp-font-body) var(--adp-font-family);
+  overflow-wrap: anywhere;
+}
+
+.adp-locked-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--adp-space-2);
+  font: var(--adp-font-body) var(--adp-font-family);
+  color: var(--adp-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.adp-locked-check input {
+  margin-block-start: 2px;
+}
+
+.adp-locked-field-error,
+.adp-locked-error {
+  color: var(--adp-color-status-caution);
+  font: var(--adp-font-small) var(--adp-font-family);
+  overflow-wrap: anywhere;
+}
+
+.adp-locked-error {
+  padding: var(--adp-space-2);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-status-caution-background);
+}
+
+.adp-locked-mode {
+  display: flex;
+  gap: var(--adp-space-4);
+  font: var(--adp-font-body) var(--adp-font-family);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-locked-mode label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+}
+
+.adp-locked-visibility {
+  flex: 0 0 auto;
+}
+
+.adp-locked-folder {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  min-height: 0;
+  height: 100%;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-locked-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 36px;
+  min-width: 0;
+}
+
+.adp-locked-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  margin-inline-start: auto;
+}
+
+.adp-locked-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-locked-banners {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+  padding: var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-locked-banners .adp-locked-note {
+  flex: 1 1 240px;
+  margin: 0;
+}
+
+.adp-locked-recovery-link {
+  border: 0;
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  text-decoration: underline;
+  font: var(--adp-font-body) var(--adp-font-family);
+  cursor: pointer;
+}
+
+.adp-locked-rows {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-locked-row {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 28px;
+  padding: 0 var(--adp-space-2);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  text-align: start;
+  font: var(--adp-font-body) var(--adp-font-family);
+}
+
+.adp-locked-row:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-locked-row.adp-list-row--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-locked-row:focus-visible,
+.adp-locked-recovery-link:focus-visible,
+.adp-locked-rows:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: -2px;
+}
+
+.adp-locked-empty {
+  padding: var(--adp-space-6);
+  color: var(--adp-color-text-secondary);
+  text-align: center;
+  font: var(--adp-font-body) var(--adp-font-family);
+}
+
+.adp-locked-unsupported {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  padding: var(--adp-space-2);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-status-caution);
+  font: var(--adp-font-body) var(--adp-font-family);
+  overflow-wrap: anywhere;
+}
+
+.adp-locked-notice {
+  padding: var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+  overflow-wrap: anywhere;
+}
+
+.adp-locked-curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: var(--adp-space-5);
+  background: color-mix(in srgb, var(--adp-color-surface-canvas-doc) 82%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.adp-locked-curtain-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  width: min(520px, calc(100vw - 32px));
+  padding: var(--adp-space-5);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-lg);
+  background: var(--adp-color-surface-pane);
+  box-shadow: var(--adp-shadow-card);
+  color: var(--adp-color-text-primary);
+  font: var(--adp-font-body) var(--adp-font-family);
+  overflow-wrap: anywhere;
+}
+
+.adp-locked-curtain-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+}
+
+.adp-locked-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--adp-color-surface-canvas-doc);
+}
+
+.adp-locked-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.adp-locked-editor .cm-editor {
+  height: 100%;
+}
+
+.adp-locked-view-error {
+  padding: var(--adp-space-4);
+  color: var(--adp-color-status-caution);
+  font: var(--adp-font-body) var(--adp-font-family);
+}
+
+.adp-locked-image {
+  align-items: center;
+  justify-content: center;
+  gap: var(--adp-space-2);
+  overflow: auto;
+}
+
+.adp-locked-image img {
+  max-width: 100%;
+  max-height: calc(100% - 40px);
+  object-fit: contain;
+}
+
+.adp-locked-hex {
+  overflow: auto;
+  padding: var(--adp-space-2);
+}
+
+.adp-locked-hex pre {
+  margin: 0;
+  color: var(--adp-color-text-primary);
+  font: var(--adp-font-small) "Cascadia Mono", Consolas, monospace;
+  white-space: pre;
+}

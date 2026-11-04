@@ -1,23 +1,125 @@
-# Step 11a: Search index, search modes, and speed pass (★★★★)
+# Step 11a: Bounded indexing, search modes and the speed pass
 
-**Needs:** 10c. **Builds:** index service, search modes.
+| Field | Value |
+|---|---|
+| State | guide; documentation reviewed; implementation not started |
+| Difficulty | 4/5 |
+| Branch | step-11a-index-search |
+| Tag | v0.2.1-step11a |
+| Depends on | 07a background/cache/identity;07d PDFtext;07e OCR;09a watchers;09d palette;10c profiles/formats;10faccessibility |
+| Written before | 07a was built |
+| Interface revision | search-index-1 |
 
-## Tasks
-- **Index service:** a user-mode file-name index plus file watcher (results update while typing within the Instant tier); an opt-in content index (text inside documents, PDFs, and OCR'd images) built in the background with pause/resume; a metadata index (dates, sizes, types, authors, dimensions, durations). Indexing follows the Background work settings and skips online-only placeholders. Optional NTFS USN/MFT fast index through an opt-in helper that needs admin rights (the app itself never requires admin for core browsing).
-- **Search modes:** the search box has a mode switcher (a dropdown at its left edge, cycled with Ctrl+Tab while the box is focused, and set by prefixes such as `name:`, `text:`, `re:`, `ask:`, `photo:`), with a default mode I choose in Settings. Modes:
-  - **Name** (default): fast filename search.
-  - **Content:** full text inside documents, PDFs, and OCR'd images.
-  - **Filters:** a visual builder (type, size, dates, folder, author, dimensions, duration; tags added in Step 11b).
-  - **Regex:** regular expressions on names or content.
-  - **Natural language**, **Photos by content**, and **Similar files:** AI modes, shown greyed out with a short note and an "Open App storage" button until their packs exist (built in Step 17c).
-  - Results show which mode found them, open in tabs, support every view mode, and any search can be saved (saved searches become smart folders in Step 11b).
-- **Speed pass:** run the whole test corpus and fix every speed-tier miss: tune prefetch, warm engines, idle preloading, memory limits, cold start, the 100,000-item folder, and tab switching.
+Guide only. Workers implement owned code/tests/help without execution. Coordinator installs approved dependencies, applies shared wiring, executes all tests/builds/security/speed/UI checks and accepts commits. Ordinary indexing and the four query modes in this step are deterministic;17c adds optional AI search against the frozen extension boundary.
 
-## Parts to consider
-`tantivy` (MIT) for the content index; `nucleo` (MPL-2.0) for fuzzy matching; `ntfs` crate (MIT/Apache-2.0); `rusqlite` and `notify`; `criterion` (Apache-2.0/MIT) and `hyperfine` (MIT/Apache-2.0) for benchmarks.
+Type notation: safeu64 means Rust u64 serialized only in the JSON safe-integer range 0..9,007,199,254,740,991 and TypeScript number. UUID means a validated canonical UUID string. Optional fields are absent/null only where the table says optional. Enum spellings are literal serialized values; no worker invents alternate names.
 
-## Help pages
-Searching; search modes and prefixes; the filter builder; regular expressions; indexing and privacy.
+## Goal and exclusions
 
-## Done when
-Filename search updates within the Instant tier on my whole drive; content search finds text inside documents and OCR'd images; every speed tier in `speed.md` is met for everything built so far.
+Search indexed names, opt-in content and metadata; build typed filters/regular expressions; save queries; keep results current without blocking browsing. AI Natural language/Photos by content/Similar modes are disabled explanatory entries only, never model downloads or semantic indexing. No full-drive automatic OCR, automatic file organizing or access elevation for ordinary browsing.
+
+## Read first and dependencies
+
+Read v1 step11a,roadmap/backlog,rules/background/speed;07a/07d/e/f,09a/d,10c/f. Read currentrusqlite0.41.1/notify8.2.1/regex1.13.1 source,ExplorerItem/SortSpec,allItemViewvariants/selection. ExistingregexisalreadyresolvedinCargo.lockbutadddirectdependencyonlythroughcoordinatorapprovedmanifesttask.
+
+| ID | Producer/task; canonical symbol/file | Use |
+|---|---|---|
+| U1 | 07a T3/E4 BackgroundPolicy/scheduler andSourceStamp;07a E9 FileIdentityKey | filename_index/content_indextasks; noforegroundbudgetsteal,full100nstampvswhole-secondSourceIdentitykeptdistinct |
+| U2 | 09a T4/E8 services/explorer.ts watchSubscribe(path,listener,options{recursive:bool} optional)/watchUnsubscribe | Recursiveindexedroots,128subscriptionsmax;eventgeneration/pairedold_pathoptional/overflowrescan;unsubscribeonlyownID |
+| U3 | 07d E3 readPdfText(sessionId,page,afterRun)->Promise<PdfTextPage>;07e OCRcachedresults;07f E7 normalizedbook/othertext | Nativeextractoradaptersuseverifiedhelperbackings;boundchunks,neverexecutecontent;OCRonlyexplicitcontentsettingandinstalledlanguage |
+| U4 | 09d FolderPresentation/ColumnSpec,ItemViewProps;handlers/openPipeline.ts planOpen | SearchresultsareExplorerItem-basedandusenormalview/selection/openrules;actualdiskpaths,notindexIDaspath |
+| U5 | 10c E5 ProfileRoot/E1 displayformats;10f E1 EffectiveAccessibility | Storeunderprofile_dir;displaylocaleindependentindexkeys;allmainsearchscreenaccessibilitybar |
+| U6 | 06d jobs.rs Jobs/JobContext/spawn_job;services/jobs.ts runJob/JobHandle.completion | Indexbuildandregexscanssharedjobs,poll100ms,cancellable;noTauriChannel |
+
+## Decisions and algorithms
+
+1. ReuseSQLitevia rusqlite0.41.1 bundled/hooks,notify8.2.1,blake3existingandregex1.13.1 MIT/Apache. NoTantivy/nucleo/ntfsnewframework. Nativeindexcrate`crates/search-index`,Tauriadaptersearch_index.rs. SQLiteFTS5namefieldtrigram/contentunicode61remove_diacritics2,typedmetadataBTreeindexes. Disableload_extension,trusted_schemafalse,query_onlyonreaderconnections;allqueryvaluesboundparameters;usertextneverrawSQL/FTSexpression.
+2. Rootsmax32explicitabsolutefolders;initialnone. Settingsschema33 -> 34addsSearchSettingsbelow. Userenablesfilenameindexperroot,content/OCRseparateuncheckedcontrols. Traversal2workers,queue256,depth256,visitedvolume/fileIDset,1,000,000recordsmax,DBphysical2GiBplus64MiBboundedWAL;commitbatches256records/100ms,checkphysicalbudgetbeforegrow. Onlimitpausewithreason,retainvalidindex,neverejectuserfiles. Symlink/reparsefoldersnotfollowed;accessdenied/disappearingdrivesreported;cloudplaceholdermetadataonly,nocontentread.
+3. File rowskeepidentity/path/name/normalizedname/ext/kind/size/modified/created/availablemetadata/stamp/contentstate. Rootmembershipmany-to-manyavoidsduplicatesforoverlappingroots. Reindexonlystampchanged;watchrenamepairedusesidentityrevalidation;unpaired/overflowboundedrootrescan. Deletingrootremovesonlyitsmembershipandorphanindexrows,notfiles. Allsizesafeintegersorunsupportedreport,nostringroundedidentities.
+4. Namequery1-2charactersisindexedprefix;>=3usescase/diacritic-normalizedsubstringwithFTS5trigramcandidateplusliteralcontainsverify. SplitspacequerytokensAND;noFTSoperatorsorwildcardsfrominput. Emptyqueryreturnsfirst50lastmodifiedrecords. ContentmodequotesliteralsandANDstokensunderunicode61,rankbm25ascendingthenpath_key;snippets<=256scalarsescapedplaintext. Regexmodeexplicitnames/contentscope,pattern<=1024bytes,RegexBuilder.size_limit1MiB/dfa_size_limit2MiB/nest_limit64,no backrefs/lookaround;allscanworkhelper/jobwith2sfirstbudgetandpagedcontinuation,nevermainthreadregex.
+5. SearchQuerytypedASTmax32clauses/depth4;nofilewrites. Stringclauseskind/ext/authoroperators eq/contains;numberclauses size,width,height,duration_ms/pagesoperators eq/gte/lte;dateclauses modified/created/date_taken rangeUTCseconds;foldersscopedrootIDs/absoluteauthorizedsubtree. TagclausepredefinedbutUIhiddenuntil11btagproviderpopulatesmirror. Unknownfield/op/typeinvalid,notignored. Time-sensitive“thismonth”resolvedtoconcreteUTCboundsatthequerycapturebasedchosenlocalzone.
+6. Searchboxmode Name/Content/Filters/Regex;focusedCtrl+Tabcyclesonlythese4andpreventsMRUtabcycling. Prefixname:/text:/re: selectmode,striponeprefix;ask:/photo:/similar:showdisabledmodeexplanationwithoutsearch/network. Modecontrolsaria-expanded,selectedlabel/keyboard;defaultName. Changingquerycancelspriorjob/generation;debounce30msmax,neverdisplaystaleresults.
+7. Searchfirstpage50,subsequent256/max768KiB;opaqueUUIDcursorboundnormalizedquery+rootset+indexgeneration+sort,expiry60s,max16cursors. Indexgenerationchangeinvalidatescursorwithsearch.changed;UIreloadsfirstpageandsaysresultsupdated. NoheldreadtransactiongrowingWAL. Resultscontainmode/source/snippetandExplorerItem;sourcepathrevalidatedonopen. Estimatedtotalexplicit;total_exactbool,neverfakefullcount.
+8. Contentextractorsmax50MiBinput/text10MiBnormalizationperfile/2MiBextractedresult,100000scalarsstored/file;truncationflag+coveragevisible. Twoactivehelperswithin07abudget,foregroundpressurepauses. TextUTF8/UTF16/csv/markdownnormalizationreuseexistingreaders;PDF/ebooks/emailnormalformsreuseisolatedhelpers;futureOffice13registersitsadapter. OCRonlyalreadycachedorrootuserenabledOCR,onefileatatimeandbudget100files/session,skiponline-only;unknownformatsstateunsupported. Nosensitivevirtualsources,unencryptedexports,archiveentriesorremotecontentindexed.
+9. Savedquerycatalog `<profile>/saved-searches.json` schema1,max100entries/1MiB,UUID/name1-60/SearchQuery;atomicappstatewriteandUiHistoryentry.11bmakesliveSmartFolderfromsamequery,notanotherquerylanguage. Namesareplaintextuserlabels;noresults/contentcopiedtocatalog.
+10. OptionalNTFSfastpathoffdefault: explicituserchoice+UACone-timehelper,currentexefixed--usn-index-helperwithnonce/currentSIDpipe,parentprovidesvalidatedvolumerootonly. HelperreadsmetadataonlywithDeviceIoControlFSCTL_ENUM_USN_DATA/QUERY_USN_JOURNAL/READ_USN_JOURNAL;MFT_ENUM_DATA_V0/USN_RECORD_V2boundedrecordparser64KiBchunks,validateoffsets/lengths/UTF16/version/parentchains<=256/cap1M. Unknownrecordversionsorunsupportedfilesystemfallnormalenumerationwithreason. Noarbitrarypaths/filecontents/writesfromelevatedhelper,noUAConstartup. Deniedelevationleavesordinaryindexusable.
+11. Speedpasscoversallbuiltfeatures/coldstartup/100kfolder/tab-switch/searchtyping. Actualmeasuredmissesfixedwithoutloweringthresholds/skippingtests;benchmark JSON records the actual enabled capabilities and hardware;17c records its added semantic-query measurements separately. Aquerylimitcaportruncationcannotbereported“entiredrivecomplete”.
+
+## Types, storage and exact exports
+
+Canonicalwire`src/services/search.ts`,native`crates/search-index/src/types.rs`,appmanagedSearchIndex insearch_index.rs. SQLschema1tablesroots/files/root_members/content_fts/name_fts/tag_members/meta;nativecommandsneveracceptSQL.
+
+| Type | Exact fields |
+|---|---|
+| IndexRoot | idUUID;pathabsoluteString;filenamebooltrue;contentboolfalse;ocrboolfalse;enabled booltrue |
+| SearchMode | name/content/filters/regex;disabledmodenamesask/photo/similararenotacceptednativeSearchMode |
+| SearchFilter | taggedall/any{clausesSearchFilter[]};not{clause};string{fieldkind/ext/author,opeq/contains,valuestring<=256};number{fieldsize/width/height/duration_ms/pages,opeq/gte/lte,valuefinitenonnegative};date{fieldmodified/created/date_taken,from_unix/to_unix optional safeu64};tags{tag_idsUUID[]max100,matchall/any}. |
+| SearchQuery | modeSearchMode;textstring<=1024bytes;rootsUUID[]max32;filteroptionalSearchFilter;regex_scope name/content defaultname;match_caseboolfalse;sortSortSpecdefault key name, direction ascending |
+| SearchSettings | rootsIndexRoot[]defaultempty;default_modeName;index_limit_mbu32default2048range128-8192;content_max_charsu32default100000range1000-100000;usn_enabledboolfalse;excluded_pathsstring[]max100absolute |
+| SearchResult | itemExplorerItem;keyFileIdentityKey;found_bySearchMode;snippetoptionalstring<=256;content_truncatedbool;metadata_availablebool |
+| SearchPage | resultsSearchResult[]max256;next_cursoroptionalUUID;generation safeu64;total_estimateu32;total_exactbool;completebool;coverage pending/partial/complete;skipped_countu32 |
+| IndexStatus | generation safeu64;files_countu32;disk_bytessafeu64;runningbool;pausedbool;coveragepartial/complete;skipped_countu32;limit_reachedbool;reason_codeoptionalstring |
+| SavedSearch | idUUID;name1-60;querySearchQuery;created_unix/modified_unixsafeu64;version1 |
+| ExtractorRequest | nativepathPathBuf;stampSourceStamp;max_charsu32;deadlineInstant;parentholdsPinnedSourceforallhelperreads |
+| ExtractedText | textStringmax100000scalars;truncatedbool;coveragecomplete/partial/unsupported;metadataMetadataField[]max16;noHTML |
+| TagSearchUpdate | keyFileIdentityKey;tag_idsUUID[]max1000;deletedboolfalse;revision safeu64;nativeauthoritativeTagStoreonly |
+
+| ID | Export | Exact signature/consumers |
+|---|---|---|
+| E1 | services/search.ts search/searchPage/cancelSearch | search(querySearchQuery)->Promise<JobHandle<SearchPage>>;searchPage(cursorstring)->Promise<JobHandle<SearchPage>>;cancelusesJobHandle.cancel,notseparatequerytable; nativesearch_start(request_id,query)/search_page_start(request_id,cursor).11bSmartFolders/views |
+| E2 | same getIndexStatus/rebuildIndex/pauseIndex | get()->Promise<IndexStatus>;rebuild(rootIdsreadonlystring[])->Promise<JobHandle<IndexStatus>>;pause(pausedbool)->Promise<IndexStatus>;nativeindex_status/index_rebuild_start/index_pause;allpolicychecks07a |
+| E3 | same listSavedSearches/saveSearch/removeSavedSearch | list()->Promise<SavedSearch[]>;save(searchSavedSearch)->Promise<SavedSearch>;remove(id)->Promise<void>;nativesaved_searches_list/saved_search_save/saved_search_remove.11b/10eproviders |
+| E4 | nativecontent_extractors.rs ContentExtractorRegistry | register(id &'static str,extensions &'static[&'static str],extractorArc<dynContentExtractor>)->Result<(),String>;ContentExtractor.extract(&self,request&ExtractorRequest,cancel&CancellationToken)->Result<ExtractedText,String>;duplicateIDrejected.13Officeadapter |
+| E5 | `src/search/SearchResultsView.tsx` | props querySearchQuery,viewFolderPresentation,activebool,onOpenFile(path)->Promise<void>,onQueryChange(query)->void,onOpenHelp(slug)->void;usesexistingItemViewand09astates,notnewfakepaths |
+| E6 | nativesearch_tags.rs apply_tag_search_updates | (updates&[TagSearchUpdate],index&SearchIndex)->Result<(),String>;batches256,transactionvalidatesrevision+identity;notpublicIPCacceptingforgedtags.11bTagStorecallsafterdurablecommit |
+| E7 | search/queryParsing.ts parseSearchInput | (rawstring,currentModeSearchMode)->{mode:SearchMode|null,text:string,disabled_mode:ask/photo/similar|null};pureprefixgrammar,notAIservice |
+
+AllTauricommandsensure_main/validatepaths/rootIDs/AST/counts;sharedJobsbeginsbeforestartresolves;errorssearch.invalid/regex/too_large/changed/unavailable/index_limit/denied/failed. NofilecontentbytesinJSON;extractednormalizedtextinternalboundedandUIonlysnippets. Cache/indexphysicalusageprovider12aregistersactualDB/WALsizes.
+
+## Texts, UI and tasks
+
+| Key | English | Spanish |
+|---|---|---|
+| search.title / search.name / search.content / search.filters / search.regex / search.searchBox | Search / Name / Content / Filters / Regex / Search indexed files… | Buscar / Nombre / Contenido / Filtros / Expresión regular / Buscar archivos indexados… |
+| search.index / search.roots / search.addRoot / search.contentOptIn / search.ocrOptIn / search.pause / search.rebuild | Indexing / Indexed folders / Add folder… / Index file contents / Include OCR in these folders / Pause indexing / Rebuild selected index | Indexación / Carpetas indexadas / Agregar carpeta… / Indexar contenido / Incluir OCR en estas carpetas / Pausar indexación / Reconstruir índice seleccionado |
+| search.save / search.savedName / search.updated / search.partial / search.truncated / search.prefixShort | Save search… / Search name / Results changed; the first page was refreshed. / Index coverage is incomplete. / Only part of this file was indexed. / One- and two-character queries match name prefixes. | Guardar búsqueda… / Nombre de búsqueda / Cambiaron los resultados; se actualizó la primera página. / La cobertura del índice está incompleta. / Solo se indexó parte de este archivo. / Las consultas de uno o dos caracteres coinciden con prefijos del nombre. |
+| search.aiUnavailable / search.openStorage / search.usn / search.usnWarning | Set up AI search to use this mode. / Open App storage / Enable optional NTFS fast indexing / Windows will ask permission for this metadata-only helper. Ordinary indexing works without it. | Configura la búsqueda con IA para usar este modo. / Abrir almacenamiento de la aplicación / Activar indexación rápida NTFS opcional / Windows pedirá permiso para este ayudante de metadatos. La indexación normal funciona sin él. |
+| search.empty / search.loading / search.foundBy / search.count | No matching files. / Searching… / Found by {mode} / {count, plural, one {# result} other {# results}} | No hay archivos coincidentes. / Buscando… / Encontrado por {mode} / {count, plural, one {# resultado} other {# resultados}} |
+| errors.search.invalid / errors.search.regex / errors.search.too_large / errors.search.changed / errors.search.unavailable / errors.search.index_limit / errors.search.denied / errors.search.failed | This search is not valid. / This regular expression is not supported. / This query exceeds the search limits. / Search results changed. Start again. / The search index is not available. / The index limit was reached; review indexed folders or storage. / This indexing request was not allowed. / The search could not finish. | Esta búsqueda no es válida. / Esta expresión regular no es compatible. / Esta consulta supera los límites. / Cambiaron los resultados. Vuelve a buscar. / El índice no está disponible. / Se alcanzó el límite; revisa las carpetas o el almacenamiento. / No se permitió esta solicitud. / No se pudo terminar la búsqueda. |
+
+Filterfieldlabelkeyssearch.fieldKind/Extension/Author/Size/Width/Height/Duration/Pages/Modified/Created/DateTaken/Folder useEnglishKind/Extension/Author/Size/Width/Height/Duration/Pages/Modified/Created/Date taken/Folder andSpanishTipo/Extensión/Autor/Tamaño/Ancho/Alto/Duración/Páginas/Modificado/Creado/Fecha de captura/Carpeta. Operatorlabelssearch.opEquals/Contains/AtLeast/AtMost/All/Any/Not=>Equals/Contains/At least/At most/All/Any/Not andIgual a/Contiene/Como mínimo/Como máximo/Todos/Cualquiera/No. UIsearchbar44px;filterDialog760px;resultsreuseviewcomponents;modebuttonaccessible/disabledreason/help;AIentrydisableduntil17cproviderregistration. Commandsapp.search(Search,Ctrl+FonlywhenExplorerhasfocus),app.indexSettings(Database) nootherglobalkeys;existingeditorCtrl+Funchanged.
+
+| Task; commit | Files/order/imports | Tests and exact oracle |
+|---|---|---|
+| T1 `deps: register bounded search dependencies [step-11a/T1]` | coordinatorsearch-indexCargo/features/licenserecords;workersnewcratemanifestproposal.U1/U6 | searchDependency.test:rusqlitebundledhooks/regex1.13.1pinned;noFTSloadableextensionorGPLdependency |
+| T2 `feat(index): bounded roots and metadata store [step-11a/T2]` | crates/search-index/src/{types,store,scan,limits}.rs;search_index.rs;services/search.ts;schema34.U1/U2/U5 | step11a_index_tests:overlaprootsdedup;cloud0contentreads;loopguard;1M+1pause;DBbudgetincludesWAL;permissionerrorpartialnotempty |
+| T3 `feat(index): incremental watchers and opt-in content [step-11a/T3]` | index_watch.rs,content_extractors.rs,search_tags.rs;U1-U3/E4/E6 | indexWatch.test/native:renamepairedidentity;overflowrescan;oneunsubleavesothertab;stalegenerationignore;OCRoff0calls;100filebudgetstop;sensitivevirtualrefused |
+| T4 `feat(search): typed bounded name content and regex queries [step-11a/T4]` | query.rs,filter.rs,paging.rs,regex_scan.rs;queryParsing.ts.U4/U6/E1/E7 | step11a_query_tests:reportcontainsportat>=3;re1-2prefix;FTSoperatorsliteral;regexbackrefreject;ASTdepth5reject;cursorchangedinvalid;page256/768KiBcap |
+| T5 `feat(search): accessible modes filters and saved searches [step-11a/T5]` | SearchResultsView.tsx,SearchModePicker.tsx,FilterBuilder.tsx,IndexSettings.tsx,saved_searches.rs,styles/search.css.U4/U5/E1-E3 | searchUi.test.tsx:focusedCtrlTab4modesnotMRU;askdisabled0network;typingstaleresultdiscard;savequerynotresults;all9viewmodeswithnormalopen |
+| T6 `feat(index): optional scoped NTFS metadata helper [step-11a/T6]` | usn_index_helper.rs,usn_records.rs,usn_admin.rs;coordinatorWindowsfeatures.U1/U6 | step11a_usn_tests:badlength/offset/versionreject;cycledepthcap;UACdeniedfallback;helpercannotwrite/opencontents;foreignSIDpipeblocked |
+| T7 `test(speed): ordinary search and application speed pass [step-11a/T7]` | writtenbenchmarkcases/searchfixtures;coordinatorscripts/actualruns.U1-U6 | 100kfolder/coldstartup/tab/searchmedians7runs;nomissedtiershidden;contentcoverageexplicit;baselinecomparison<=20%regression |
+| T8 `docs(help): search modes filters and indexing privacy [step-11a/T8]` | fivehelpfilesbelow;coordinatorkeys/pseudo/registries/screenshots.U1-U6 | allqueryprefixesdocumented;en/esICUparity;normal/disabledAIhelpdistinct |
+
+## Full help
+
+`searching.md`, English **Searching**: “Find files in folders you chose to index.” How to use: “Choose indexed folders in Settings > Indexing. Enter a query and open a result normally. Save search stores the query for later.” Good to know: “Coverage may be incomplete while indexing. Short name queries match prefixes. Online-only content is not downloaded.” See also: “Search modes and prefixes”. Spanish **Buscar**: “Encuentra archivos en carpetas que elegiste indexar.” Cómo usar: “Elige carpetas en Configuración > Indexación. Escribe una consulta y abre un resultado normalmente. Guardar búsqueda conserva la consulta.” Para tener en cuenta: “La cobertura puede estar incompleta durante la indexación. Las consultas cortas coinciden con prefijos. No se descarga contenido solo en línea.” Consulta también: «Modos y prefijos de búsqueda».
+
+`search-modes.md`, English **Search modes and prefixes**: “Choose what a query searches.” How to use: “Select Name, Content, Filters or Regex. Ctrl+Tab changes modes while the search box has focus. Prefixes name:, text: and re: select a mode.” Good to know: “AI modes are provided by17c after explicit setup; ordinary search needs no AI pack. Content searching requires explicit indexing consent.” See also: “Indexing and privacy”. Spanish **Modos y prefijos de búsqueda**: “Elige qué busca una consulta.” Cómo usar: “Selecciona Nombre, Contenido, Filtros o Expresión regular. Ctrl+Tab cambia de modo con el campo enfocado. Los prefijos name:, text: y re: eligen un modo.” Para tener en cuenta: “Los modos de IA llegan con17c tras una configuración explícita; la búsqueda normal no necesita IA. El contenido requiere consentimiento explícito de indexación.” Consulta también: «Indexación y privacidad».
+
+`search-filters.md`, English **Search filters**: “Combine file properties without writing code.” How to use: “Choose Filters, add type, size, dates, folder or metadata conditions and choose All or Any. Review the query before saving.” Good to know: “Dates are resolved to a fixed interval for the captured query. Unsupported fields are refused, not ignored.” See also: “Searching”. Spanish **Filtros de búsqueda**: “Combina propiedades sin escribir código.” Cómo usar: “Elige Filtros, agrega tipo, tamaño, fechas, carpeta o metadatos y elige Todos o Cualquiera. Revisa la consulta antes de guardarla.” Para tener en cuenta: “Las fechas se resuelven a un intervalo fijo para la consulta capturada. Los campos no compatibles se rechazan.” Consulta también: «Buscar».
+
+`search-regex.md`, English **Regular expressions**: “Match names or indexed content with a bounded pattern.” How to use: “Select Regex and choose names or content. Enter a supported expression. Cancel stops a long scan.” Good to know: “Backreferences and lookaround are not supported. A regular expression does not run programs or change files.” See also: “Searching”. Spanish **Expresiones regulares**: “Busca nombres o contenido indexado con un patrón limitado.” Cómo usar: “Selecciona Expresión regular y elige nombres o contenido. Escribe una expresión compatible. Cancelar detiene un examen largo.” Para tener en cuenta: “No se admiten referencias hacia atrás ni anticipaciones. Una expresión no ejecuta programas ni modifica archivos.” Consulta también: «Buscar».
+
+`indexing-and-privacy.md`, English **Indexing and privacy**: “Control which local names and text are stored.” How to use: “Add only folders you want indexed. Enable contents and OCR separately. Pause, rebuild or remove an indexed folder in Settings.” Good to know: “The index stays in this profile with a size limit. Sensitive unlocked content is excluded. Removing index data does not remove your files. Optional NTFS permission is not needed for normal browsing.” See also: “App storage”. Spanish **Indexación y privacidad**: “Controla qué nombres y texto locales se guardan.” Cómo usar: “Agrega solo carpetas que quieras indexar. Activa contenido y OCR por separado. Pausa, reconstruye o quita una carpeta en Configuración.” Para tener en cuenta: “El índice permanece en este perfil con un límite. Se excluye contenido sensible desbloqueado. Quitar datos del índice no elimina archivos. El permiso NTFS opcional no se necesita para explorar normalmente.” Consulta también: «Almacenamiento de la aplicación».
+
+## Checks, speed, screenshots and evidence
+
+Fixturesretained:100kfiles/rootand1Msyntheticindexrows,separatesparse/offline/permission/loop/mockUSNcases,text“alpha café”,PDF3pages/1scannedpage,cachedOCRfixed“beta”,queryAST/regexinvalidcases. Coordinatorchecksname/content/filter/regex/modes/saves/watch/rescan/Cancel/privacy/limits/coverage,allviewsandnormalopens,Narrator/NVDA/300%/highcontrast/Spanishdark/pseudo. Measurestep11a.search.name.firstpage/filter Instant<100ms,indexfirstpaintFast<1s,regex/contentlongscanjobfeedback,browsingunchanged. Reserve131-search-modes,132-search-filters,133-indexing-settings inthreevariants. Done:allDTOs/consumersmatch,fullspeedpassactualresults,17cproviderextensionexplicit,noindexscopeoverclaim,coordinatorgate/package/security/AT/speedreportcomplete.
+
+Verifiedsource: SQLiteFTS5 https://www.sqlite.org/fts5.html ; regex1.13.1localbuilders.rs hasnew/build/size_limit/dfa_size_limit/nest_limit;windows0.61.3System_IoctlhasMFT_ENUM_DATA_V0/USN_RECORD_V2/FSCTL_ENUM_USN_DATA/QUERY/READ andSystem_IODeviceIoControl. CoordinatorrecordsfeatureflagsWin32_System_Ioctl/Win32_System_IO/Win32_Storage_FileSystem/Win32_UI_Shell onlywhenneeded.
+
+17c extends this existing search surface with semantic/photo/similar/natural-language providers. Prefixes ask:/photo:/similar: are unavailable with a translated pack/setup reason before its provider registration, then route to17c exact types; Name/Content/Filters/Regex behavior and query AST remain unchanged. No duplicated index/filter model or API background embedding upload.
+
+## AI extension boundary
+
+Name/Content/Filters/Regex and SearchMode above remain the11a native query contract.17c owns ask/photo/similar requests and activates their provider registration; it does not send those strings to11a search_start as if they were SearchMode variants. Before that provider is available, search.aiUnavailable is the setup message above and performs no inference/network request.17c computes embeddings locally. Natural-language assistant requests follow17a selected Local/API backend and explicit outbound consent; selecting an AI-looking prefix alone never approves uploading indexed content. T5 tests both the unavailable-provider path and that the ordinary four-mode cycle remains unchanged after provider registration.

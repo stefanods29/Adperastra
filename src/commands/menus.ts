@@ -1,5 +1,18 @@
-import { ArrowDownWideNarrow, Group, List, Plus, type LucideIcon } from "lucide-react";
-import { isCommandVisible, type Command, type CommandContext } from "./registry";
+import {
+  ArrowDownWideNarrow,
+  FileCode,
+  Group,
+  LayoutTemplate,
+  List,
+  PackageOpen,
+  PanelTop,
+  Plus,
+  Rows2,
+  type LucideIcon,
+} from "lucide-react";
+import { VIEW_MODE_IDS, type ViewModeId } from "../services/settings";
+import { VIEW_MODE_COMMANDS } from "./explorerCommands";
+import { isCommandPresented, type Command, type CommandContext } from "./registry";
 
 /** Menus from commands (contract 9): every menu and bar is data drawn by
  * one renderer, so the menu editor (Step 10b) can change them later
@@ -8,13 +21,23 @@ import { isCommandVisible, type Command, type CommandContext } from "./registry"
 export type MenuEntry =
   | { type: "command"; id: string }
   | { type: "separator" }
-  | { type: "submenu"; id: string; labelKey: string; icon?: LucideIcon; entries: MenuEntry[] }
+  | { type: "submenu"; id: string; labelKey: string; label?: string; icon?: LucideIcon; entries: MenuEntry[] }
   | { type: "iconRow"; ids: string[] };
 
 const cmd = (id: string): MenuEntry => ({ type: "command", id });
 const separator: MenuEntry = { type: "separator" };
 
-export const NEW_MENU: MenuEntry[] = [cmd("explorer.newFolder"), cmd("explorer.newTextFile")];
+export const NEW_MENU: MenuEntry[] = [
+  cmd("explorer.newFolder"),
+  cmd("explorer.newTextFile"),
+  cmd("explorer.newMarkdown"),
+  cmd("explorer.newCsv"),
+  cmd("explorer.newDocument"),
+  cmd("explorer.newSpreadsheet"),
+  cmd("explorer.newPresentation"),
+  separator,
+  cmd("explorer.newFromTemplate"),
+];
 
 export const GROUP_MENU: MenuEntry[] = [
   cmd("explorer.groupByNone"),
@@ -36,12 +59,9 @@ export const SORT_MENU: MenuEntry[] = [
   { type: "submenu", id: "groupBy", labelKey: "commands.groupBy", icon: Group, entries: GROUP_MENU },
 ];
 
-export const VIEW_MENU: MenuEntry[] = [
-  cmd("explorer.viewDetails"),
-  cmd("explorer.viewList"),
-  cmd("explorer.viewSmallIcons"),
-  cmd("explorer.viewMediumIcons"),
-  cmd("explorer.viewLargeIcons"),
+/** The View menu in the order chosen in Settings > Views (Step 05a). */
+export const viewMenuFor = (order: readonly ViewModeId[]): MenuEntry[] => [
+  ...order.map((mode) => cmd(VIEW_MODE_COMMANDS[mode])),
   separator,
   cmd("explorer.toggleDetailsPane"),
   cmd("explorer.toggleHiddenItems"),
@@ -49,7 +69,12 @@ export const VIEW_MENU: MenuEntry[] = [
   cmd("explorer.toggleCheckboxes"),
 ];
 
+export const VIEW_MENU: MenuEntry[] = viewMenuFor(VIEW_MODE_IDS);
+
 export const OVERFLOW_MENU: MenuEntry[] = [
+  cmd("explorer.undo"),
+  cmd("explorer.redo"),
+  separator,
   cmd("explorer.selectAll"),
   cmd("explorer.selectNone"),
   cmd("explorer.invertSelection"),
@@ -58,6 +83,8 @@ export const OVERFLOW_MENU: MenuEntry[] = [
   cmd("explorer.copyPath"),
   cmd("explorer.openInTerminal"),
   cmd("explorer.properties"),
+  separator,
+  cmd("explorer.recentActions"),
 ];
 
 /** Right-click on one or more items. */
@@ -65,27 +92,54 @@ export const ITEM_MENU: MenuEntry[] = [
   { type: "iconRow", ids: ["explorer.cut", "explorer.copy", "explorer.rename", "explorer.share", "explorer.delete"] },
   separator,
   cmd("explorer.open"),
+  cmd("explorer.bulkRename"),
+  cmd("explorer.quickPreview"),
+  cmd("explorer.openInWindowsApp"),
   cmd("explorer.openWith"),
+  { type: "submenu", id: "openAs", labelKey: "commands.openAs", icon: FileCode, entries: [cmd("explorer.openAsText"), cmd("explorer.openAsHex")] },
+  {
+    type: "submenu",
+    id: "extract",
+    labelKey: "commands.extract",
+    icon: PackageOpen,
+    entries: [cmd("explorer.extractToFolder"), cmd("explorer.extractHere"), cmd("explorer.extractTo")],
+  },
+  cmd("explorer.compressTo"),
+  cmd("explorer.convertTo"),
+  cmd("explorer.runConversionPreset"),
+  cmd("explorer.batchActions"),
+  cmd("explorer.removeHiddenInfo"),
   cmd("explorer.toggleFavorite"),
+  cmd("explorer.tags"),
+  cmd("explorer.removeTags"),
   cmd("explorer.showInFolder"),
   cmd("explorer.copyPath"),
   cmd("explorer.properties"),
+  cmd("explorer.versionHistory"),
+  cmd("explorer.addToShelf"),
+  cmd("explorer.fileLocks"),
+  cmd("explorer.mountImage"),
+  cmd("explorer.ejectImage"),
+  cmd("explorer.deletePermanently"),
   separator,
   cmd("explorer.showMoreOptions"),
 ];
 
 /** Right-click on empty space in a folder. */
-export const BACKGROUND_MENU: MenuEntry[] = [
-  { type: "submenu", id: "view", labelKey: "commands.view", icon: List, entries: VIEW_MENU },
+export const backgroundMenuFor = (order: readonly ViewModeId[]): MenuEntry[] => [
+  { type: "submenu", id: "view", labelKey: "commands.view", icon: List, entries: viewMenuFor(order) },
   { type: "submenu", id: "sort", labelKey: "commands.sortBy", icon: ArrowDownWideNarrow, entries: SORT_MENU },
   { type: "submenu", id: "new", labelKey: "commands.new", icon: Plus, entries: NEW_MENU },
   separator,
   cmd("explorer.paste"),
+  cmd("explorer.pasteAsFile"),
   cmd("explorer.openInTerminal"),
   cmd("explorer.properties"),
   separator,
   cmd("explorer.showMoreOptions"),
 ];
+
+export const BACKGROUND_MENU: MenuEntry[] = backgroundMenuFor(VIEW_MODE_IDS);
 
 export type BarEntry =
   | { type: "menu"; id: string; labelKey: string; icon: LucideIcon; entries: MenuEntry[] }
@@ -96,7 +150,7 @@ export type BarEntry =
 
 /** The Explorer command bar, in the Figma order, with Windows 11's
  * Details toggle at the right. */
-export const COMMAND_BAR: BarEntry[] = [
+export const commandBarFor = (order: readonly ViewModeId[]): BarEntry[] => [
   { type: "menu", id: "new", labelKey: "commands.new", icon: Plus, entries: NEW_MENU },
   { type: "separator" },
   { type: "command", id: "explorer.cut" },
@@ -105,25 +159,63 @@ export const COMMAND_BAR: BarEntry[] = [
   { type: "command", id: "explorer.rename" },
   { type: "command", id: "explorer.share" },
   { type: "command", id: "explorer.delete" },
+  { type: "command", id: "explorer.extractToFolder", showLabel: true },
+  { type: "command", id: "explorer.compressTo", showLabel: true },
+  { type: "command", id: "explorer.convertTo", showLabel: true },
   { type: "separator" },
   { type: "menu", id: "sort", labelKey: "commands.sort", icon: ArrowDownWideNarrow, entries: SORT_MENU },
-  { type: "menu", id: "view", labelKey: "commands.view", icon: List, entries: VIEW_MENU },
+  { type: "menu", id: "view", labelKey: "commands.view", icon: List, entries: viewMenuFor(order) },
   { type: "separator" },
   { type: "overflow", entries: OVERFLOW_MENU },
   { type: "spacer" },
   { type: "command", id: "explorer.toggleDetailsPane", showLabel: true },
 ];
 
+export const COMMAND_BAR: BarEntry[] = commandBarFor(VIEW_MODE_IDS);
+
+/** The toolbar's right-click menu (Step 05c): where it sits, how it looks
+ * and the ready-made presets. Saved presets live in Settings. */
+export const TOOLBAR_MENU: MenuEntry[] = [
+  {
+    type: "submenu",
+    id: "toolbarPosition",
+    labelKey: "layout.toolbarPosition",
+    icon: PanelTop,
+    entries: [cmd("layout.toolbarTop"), cmd("layout.toolbarBottom"), cmd("layout.toolbarLeft"), cmd("layout.toolbarRight")],
+  },
+  {
+    type: "submenu",
+    id: "toolbarStyle",
+    labelKey: "layout.toolbarStyle",
+    icon: Rows2,
+    entries: [
+      cmd("layout.toolbarFull"),
+      cmd("layout.toolbarCompact"),
+      cmd("layout.toolbarIconsOnly"),
+      cmd("layout.toolbarAutoHide"),
+    ],
+  },
+  separator,
+  {
+    type: "submenu",
+    id: "layoutPreset",
+    labelKey: "layout.preset",
+    icon: LayoutTemplate,
+    entries: [cmd("layout.presetStandard"), cmd("layout.presetMinimal"), cmd("layout.presetClassic")],
+  },
+];
+
 /** Drop unknown or hidden commands, empty submenus and icon rows, and
  * separators that would sit at an edge or next to another separator. */
-export function resolveMenu(
+export function resolveMenu<C = CommandContext>(
   entries: readonly MenuEntry[],
-  ctx: CommandContext,
-  lookup: (id: string) => Command | undefined,
+  ctx: C,
+  lookup: (id: string) => Command<C> | undefined,
+  simpleMode = false,
 ): MenuEntry[] {
   const visible = (id: string) => {
     const command = lookup(id);
-    return command !== undefined && isCommandVisible(command, ctx);
+    return command !== undefined && isCommandPresented(command, ctx, simpleMode);
   };
   const kept: MenuEntry[] = [];
   for (const entry of entries) {
@@ -133,7 +225,7 @@ export function resolveMenu(
       const ids = entry.ids.filter(visible);
       if (ids.length > 0) kept.push({ ...entry, ids });
     } else if (entry.type === "submenu") {
-      const sub = resolveMenu(entry.entries, ctx, lookup);
+      const sub = resolveMenu(entry.entries, ctx, lookup, simpleMode);
       if (sub.length > 0) kept.push({ ...entry, entries: sub });
     } else if (kept.length > 0 && kept[kept.length - 1].type !== "separator") {
       kept.push(entry);

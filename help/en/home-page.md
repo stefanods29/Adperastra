@@ -14,4 +14,4 @@ The cards at the top open your main folders (Desktop, Downloads, Documents, Pict
 
 Both lists work like any folder: select items, double-click to open them, or right-click for more, including **Show in folder** to jump to the folder that holds an item. Pinned folders live in Quick access instead.
 
-See also: "Pinning folders", "Browsing folders", and "The right-click menu" in the help list on the left.
+See also: "Pinning folders", "Browsing folders", "The Gallery", and "The right-click menu" in the help list on the left.

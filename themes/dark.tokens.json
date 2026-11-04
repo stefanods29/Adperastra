@@ -19,7 +19,7 @@
       "secondary": "#B8B8B8",
       "tertiary": "#8A8A8A",
       "bodyMuted": "#DDDDDD",
-      "onAccent": "#FFFFFF"
+      "onAccent": "#000000"
     },
     "border": {
       "default": "#3D3D3D",
@@ -47,6 +47,11 @@
       "word": "#EAF1FB",
       "image": "#DEF3F4",
       "group": "rgba(127,86,217,0.16)"
+    },
+    "status": {
+      "_note": "Message bars (Step 04c), from the Windows 11 caution colors.",
+      "caution": "#FCE100",
+      "cautionBackground": "#433519"
     }
   },
   "font": {
@@ -76,5 +81,20 @@
     "segment": "0 1px 3px rgba(0,0,0,.14)",
     "image": "0 4px 16px rgba(0,0,0,.22)"
   },
-  "space": [2, 4, 6, 8, 10, 12, 14, 16, 18, 22, 25]
+  "space": [2, 4, 6, 8, 10, 12, 14, 16, 18, 22, 25],
+  "syntax": {
+    "_note": "Code colors for viewers and editors (Step 04b), from the GitHub dark palette.",
+    "keyword": "#FF7B72",
+    "string": "#A5D6FF",
+    "number": "#79C0FF",
+    "comment": "#8B949E",
+    "function": "#D2A8FF",
+    "type": "#FFA657",
+    "tag": "#7EE787",
+    "attribute": "#79C0FF",
+    "property": "#79C0FF",
+    "invalid": "#FFA198",
+    "match": "rgba(187, 128, 9, 0.45)",
+    "matchSelected": "rgba(255, 166, 87, 0.55)"
+  }
 }

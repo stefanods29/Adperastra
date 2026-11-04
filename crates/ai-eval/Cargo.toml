@@ -1,0 +1,13 @@
+[package]
+name = "ai-eval"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Deterministic structural and safety evaluation for Adperastra assistant fixtures"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+tempfile = "3"

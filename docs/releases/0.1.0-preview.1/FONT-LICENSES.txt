@@ -1,0 +1,75 @@
+Compatible fonts bundled with the Office preview
+
+Notices reproduced from the font name tables.
+
+Caladea
+
+Copyright (c) 2012 Huerta Tipografia
+
+Licensed under the Apache License, Version 2.0
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+--------
+
+Carlito
+
+Copyright (c) 2010-2013 by tyPoland Lukasz Dziedzic with Reserved Font Name "Carlito". Licensed under the SIL Open Font License, Version 1.1.
+
+Copyright (c) 2010-2013 by tyPoland Lukasz Dziedzic (http://www.typoland.com/) with Reserved Font Name "Carlito". Licensed under the SIL Open Font License, Version 1.1 (http://scripts.sil.org/OFL).
+
+http://scripts.sil.org/OFL
+
+--------
+
+Liberation Mono
+
+Digitized data copyright (c) 2010 Google Corporation.
+Copyright (c) 2012 Red Hat, Inc.
+
+Licensed under the SIL Open Font License, Version 1.1
+
+http://scripts.sil.org/OFL
+
+--------
+
+Liberation Sans
+
+Digitized data copyright (c) 2010 Google Corporation.
+Copyright (c) 2012 Red Hat, Inc.
+
+Licensed under the SIL Open Font License, Version 1.1
+
+http://scripts.sil.org/OFL
+
+--------
+
+Liberation Sans
+
+Digitized data copyright (c) 2010 Google Corporation. 
+Copyright (c) 2012 Red Hat, Inc.
+
+Licensed under the SIL Open Font License, Version 1.1
+
+http://scripts.sil.org/OFL
+
+--------
+
+Liberation Serif
+
+Digitized data copyright (c) 2010 Google Corporation.
+Copyright (c) 2012 Red Hat, Inc.
+
+Licensed under the SIL Open Font License, Version 1.1
+
+http://scripts.sil.org/OFL
+
+--------
+
+Noto Sans
+
+Copyright 2022 The Noto Project Authors (https://github.com/notofonts/latin-greek-cyrillic)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL
+
+https://scripts.sil.org/OFL

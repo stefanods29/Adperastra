@@ -1,0 +1,60 @@
+.sheet-ai-panel {
+  box-sizing: border-box;
+  width: 400px;
+  min-width: min(320px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  font-family: var(--adp-font-family);
+}
+.adp-sheet-ai-formula { display: grid; gap: 12px; min-width: 0; }
+.adp-sheet-ai-formula label { display: grid; gap: 4px; }
+.adp-sheet-ai-formula textarea {
+  width: 100%;
+  box-sizing: border-box;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  font-family: monospace;
+  resize: vertical;
+}
+.adp-sheet-ai-cleaning { min-width: 0; border: 1px solid var(--adp-color-border-default); }
+.adp-sheet-ai-cleaning-header, .adp-sheet-ai-cleaning-row {
+  display: grid;
+  grid-template-columns: minmax(60px, .7fr) minmax(80px, 1fr) minmax(80px, 1fr) minmax(90px, 1.2fr);
+  align-items: center;
+  height: 32px;
+  font-size: var(--adp-font-body);
+}
+.adp-sheet-ai-cleaning-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--adp-color-surface-header);
+}
+.adp-sheet-ai-cleaning-row { position: absolute; width: 100%; top: 0; }
+.adp-sheet-ai-cleaning-row > span, .adp-sheet-ai-cleaning-header > span {
+  overflow: auto;
+  white-space: nowrap;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+.adp-sheet-ai-cleaning-scroll { max-height: 320px; overflow: auto; }
+.adp-sheet-ai-chart { margin: 0; min-width: 0; }
+.adp-sheet-ai-chart img { display: block; max-width: 100%; height: auto; }
+.adp-sheet-ai-chart code { overflow-wrap: anywhere; }
+.sheet-ai-panel :focus-visible, .adp-sheet-ai-cleaning-scroll:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+@media (max-width: 999px) {
+  .sheet-ai-panel { width: 800px; max-height: calc(100vh - 32px); }
+}

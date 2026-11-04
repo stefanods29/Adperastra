@@ -1,0 +1,371 @@
+{
+  "date": "2026-10-31T14:43:06.322Z",
+  "step": "06b+06c",
+  "build": "release (tauri build --no-bundle)",
+  "scope": "Only 06b/06c interactions; earlier-step speed regression suite and owner hand checks remain pending",
+  "method": "7 runs; action to ready condition and two painted frames",
+  "language": "es",
+  "theme": "dark",
+  "fixture": "C:\\Users\\stefa\\AppData\\Local\\Temp\\adperastra-review-06bc-1557baa67bcb41d6bf5aad9d0597d125",
+  "passed": false,
+  "functional_passed": true,
+  "console_clean": false,
+  "failure": "no captured runtime console warnings or errors",
+  "results": [
+    {
+      "name": "save a small text file with version history (Ctrl+S)",
+      "median_ms": 29.5,
+      "max_ms": 46.7,
+      "runs": 7
+    },
+    {
+      "name": "open the version history (right-click menu)",
+      "median_ms": 32,
+      "max_ms": 35.1,
+      "runs": 7
+    },
+    {
+      "name": "command bar New menu (with templates)",
+      "median_ms": 29.4,
+      "max_ms": 33.9,
+      "runs": 7
+    }
+  ],
+  "checks": [
+    "saved revision 1 reached disk",
+    "saved revision 2 reached disk",
+    "saved revision 3 reached disk",
+    "saved revision 4 reached disk",
+    "saved revision 5 reached disk",
+    "saved revision 6 reached disk",
+    "saved revision 7 reached disk",
+    "diff contains added lines",
+    "added text contrast 12.89:1 (minimum 4.5:1)",
+    "diff contains removed lines",
+    "removed text contrast 8.78:1 (minimum 4.5:1)",
+    "history horizontal bounds: []",
+    "oldest version preview matches original bytes",
+    "restore kept the selected original version",
+    "editor Undo restored exact pre-restore bytes",
+    "template dialog uses its planned 640px width within the viewport",
+    "dialog horizontal bounds: []",
+    "keyboard focus selected the meeting template",
+    "focused template created its Markdown file",
+    "template creation left the original document unchanged"
+  ],
+  "consoleMessages": [
+    {
+      "method": "Log.entryAdded",
+      "params": {
+        "entry": {
+          "source": "security",
+          "level": "error",
+          "text": "Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'unsafe-inline' 'nonce-[redacted]''. Note that 'unsafe-inline' is ignored if either a hash or nonce value is present in the source list. The action has been blocked.",
+          "timestamp": 1793457781783.526,
+          "lineNumber": 8,
+          "stackTrace": {
+            "callFrames": [
+              {
+                "functionName": "",
+                "scriptId": "12",
+                "url": "",
+                "lineNumber": 8,
+                "columnNumber": 18
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "method": "Log.entryAdded",
+      "params": {
+        "entry": {
+          "source": "security",
+          "level": "error",
+          "text": "Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'unsafe-inline' 'nonce-[redacted]''. Note that 'unsafe-inline' is ignored if either a hash or nonce value is present in the source list. The action has been blocked.",
+          "timestamp": 1793457782406.199,
+          "url": "http://tauri.localhost/assets/languages-aEc30tWZ.js",
+          "lineNumber": 7,
+          "stackTrace": {
+            "callFrames": [
+              {
+                "functionName": "mount",
+                "scriptId": "55",
+                "url": "http://tauri.localhost/assets/languages-aEc30tWZ.js",
+                "lineNumber": 7,
+                "columnNumber": 77
+              },
+              {
+                "functionName": "mount",
+                "scriptId": "55",
+                "url": "http://tauri.localhost/assets/languages-aEc30tWZ.js",
+                "lineNumber": 6,
+                "columnNumber": 152
+              },
+              {
+                "functionName": "mountStyles",
+                "scriptId": "55",
+                "url": "http://tauri.localhost/assets/languages-aEc30tWZ.js",
+                "lineNumber": 10,
+                "columnNumber": 12950
+              },
+              {
+                "functionName": "e",
+                "scriptId": "55",
+                "url": "http://tauri.localhost/assets/languages-aEc30tWZ.js",
+                "lineNumber": 10,
+                "columnNumber": 6027
+              },
+              {
+                "functionName": "",
+                "scriptId": "55",
+                "url": "http://tauri.localhost/assets/languages-aEc30tWZ.js",
+                "lineNumber": 16,
+                "columnNumber": 16527
+              },
+              {
+                "functionName": "_l",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 95076
+              },
+              {
+                "functionName": "Ru",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119707
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119239
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119058
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118295
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118295
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 119532
+              },
+              {
+                "functionName": "Iu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118088
+              },
+              {
+                "functionName": "Lu",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 118361
+              },
+              {
+                "functionName": "uf",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 132836
+              },
+              {
+                "functionName": "",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 8,
+                "columnNumber": 129831
+              },
+              {
+                "functionName": "ne",
+                "scriptId": "29",
+                "url": "http://tauri.localhost/assets/index-iXvKBS4V.js",
+                "lineNumber": 1,
+                "columnNumber": 3672
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

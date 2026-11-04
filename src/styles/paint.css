@@ -1,0 +1,267 @@
+/* Step 18b: painting, adjustment popovers, text/shape editors and guides.
+   Every color comes from a token; image colors remain content data. */
+
+.adp-paint-properties {
+  width: 300px;
+  padding: var(--adp-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  background: var(--adp-color-surface-pane);
+  border-left: 1px solid var(--adp-color-border-panel);
+  overflow-y: auto;
+}
+
+.adp-paint-popover {
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  padding: var(--adp-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-lg);
+  box-shadow: var(--adp-shadow-page);
+  z-index: 20;
+}
+
+.adp-paint-curve-graph {
+  display: block;
+  width: 256px;
+  height: 160px;
+  background: var(--adp-color-surface-canvas-doc);
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-sm);
+  align-self: center;
+}
+
+.adp-paint-curve-frame {
+  fill: none;
+  stroke: var(--adp-color-border-subtle);
+  stroke-width: 1;
+}
+
+.adp-paint-curve-line {
+  stroke: var(--adp-accent-explorer);
+  stroke-width: 2;
+}
+
+.adp-paint-curve-point {
+  fill: var(--adp-accent-explorer);
+  stroke: var(--adp-color-surface-pane);
+  stroke-width: 1;
+}
+
+.adp-paint-curve-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--adp-font-small);
+}
+
+.adp-paint-curve-table th,
+.adp-paint-curve-table td {
+  padding: 2px 4px;
+  text-align: left;
+  font-weight: normal;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-paint-nudge {
+  display: block;
+}
+
+.adp-paint-nudge .adp-input {
+  width: 72px;
+}
+
+.adp-paint-curve-actions,
+.adp-paint-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--adp-space-2);
+}
+
+.adp-paint-levels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+}
+
+.adp-paint-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-primary);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.adp-paint-row {
+  display: flex;
+  gap: var(--adp-space-2);
+  flex-wrap: wrap;
+}
+
+.adp-paint-row .adp-paint-field {
+  flex: 1 1 64px;
+}
+
+.adp-paint-textarea {
+  min-height: 64px;
+  resize: vertical;
+  font: inherit;
+  color: inherit;
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  padding: var(--adp-space-1);
+}
+
+.adp-paint-align {
+  flex-direction: row;
+  gap: var(--adp-space-1);
+}
+
+.adp-paint-align legend {
+  font-size: var(--adp-font-small);
+  padding: 0;
+  margin-bottom: 2px;
+}
+
+/* Rulers and guides: the layer ignores pointer events so drawing reaches the
+   canvas; handles and buttons opt back in. */
+.adp-paint-rulers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-size: var(--adp-font-tiny);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-paint-ruler {
+  position: absolute;
+  background: var(--adp-color-surface-header);
+  border-color: var(--adp-color-border-panel);
+  border-style: solid;
+}
+
+.adp-paint-ruler--top {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  border-width: 0 0 1px 0;
+}
+
+.adp-paint-ruler--left {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 20px;
+  border-width: 0 1px 0 0;
+}
+
+.adp-paint-ruler-tick {
+  position: absolute;
+  font-size: var(--adp-font-tiny);
+  line-height: 1;
+  color: var(--adp-color-text-primary);
+  white-space: nowrap;
+}
+
+.adp-paint-ruler--top .adp-paint-ruler-tick {
+  top: 2px;
+  transform: translateX(2px);
+}
+
+.adp-paint-ruler--left .adp-paint-ruler-tick {
+  left: 2px;
+  transform: translateY(2px);
+  writing-mode: vertical-rl;
+}
+
+.adp-paint-guide-layer {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  pointer-events: none;
+}
+
+.adp-paint-guide {
+  position: absolute;
+  pointer-events: auto;
+  background: var(--adp-accent-explorer);
+  opacity: 0.7;
+  outline: none;
+}
+
+.adp-paint-guide--x {
+  width: 1px;
+  cursor: col-resize;
+}
+
+.adp-paint-guide--y {
+  height: 1px;
+  cursor: row-resize;
+}
+
+.adp-paint-guide:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.adp-paint-guide-grip {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--adp-radius-round);
+  background: var(--adp-accent-explorer);
+  border: 1px solid var(--adp-color-surface-pane);
+}
+
+.adp-paint-guide--x .adp-paint-guide-grip {
+  top: -4px;
+  left: -4px;
+}
+
+.adp-paint-guide--y .adp-paint-guide-grip {
+  top: -4px;
+  left: -4px;
+}
+
+.adp-paint-guide-actions {
+  position: absolute;
+  top: 24px;
+  right: 8px;
+  display: flex;
+  gap: var(--adp-space-1);
+  pointer-events: auto;
+}
+
+.adp-paint-cursor {
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid var(--adp-color-text-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--adp-color-surface-canvas-doc);
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+}
+
+.adp-paint-curves :focus-visible,
+.adp-paint-text-editor :focus-visible,
+.adp-paint-shape-editor :focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .adp-paint-properties {
+    width: 260px;
+  }
+}

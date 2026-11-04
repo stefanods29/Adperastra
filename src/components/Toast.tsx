@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useAccessibilityOptional } from "../accessibility/AccessibilityContext";
 
 export interface ToastData {
   id: number;
@@ -13,14 +14,17 @@ export interface ToastProps {
   toast: ToastData;
   onDismiss: (id: number) => void;
   onUndo?: (id: number) => void;
+  /** Stays until dismissed (the persistent-toasts preference). */
+  persistent?: boolean;
 }
 
-export function Toast({ toast, onDismiss, onUndo }: ToastProps) {
+export function Toast({ toast, onDismiss, onUndo, persistent = false }: ToastProps) {
   const { t } = useTranslation();
   const timer = useRef<number | null>(null);
 
   const start = () => {
     stop();
+    if (persistent) return;
     timer.current = window.setTimeout(() => onDismiss(toast.id), 8000);
   };
   const stop = () => {
@@ -32,7 +36,7 @@ export function Toast({ toast, onDismiss, onUndo }: ToastProps) {
     start();
     return stop;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast.id]);
+  }, [toast.id, persistent]);
 
   return (
     <div
@@ -70,11 +74,19 @@ export interface ToastStackProps {
 }
 
 export default function ToastStack({ toasts, onDismiss, onUndo }: ToastStackProps) {
+  const accessibility = useAccessibilityOptional();
+  const persistent = accessibility?.settings.persistent_toasts ?? false;
   if (toasts.length === 0) return null;
   return (
     <div className="adp-toast-stack">
       {toasts.map((toast) => (
-        <Toast key={toast.id} toast={toast} onDismiss={onDismiss} onUndo={onUndo} />
+        <Toast
+          key={toast.id}
+          toast={toast}
+          onDismiss={onDismiss}
+          onUndo={onUndo}
+          persistent={persistent}
+        />
       ))}
     </div>
   );

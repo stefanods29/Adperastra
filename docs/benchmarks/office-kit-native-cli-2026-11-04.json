@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "engine": "@deepseek-ai/libreoffice-kit-win32-x64",
+  "version": "0.1.3",
+  "mode": "fresh child and private profile each run; filesystem cache uncontrolled",
+  "concurrent_work": "workspace gate compilation",
+  "fixture_sha256": "f0e508408afdb8aedc83928f966fbeb6aaf9fdaaf1201c173d63545eafcd4b94",
+  "unchanged_source": true,
+  "app_launcher_source": true,
+  "signed_pack_path": false,
+  "samples": [
+    {
+      "run": 1,
+      "elapsed_ms": 1985,
+      "pages": 3,
+      "bytes": 39260
+    },
+    {
+      "run": 2,
+      "elapsed_ms": 1089,
+      "pages": 3,
+      "bytes": 39260
+    },
+    {
+      "run": 3,
+      "elapsed_ms": 1118,
+      "pages": 3,
+      "bytes": 39260
+    },
+    {
+      "run": 4,
+      "elapsed_ms": 1047,
+      "pages": 3,
+      "bytes": 39260
+    },
+    {
+      "run": 5,
+      "elapsed_ms": 1034,
+      "pages": 3,
+      "bytes": 39260
+    }
+  ]
+}

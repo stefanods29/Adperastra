@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { MenuEntry } from "../commands/menus";
 import { commandLabelKey, isCommandEnabled, type Command, type CommandContext } from "../commands/registry";
+import { resolveShortcutText, useShortcutResolutionHost } from "../keyboard/shortcutDisplay";
 import { formatShortcut } from "../services/shortcuts";
 
 /** Where a menu opens: at a point (right-click), below a button
@@ -20,13 +21,13 @@ export type MenuAnchor =
 
 export type MenuCloseReason = "run" | "escape" | "outside" | "tab" | "back";
 
-export interface MenuProps {
+export interface MenuProps<C = CommandContext> {
   /** Already resolved with `resolveMenu`. */
   entries: MenuEntry[];
-  ctx: CommandContext;
-  lookup: (id: string) => Command | undefined;
+  ctx: C;
+  lookup: (id: string) => Command<C> | undefined;
   anchor: MenuAnchor;
-  onRun: (command: Command) => void;
+  onRun: (command: Command<C>) => void;
   onClose: (reason: MenuCloseReason) => void;
   ariaLabel: string;
   /** Keyboard-opened menus start on their first item. */
@@ -66,19 +67,30 @@ function place(anchor: MenuAnchor, width: number, height: number): { left: numbe
  * right-click menus, command bar dropdowns, and the overflow menu. Our
  * own items render synchronously, so a menu is on screen in the same
  * frame as the click. */
-export default function Menu(props: MenuProps) {
+export default function Menu<C = CommandContext>({
+  entries,
+  ctx,
+  lookup,
+  anchor,
+  onRun,
+  onClose,
+  ariaLabel,
+  focusFirst,
+  onShown,
+  nested,
+}: MenuProps<C>) {
   const { t } = useTranslation();
   const menuId = useId();
+  const shortcutHost = useShortcutResolutionHost();
   const ref = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const hoverTimer = useRef<number | null>(null);
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
-  const [active, setActive] = useState(props.focusFirst ? 0 : -1);
+  const [active, setActive] = useState(focusFirst ? 0 : -1);
   const [sub, setSub] = useState<{ index: number; anchor: MenuAnchor; focusFirst: boolean } | null>(null);
-  const { ctx, lookup, onClose, onShown, nested } = props;
 
   const focusables: Focusable[] = [];
-  for (const entry of props.entries) {
+  for (const entry of entries) {
     if (entry.type === "command") {
       const command = lookup(entry.id);
       if (command) focusables.push({ entry, commandId: entry.id, label: t(commandLabelKey(command, ctx)) });
@@ -96,8 +108,8 @@ export default function Menu(props: MenuProps) {
     const element = ref.current;
     if (!element) return;
     const rect = element.getBoundingClientRect();
-    setPosition(place(props.anchor, rect.width, rect.height));
-  }, [props.anchor]);
+    setPosition(place(anchor, rect.width, rect.height));
+  }, [anchor]);
 
   useEffect(() => {
     ref.current?.focus({ preventScroll: true });
@@ -151,7 +163,7 @@ export default function Menu(props: MenuProps) {
     const command = item.commandId ? lookup(item.commandId) : undefined;
     if (!command || !isCommandEnabled(command, ctx)) return;
     onClose("run");
-    props.onRun(command);
+    onRun(command);
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -224,7 +236,8 @@ export default function Menu(props: MenuProps) {
     if (!command) return null;
     const enabled = isCommandEnabled(command, ctx);
     const label = t(commandLabelKey(command, ctx));
-    const shortcut = command.shortcut ? formatShortcut(command.shortcut, t) : "";
+    const shortcutText = resolveShortcutText(shortcutHost, command.id, command.shortcut);
+    const shortcut = shortcutText ? formatShortcut(shortcutText, t) : "";
     // Icon buttons have no visible label, so their tooltip says it all.
     const hint = command.pending ? t("commands.comingLater", { label }) : shortcut ? `${label} (${shortcut})` : label;
     const checked = command.checkedWhen ? command.checkedWhen(ctx) : undefined;
@@ -267,14 +280,14 @@ export default function Menu(props: MenuProps) {
       ref={ref}
       className="adp-ctxmenu"
       role="menu"
-      aria-label={props.ariaLabel}
+      aria-label={ariaLabel}
       tabIndex={-1}
       aria-activedescendant={active >= 0 ? itemId(active) : undefined}
       style={position ? { left: position.left, top: position.top } : { left: 0, top: 0, visibility: "hidden" }}
       onKeyDown={onKeyDown}
       onContextMenu={(event) => event.preventDefault()}
     >
-      {props.entries.map((entry, entryIndex) => {
+      {entries.map((entry, entryIndex) => {
         if (entry.type === "separator") {
           return <div key={`sep-${entryIndex}`} role="separator" className="adp-ctxmenu-separator" />;
         }
@@ -322,7 +335,7 @@ export default function Menu(props: MenuProps) {
           lookup={lookup}
           anchor={sub.anchor}
           focusFirst={sub.focusFirst}
-          onRun={props.onRun}
+          onRun={onRun}
           onClose={closeSub}
           ariaLabel={focusables[sub.index].label}
         />

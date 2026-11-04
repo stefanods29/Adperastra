@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "app_sha256": "961b722a0cb8cca2cdcfa186da87a3ffa8da478fdf3cb5cb704c8c4a15925509",
+  "checks": [
+    {
+      "format": "docx",
+      "source_unchanged": true,
+      "source_sha256": "f815894561b59c45d707eb3efc81f2dd0b6d674545fb673c68142fde37437403",
+      "changed_parts": [
+        "word/document.xml"
+      ],
+      "copy_sha256": "2fd83321d06fafc4715315de8768fc1d3f6213c5a0ce88cfcfce9df81d0bde7a"
+    },
+    {
+      "format": "xlsx",
+      "source_unchanged": true,
+      "source_sha256": "3bd7f5606d5bdeb07495ae44dbd24dc7dab928385893a67ceeecfe8d7c8400e9",
+      "changed_parts": [
+        "xl/worksheets/sheet1.xml"
+      ],
+      "copy_sha256": "e93808cd13795604c2da9bbc6ef5bf4ffe95c0c9c0d565414da0522637aba51e"
+    },
+    {
+      "format": "pptx",
+      "source_unchanged": true,
+      "source_sha256": "f0e508408afdb8aedc83928f966fbeb6aaf9fdaaf1201c173d63545eafcd4b94",
+      "changed_parts": [
+        "ppt/slides/slide1.xml"
+      ],
+      "copy_sha256": "c8038de3dfebd01071cf1630c516983c029a56b4fbd85ecbf7ed4332d558dd22"
+    }
+  ],
+  "final_app_sha256": "db5f4dd0938046b3d1ab9cc6a11dabe146bb73daeafb0bb31390ce39e16c69b9",
+  "final_copies_match_verified_results": true
+}

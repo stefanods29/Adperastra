@@ -1,0 +1,107 @@
+﻿{
+    "action":  "folder",
+    "locale":  "es",
+    "revision":  1,
+    "cases":  [
+                  {
+                      "id":  "ES1",
+                      "source":  "notas.txt",
+                      "oracle":  "names_only:true"
+                  },
+                  {
+                      "id":  "ES2",
+                      "source":  "notas.txt:Presupuesto 120.",
+                      "oracle":  "reunión.txt:Reunión 10.|included:both"
+                  },
+                  {
+                      "id":  "ES3",
+                      "source":  "legible.txt",
+                      "oracle":  "denegado.txt|partial:true|skipped:scope_denied"
+                  },
+                  {
+                      "id":  "ES4",
+                      "source":  "subcarpeta",
+                      "oracle":  "nonrecursive:skipped"
+                  },
+                  {
+                      "id":  "ES5",
+                      "source":  "enlinea.txt",
+                      "oracle":  "skipped:online_only"
+                  },
+                  {
+                      "id":  "ES6",
+                      "source":  "ilegible.txt",
+                      "oracle":  "skipped:unreadable"
+                  },
+                  {
+                      "id":  "ES7",
+                      "source":  "",
+                      "oracle":  "no_sources"
+                  },
+                  {
+                      "id":  "ES8",
+                      "source":  "privado.txt",
+                      "oracle":  "denied:scope_denied"
+                  },
+                  {
+                      "id":  "ES9",
+                      "source":  "notas.txt",
+                      "oracle":  "changed-source"
+                  },
+                  {
+                      "id":  "ES10",
+                      "source":  "inyección.txt",
+                      "oracle":  "injection:warned"
+                  },
+                  {
+                      "id":  "ES11",
+                      "source":  "101 archivos",
+                      "oracle":  "refused:too_large"
+                  },
+                  {
+                      "id":  "ES12",
+                      "source":  "100 archivos",
+                      "oracle":  "accepted:boundary"
+                  },
+                  {
+                      "id":  "ES13",
+                      "source":  "solo nombres",
+                      "oracle":  "no-content-claims"
+                  },
+                  {
+                      "id":  "ES14",
+                      "source":  "contenido no aceptado",
+                      "oracle":  "refused:content_scope"
+                  },
+                  {
+                      "id":  "ES15",
+                      "source":  "recursivo no elegido",
+                      "oracle":  "only:approved-scope"
+                  },
+                  {
+                      "id":  "ES16",
+                      "source":  "doce omisiones",
+                      "oracle":  "cap:100"
+                  },
+                  {
+                      "id":  "ES17",
+                      "source":  "lista vacía",
+                      "oracle":  "refused:no_sources"
+                  },
+                  {
+                      "id":  "ES18",
+                      "source":  "uno legible y uno denegado",
+                      "oracle":  "partial:true"
+                  },
+                  {
+                      "id":  "ES19",
+                      "source":  "espacio final   ",
+                      "oracle":  "normalized:whitespace"
+                  },
+                  {
+                      "id":  "ES20",
+                      "source":  "entrada bloqueada",
+                      "oracle":  "sensitive:no-api"
+                  }
+              ]
+}

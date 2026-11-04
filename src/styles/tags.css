@@ -1,0 +1,361 @@
+/* Tags (Step 11b): the picker and the catalog window. Sizes are logical so
+ * the layout mirrors under RTL locales; every color comes from a theme token
+ * except a tag's own measured color, which is data. */
+
+.adp-tag-picker {
+  inline-size: 480px;
+}
+
+.adp-tag-manager {
+  inline-size: 760px;
+}
+
+.adp-tag-picker,
+.adp-tag-manager,
+.adp-tag-import {
+  max-inline-size: calc(100vw - var(--adp-space-10));
+}
+
+.adp-tag-import {
+  inline-size: 560px;
+}
+
+.adp-tag-import-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  max-block-size: 60vh;
+  overflow: auto;
+}
+
+.adp-tag-conflicts-title {
+  margin: 0 0 var(--adp-space-2);
+  font-size: var(--adp-font-body);
+  font-weight: 600;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-tag-conflict-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+}
+
+.adp-tag-conflict {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-block-size: 36px;
+  flex-wrap: wrap;
+}
+
+.adp-tag-conflict-name {
+  min-inline-size: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-tag-conflict .adp-select {
+  flex: none;
+  max-inline-size: 220px;
+}
+
+.adp-tag-conflict .adp-input {
+  flex: 1;
+  min-inline-size: 140px;
+}
+
+.adp-tag-import-paths {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  padding-block-start: var(--adp-space-3);
+  border-block-start: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-tag-import-check {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-block-size: 36px;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+  cursor: pointer;
+}
+
+.adp-tag-import-check input[type="checkbox"] {
+  inline-size: 16px;
+  block-size: 16px;
+  accent-color: var(--adp-accent-current);
+  flex: none;
+}
+
+.adp-tag-import-check input:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: 2px;
+}
+
+.adp-tag-hint {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-tag-picker-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-block-size: 240px;
+}
+
+.adp-tag-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-block-size: 320px;
+  overflow: auto;
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-tag-row {
+  block-size: 36px;
+  min-block-size: 36px;
+  display: flex;
+  align-items: center;
+  border-block-end: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-tag-row:last-child {
+  border-block-end: none;
+}
+
+.adp-tag-row:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-tag-row--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-tag-row-label,
+.adp-tag-row-select {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  block-size: 100%;
+  padding-inline: var(--adp-space-3);
+  border: none;
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.adp-tag-row-label input[type="checkbox"] {
+  inline-size: 16px;
+  block-size: 16px;
+  accent-color: var(--adp-accent-current);
+  flex: none;
+}
+
+.adp-tag-swatch {
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: var(--adp-radius-round);
+  border: 1px solid var(--adp-color-border-chip);
+  flex: none;
+}
+
+.adp-tag-icon {
+  flex: none;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-tag-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-tag-empty {
+  margin: 0;
+  padding: var(--adp-space-5);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-body);
+  text-align: center;
+}
+
+.adp-tag-error {
+  margin: 0;
+  color: var(--adp-syntax-invalid);
+  font-size: var(--adp-font-small);
+}
+
+.adp-dialog-actions-spacer {
+  flex: 1;
+}
+
+.adp-tag-manager-body {
+  display: flex;
+  gap: var(--adp-space-6);
+  align-items: flex-start;
+}
+
+.adp-tag-manager-list {
+  inline-size: 280px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+}
+
+.adp-tag-manager-form {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+}
+
+.adp-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+}
+
+.adp-field-label {
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-tag-colors {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  flex-wrap: wrap;
+}
+
+.adp-tag-color {
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: var(--adp-radius-round);
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.adp-tag-color--current {
+  border-color: var(--adp-color-text-primary);
+  outline: 1px solid var(--adp-color-border-default);
+  outline-offset: 1px;
+}
+
+.adp-tag-color-input {
+  inline-size: 40px;
+  block-size: 28px;
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.adp-tag-icons {
+  display: flex;
+  gap: var(--adp-space-2);
+}
+
+.adp-tag-icon-choice {
+  inline-size: 32px;
+  block-size: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  cursor: pointer;
+}
+
+.adp-tag-icon-choice--current {
+  border-color: var(--adp-accent-current);
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-tag-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  block-size: 36px;
+  padding-inline: var(--adp-space-3);
+  border: 1px dashed var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-tag-confirm {
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  padding: var(--adp-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  font-size: var(--adp-font-body);
+}
+
+.adp-tag-confirm p {
+  margin: 0;
+}
+
+.adp-tag-confirm-actions {
+  display: flex;
+  gap: var(--adp-space-2);
+  justify-content: flex-end;
+}
+
+.adp-tag-manager-merge {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  margin-block-start: var(--adp-space-5);
+  padding-block-start: var(--adp-space-4);
+  border-block-start: 1px solid var(--adp-color-border-panel);
+  flex-wrap: wrap;
+}
+
+.adp-select {
+  block-size: 30px;
+  padding-inline: var(--adp-space-2);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  font-family: inherit;
+  font-size: var(--adp-font-body);
+}
+
+.adp-tag-picker:focus-visible,
+.adp-tag-manager:focus-visible,
+.adp-tag-color:focus-visible,
+.adp-tag-icon-choice:focus-visible,
+.adp-tag-color-input:focus-visible,
+.adp-tag-row-select:focus-visible,
+.adp-tag-row-label input:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: 2px;
+}

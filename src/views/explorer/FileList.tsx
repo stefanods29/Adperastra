@@ -1,63 +1,56 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Cloud, Link2 } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { ExplorerItem, SortDirection, SortKey } from "../../services/explorer";
-import { formatDate, formatSize } from "../../services/format";
-import type { ItemGroup } from "../../services/grouping";
-import { displayName } from "../../services/names";
 import {
-  moveFocus,
-  selectAll,
-  selectOnly,
-  selectRange,
-  toggleFocused,
-  toggleItem,
-  typeAheadIndex,
-  type FocusMove,
-  type SelectionState,
-} from "../../services/selection";
+  fileAnnouncementArgs,
+  listItemAriaProps,
+} from "../../accessibility/AccessibleFileAnnouncement";
+import { useAnnouncementsOptional } from "../../accessibility/AnnouncementContext";
+import { useRowSizes } from "../../appearance/density";
+import { FolderBackground } from "../../folders/FolderBackground";
+import { FolderGlyph } from "../../folders/FolderGlyph";
+import {
+  folderDecorationFor,
+  useFolderDecoration,
+  useFolderDecorations,
+  useFolderSurfaceColors,
+} from "../../folders/folderDecorationState";
+import type { ExplorerItem, SortKey } from "../../services/explorer";
+import { formatDate, formatSize } from "../../services/format";
+import {
+  COLUMN_LABEL_KEYS,
+  defaultColumns,
+  validColumns,
+  type ColumnId,
+  type ColumnSpec,
+} from "../../services/folderPresentation";
+import { displayName } from "../../services/names";
+import { linearMoveTarget, selectAll, type FocusMove } from "../../services/selection";
 import { fileTile } from "./fileTile";
 import RenameInput from "./RenameInput";
+import {
+  useItemInteractions,
+  type ItemViewProps,
+} from "./views/useItemInteractions";
 
-export interface FileListProps {
-  items: ExplorerItem[];
-  /** Grouped view; `null` shows the items as one list. */
-  groups: ItemGroup<ExplorerItem>[] | null;
-  selection: SelectionState;
-  onSelectionChange: (next: SelectionState) => void;
-  sortKey: SortKey;
-  sortDirection: SortDirection;
-  /** Column headers sort when set (folders); Home lists keep their order. */
-  onSort?: (key: SortKey) => void;
-  showExtensions: boolean;
-  checkboxes: boolean;
-  typeLabel: (item: ExplorerItem) => string;
-  renamingPath: string | null;
-  onStartRename: (item: ExplorerItem) => void;
-  /** Resolves to a translated error message, or null when renamed. */
-  onRenameCommit: (item: ExplorerItem, newName: string) => Promise<string | null>;
-  onRenameCancel: () => void;
-  onOpen: (item: ExplorerItem) => void;
-  /** Right-click or the Menu key; `item` is null for empty space. */
-  onContextMenu: (point: { x: number; y: number }, item: ExplorerItem | null) => void;
-  /** Keys that run registry commands (Enter, F2, Alt+Enter, ...); the
-   * point says where a keyboard-opened menu should appear. */
-  onCommandKey: (commandId: string, point?: { x: number; y: number }) => void;
-  onFirstPaint?: () => void;
-  /** Short Home lists render every row; folders virtualize. */
-  virtual?: boolean;
-  label: string;
-}
+/** Details view: the rows with columns. Props live in `ItemViewProps`
+ * (Step 05a moved them to the shared interactions hook). */
+export type FileListProps = ItemViewProps;
 
 type Row =
   | { type: "header"; key: string; label: string; count: number }
   | { type: "item"; key: string; item: ExplorerItem; order: number };
 
-const ROW_HEIGHT = 28;
 const HEADER_HEIGHT = 32;
-const TYPE_AHEAD_RESET_MS = 1000;
-const RENAME_CLICK_DELAY_MS = 500;
+const COLUMN_CLASS: Partial<Record<ColumnId, string>> = {
+  name: "adp-col-name",
+  modified: "adp-col-date",
+  kind: "adp-col-type",
+  size: "adp-col-size",
+};
+const FILE_LIST_COLUMNS = new Set<ColumnId>(["name", "modified", "kind", "size"]);
+const ignoreBackgroundWarning = () => undefined;
 
 const KEY_MOVES: Record<string, FocusMove> = {
   ArrowDown: "next",
@@ -73,9 +66,8 @@ export default function FileList(props: FileListProps) {
   const listId = useId();
   const scrollRef = useRef<HTMLDivElement>(null);
   const paintedRef = useRef(false);
-  const typeAhead = useRef({ buffer: "", at: 0 });
-  const renameTimer = useRef<number | null>(null);
   const virtual = props.virtual !== false;
+  const { row: rowHeight } = useRowSizes();
 
   const rows = useMemo<Row[]>(() => {
     const out: Row[] = [];
@@ -96,6 +88,63 @@ export default function FileList(props: FileListProps) {
   }, [props.groups, props.items, t]);
 
   const itemRows = useMemo(() => rows.filter((row): row is Extract<Row, { type: "item" }> => row.type === "item"), [rows]);
+  const orderItems = useMemo(() => itemRows.map((row) => row.item), [itemRows]);
+  const announcements = useAnnouncementsOptional();
+  const focusedItem = useMemo(
+    () =>
+      props.selection.focus === null
+        ? null
+        : itemRows.find((row) => row.item.path === props.selection.focus)?.item ?? null,
+    [itemRows, props.selection.focus],
+  );
+  // One combined announcement per focused row; the shared queue throttles
+  // quick arrow-key moves and never speaks for an inactive list (D2).
+  useEffect(() => {
+    if (!announcements || props.active === false || focusedItem === null) return;
+    const size =
+      focusedItem.kind === "folder" || focusedItem.kind === "drive"
+        ? ""
+        : formatSize(focusedItem.size, i18n.language);
+    announcements.announce(
+      "accessibility.fileAnnouncement",
+      fileAnnouncementArgs({
+        name: displayName(focusedItem.name, focusedItem.kind, props.showExtensions),
+        type: props.typeLabel(focusedItem),
+        size,
+        date: focusedItem.modified_unix > 0 ? formatDate(focusedItem.modified_unix, i18n.language) : "",
+      }),
+      "polite",
+    );
+    // The focused path is the trigger; formatters read current language.
+  }, [
+    props.active,
+    props.showExtensions,
+    props.typeLabel,
+    announcements,
+    focusedItem,
+    i18n.language,
+  ]);
+  // One bounded catalog read for the folders this list draws. Files never
+  // query the folder catalog, and an unavailable adapter leaves the map empty.
+  const folderPaths = useMemo(
+    () => itemRows.filter((row) => row.item.kind === "folder").map((row) => row.item.path),
+    [itemRows],
+  );
+  const folderDecorations = useFolderDecorations(folderPaths);
+  // A manually assigned column set uses what this list can draw: the four
+  // listing-backed columns. Metadata-only IDs remain the 09d presenter's job.
+  const activePath = props.folderPath && (props.folderBackgrounds || props.columnSetsEnabled) ? props.folderPath : null;
+  const activeDecoration = useFolderDecoration(activePath);
+  const activeBackground = activeDecoration?.background;
+  const surface = useFolderSurfaceColors();
+  const columns = useMemo(() => {
+    const assigned = props.columnSetsEnabled ? activeDecoration?.column_set : undefined;
+    const source = assigned && validColumns(assigned.columns) ? assigned.columns : defaultColumns();
+    const supported = source.filter((column) => FILE_LIST_COLUMNS.has(column.id));
+    return supported.length > 0 && supported[0].id === "name" ? supported : defaultColumns();
+  }, [activeDecoration, props.columnSetsEnabled]);
+  const columnStyle = (column: ColumnSpec) =>
+    column.id === "name" ? undefined : { flex: `0 0 ${column.width}px` };
   const order = useMemo(() => itemRows.map((row) => row.item.path), [itemRows]);
   const rowIndexOfPath = useMemo(() => {
     const map = new Map<string, number>();
@@ -105,10 +154,33 @@ export default function FileList(props: FileListProps) {
     return map;
   }, [rows]);
 
+  const interactions = useItemInteractions(props, {
+    order,
+    orderItems,
+    scrollRef,
+    moveTarget: (key, current) => {
+      const move = KEY_MOVES[key];
+      if (!move) return null;
+      const height = scrollRef.current?.clientHeight ?? 280;
+      const pageSize = Math.max(1, Math.floor(height / rowHeight) - 1);
+      return linearMoveTarget(move, current, order.length, pageSize);
+    },
+    elementForIndex: (index) => {
+      const rowIndex = rowIndexOfPath.get(order[index]);
+      if (rowIndex === undefined) return null;
+      return scrollRef.current?.querySelector(`[data-row="${rowIndex}"]`) ?? null;
+    },
+  });
+
+  // A new function each time the density changes makes the virtualizer
+  // measure its rows again.
+  const getItemKey = useCallback((index: number) => index, [rowHeight]);
+
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index) => (rows[index]?.type === "header" ? HEADER_HEIGHT : ROW_HEIGHT),
+    estimateSize: (index) => (rows[index]?.type === "header" ? HEADER_HEIGHT : rowHeight),
+    getItemKey,
     overscan: 12,
   });
 
@@ -135,140 +207,7 @@ export default function FileList(props: FileListProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus]);
 
-  useEffect(
-    () => () => {
-      if (renameTimer.current !== null) window.clearTimeout(renameTimer.current);
-    },
-    [],
-  );
-
-  const cancelRenameTimer = () => {
-    if (renameTimer.current !== null) window.clearTimeout(renameTimer.current);
-    renameTimer.current = null;
-  };
-
   const rowId = (index: number) => `${listId}-row-${index}`;
-
-  const onRowClick = (event: ReactMouseEvent, item: ExplorerItem) => {
-    event.stopPropagation();
-    const selection = props.selection;
-    const wasOnlySelection = selection.selected.size === 1 && selection.selected.has(item.path);
-    cancelRenameTimer();
-    if (event.shiftKey) {
-      props.onSelectionChange(selectRange(selection, order, item.path, event.ctrlKey || event.metaKey));
-      return;
-    }
-    if (event.ctrlKey || event.metaKey) {
-      props.onSelectionChange(toggleItem(selection, item.path));
-      return;
-    }
-    if (!wasOnlySelection) {
-      props.onSelectionChange(selectOnly(item.path));
-      return;
-    }
-    // One-step rename: a second, slow click on the name of the only
-    // selected item starts renaming (a double-click opens instead).
-    const onName = (event.target as Element).closest(".adp-file-name");
-    if (onName && event.detail === 1) {
-      renameTimer.current = window.setTimeout(() => {
-        renameTimer.current = null;
-        props.onStartRename(item);
-      }, RENAME_CLICK_DELAY_MS);
-    }
-  };
-
-  const onRowContextMenu = (event: ReactMouseEvent, item: ExplorerItem) => {
-    event.preventDefault();
-    event.stopPropagation();
-    cancelRenameTimer();
-    if (!props.selection.selected.has(item.path)) props.onSelectionChange(selectOnly(item.path));
-    props.onContextMenu({ x: event.clientX, y: event.clientY }, item);
-  };
-
-  const menuPointForFocus = (): { point: { x: number; y: number }; item: ExplorerItem | null } => {
-    const focusPath = props.selection.focus;
-    const index = focusPath !== null ? rowIndexOfPath.get(focusPath) : undefined;
-    const element = index !== undefined ? scrollRef.current?.querySelector(`[data-row="${index}"]`) : null;
-    const box = (element ?? scrollRef.current)?.getBoundingClientRect();
-    const point = box ? { x: box.left + 24, y: box.top + (element ? box.height : 8) } : { x: 0, y: 0 };
-    const row = index !== undefined ? rows[index] : undefined;
-    const item = row && row.type === "item" && props.selection.selected.has(row.item.path) ? row.item : null;
-    return { point, item };
-  };
-
-  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (event.target !== scrollRef.current) return;
-    const selection = props.selection;
-    const ctrl = event.ctrlKey || event.metaKey;
-    const move = KEY_MOVES[event.key];
-    if (move && !event.altKey) {
-      event.preventDefault();
-      const pageSize = Math.max(1, Math.floor((scrollRef.current?.clientHeight ?? 280) / ROW_HEIGHT) - 1);
-      props.onSelectionChange(moveFocus(selection, order, move, { shift: event.shiftKey, ctrl, pageSize }));
-      return;
-    }
-    if (ctrl && !event.shiftKey && (event.key === "a" || event.key === "A")) {
-      event.preventDefault();
-      props.onSelectionChange(selectAll(selection, order));
-      return;
-    }
-    if (ctrl && event.key === " ") {
-      event.preventDefault();
-      props.onSelectionChange(toggleFocused(selection));
-      return;
-    }
-    if (event.key === "Enter" && event.altKey) {
-      event.preventDefault();
-      props.onCommandKey("explorer.properties");
-      return;
-    }
-    if (event.key === "Enter") {
-      event.preventDefault();
-      props.onCommandKey("explorer.open");
-      return;
-    }
-    if (event.key === "F2") {
-      event.preventDefault();
-      props.onCommandKey("explorer.rename");
-      return;
-    }
-    if (ctrl && event.shiftKey && (event.key === "c" || event.key === "C")) {
-      event.preventDefault();
-      props.onCommandKey("explorer.copyPath");
-      return;
-    }
-    if (event.key === "F10" && event.shiftKey) {
-      event.preventDefault();
-      props.onCommandKey("explorer.showMoreOptions", menuPointForFocus().point);
-      return;
-    }
-    if (event.key === "ContextMenu") {
-      event.preventDefault();
-      const { point, item } = menuPointForFocus();
-      props.onContextMenu(point, item);
-      return;
-    }
-    if (event.key.length === 1 && !ctrl && !event.altKey) {
-      const now = Date.now();
-      const state = typeAhead.current;
-      if (event.key === " " && (state.buffer === "" || now - state.at > TYPE_AHEAD_RESET_MS)) {
-        event.preventDefault();
-        if (selection.focus !== null && !selection.selected.has(selection.focus)) {
-          props.onSelectionChange(toggleFocused(selection));
-        }
-        return;
-      }
-      state.buffer = now - state.at > TYPE_AHEAD_RESET_MS ? event.key : state.buffer + event.key;
-      state.at = now;
-      const names = itemRows.map((row) => displayName(row.item.name, row.item.kind, props.showExtensions));
-      const current = selection.focus !== null ? order.indexOf(selection.focus) : -1;
-      const index = typeAheadIndex(names, current, state.buffer);
-      if (index >= 0) {
-        event.preventDefault();
-        props.onSelectionChange(selectOnly(order[index]));
-      }
-    }
-  };
 
   const typeLabelFor = props.typeLabel;
   const renderRow = (row: Row, index: number, style: React.CSSProperties | undefined) => {
@@ -287,16 +226,76 @@ export default function FileList(props: FileListProps) {
     const renaming = props.renamingPath === item.path;
     const tile = fileTile(item.name, item.kind);
     const Icon = tile.icon;
+    const decoration = item.kind === "folder" ? folderDecorationFor(folderDecorations, item.path) : undefined;
+    const unstable = decoration?.warning_codes.includes("unstable") === true;
     const shownName = displayName(item.name, item.kind, props.showExtensions);
     const className = [
       "adp-file-row",
       virtual ? "" : "adp-file-row--static",
       selected ? "adp-file-row--selected" : "",
       focused ? "adp-file-row--focused" : "",
+      props.pickActive && (item.kind === "folder" || item.kind === "drive")
+        ? "adp-pick-target"
+        : "",
       item.hidden || item.system ? "adp-file-row--hidden" : "",
     ]
       .filter(Boolean)
       .join(" ");
+    const nameCell = (
+      <span key="name" className="adp-col-name adp-file-name-cell">
+        {props.checkboxes ? (
+          <span
+            className={`adp-row-check${selected ? " adp-row-check--on" : ""}`}
+            aria-hidden="true"
+            onClick={(event) => interactions.onCheckClick(event, item)}
+          >
+            {selected ? <Check size={12} /> : null}
+          </span>
+        ) : null}
+        <span
+          className={`adp-file-tile adp-file-tile--${tile.tone}`}
+          title={unstable ? t("folderCustom.unstable") : undefined}
+        >
+          {item.kind === "folder" ? <FolderGlyph decoration={decoration} size={13} /> : <Icon size={13} aria-hidden="true" />}
+        </span>
+        {renaming ? (
+          <RenameInput
+            item={item}
+            showExtensions={props.showExtensions}
+            onCommit={(newName) => props.onRenameCommit(item, newName)}
+            onCancel={props.onRenameCancel}
+          />
+        ) : (
+          <span className="adp-file-name">{shownName}</span>
+        )}
+        {item.online_only ? (
+          <span className="adp-file-badge" title={t("explorer.onlineOnly")} aria-label={t("explorer.onlineOnly")}>
+            <Cloud size={12} aria-hidden="true" />
+          </span>
+        ) : null}
+        {item.is_link ? (
+          <span className="adp-file-badge" title={t("explorer.isLink")} aria-label={t("explorer.isLink")}>
+            <Link2 size={11} aria-hidden="true" />
+          </span>
+        ) : null}
+      </span>
+    );
+    const cells = columns.map((column) => {
+      if (column.id === "name") return nameCell;
+      if (column.id === "modified") {
+        return <span key="modified" className="adp-col-date" style={columnStyle(column)}>
+          {item.modified_unix > 0 ? formatDate(item.modified_unix, i18n.language) : ""}
+        </span>;
+      }
+      if (column.id === "kind") return <span key="kind" className="adp-col-type" style={columnStyle(column)}>{typeLabelFor(item)}</span>;
+      const folderSize =
+        item.kind === "folder" ? (props.folderSizeText?.(item) ?? "") : "";
+      return <span key="size" className="adp-col-size" style={columnStyle(column)}>
+        {item.kind === "folder" || item.kind === "drive"
+          ? folderSize
+          : formatSize(item.size, i18n.language)}
+      </span>;
+    });
     return (
       <div
         key={row.key}
@@ -304,76 +303,48 @@ export default function FileList(props: FileListProps) {
         data-row={index}
         role="option"
         aria-selected={selected}
+        {...listItemAriaProps(row.order, order.length)}
         className={className}
         style={style}
-        onClick={(event) => onRowClick(event, item)}
-        onDoubleClick={(event) => {
-          event.stopPropagation();
-          cancelRenameTimer();
-          if (!renaming) props.onOpen(item);
-        }}
-        onContextMenu={(event) => onRowContextMenu(event, item)}
+        data-drop-folder={item.kind === "folder" || item.kind === "drive" ? item.path : undefined}
+        data-drop-name={item.kind === "folder" || item.kind === "drive" ? item.name : undefined}
+        data-pick-target={
+          props.pickActive && (item.kind === "folder" || item.kind === "drive") ? item.path : undefined
+        }
+        onMouseDown={(event) => props.onItemMouseDown?.(event, item)}
+        onClick={(event) => interactions.onItemClick(event, item)}
+        onDoubleClick={(event) => interactions.onItemDoubleClick(event, item)}
+        onContextMenu={(event) => interactions.onItemContextMenu(event, item)}
+        onAuxClick={(event) => interactions.onItemAuxClick(event, item)}
       >
-        <span className="adp-col-name adp-file-name-cell">
-          {props.checkboxes ? (
-            <span
-              className={`adp-row-check${selected ? " adp-row-check--on" : ""}`}
-              aria-hidden="true"
-              onClick={(event) => {
-                event.stopPropagation();
-                cancelRenameTimer();
-                props.onSelectionChange(toggleItem(props.selection, item.path));
-              }}
-            >
-              {selected ? <Check size={12} /> : null}
-            </span>
-          ) : null}
-          <span className={`adp-file-tile adp-file-tile--${tile.tone}`}>
-            <Icon size={13} aria-hidden="true" />
-          </span>
-          {renaming ? (
-            <RenameInput
-              item={item}
-              showExtensions={props.showExtensions}
-              onCommit={(newName) => props.onRenameCommit(item, newName)}
-              onCancel={props.onRenameCancel}
-            />
-          ) : (
-            <span className="adp-file-name">{shownName}</span>
-          )}
-          {item.online_only ? (
-            <span className="adp-file-badge" title={t("explorer.onlineOnly")} aria-label={t("explorer.onlineOnly")}>
-              <Cloud size={12} aria-hidden="true" />
-            </span>
-          ) : null}
-          {item.is_link ? (
-            <span className="adp-file-badge" title={t("explorer.isLink")} aria-label={t("explorer.isLink")}>
-              <Link2 size={11} aria-hidden="true" />
-            </span>
-          ) : null}
-        </span>
-        <span className="adp-col-date">{item.modified_unix > 0 ? formatDate(item.modified_unix, i18n.language) : ""}</span>
-        <span className="adp-col-type">{typeLabelFor(item)}</span>
-        <span className="adp-col-size">{item.kind === "folder" || item.kind === "drive" ? "" : formatSize(item.size, i18n.language)}</span>
+        {cells}
       </div>
     );
   };
 
-  const header = (key: SortKey, labelKey: string, className: string) => {
+  const header = (key: SortKey, labelKey: string, className: string, column: ColumnSpec) => {
     if (!props.onSort) {
       return (
-        <span role="columnheader" className={`adp-filelist-header-cell adp-filelist-header-cell--static ${className}`}>
+        <span
+          key={key}
+          style={columnStyle(column)}
+          className={`adp-filelist-header-cell adp-filelist-header-cell--static ${className}`}
+        >
           {t(labelKey)}
         </span>
       );
     }
     return (
       <button
+        key={key}
         type="button"
-        role="columnheader"
+        style={columnStyle(column)}
         className={`adp-filelist-header-cell ${className}`}
-        aria-label={t("explorer.sortBy", { name: t(labelKey) })}
-        aria-sort={props.sortKey === key ? (props.sortDirection === "ascending" ? "ascending" : "descending") : undefined}
+        aria-label={
+          props.sortKey === key
+            ? t(props.sortDirection === "ascending" ? "explorer.sortedAscending" : "explorer.sortedDescending", { name: t(labelKey) })
+            : t("explorer.sortBy", { name: t(labelKey) })
+        }
         onClick={() => props.onSort?.(key)}
       >
         <span>{t(labelKey)}</span>
@@ -387,7 +358,17 @@ export default function FileList(props: FileListProps) {
 
   return (
     <div className={virtual ? "adp-filelist" : "adp-filelist adp-filelist--static"}>
-      <div className="adp-filelist-header" role="row">
+      {activeBackground ? (
+        <FolderBackground
+          background={activeBackground}
+          enabled={props.folderBackgrounds === true}
+          visible
+          paneColor={surface.paneColor}
+          textColor={surface.textColor}
+          onWarning={ignoreBackgroundWarning}
+        />
+      ) : null}
+      <div className="adp-filelist-header" role="group" aria-label={t("explorer.columnsLabel")}>
         {props.checkboxes ? (
           <span
             className={`adp-row-check adp-row-check--header${allSelected ? " adp-row-check--on" : ""}`}
@@ -402,30 +383,21 @@ export default function FileList(props: FileListProps) {
             {allSelected ? <Check size={12} aria-hidden="true" /> : null}
           </span>
         ) : null}
-        {header("name", "explorer.columnName", "adp-col-name")}
-        {header("modified", "explorer.columnModified", "adp-col-date")}
-        {header("kind", "explorer.columnType", "adp-col-type")}
-        {header("size", "explorer.columnSize", "adp-col-size")}
+        {columns.map((column) =>
+          header(column.id as SortKey, COLUMN_LABEL_KEYS[column.id], COLUMN_CLASS[column.id] ?? "", column),
+        )}
       </div>
       <div
         ref={scrollRef}
-        className="adp-filelist-scroll"
+        className={`adp-filelist-scroll${props.pickActive && props.onPickCurrentTarget ? " adp-pick-target" : ""}`}
         role="listbox"
         aria-multiselectable="true"
         aria-label={props.label}
         aria-activedescendant={focusIndex !== undefined ? rowId(focusIndex) : undefined}
         tabIndex={0}
-        onKeyDown={onKeyDown}
-        onClick={() => {
-          cancelRenameTimer();
-          if (props.selection.selected.size > 0) props.onSelectionChange({ ...props.selection, selected: new Set() });
-        }}
-        onContextMenu={(event) => {
-          event.preventDefault();
-          cancelRenameTimer();
-          if (props.selection.selected.size > 0) props.onSelectionChange({ ...props.selection, selected: new Set() });
-          props.onContextMenu({ x: event.clientX, y: event.clientY }, null);
-        }}
+        onKeyDown={interactions.onListKeyDown}
+        onClick={interactions.onListClick}
+        onContextMenu={interactions.onListContextMenu}
       >
         {virtual ? (
           <div className="adp-filelist-inner" style={{ height: virtualizer.getTotalSize() }}>
@@ -434,7 +406,7 @@ export default function FileList(props: FileListProps) {
               if (!row) return null;
               return renderRow(row, virtualRow.index, {
                 transform: `translateY(${virtualRow.start}px)`,
-                height: row.type === "header" ? HEADER_HEIGHT : ROW_HEIGHT,
+                height: row.type === "header" ? HEADER_HEIGHT : rowHeight,
               });
             })}
           </div>

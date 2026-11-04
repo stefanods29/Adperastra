@@ -16,6 +16,8 @@ Do NOT build these unless I ask. Just make sure nothing in the architecture bloc
 - Option to replace the Windows Explorer for Win+E and "open folder".
 - Natural-sounding read-aloud voices (Kokoro, Apache-2.0) as an optional pack.
 - Sensitive-data warning before sharing (ID numbers, card numbers) as an optional privacy feature.
+- A spelling language per document in the text editor (Step 06a uses the webview's built-in checker, which follows the languages installed in Windows; a per-document choice needs a permissively licensed checker or a WebView2 option).
 - Update channels (stable and beta) and one-click rollback to the previous version.
 - Code signing of releases (only if users ask; see Step 08c).
 - Submitting releases to winget.
+- Editing files inside an archive (save back into the archive), other view modes inside archive tabs, and Replace/Merge choices when extracting (Step 09f's conflict window could offer them).

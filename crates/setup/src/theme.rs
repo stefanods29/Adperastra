@@ -52,22 +52,40 @@ pub fn apply(ctx: &egui::Context, dark: bool) {
     });
 }
 
-/// Load `payload/fonts/Inter.ttf` under `base_dir` as the primary
-/// proportional font, if present. All failures are ignored: the
-/// built-in egui fonts are an acceptable fallback.
+/// Bind every egui text family before the first frame. egui's built-in
+/// fonts are turned off (their Ubuntu font license is not on the allowed
+/// list), so there is no automatic fallback. Order: the bundled Inter
+/// (`payload/fonts/Inter.ttf` under `base_dir`), else the Windows UI font
+/// installed on the PC, else any TrueType font in the Windows Fonts folder.
+/// System fonts are read at run time and never bundled; they matter exactly
+/// when Inter is missing, which is when this window runs to repair it.
 pub fn install_fonts(ctx: &egui::Context, base_dir: &Path) {
-    let path = base_dir.join("payload").join("fonts").join("Inter.ttf");
-    let bytes = match std::fs::read(&path) {
-        Ok(b) => b,
-        Err(_) => return,
+    let windows = std::env::var_os("WINDIR").unwrap_or_else(|| r"C:\Windows".into());
+    let fonts_dir = Path::new(&windows).join("Fonts");
+    let mut candidates = vec![
+        base_dir.join("payload").join("fonts").join("Inter.ttf"),
+        fonts_dir.join("segoeui.ttf"),
+    ];
+    if let Ok(entries) = std::fs::read_dir(&fonts_dir) {
+        let mut others: Vec<_> = entries
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.extension().is_some_and(|x| x.eq_ignore_ascii_case("ttf")))
+            .collect();
+        others.sort();
+        candidates.extend(others);
+    }
+    let Some(bytes) = candidates.iter().find_map(|p| std::fs::read(p).ok()) else {
+        // Only reachable on a Windows install with no readable fonts at
+        // all; the window then has no text, but the repair still runs.
+        return;
     };
-    let mut defs = FontDefinitions::default();
+    let mut defs = FontDefinitions::empty();
     defs.font_data
-        .insert("inter".to_owned(), Arc::new(FontData::from_owned(bytes)));
+        .insert("ui".to_owned(), Arc::new(FontData::from_owned(bytes)));
     defs.families
-        .entry(FontFamily::Proportional)
-        .or_default()
-        .insert(0, "inter".to_owned());
+        .insert(FontFamily::Proportional, vec!["ui".to_owned()]);
+    defs.families
+        .insert(FontFamily::Monospace, vec!["ui".to_owned()]);
     ctx.set_fonts(defs);
 }
 

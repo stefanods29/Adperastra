@@ -1,0 +1,71 @@
+.adp-folder-customize {
+  inline-size: 760px;
+  max-inline-size: calc(100vw - 32px);
+  max-block-size: calc(100vh - 32px);
+  overflow: auto;
+}
+.adp-folder-customize-form {
+  display: grid;
+  grid-template-columns: 128px minmax(240px, 1fr);
+  gap: 16px;
+}
+.adp-folder-customize-tabs { display: flex; align-items: center; gap: var(--adp-space-1); margin-block-end: 16px; }
+.adp-folder-customize-tab { border: none; border-radius: var(--adp-radius-sm); background: transparent; color: var(--adp-color-text-secondary); padding: var(--adp-space-2) var(--adp-space-4); cursor: pointer; }
+.adp-folder-customize-tab--active { background: var(--adp-color-surface-selected); color: var(--adp-color-text-primary); }
+.adp-folder-customize-help { margin-inline-start: auto; }
+.adp-folder-customize-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 240px;
+  block-size: 180px;
+  max-inline-size: 100%;
+  margin-block-end: 16px;
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  border: 1px solid var(--adp-color-border-default);
+}
+.adp-folder-customize-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--adp-space-2); min-inline-size: 0; }
+.adp-folder-customize-icon { display: inline-flex; align-items: center; justify-content: center; min-inline-size: 32px; min-block-size: 32px; padding: var(--adp-space-1) var(--adp-space-2); border: 1px solid var(--adp-color-border-default); border-radius: var(--adp-radius-sm); background: transparent; color: var(--adp-color-text-primary); cursor: pointer; }
+.adp-folder-customize-icon--on { border-color: var(--adp-accent-current); background: var(--adp-color-surface-selected); }
+.adp-folder-customize-column { flex-direction: column; align-items: flex-start; }
+.adp-folder-customize-actions { display: flex; align-items: center; gap: var(--adp-space-2); margin-block-start: 16px; }
+.adp-folder-glyph-emoji { font-size: 1em; line-height: 1; }
+.adp-filelist { position: relative; }
+.adp-filelist > .adp-folder-background { z-index: 0; }
+.adp-filelist > .adp-filelist-header,
+.adp-filelist > .adp-filelist-scroll { position: relative; z-index: 1; }
+.adp-folder-background {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.adp-folder-background-image,
+.adp-folder-background-tile { inline-size: 100%; block-size: 100%; }
+.adp-folder-background-fit { object-fit: contain; }
+.adp-folder-background-fill { object-fit: cover; }
+.adp-folder-background-tile { background-repeat: repeat; }
+.adp-folder-column-sets {
+  display: grid;
+  gap: 16px;
+  min-inline-size: 0;
+  color: var(--adp-color-text-primary);
+  border: 1px solid var(--adp-color-border-default);
+}
+.adp-folder-column-sets-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.adp-folder-column-sets-row label { flex: 1 1 128px; }
+.adp-folder-column-sets-row input[type="number"] { inline-size: 6em; }
+.adp-folder-column-sets :focus-visible,
+.adp-folder-customize :focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .adp-folder-customize-form { grid-template-columns: minmax(0, 1fr); }
+}

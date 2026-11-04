@@ -1,0 +1,429 @@
+/* Storage view, duplicate review and folder-size surfaces (Step 11c).
+   Colors come only from tokens; no component hard-codes a palette value. */
+
+.adp-storage-view,
+.adp-duplicates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-5);
+  min-height: 100%;
+  padding: var(--adp-space-5);
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-storage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-5);
+  min-height: 56px;
+  padding: 0 var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-storage-title {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-width: 0;
+}
+
+.adp-storage-title h1 {
+  margin: 0;
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+}
+
+.adp-storage-root {
+  display: block;
+  overflow: hidden;
+  max-width: 60ch;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-storage-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+}
+
+.adp-storage-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.adp-storage-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  padding: var(--adp-space-4);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-storage-card span {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-storage-card strong {
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+}
+
+.adp-storage-layout {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .adp-storage-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.adp-storage-treemap,
+.adp-storage-largest,
+.adp-storage-types {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-width: 0;
+}
+
+.adp-storage-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-3);
+  min-height: 24px;
+}
+
+.adp-storage-heading {
+  margin: 0;
+  font-size: var(--adp-font-body);
+  font-weight: 600;
+}
+
+.adp-storage-count,
+.adp-storage-status {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-storage-canvas {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  height: 240px;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-storage-tile-list,
+.adp-storage-largest-list,
+.adp-duplicate-member-preview,
+.adp-duplicate-unverified-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow: auto;
+  list-style: none;
+}
+
+.adp-storage-tile-row,
+.adp-duplicate-member-preview li {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 32px;
+}
+
+.adp-storage-tile-action,
+.adp-storage-row-main,
+.adp-duplicate-open {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--adp-space-4);
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--adp-space-3);
+  border: 0;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.adp-storage-tile-action {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.adp-storage-tile-action:hover,
+.adp-storage-row-main:hover,
+.adp-duplicate-open:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-storage-tile-action--selected,
+.adp-storage-row--selected .adp-storage-row-main {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-storage-row--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-storage-name,
+.adp-storage-tile-action span:first-child,
+.adp-duplicate-path,
+.adp-duplicate-open span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-storage-bytes,
+.adp-storage-items,
+.adp-storage-row-main > span:not(.adp-storage-name) {
+  color: var(--adp-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.adp-storage-table-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 120px 72px 24px;
+  gap: var(--adp-space-4);
+  align-items: center;
+  padding: 0 var(--adp-space-3);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-storage-column-header {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--adp-space-1);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.adp-storage-column-header:hover {
+  color: var(--adp-color-text-primary);
+}
+
+.adp-storage-row {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-storage-row-main {
+  grid-template-columns: minmax(0, 1fr) 120px 120px 72px;
+}
+
+.adp-storage-load-more {
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  border: 0;
+  background: transparent;
+  color: var(--adp-accent-explorer);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adp-storage-note,
+.adp-storage-empty,
+.adp-storage-error {
+  margin: 0;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-inline-start: 3px solid var(--adp-accent-explorer);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-storage-error {
+  border-inline-start-color: var(--adp-color-status-caution);
+  color: var(--adp-color-status-caution);
+}
+
+.adp-storage-types ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--adp-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-storage-types li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 96px;
+  gap: var(--adp-space-2);
+  padding: var(--adp-space-1) var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  font-size: var(--adp-font-small);
+}
+
+.adp-storage-types li span:nth-child(2),
+.adp-storage-types li span:nth-child(3) {
+  color: var(--adp-color-text-secondary);
+  text-align: end;
+}
+
+/* Duplicate review */
+
+.adp-duplicates-dialog {
+  width: 960px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-duplicate-review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+}
+
+.adp-duplicate-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-duplicate-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  padding: var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-duplicate-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-height: 32px;
+  font-size: var(--adp-font-small);
+}
+
+.adp-duplicate-group-header > span:first-child {
+  flex: 1;
+  font-weight: 600;
+}
+
+.adp-duplicate-member {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) 96px 140px;
+  gap: var(--adp-space-3);
+  align-items: center;
+  min-height: 40px;
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  font-size: var(--adp-font-small);
+}
+
+.adp-duplicate-keep {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-width: 0;
+}
+
+.adp-duplicate-hardlink,
+.adp-duplicate-warning {
+  color: var(--adp-color-status-caution);
+  font-size: var(--adp-font-small);
+}
+
+.adp-duplicate-warning {
+  margin: 0;
+}
+
+.adp-duplicate-summary {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-duplicate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--adp-space-3);
+}
+
+.adp-duplicate-badge {
+  padding: 0 var(--adp-space-3);
+  border-radius: var(--adp-radius-pill);
+  background: var(--adp-accent-light-explorer);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-duplicate-badge--warning {
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-status-caution);
+}
+
+.adp-duplicates .adp-storage-empty {
+  border-inline-start-color: var(--adp-accent-explorer);
+}
+
+/* Folder-size status in the existing Size column and Details pane. */
+
+.adp-folder-size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.adp-folder-size--ready {
+  color: var(--adp-color-text-primary);
+}
+
+.adp-folder-size--unavailable {
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-folder-size--partial::before,
+.adp-folder-size--pending::before,
+.adp-folder-size--running::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--adp-accent-explorer);
+}
+
+@media (max-width: 900px) {
+  .adp-duplicate-member {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+}

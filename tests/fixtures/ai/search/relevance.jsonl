@@ -1,0 +1,300 @@
+{"kind":"asset","id":"asset-photo-001","media":"photo","labels":["dog","beach"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-002","media":"photo","labels":["dog","sand"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-003","media":"photo","labels":["cat","room"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-004","media":"photo","labels":["cat","sofa"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-005","media":"photo","labels":["whiteboard","diagrams"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-006","media":"photo","labels":["empty","blue","field"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-007","media":"photo","labels":["invoice","paper"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-008","media":"photo","labels":["receipt","desk"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-009","media":"photo","labels":["mountain","landscape"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-010","media":"photo","labels":["city","street"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-011","media":"photo","labels":["food","pasta"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-012","media":"photo","labels":["car","road"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-013","media":"photo","labels":["flower","garden"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-014","media":"photo","labels":["bird","sky"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-015","media":"photo","labels":["boat","water"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-016","media":"photo","labels":["house","garden"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-017","media":"photo","labels":["person","portrait"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-018","media":"photo","labels":["child","playground"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-019","media":"photo","labels":["office","desk"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-020","media":"photo","labels":["computer","screen"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-021","media":"photo","labels":["book","table"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-022","media":"photo","labels":["coffee","cup"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-023","media":"photo","labels":["train","station"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-024","media":"photo","labels":["airplane","sky"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-025","media":"photo","labels":["bicycle","park"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-026","media":"photo","labels":["tree","forest"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-027","media":"photo","labels":["river","bridge"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-028","media":"photo","labels":["night","stars"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-029","media":"photo","labels":["sunset","sea"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-030","media":"photo","labels":["snow","mountain"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-031","media":"photo","labels":["dog","park"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-032","media":"photo","labels":["cat","window"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-033","media":"photo","labels":["food","salad"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-034","media":"photo","labels":["food","cake"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-035","media":"photo","labels":["drink","juice"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-036","media":"photo","labels":["building","glass"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-037","media":"photo","labels":["museum","art"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-038","media":"photo","labels":["library","shelves"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-039","media":"photo","labels":["school","classroom"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-040","media":"photo","labels":["hospital","corridor"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-041","media":"photo","labels":["kitchen","table"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-042","media":"photo","labels":["bedroom","bed"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-043","media":"photo","labels":["bathroom","tiles"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-044","media":"photo","labels":["garden","fence"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-045","media":"photo","labels":["farm","field"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-046","media":"photo","labels":["cow","grass"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-047","media":"photo","labels":["horse","field"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-048","media":"photo","labels":["sheep","hill"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-049","media":"photo","labels":["market","fruit"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-050","media":"photo","labels":["shop","window"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-051","media":"photo","labels":["concert","stage"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-052","media":"photo","labels":["guitar","music"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-053","media":"photo","labels":["painting","canvas"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-054","media":"photo","labels":["sculpture","museum"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-055","media":"photo","labels":["phone","hand"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-056","media":"photo","labels":["laptop","cafe"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-057","media":"photo","labels":["keyboard","desk"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-058","media":"photo","labels":["camera","lens"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-059","media":"photo","labels":["watch","wrist"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-060","media":"photo","labels":["shoe","floor"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-061","media":"photo","labels":["bag","chair"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-062","media":"photo","labels":["hat","table"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-063","media":"photo","labels":["coat","rack"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-064","media":"photo","labels":["umbrella","rain"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-065","media":"photo","labels":["window","rain"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-066","media":"photo","labels":["cloud","sky"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-067","media":"photo","labels":["lighthouse","coast"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-068","media":"photo","labels":["harbor","boats"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-069","media":"photo","labels":["bridge","river"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-070","media":"photo","labels":["tunnel","road"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-071","media":"photo","labels":["desert","sand"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-072","media":"photo","labels":["cactus","desert"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-073","media":"photo","labels":["waterfall","rocks"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-074","media":"photo","labels":["lake","reflection"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-075","media":"photo","labels":["forest","path"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-076","media":"photo","labels":["meadow","flowers"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-077","media":"photo","labels":["vineyard","grapes"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-078","media":"photo","labels":["orchard","apples"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-079","media":"photo","labels":["bakery","bread"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-080","media":"photo","labels":["restaurant","tables"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-081","media":"photo","labels":["chess","board"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-082","media":"photo","labels":["puzzle","pieces"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-083","media":"photo","labels":["gym","weights"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-084","media":"photo","labels":["pool","water"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-085","media":"photo","labels":["beach","umbrella"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-086","media":"photo","labels":["surfboard","beach"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-087","media":"photo","labels":["mountain","hiker"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-088","media":"photo","labels":["camping","tent"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-089","media":"photo","labels":["fire","campfire"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-090","media":"photo","labels":["boat","fishing"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-091","media":"photo","labels":["dog","snow"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-092","media":"photo","labels":["cat","blanket"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-093","media":"photo","labels":["bird","feeder"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-094","media":"photo","labels":["rabbit","grass"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-095","media":"photo","labels":["fish","aquarium"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-096","media":"photo","labels":["turtle","sea"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-097","media":"photo","labels":["butterfly","flower"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-098","media":"photo","labels":["bee","flower"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-099","media":"photo","labels":["empty","white","room"],"synthetic":true}
+{"kind":"asset","id":"asset-photo-100","media":"photo","labels":["blank","blue","field"],"synthetic":true}
+{"kind":"asset","id":"asset-text-101","media":"text","labels":["invoice","maria","october"],"synthetic":true}
+{"kind":"asset","id":"asset-text-102","media":"text","labels":["invoice","acme","2044"],"synthetic":true}
+{"kind":"asset","id":"asset-text-103","media":"text","labels":["budget","design","annual"],"synthetic":true}
+{"kind":"asset","id":"asset-text-104","media":"text","labels":["meeting","friday","ten"],"synthetic":true}
+{"kind":"asset","id":"asset-text-105","media":"text","labels":["sales","north","quarterly"],"synthetic":true}
+{"kind":"asset","id":"asset-text-106","media":"text","labels":["recipe","lemon","almond"],"synthetic":true}
+{"kind":"asset","id":"asset-text-107","media":"text","labels":["travel","lisbon","porto"],"synthetic":true}
+{"kind":"asset","id":"asset-text-108","media":"text","labels":["tax","2026","fiscal"],"synthetic":true}
+{"kind":"asset","id":"asset-text-109","media":"text","labels":["contract","ada","lovelace"],"synthetic":true}
+{"kind":"asset","id":"asset-text-110","media":"text","labels":["museum","blue","exhibit"],"synthetic":true}
+{"kind":"asset","id":"asset-text-111","media":"text","labels":["grocery","milk","bread"],"synthetic":true}
+{"kind":"asset","id":"asset-text-112","media":"text","labels":["project","phoenix","kickoff"],"synthetic":true}
+{"kind":"asset","id":"asset-text-113","media":"text","labels":["planning","quarterly","regions"],"synthetic":true}
+{"kind":"asset","id":"asset-text-114","media":"text","labels":["family","dinner","photo"],"synthetic":true}
+{"kind":"asset","id":"asset-text-115","media":"text","labels":["dog","beach","notes"],"synthetic":true}
+{"kind":"asset","id":"asset-text-116","media":"text","labels":["cat","room","notes"],"synthetic":true}
+{"kind":"asset","id":"asset-text-117","media":"text","labels":["whiteboard","engineering","diagrams"],"synthetic":true}
+{"kind":"asset","id":"asset-text-118","media":"text","labels":["security","password","warning"],"synthetic":true}
+{"kind":"asset","id":"asset-text-119","media":"text","labels":["server","backup","schedule"],"synthetic":true}
+{"kind":"asset","id":"asset-text-120","media":"text","labels":["network","switch","config"],"synthetic":true}
+{"kind":"asset","id":"asset-text-121","media":"text","labels":["design","colors","palette"],"synthetic":true}
+{"kind":"asset","id":"asset-text-122","media":"text","labels":["design","typography","guide"],"synthetic":true}
+{"kind":"asset","id":"asset-text-123","media":"text","labels":["marketing","campaign","launch"],"synthetic":true}
+{"kind":"asset","id":"asset-text-124","media":"text","labels":["customer","survey","results"],"synthetic":true}
+{"kind":"asset","id":"asset-text-125","media":"text","labels":["support","ticket","resolution"],"synthetic":true}
+{"kind":"asset","id":"asset-text-126","media":"text","labels":["legal","privacy","policy"],"synthetic":true}
+{"kind":"asset","id":"asset-text-127","media":"text","labels":["finance","expenses","receipt"],"synthetic":true}
+{"kind":"asset","id":"asset-text-128","media":"text","labels":["finance","forecast","revenue"],"synthetic":true}
+{"kind":"asset","id":"asset-text-129","media":"text","labels":["hr","holiday","calendar"],"synthetic":true}
+{"kind":"asset","id":"asset-text-130","media":"text","labels":["training","onboarding","guide"],"synthetic":true}
+{"kind":"asset","id":"asset-text-131","media":"text","labels":["api","reference","endpoint"],"synthetic":true}
+{"kind":"asset","id":"asset-text-132","media":"text","labels":["database","schema","migration"],"synthetic":true}
+{"kind":"asset","id":"asset-text-133","media":"text","labels":["release","notes","version"],"synthetic":true}
+{"kind":"asset","id":"asset-text-134","media":"text","labels":["bug","report","steps"],"synthetic":true}
+{"kind":"asset","id":"asset-text-135","media":"text","labels":["incident","timeline","review"],"synthetic":true}
+{"kind":"asset","id":"asset-text-136","media":"text","labels":["roadmap","milestones","dates"],"synthetic":true}
+{"kind":"asset","id":"asset-text-137","media":"text","labels":["test","coverage","report"],"synthetic":true}
+{"kind":"asset","id":"asset-text-138","media":"text","labels":["accessibility","contrast","focus"],"synthetic":true}
+{"kind":"asset","id":"asset-text-139","media":"text","labels":["localization","spanish","glossary"],"synthetic":true}
+{"kind":"asset","id":"asset-text-140","media":"text","labels":["performance","benchmark","median"],"synthetic":true}
+{"kind":"asset","id":"asset-text-141","media":"text","labels":["backup","disaster","recovery"],"synthetic":true}
+{"kind":"asset","id":"asset-text-142","media":"text","labels":["storage","quota","cleanup"],"synthetic":true}
+{"kind":"asset","id":"asset-text-143","media":"text","labels":["version","history","restore"],"synthetic":true}
+{"kind":"asset","id":"asset-text-144","media":"text","labels":["archive","zip","password"],"synthetic":true}
+{"kind":"asset","id":"asset-text-145","media":"text","labels":["image","resize","quality"],"synthetic":true}
+{"kind":"asset","id":"asset-text-146","media":"text","labels":["video","subtitle","caption"],"synthetic":true}
+{"kind":"asset","id":"asset-text-147","media":"text","labels":["audio","transcript","minutes"],"synthetic":true}
+{"kind":"asset","id":"asset-text-148","media":"text","labels":["pdf","pages","scanned"],"synthetic":true}
+{"kind":"asset","id":"asset-text-149","media":"text","labels":["spreadsheet","formula","budget"],"synthetic":true}
+{"kind":"asset","id":"asset-text-150","media":"text","labels":["presentation","slides","outline"],"synthetic":true}
+{"kind":"asset","id":"asset-text-151","media":"text","labels":["contract","signature","deadline"],"synthetic":true}
+{"kind":"asset","id":"asset-text-152","media":"text","labels":["lease","apartment","rent"],"synthetic":true}
+{"kind":"asset","id":"asset-text-153","media":"text","labels":["insurance","policy","claim"],"synthetic":true}
+{"kind":"asset","id":"asset-text-154","media":"text","labels":["medical","appointment","results"],"synthetic":true}
+{"kind":"asset","id":"asset-text-155","media":"text","labels":["school","grades","semester"],"synthetic":true}
+{"kind":"asset","id":"asset-text-156","media":"text","labels":["recipe","soup","winter"],"synthetic":true}
+{"kind":"asset","id":"asset-text-157","media":"text","labels":["recipe","bread","baking"],"synthetic":true}
+{"kind":"asset","id":"asset-text-158","media":"text","labels":["travel","train","tickets"],"synthetic":true}
+{"kind":"asset","id":"asset-text-159","media":"text","labels":["travel","hotel","booking"],"synthetic":true}
+{"kind":"asset","id":"asset-text-160","media":"text","labels":["travel","packing","list"],"synthetic":true}
+{"kind":"asset","id":"asset-text-161","media":"text","labels":["garden","tomatoes","summer"],"synthetic":true}
+{"kind":"asset","id":"asset-text-162","media":"text","labels":["garden","tools","maintenance"],"synthetic":true}
+{"kind":"asset","id":"asset-text-163","media":"text","labels":["car","maintenance","oil"],"synthetic":true}
+{"kind":"asset","id":"asset-text-164","media":"text","labels":["bicycle","repair","brakes"],"synthetic":true}
+{"kind":"asset","id":"asset-text-165","media":"text","labels":["book","notes","chapter"],"synthetic":true}
+{"kind":"asset","id":"asset-text-166","media":"text","labels":["music","playlist","practice"],"synthetic":true}
+{"kind":"asset","id":"asset-text-167","media":"text","labels":["movie","review","cast"],"synthetic":true}
+{"kind":"asset","id":"asset-text-168","media":"text","labels":["game","rules","strategy"],"synthetic":true}
+{"kind":"asset","id":"asset-text-169","media":"text","labels":["sport","training","schedule"],"synthetic":true}
+{"kind":"asset","id":"asset-text-170","media":"text","labels":["weather","forecast","week"],"synthetic":true}
+{"kind":"asset","id":"asset-text-171","media":"text","labels":["electricity","bill","usage"],"synthetic":true}
+{"kind":"asset","id":"asset-text-172","media":"text","labels":["water","bill","usage"],"synthetic":true}
+{"kind":"asset","id":"asset-text-173","media":"text","labels":["internet","plan","provider"],"synthetic":true}
+{"kind":"asset","id":"asset-text-174","media":"text","labels":["bank","statement","balance"],"synthetic":true}
+{"kind":"asset","id":"asset-text-175","media":"text","labels":["credit","card","payment"],"synthetic":true}
+{"kind":"asset","id":"asset-text-176","media":"text","labels":["savings","goal","monthly"],"synthetic":true}
+{"kind":"asset","id":"asset-text-177","media":"text","labels":["investment","portfolio","summary"],"synthetic":true}
+{"kind":"asset","id":"asset-text-178","media":"text","labels":["pension","retirement","plan"],"synthetic":true}
+{"kind":"asset","id":"asset-text-179","media":"text","labels":["charity","donation","receipt"],"synthetic":true}
+{"kind":"asset","id":"asset-text-180","media":"text","labels":["wedding","guest","list"],"synthetic":true}
+{"kind":"asset","id":"asset-text-181","media":"text","labels":["birthday","party","plan"],"synthetic":true}
+{"kind":"asset","id":"asset-text-182","media":"text","labels":["holiday","gift","ideas"],"synthetic":true}
+{"kind":"asset","id":"asset-text-183","media":"text","labels":["home","renovation","quote"],"synthetic":true}
+{"kind":"asset","id":"asset-text-184","media":"text","labels":["furniture","assembly","guide"],"synthetic":true}
+{"kind":"asset","id":"asset-text-185","media":"text","labels":["cleaning","schedule","tasks"],"synthetic":true}
+{"kind":"asset","id":"asset-text-186","media":"text","labels":["pet","vaccination","record"],"synthetic":true}
+{"kind":"asset","id":"asset-text-187","media":"text","labels":["child","school","contact"],"synthetic":true}
+{"kind":"asset","id":"asset-text-188","media":"text","labels":["emergency","contacts","list"],"synthetic":true}
+{"kind":"asset","id":"asset-text-189","media":"text","labels":["password","recovery","codes"],"synthetic":true}
+{"kind":"asset","id":"asset-text-190","media":"text","labels":["warranty","appliance","receipt"],"synthetic":true}
+{"kind":"asset","id":"asset-text-191","media":"text","labels":["manual","printer","setup"],"synthetic":true}
+{"kind":"asset","id":"asset-text-192","media":"text","labels":["manual","camera","settings"],"synthetic":true}
+{"kind":"asset","id":"asset-text-193","media":"text","labels":["notes","conference","talk"],"synthetic":true}
+{"kind":"asset","id":"asset-text-194","media":"text","labels":["notes","workshop","ideas"],"synthetic":true}
+{"kind":"asset","id":"asset-text-195","media":"text","labels":["research","sources","summary"],"synthetic":true}
+{"kind":"asset","id":"asset-text-196","media":"text","labels":["draft","article","outline"],"synthetic":true}
+{"kind":"asset","id":"asset-text-197","media":"text","labels":["letter","complaint","draft"],"synthetic":true}
+{"kind":"asset","id":"asset-text-198","media":"text","labels":["resume","experience","skills"],"synthetic":true}
+{"kind":"asset","id":"asset-text-199","media":"text","labels":["job","interview","questions"],"synthetic":true}
+{"kind":"asset","id":"asset-text-200","media":"text","labels":["reference","letter","template"],"synthetic":true}
+{"kind":"query","id":"rel-en-photo-01","locale":"en","media":"photo","query":"a dog on a beach","relevant":["asset-photo-001","asset-photo-002","asset-photo-085"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-02","locale":"en","media":"photo","query":"cat inside a room","relevant":["asset-photo-003","asset-photo-004"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-03","locale":"en","media":"photo","query":"whiteboard with diagrams","relevant":["asset-photo-005"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-04","locale":"en","media":"photo","query":"empty blue field","relevant":["asset-photo-006","asset-photo-100"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-05","locale":"en","media":"photo","query":"an invoice on paper","relevant":["asset-photo-007"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-06","locale":"en","media":"photo","query":"mountain landscape","relevant":["asset-photo-009","asset-photo-030","asset-photo-087"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-07","locale":"en","media":"photo","query":"city street","relevant":["asset-photo-010"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-08","locale":"en","media":"photo","query":"pasta dinner","relevant":["asset-photo-011"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-09","locale":"en","media":"photo","query":"a red car","relevant":["asset-photo-012"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-10","locale":"en","media":"photo","query":"flowers in a garden","relevant":["asset-photo-013","asset-photo-044","asset-photo-097"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-11","locale":"en","media":"photo","query":"bird flying in the sky","relevant":["asset-photo-014","asset-photo-093"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-12","locale":"en","media":"photo","query":"boat on the water","relevant":["asset-photo-015","asset-photo-068","asset-photo-090"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-13","locale":"en","media":"photo","query":"a house with a garden","relevant":["asset-photo-016"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-14","locale":"en","media":"photo","query":"portrait of a person","relevant":["asset-photo-017"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-15","locale":"en","media":"photo","query":"child on a playground","relevant":["asset-photo-018"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-16","locale":"en","media":"photo","query":"office desk with a computer","relevant":["asset-photo-019","asset-photo-020","asset-photo-057"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-17","locale":"en","media":"photo","query":"coffee cup on a table","relevant":["asset-photo-022","asset-photo-021"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-18","locale":"en","media":"photo","query":"train at a station","relevant":["asset-photo-023"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-19","locale":"en","media":"photo","query":"airplane in the sky","relevant":["asset-photo-024"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-20","locale":"en","media":"photo","query":"bicycle in a park","relevant":["asset-photo-025"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-21","locale":"en","media":"photo","query":"forest trees","relevant":["asset-photo-026","asset-photo-075"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-22","locale":"en","media":"photo","query":"river with a bridge","relevant":["asset-photo-027","asset-photo-069"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-23","locale":"en","media":"photo","query":"stars at night","relevant":["asset-photo-028"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-24","locale":"en","media":"photo","query":"sunset over the sea","relevant":["asset-photo-029"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-photo-25","locale":"en","media":"photo","query":"snowy mountain","relevant":["asset-photo-030"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-26","locale":"en","media":"text","query":"invoice from Maria in October","relevant":["asset-text-101"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-27","locale":"en","media":"text","query":"Acme invoice 2044","relevant":["asset-text-102"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-28","locale":"en","media":"text","query":"annual design budget","relevant":["asset-text-103"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-29","locale":"en","media":"text","query":"Friday meeting at ten","relevant":["asset-text-104"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-30","locale":"en","media":"text","query":"north region quarterly sales","relevant":["asset-text-105"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-31","locale":"en","media":"text","query":"lemon almond cake recipe","relevant":["asset-text-106","asset-text-157"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-32","locale":"en","media":"text","query":"travel notes Lisbon Porto","relevant":["asset-text-107","asset-text-158"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-33","locale":"en","media":"text","query":"2026 tax form","relevant":["asset-text-108"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-34","locale":"en","media":"text","query":"contract signed by Ada Lovelace","relevant":["asset-text-109"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-35","locale":"en","media":"text","query":"museum blue exhibit","relevant":["asset-text-110"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-36","locale":"en","media":"text","query":"grocery list milk bread","relevant":["asset-text-111"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-37","locale":"en","media":"text","query":"project Phoenix kickoff","relevant":["asset-text-112"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-38","locale":"en","media":"text","query":"quarterly planning across regions","relevant":["asset-text-113","asset-text-136"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-39","locale":"en","media":"text","query":"family dinner photo notes","relevant":["asset-text-114"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-40","locale":"en","media":"text","query":"whiteboard engineering diagrams","relevant":["asset-text-117"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-41","locale":"en","media":"text","query":"password security warning","relevant":["asset-text-118"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-42","locale":"en","media":"text","query":"server backup schedule","relevant":["asset-text-119","asset-text-141"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-43","locale":"en","media":"text","query":"network switch configuration","relevant":["asset-text-120"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-44","locale":"en","media":"text","query":"design colors palette","relevant":["asset-text-121","asset-text-122"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-45","locale":"en","media":"text","query":"marketing campaign launch","relevant":["asset-text-123"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-46","locale":"en","media":"text","query":"customer survey results","relevant":["asset-text-124"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-47","locale":"en","media":"text","query":"support ticket resolution","relevant":["asset-text-125"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-48","locale":"en","media":"text","query":"privacy policy","relevant":["asset-text-126"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-49","locale":"en","media":"text","query":"expenses and receipts","relevant":["asset-text-127"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-en-text-50","locale":"en","media":"text","query":"revenue forecast","relevant":["asset-text-128"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-01","locale":"es","media":"photo","query":"un perro en la playa","relevant":["asset-photo-001","asset-photo-002","asset-photo-085"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-02","locale":"es","media":"photo","query":"gato dentro de una habitación","relevant":["asset-photo-003","asset-photo-004"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-03","locale":"es","media":"photo","query":"pizarra con diagramas","relevant":["asset-photo-005"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-04","locale":"es","media":"photo","query":"campo azul vacío","relevant":["asset-photo-006","asset-photo-100"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-05","locale":"es","media":"photo","query":"una factura en papel","relevant":["asset-photo-007"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-06","locale":"es","media":"photo","query":"paisaje de montaña","relevant":["asset-photo-009","asset-photo-030","asset-photo-087"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-07","locale":"es","media":"photo","query":"calle de la ciudad","relevant":["asset-photo-010"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-08","locale":"es","media":"photo","query":"cena de pasta","relevant":["asset-photo-011"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-09","locale":"es","media":"photo","query":"un coche rojo","relevant":["asset-photo-012"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-10","locale":"es","media":"photo","query":"flores en un jardín","relevant":["asset-photo-013","asset-photo-044","asset-photo-097"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-11","locale":"es","media":"photo","query":"pájaro volando en el cielo","relevant":["asset-photo-014","asset-photo-093"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-12","locale":"es","media":"photo","query":"barco en el agua","relevant":["asset-photo-015","asset-photo-068","asset-photo-090"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-13","locale":"es","media":"photo","query":"casa con jardín","relevant":["asset-photo-016"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-14","locale":"es","media":"photo","query":"retrato de una persona","relevant":["asset-photo-017"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-15","locale":"es","media":"photo","query":"niño en un parque infantil","relevant":["asset-photo-018"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-16","locale":"es","media":"photo","query":"escritorio de oficina con computadora","relevant":["asset-photo-019","asset-photo-020","asset-photo-057"],"gains":[3,2,1,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-17","locale":"es","media":"photo","query":"taza de café sobre la mesa","relevant":["asset-photo-022","asset-photo-021"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-18","locale":"es","media":"photo","query":"tren en una estación","relevant":["asset-photo-023"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-19","locale":"es","media":"photo","query":"avión en el cielo","relevant":["asset-photo-024"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-20","locale":"es","media":"photo","query":"bicicleta en un parque","relevant":["asset-photo-025"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-21","locale":"es","media":"photo","query":"árboles del bosque","relevant":["asset-photo-026","asset-photo-075"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-22","locale":"es","media":"photo","query":"río con un puente","relevant":["asset-photo-027","asset-photo-069"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-23","locale":"es","media":"photo","query":"estrellas de noche","relevant":["asset-photo-028"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-24","locale":"es","media":"photo","query":"atardecer sobre el mar","relevant":["asset-photo-029"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-photo-25","locale":"es","media":"photo","query":"montaña nevada","relevant":["asset-photo-030"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-26","locale":"es","media":"text","query":"factura de María de octubre","relevant":["asset-text-101"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-27","locale":"es","media":"text","query":"factura Acme 2044","relevant":["asset-text-102"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-28","locale":"es","media":"text","query":"presupuesto anual de diseño","relevant":["asset-text-103"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-29","locale":"es","media":"text","query":"reunión del viernes a las diez","relevant":["asset-text-104"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-30","locale":"es","media":"text","query":"ventas trimestrales de la región norte","relevant":["asset-text-105"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-31","locale":"es","media":"text","query":"receta de pastel de limón y almendra","relevant":["asset-text-106","asset-text-157"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-32","locale":"es","media":"text","query":"notas de viaje Lisboa Oporto","relevant":["asset-text-107","asset-text-158"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-33","locale":"es","media":"text","query":"formulario de impuestos 2026","relevant":["asset-text-108"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-34","locale":"es","media":"text","query":"contrato firmado por Ada Lovelace","relevant":["asset-text-109"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-35","locale":"es","media":"text","query":"exposición azul del museo","relevant":["asset-text-110"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-36","locale":"es","media":"text","query":"lista de compras leche pan","relevant":["asset-text-111"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-37","locale":"es","media":"text","query":"inicio del proyecto Fénix","relevant":["asset-text-112"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-38","locale":"es","media":"text","query":"planificación trimestral de regiones","relevant":["asset-text-113","asset-text-136"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-39","locale":"es","media":"text","query":"notas de una cena familiar","relevant":["asset-text-114"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-40","locale":"es","media":"text","query":"pizarra con diagramas de ingeniería","relevant":["asset-text-117"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-41","locale":"es","media":"text","query":"advertencia de seguridad de contraseña","relevant":["asset-text-118"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-42","locale":"es","media":"text","query":"programa de copia de seguridad del servidor","relevant":["asset-text-119","asset-text-141"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-43","locale":"es","media":"text","query":"configuración del conmutador de red","relevant":["asset-text-120"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-44","locale":"es","media":"text","query":"colores y paleta de diseño","relevant":["asset-text-121","asset-text-122"],"gains":[3,2,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-45","locale":"es","media":"text","query":"lanzamiento de campaña de marketing","relevant":["asset-text-123"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-46","locale":"es","media":"text","query":"resultados de encuesta de clientes","relevant":["asset-text-124"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-47","locale":"es","media":"text","query":"resolución de ticket de soporte","relevant":["asset-text-125"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-48","locale":"es","media":"text","query":"política de privacidad","relevant":["asset-text-126"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-49","locale":"es","media":"text","query":"gastos y recibos","relevant":["asset-text-127"],"gains":[3,0,0,0,0,0,0,0,0,0]}
+{"kind":"query","id":"rel-es-text-50","locale":"es","media":"text","query":"previsión de ingresos","relevant":["asset-text-128"],"gains":[3,0,0,0,0,0,0,0,0,0]}

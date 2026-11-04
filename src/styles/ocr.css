@@ -1,0 +1,60 @@
+/* OCR overlay and status (Step 07e). Colours come only from tokens.css:
+   the selection uses the themed selected-row surface, never a fixed green. */
+
+.adp-ocr-word--match {
+  outline: 2px solid var(--adp-color-accent);
+  outline-offset: 1px;
+}
+
+.adp-ocr-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  user-select: text;
+  /* Only word boxes take pointer input, so panning the picture still works
+     everywhere else. */
+  pointer-events: none;
+}
+
+.adp-ocr-word {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  color: transparent;
+  background: transparent;
+  white-space: pre;
+  line-height: 1;
+  overflow: hidden;
+  cursor: text;
+  pointer-events: auto;
+}
+
+.adp-ocr-overlay ::selection {
+  /* Themed fallback first; the accent blend is used when the engine
+     supports color-mix. No fixed OCR colour. */
+  background: var(--adp-color-surface-selected-row);
+  background: color-mix(in srgb, var(--adp-accent-current) 35%, transparent);
+  color: transparent;
+}
+
+.adp-ocr-status {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-height: 24px;
+  padding: 0 var(--adp-space-3);
+  color: var(--adp-color-text-secondary);
+  font-family: var(--adp-font-family);
+  font-size: var(--adp-font-body);
+}
+
+.adp-ocr-status[data-state="error"] {
+  color: var(--adp-color-text-primary);
+}
+
+.adp-ocr-status-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+}

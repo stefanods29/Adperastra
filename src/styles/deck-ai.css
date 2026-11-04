@@ -1,0 +1,197 @@
+/* Step 22b AI deck review panel. */
+
+.deck-ai-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 400px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  padding: 16px;
+  overflow: auto;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-lg);
+  box-shadow: var(--adp-shadow-card);
+  font-family: var(--adp-font-family);
+  font-size: var(--adp-font-body);
+}
+
+.deck-ai-header,
+.deck-ai-actions,
+.deck-ai-panel-actions,
+.deck-ai-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.deck-ai-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: var(--adp-font-section);
+}
+
+.deck-ai-panel button,
+.deck-ai-panel select,
+.deck-ai-panel input,
+.deck-ai-panel textarea {
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+}
+
+.deck-ai-panel button {
+  min-height: 28px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.deck-ai-panel button[aria-pressed="true"] {
+  border-color: var(--adp-accent-explorer);
+  background: var(--adp-color-surface-selected);
+}
+
+.deck-ai-panel button:focus-visible,
+.deck-ai-panel input:focus-visible,
+.deck-ai-panel select:focus-visible,
+.deck-ai-panel textarea:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+.deck-ai-source {
+  display: grid;
+  gap: 8px;
+}
+
+.deck-ai-source label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deck-ai-source textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.deck-ai-consent {
+  padding: 8px;
+  background: var(--adp-color-surface-header);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-sm);
+}
+
+.deck-ai-outline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-ai-slide-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+  padding: 12px;
+  background: var(--adp-color-surface-header);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.deck-ai-slide-heading {
+  text-align: left;
+}
+
+.deck-ai-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-ai-bullets li {
+  display: flex;
+  gap: 4px;
+}
+
+.deck-ai-bullets input {
+  flex: 1;
+}
+
+.deck-ai-image-note,
+.deck-ai-preview-empty,
+.deck-ai-announcement,
+.deck-ai-status {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.deck-ai-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  background: var(--adp-color-status-caution-background);
+  border-radius: var(--adp-radius-sm);
+}
+
+.deck-ai-warnings li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.deck-ai-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deck-ai-preview-page {
+  margin: 0;
+}
+
+.deck-ai-preview-page img {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: var(--adp-color-surface-canvas-doc);
+}
+
+.deck-ai-preview-page figcaption {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+}
+
+.deck-ai-error {
+  color: var(--adp-color-status-caution);
+}
+
+@media (max-width: 1000px) {
+  .deck-ai-panel {
+    width: 900px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-ai-panel * {
+    transition: none;
+  }
+}

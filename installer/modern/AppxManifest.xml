@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 16 design artifact for the OWNER CHECKPOINT (guide D1).
+
+  This manifest is NOT installed, signed or published. Every identity and
+  CLSID value is an obvious PLACEHOLDER so nothing can be mistaken for an
+  approved package. The real values belong to the owner-approved identity
+  route.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+  IgnorableNamespaces="uap uap10 desktop4 desktop5">
+
+  <Identity
+    Name="Adperastra.ModernMenu.PLACEHOLDER"
+    Publisher="CN=PLACEHOLDER"
+    Version="0.4.0.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Adperastra modern menu design (PLACEHOLDER)</DisplayName>
+    <PublisherDisplayName>PLACEHOLDER</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily
+      Name="Windows.Desktop"
+      MinVersion="10.0.22000.0"
+      MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Applications>
+    <Application
+      Id="Adperastra"
+      Executable="Adperastra.exe"
+      EntryPoint="Windows.FullTrustApplication"
+      uap10:RuntimeBehavior="packagedClassicApp"
+      uap10:TrustLevel="mediumIL">
+      <uap:VisualElements
+        DisplayName="Adperastra (PLACEHOLDER design, not installed)"
+        Description="PLACEHOLDER design artifact; no package is deployed by Step 16."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png"
+        AppListEntry="none" />
+      <Extensions>
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type="*">
+              <desktop5:Verb
+                Id="AdperastraConvert"
+                Clsid="{00000000-0000-0000-0000-000000000000}" />
+            </desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>

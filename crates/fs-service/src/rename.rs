@@ -27,8 +27,10 @@ pub fn rename_in_place(path: &Path, new_name: &str) -> Result<PathBuf> {
     Ok(target)
 }
 
+/// Move or rename without ever replacing an existing item (the target must
+/// not exist). Used by renames and by archive extraction.
 #[cfg(windows)]
-fn move_without_replacing(from: &Path, to: &Path) -> Result<()> {
+pub fn move_without_replacing(from: &Path, to: &Path) -> Result<()> {
     use crate::winpath::{long_path_wide, win32_error};
     use windows::core::PCWSTR;
     use windows::Win32::Storage::FileSystem::{MoveFileExW, MOVE_FILE_FLAGS};
@@ -48,7 +50,7 @@ fn move_without_replacing(from: &Path, to: &Path) -> Result<()> {
 }
 
 #[cfg(not(windows))]
-fn move_without_replacing(from: &Path, to: &Path) -> Result<()> {
+pub fn move_without_replacing(from: &Path, to: &Path) -> Result<()> {
     if to.symlink_metadata().is_ok() {
         return Err(FsError::Io(std::io::Error::from(
             std::io::ErrorKind::AlreadyExists,

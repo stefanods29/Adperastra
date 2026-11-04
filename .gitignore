@@ -48,6 +48,9 @@ test-files/generated/
 test-files/corpus/
 !test-files/.gitkeep
 
+# Unsigned release artifacts (scripts/package-release.ps1)
+/release/
+
 # Local build output (only README and check script are committed)
 /build/*
 !/build/README.md
@@ -57,3 +60,16 @@ test-files/corpus/
 *.key
 *.minisig*
 .adperastra/
+
+# Agent stop notes (AGENTS.md rule 4), never committed
+/BLOCKED.md
+
+# Preserved worker handoffs (working input, hash manifest committed instead)
+/handoff/
+
+# Generated PDF.js assets (scripts/copy-pdfjs-assets.mjs)
+/public/pdfjs/
+
+# Registry bookkeeping retained locally with the reviewed EXIF source copy.
+/crates/vendor/little_exif/.cargo-ok
+/crates/vendor/little_exif/Cargo.lock

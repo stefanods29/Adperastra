@@ -13,9 +13,28 @@
       // before encrypting/sending, so a throw means nothing reaches Core.
       (function () {
         var ALLOWED = new Set([
-          'get_settings', 'set_maximize_rect',
+          'convert_start',
+          'convert_preview_start',
+          'convert_report_page',
+          'export_snapshot_authorize_file',
+          'export_snapshot_authorize_new',
+          'export_snapshot_begin',
+          'export_snapshot_finish',
+          'export_snapshot_release',
+          'export_snapshot_abort',
+          'export_snapshot_authority_release',
+          'image_encode_plan', 'image_encode',
+          'image_project_open_start', 'image_project_capture_start',
+          'image_project_payload_start', 'image_project_payload_page',
+          'image_project_payload_release',
+          'image_project_psd_scan_start', 'image_project_psd_import_start',
+
+          'special_view_open_start', 'special_view_scene', 'special_view_raw_start', 'special_view_layers', 'special_view_close',
+          'get_settings', 'set_maximize_rect', 'set_titlebar_drag_rect',
           'save_settings',
+          'keyboard_map_save',
           'get_session',
+          'startup_ready',
           'save_session',
           'list_help',
           'get_help_page',
@@ -28,10 +47,99 @@
           'pin_folder', 'unpin_folder', 'record_recent_folder',
           'watch_start', 'watch_stop',
           'item_details', 'rename_item',
+          'check_conflicts', 'create_item', 'create_text_file', 'file_op_start', 'file_op_poll', 'file_op_cancel',
           'add_favorite', 'remove_favorite', 'list_favorite_items',
           'open_item', 'open_with_dialog', 'show_properties', 'open_in_terminal',
-          'share_items', 'show_classic_menu'
+          'share_items', 'show_classic_menu',
+          'clipboard_set_files', 'clipboard_read', 'clipboard_text', 'clipboard_image_file', 'clipboard_clear', 'start_external_drag', 'create_shortcut',
+          'file_detect', 'file_grant', 'file_revoke', 'open_external_url', 'file_unblock', 'media_sidecars',
+          'folder_views_get', 'folder_view_set', 'folder_views_clear',
+          'appearance_set_zoom', 'settings_export', 'settings_import',
+          'text_save', 'text_pick_save_path',
+          'versions_list', 'versions_extract', 'versions_restore', 'versions_save_copy', 'versions_delete_all', 'versions_store_size',
+          'job_poll', 'job_cancel',
+          'ai_eval_start', 'ai_eval_page',
+          'file_identity', 'cache_usage', 'cache_clear', 'cache_release',
+          'background_status', 'background_tasks', 'background_pause_all', 'thumbnail_request_start', 'thumbnail_lookup', 'thumbnail_release',
+          'gallery_start', 'gallery_page', 'gallery_close', 'gallery_active', 'gallery_pick_source',
+          'metadata_read_start', 'metadata_release',
+          'pdf_open_start', 'pdf_open_input_start', 'pdf_close', 'pdf_render_start',
+          'pdf_text_page', 'pdf_outline', 'pdf_search_start', 'pdf_print_start',
+          'pdf_edit_inspect_start', 'pdf_edit_serialize_start',
+          'helper_reply', 'helper_ready',
+          'ocr_languages', 'ocr_start', 'ocr_page', 'ocr_release',
+          'extra_view_open_start', 'extra_view_page', 'extra_view_close',
+          'extra_view_attachment_start', 'extra_view_subtitles',
+          'extra_view_sqlite_tables', 'extra_view_book_contents',
+          'preview_detect', 'preview_grant', 'preview_revoke',
+          'archive_open_start', 'archive_folder', 'archive_search', 'archive_close',
+          'archive_open_entry_start', 'archive_extract_start', 'archive_pick_folder',
+          'archive_rar_status', 'archive_create_start',
+          'templates_list', 'template_create', 'template_create_start', 'templates_pick_folder',
+          'table_open_start', 'table_view_start', 'table_rows', 'table_close',
+          'json_open_start', 'json_children', 'json_find', 'json_copy', 'json_close',
+          'font_info_start', 'font_install'
         ]);
+        // Commands integrated after Step 08a.
+        (
+          'accessibility_system_state,activation_ready,activity_status,activity_list,activity_clear,activity_set_paused,' +
+          'ai_action_start,ai_action_sources,ai_mask_artifact_create,ai_action_result,ai_action_result_release,ai_action_result_export_start,' +
+          'ai_extract_prepare_start,ai_extract_start,ai_extract_page,ai_extract_correct,ai_extract_capture_start,ai_extract_release,ai_inline_start,' +
+          'ai_eval_start,ai_eval_page,' +
+          'ai_names_suggest_start,ai_query_preview_start,ai_semantic_search_start,ai_semantic_status,ai_semantic_rebuild_start,' +
+          'ai_sort_history_reset,ai_sort_suggest_start,assistant_chat_create,assistant_messages,assistant_turn_start,assistant_turn_stop,' +
+          'assistant_scope_request,assistant_scope,assistant_scope_revoke,assistant_history_list,assistant_history_clear,assistant_history_export,' +
+          'assistant_credential_status,assistant_credential_edit,assistant_credential_remove,assistant_provider_models,assistant_provider_test,' +
+          'assistant_endpoint_configure,assistant_endpoint_status,assistant_endpoint_probe,assistant_inference_prepare,assistant_outbound_confirm,assistant_inference_start,' +
+          'assistant_action_preview,assistant_action_apply,assistant_action_cancel,assistant_recycle_confirm,' +
+          'clipboard_history_list,clipboard_history_patch,clipboard_history_resolve,clipboard_history_record,' +
+          'transfer_create,transfer_get,transfer_release,doc_blocks_start,doc_blocks_page,' +
+          'conversion_presets_list,conversion_preset_save,conversion_preset_remove,conversion_presets_replace,conversion_presets_import,' +
+          'theme_list,theme_read,theme_save,theme_remove,deck_style_prepare,deck_style_apply,' +
+          'deck_style_file_import_start,deck_style_file_export_start,deck_style_import_start,' +
+          'deck_styles_list,deck_styles_save,deck_styles_remove,diagnostics_open_issue,diagnostics_create_start,diagnostics_edit,diagnostics_save_start,diagnostics_close,' +
+          'disk_mount_start,disk_eject_start,disk_mounts,document_commit_start,document_save_as_new_start,' +
+          'document_open,document_release,document_snapshot_begin,duplicates_start,duplicates_page,duplicates_release,duplicates_cleanup_prepare,duplicates_cleanup_start,' +
+          'engines_capabilities,locks_inspect_start,locks_close_start,folder_presentation_get,folder_presentation_set,folder_presentation_clear,' +
+          'folder_decorations,folder_customize_start,folder_reset_start,column_sets_list,column_set_save,column_set_remove,' +
+          'folder_size_request,folder_size_release,geo_points_start,indexed_view_start,' +
+          'windows_integration_status,windows_integration_apply,windows_integration_open_defaults,' +
+          'ai_capabilities,ai_hardware,ai_task_start,ai_text_page,ai_shutdown,ai_input_acquire,ai_document_input_acquire,ai_input_release,' +
+          'ai_artifact_describe,ai_artifact_read,ai_artifact_release,' +
+          'locked_create_start,locked_unlock_start,locked_pick_recovery_path,locked_persist_start,locked_lock_start,locked_save_copy_start,' +
+          'locked_recovery_list,locked_recovery_choose,locked_mark_dirty,locked_touch,locked_idle_check,' +
+          'locked_list,locked_entry_info,locked_entry_grant,locked_entry_release,locked_export_start,' +
+          'map_view_open,map_view_close,map_tile_get,map_tile_release,map_tile_clear,' +
+          'media_probe_start,media_preview_start,media_recipe_export_start,' +
+          'office_ai_context_start,office_ai_context_release,office_ai_proposal_evaluate_start,office_ai_proposal_page,office_ai_proposal_release,office_ai_proposal_confirm,office_ai_proposal_apply,' +
+          'office_draft_create_start,office_blank_draft_create_start,office_deck_template_inspect_start,office_deck_template_import,' +
+          'office_edit_open_start,office_edit_close,office_edit_state,office_edit_transact,office_edit_undo,office_edit_redo,' +
+            'office_edit_mode,office_edit_discard_saved,office_edit_items,office_edit_formatting,office_edit_cell_window,office_edit_formula_parse,office_edit_formula_format,office_edit_find,office_edit_spelling,office_edit_document_stats,office_edit_functions,office_edit_release_lease,office_edit_print_start,office_edit_basic_page,' +
+          'office_view_open_start,office_view_page_start,office_view_text_start,office_view_sections,office_view_comments,office_view_cells,office_view_close,' +
+          'pack_list,catalog_refresh_start,install_start,download_pause,download_resume_start,remove_start,' +
+          'office_edit_render_start,office_edit_capture_start,office_edit_export_start,' +
+          'portable_copy_start,office_presentation_displays,office_presentation_start,office_presentation_navigate,office_presentation_end,' +
+          'privacy_inspect_start,privacy_inspection_page,privacy_effective_categories,privacy_clean_start,privacy_release,' +
+          'profiles_list,profile_create,profile_rename,profile_root,profile_switch_prepare,profile_switch_commit,media_proxy_start,' +
+          'read_voices,read_aloud_start,read_aloud_chunk,read_aloud_stop,recovery_open_start,recovery_save_start,recovery_list,recovery_legacy_count,' +
+          'recovery_legacy_import_start,recovery_discard,recovery_legacy_read,' +
+          'resident_status,resident_set,resident_show,resident_close_confirmed,resident_tray_labels,safe_mode_status,restart_normal,' +
+          'saved_groups_list,saved_group_write,saved_group_remove,saved_groups_export,saved_groups_import,saved_groups_pick_import,' +
+          'setup_pick_import,setup_preview_start,setup_apply_start,setup_release,setup_export_start,' +
+          'search_start,search_page_start,index_status,index_rebuild_start,index_pause,saved_searches_list,saved_search_save,saved_search_remove,' +
+          'shelf_get,shelf_patch,shelf_refresh_start,smart_folders_list,smart_folder_save,smart_folder_remove,' +
+          'speech_captions_start,speech_transcribe_start,speech_transcript_page,speech_transcript_release,speech_dictation_start,speech_dictation_stop,speech_dictation_cancel,' +
+          'storage_report,storage_clear_start,storage_set_limit,storage_scan_start,storage_page,storage_release,' +
+          'tag_identity_apply,tags_catalog,tag_save,tag_merge,tag_delete,tag_assignments,tag_mutate_start,tag_undo,' +
+          'tags_import_preview,tags_import_apply,tags_export_start,tags_write_start,tags_pick_import,tags_pick_export,' +
+          'theme_background_import,theme_background_lease,theme_pick_background,theme_system_fonts,theme_apply_material,' +
+          'theme_import,theme_export,theme_pick_import,theme_pick_export,theme_wallpaper_palette,' +
+          'timeline_proxy_start,timeline_proxy_release,timeline_open_start,timeline_export_preview_start,timeline_export_start,' +
+          'transfer_start,transfer_state,transfer_control,transfer_decide,transfer_report_page,transfer_replay_check,' +
+          'rename_preview_start,rename_preview_page,rename_execute_start,rename_report_page,rename_plan_release,' +
+          'rename_presets_list,rename_preset_write,rename_preset_remove,' +
+          'update_check,update_mark_seen,update_open_page,media_waveform_page,watch_subscribe,watch_unsubscribe'
+        ).split(',').forEach((name) => ALLOWED.add(name));
         // Core commands used by the JS window/event APIs we grant in
         // capabilities/main.json (plugin:window|*, plugin:event|*).
         function isCoreAllowed(cmd) {

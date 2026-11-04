@@ -1,0 +1,147 @@
+/* Accessibility presentation (Step 10f). The root element carries the
+   effective state as data attributes set from EffectiveAccessibility:
+   data-accessibility-focus="2|3|4", data-accessibility-targets="24|44",
+   data-accessibility-font="dyslexic", data-accessibility-motion="reduced",
+   data-accessibility-cursor="normal|large|xlarge". Colors always come
+   from the theme tokens; forced-colors mode lets the OS palette win. */
+
+.adp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+:root[data-accessibility-focus="3"] :focus-visible {
+  outline-width: 3px;
+}
+
+:root[data-accessibility-focus="4"] :focus-visible {
+  outline-width: 4px;
+}
+
+.adp-a11y-target {
+  min-width: var(--adp-a11y-target-px, 24px);
+  min-height: var(--adp-a11y-target-px, 24px);
+}
+
+:root[data-accessibility-targets="44"] .adp-file-row,
+:root[data-accessibility-targets="44"] .adp-a11y-row {
+  min-height: 44px;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("../assets/fonts/OpenDyslexic-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("../assets/fonts/OpenDyslexic-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("../assets/fonts/OpenDyslexic-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("../assets/fonts/OpenDyslexic-Bold-Italic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root[data-accessibility-font="dyslexic"] body {
+  font-family: "OpenDyslexic", var(--adp-font-family);
+  letter-spacing: var(--adp-a11y-letter-spacing, 0);
+  word-spacing: var(--adp-a11y-word-spacing, 0);
+  line-height: var(--adp-a11y-line-height, 1.4);
+}
+
+/* Code keeps its monospace font unless a reader style opts in (D5). */
+:root[data-accessibility-font="dyslexic"] code,
+:root[data-accessibility-font="dyslexic"] pre,
+:root[data-accessibility-font="dyslexic"] .cm-editor {
+  font-family: var(--adp-font-mono, monospace);
+}
+
+:root[data-accessibility-motion="reduced"] *,
+:root[data-accessibility-motion="reduced"] *::before,
+:root[data-accessibility-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+:root[data-accessibility-cursor="large"] body {
+  cursor: var(--adp-a11y-cursor-large, auto);
+}
+
+:root[data-accessibility-cursor="xlarge"] body {
+  cursor: var(--adp-a11y-cursor-xlarge, auto);
+}
+
+.adp-accessibility-section {
+  max-width: 960px;
+}
+
+.adp-accessibility-toolbar button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.adp-a11y-subtitle {
+  color: var(--adp-a11y-subtitle-color, #ffffff);
+  background: var(--adp-a11y-subtitle-background, #000000);
+  opacity: var(--adp-a11y-subtitle-opacity, 0.75);
+  font-size: calc(var(--adp-font-body) * var(--adp-a11y-subtitle-scale, 1));
+}
+
+@media (max-width: 600px) {
+  .adp-accessibility-section .adp-setting-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adp-dialog {
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+  }
+
+  .adp-dialog-body {
+    overflow-y: auto;
+  }
+}
+
+@media (forced-colors: active) {
+  .adp-dialog,
+  .adp-toast,
+  .adp-menu,
+  .adp-a11y-subtitle {
+    forced-color-adjust: auto;
+    box-shadow: none;
+    background-image: none;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}

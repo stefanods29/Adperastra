@@ -1,0 +1,36 @@
+/* E-book viewer (Step 07f). Contents pane 196px, content 16px padding,
+   8px gaps, reading font from the SafeMarkupFrame document. */
+.adp-book { display: flex; flex: 1; min-width: 0; min-height: 0; background: var(--adp-color-surface-window); outline: none; }
+.adp-book:focus-visible { outline: 2px solid var(--adp-accent-current); outline-offset: -2px; }
+.adp-book-layout { display: flex; flex: 1; min-width: 0; min-height: 0; gap: var(--adp-space-2); }
+.adp-book-contents {
+  width: 196px;
+  min-width: 160px;
+  max-width: 320px;
+  flex: none;
+  overflow: auto;
+  padding: var(--adp-space-4);
+  border-inline-end: 1px solid var(--adp-color-border-default);
+  background: var(--adp-color-surface-pane);
+}
+.adp-book-contents h2 { margin: 0 0 var(--adp-space-3); font-size: var(--adp-font-body); color: var(--adp-color-text-secondary); }
+.adp-book-contents ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.adp-book-contents button {
+  width: 100%;
+  padding: var(--adp-space-1) var(--adp-space-2);
+  border: 0;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  text-align: start;
+  font: inherit;
+  font-size: var(--adp-font-small);
+  cursor: pointer;
+}
+.adp-book-contents button:hover { background: var(--adp-color-surface-selected); }
+.adp-book-contents button:focus-visible { outline: 2px solid var(--adp-accent-current); outline-offset: -2px; }
+.adp-book-toc--current { background: var(--adp-color-surface-selected); font-weight: 600; }
+.adp-book-main { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; padding: var(--adp-space-4); gap: var(--adp-space-2); }
+.adp-book-frame { flex: 1; min-height: 0; width: 100%; border: 0; background: var(--adp-color-surface-window); }
+.adp-book-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--adp-space-3); flex: none; }
+.adp-book-nav > span { color: var(--adp-color-text-secondary); font-size: var(--adp-font-small); }

@@ -1,0 +1,465 @@
+/* Advanced layers and selections (Step 18a). Every color is a UI token;
+   image pixels and thumbnails are document data, never chrome colors. */
+
+.adp-layers-panel {
+  width: 300px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  font: var(--adp-font-body) var(--adp-font-family);
+}
+
+.adp-layers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-3);
+  min-height: 40px;
+  padding: 0 var(--adp-space-5);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-layers-header h2,
+.adp-layer-history-header h2 {
+  margin: 0;
+  font: var(--adp-font-section) var(--adp-font-family);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-layers-count {
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-layers-top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  padding: var(--adp-space-4) var(--adp-space-5);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-layer-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-layer-select,
+.adp-layer-rename,
+.adp-selection-field input,
+.adp-transform-field input {
+  min-width: 0;
+  min-height: 28px;
+  padding: var(--adp-space-1) var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  font: var(--adp-font-body) var(--adp-font-family);
+}
+
+.adp-layer-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--adp-space-2) 0;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.adp-layer-row {
+  display: grid;
+  grid-template-columns: 24px 32px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 4px var(--adp-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--adp-radius-sm);
+  cursor: default;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-layer-row:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-layer-row[aria-selected="true"] {
+  background: var(--adp-color-surface-selected-row);
+  border-color: var(--adp-accent-image);
+}
+
+.adp-layer-row:focus-visible,
+.adp-layer-row:focus-within {
+  outline: 2px solid var(--adp-accent-image);
+  outline-offset: -2px;
+}
+
+.adp-layer-visibility,
+.adp-layer-lock {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--adp-radius-xs);
+  background: transparent;
+  color: var(--adp-color-text-secondary);
+  cursor: pointer;
+}
+
+.adp-layer-visibility[aria-pressed="true"],
+.adp-layer-lock[aria-pressed="true"] {
+  color: var(--adp-accent-image);
+}
+
+.adp-layer-thumb {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--adp-color-text-secondary);
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-xs);
+  background-color: var(--adp-color-surface-window);
+  background-image:
+    linear-gradient(45deg, var(--adp-color-surface-selected) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--adp-color-surface-selected) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--adp-color-surface-selected) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--adp-color-surface-selected) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
+
+.adp-layer-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: default;
+  font: var(--adp-font-body) var(--adp-font-family);
+  padding: 0;
+}
+
+.adp-layer-rename {
+  width: 100%;
+}
+
+.adp-layer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-1);
+  min-height: 32px;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-layer-actions .adp-btn {
+  min-height: 28px;
+  padding-inline: var(--adp-space-2);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-layer-working {
+  margin: 0;
+  padding: var(--adp-space-2) var(--adp-space-5);
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-layer-error,
+.adp-layer-warning,
+.adp-transform-error {
+  margin: 0;
+  padding: var(--adp-space-2);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-status-caution);
+  background: var(--adp-color-status-caution-background);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-layer-warning {
+  margin-bottom: var(--adp-space-4);
+}
+
+.adp-layer-dialog-actions,
+.adp-transform-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--adp-space-2);
+}
+
+.adp-layer-flatten-dialog {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-transform-dialog {
+  width: 520px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-transform-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+}
+
+.adp-transform-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--adp-space-3);
+}
+
+.adp-transform-field,
+.adp-selection-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-transform-pivot,
+.adp-selection-bounds {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-transform-check {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  color: var(--adp-color-text-body-muted);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-selection-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  padding: var(--adp-space-4);
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-selection-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 36px);
+  gap: var(--adp-space-1);
+}
+
+.adp-selection-tool {
+  width: 36px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  cursor: pointer;
+}
+
+.adp-selection-tool[aria-pressed="true"] {
+  border-color: var(--adp-accent-image);
+  background: var(--adp-accent-light-image);
+}
+
+.adp-selection-modes,
+.adp-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-1);
+}
+
+.adp-selection-mode {
+  min-height: 28px;
+  padding: 0 var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  cursor: pointer;
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-selection-mode[aria-pressed="true"] {
+  border-color: var(--adp-accent-image);
+  background: var(--adp-accent-light-image);
+}
+
+.adp-selection-feather {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+}
+
+.adp-selection-feather input {
+  flex: 1;
+}
+
+.adp-layer-history {
+  width: 196px;
+  min-width: 196px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-layer-history-header {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--adp-space-4);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-layer-history-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  padding: var(--adp-space-2);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-layer-history-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--adp-space-1) 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.adp-layer-history-row {
+  padding: var(--adp-space-2) var(--adp-space-4);
+  color: var(--adp-color-text-secondary);
+  font: var(--adp-font-small) var(--adp-font-family);
+}
+
+.adp-layer-history-row[aria-current="true"] {
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-layers-panel button:focus-visible,
+.adp-layers-panel input:focus-visible,
+.adp-layers-panel select:focus-visible,
+.adp-layer-history button:focus-visible,
+.adp-layer-flatten-dialog button:focus-visible,
+.adp-selection-tools button:focus-visible,
+.adp-selection-tools input:focus-visible,
+.adp-transform-dialog button:focus-visible,
+.adp-transform-dialog input:focus-visible {
+  outline: 2px solid var(--adp-accent-image);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .adp-layers-panel {
+    width: min(300px, 80%);
+    min-width: 0;
+  }
+  .adp-transform-dialog {
+    width: min(520px, calc(100vw - 24px));
+  }
+}
+
+/* Advanced presenter inside the existing 14b image editor. */
+.adp-image-body {
+  display: contents;
+}
+
+.adp-image-editor.adp-image-advanced {
+  display: flex;
+  flex-direction: column;
+}
+
+.adp-image-advanced .adp-image-top {
+  flex: 0 0 40px;
+}
+
+.adp-image-advanced .adp-image-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.adp-image-advanced .adp-image-canvas-wrap {
+  grid-column: auto;
+  grid-row: auto;
+  flex: 1 1 auto;
+}
+
+.adp-image-advanced .adp-layer-history {
+  flex: 0 0 196px;
+}
+
+.adp-advanced-side {
+  width: 300px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  border-left: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-advanced-side .adp-layers-panel {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  border-left: 0;
+}
+
+.adp-advanced-side .adp-selection-tools {
+  margin: var(--adp-space-3);
+}
+
+.adp-advanced-commandbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-1);
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-advanced-selection {
+  position: absolute;
+  border: 1px solid var(--adp-accent-image);
+  box-shadow: inset 0 0 0 1px var(--adp-color-surface-window);
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .adp-advanced-side {
+    width: min(300px, 80%);
+    min-width: 0;
+  }
+}

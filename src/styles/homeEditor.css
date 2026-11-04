@@ -1,0 +1,225 @@
+/* Home sections and their editor (Step 10e T3). */
+
+.adp-home-section-host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  min-width: 0;
+}
+
+.adp-home-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  min-width: 0;
+}
+
+.adp-home-section__header {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 36px;
+}
+
+.adp-home-section__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 36px;
+  padding: 0 var(--adp-space-2);
+  border: 0;
+  border-radius: var(--adp-radius-sm);
+  background: none;
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  font-size: var(--adp-font-section);
+  cursor: pointer;
+}
+
+.adp-home-section__toggle:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-home-section__missing {
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-home-section__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: var(--adp-space-2) var(--adp-space-4);
+  min-width: 0;
+}
+
+.adp-home-section__card {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-width: 0;
+  min-height: 48px;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border: none;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.adp-home-section__card:hover:not(:disabled) {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-home-section__card:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-home-section__card:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.adp-home-section__card--small {
+  grid-column: span 1;
+}
+
+.adp-home-section__card--medium {
+  grid-column: span 2;
+}
+
+.adp-home-section__card--large {
+  grid-column: span 3;
+}
+
+.adp-home-section__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-accent-light-explorer);
+  color: #dfb22b;
+}
+
+.adp-home-section__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.adp-home-section__label,
+.adp-home-section__detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-home-section__detail {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+@media (max-width: 1024px) {
+  .adp-home-section__grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  .adp-home-section__card--small,
+  .adp-home-section__card--medium,
+  .adp-home-section__card--large {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .adp-home-section__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adp-home-section__card--small,
+  .adp-home-section__card--medium,
+  .adp-home-section__card--large {
+    grid-column: span 1;
+  }
+}
+
+/* Editor */
+
+.adp-home-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  width: 100%;
+  max-width: 960px;
+  min-width: 0;
+}
+
+.adp-home-editor__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+}
+
+.adp-home-editor__row {
+  display: grid;
+  grid-template-columns: minmax(140px, 240px) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-height: 36px;
+  padding-block: var(--adp-space-1);
+  border-block-end: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-home-editor__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.adp-home-editor__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-home-editor__missing {
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-home-editor__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-2);
+}
+
+.adp-home-editor__limit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-home-editor__limit input {
+  width: 72px;
+}
+
+.adp-home-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+}
+
+.adp-home-editor__error {
+  margin: 0;
+  color: var(--adp-accent-pdf);
+  font-size: var(--adp-font-body);
+}

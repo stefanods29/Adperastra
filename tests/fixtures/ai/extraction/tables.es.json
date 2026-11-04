@@ -1,0 +1,22 @@
+[
+  {"id":"tab-es-01","locale":"es","degradation":"clean","rows":[["Artículo","Cantidad","Total"],["Lápiz","2","6.00"],["Libro","1","12.00"]]},
+  {"id":"tab-es-02","locale":"es","degradation":"clean","rows":[["Artículo","Cantidad","Total"],["Tinta","4","9.60"],["Papel","2","8.40"]]},
+  {"id":"tab-es-03","locale":"es","degradation":"clean","rows":[["Nombre","Puesto","Horas"],["Ana","Editora","8"],["Bo","Revisor","5"]]},
+  {"id":"tab-es-04","locale":"es","degradation":"clean","rows":[["Día","Apertura","Cierre"],["Lunes","09:00","17:00"],["Martes","09:00","17:00"]]},
+  {"id":"tab-es-05","locale":"es","degradation":"degraded","rows":[["Artículo","Cantidad","Total"],["Pegamento","3","4.50"],["Cinta","6","3.00"]]},
+  {"id":"tab-es-06","locale":"es","degradation":"clean","rows":[["Ciudad","País","Código"],["Lima","Perú","PE"],["Madrid","España","ES"]]},
+  {"id":"tab-es-07","locale":"es","degradation":"clean","rows":[["Producto","Precio unitario","Existencias"],["Cuaderno","3.50","40"],["Lápiz","0.80","120"]]},
+  {"id":"tab-es-08","locale":"es","degradation":"degraded","rows":[["Métrica","Enero","Febrero"],["Ventas","1200","1350"],["Devoluciones","40","35"]]},
+  {"id":"tab-es-09","locale":"es","degradation":"clean","rows":[["Paso","Responsable","Hecho"],["Borrador","Ana","sí"],["Revisión","Bo","no"]]},
+  {"id":"tab-es-10","locale":"es","degradation":"clean","rows":[["Factura","Fecha","Importe"],["8801","2026-11-03","240.50"],["8802","2026-11-04","118.00"]]},
+  {"id":"tab-es-11","locale":"es","degradation":"degraded","rows":[["Artículo","Cantidad","Total"],["Carpeta","10","5.00"],["Etiqueta","2","1.20"]]},
+  {"id":"tab-es-12","locale":"es","degradation":"clean","rows":[["Ruta","Distancia","Tiempo"],["A","4.2","12"],["B","7.8","20"]]},
+  {"id":"tab-es-13","locale":"es","degradation":"clean","rows":[["Cuenta","Débito","Crédito"],["Alquiler","950.00","0.00"],["Salario","0.00","2100.00"]]},
+  {"id":"tab-es-14","locale":"es","degradation":"clean","rows":[["Archivo","Tamaño","Modificado"],["notas.txt","2 KB","2026-11-01"],["datos.csv","8 KB","2026-11-02"]]},
+  {"id":"tab-es-15","locale":"es","degradation":"degraded","rows":[["Nombre","Puntos","Nota"],["Ana","92","A"],["Bo","85","B"]]},
+  {"id":"tab-es-16","locale":"es","degradation":"clean","rows":[["Turno","Inicio","Fin"],["Mañana","07:00","15:00"],["Tarde","15:00","23:00"]]},
+  {"id":"tab-es-17","locale":"es","degradation":"clean","rows":[["Artículo","Serie","Garantía"],["Disco","QX-5510","2028-01-15"],["Ratón","MM-2201","2027-08-01"]]},
+  {"id":"tab-es-18","locale":"es","degradation":"clean","rows":[["Moneda","Tipo","Fecha"],["PEN","1.00","2026-11-03"],["USD","3.72","2026-11-03"]]},
+  {"id":"tab-es-19","locale":"es","degradation":"degraded","rows":[["Tabla","Filas","Columnas"],["Contactos","30","4"],["Pedidos","120","6"]]},
+  {"id":"tab-es-20","locale":"es","degradation":"clean","rows":[["Artículo","Cantidad","Total"],["=SUMA(1,2)","1","3.00"],["Engrapadora","1","7.50"]]}
+]

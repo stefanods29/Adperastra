@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "target": "windows-x86_64",
+  "names": [
+    "Adperastra-{version}-windows-x64-setup.exe",
+    "Adperastra-{version}-windows-x64-portable.zip",
+    "SHA256SUMS.txt",
+    "THIRD_PARTY_LICENSES.txt",
+    "SOURCE-NOTICES.txt",
+    "release-notes-en.md",
+    "release-notes-es.md"
+  ],
+  "derived": [
+    "SHA256SUMS.txt"
+  ]
+}

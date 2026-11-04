@@ -3,7 +3,9 @@ import {
   EMPTY_SELECTION,
   clearSelection,
   invertSelection,
+  linearMoveTarget,
   moveFocus,
+  moveFocusTo,
   pruneSelection,
   selectAll,
   selectOnly,
@@ -55,6 +57,34 @@ describe("selection model", () => {
     expect(moveFocus(state, order, "first").focus).toBe("a");
     expect(moveFocus(selectOnly("a"), order, "pageDown", { pageSize: 3 }).focus).toBe("d");
     expect(moveFocus(selectOnly("e"), order, "pageUp", { pageSize: 10 }).focus).toBe("a");
+  });
+
+  it("moving the caret by index", () => {
+    // linearMoveTarget follows the keys.
+    expect(linearMoveTarget("next", -1, 5, 10)).toBe(0);
+    expect(linearMoveTarget("next", 2, 5, 10)).toBe(3);
+    expect(linearMoveTarget("next", 4, 5, 10)).toBe(4);
+    expect(linearMoveTarget("previous", 0, 5, 10)).toBe(0);
+    expect(linearMoveTarget("pageDown", 1, 5, 3)).toBe(4);
+    expect(linearMoveTarget("pageUp", 4, 5, 3)).toBe(1);
+    expect(linearMoveTarget("first", 3, 5, 10)).toBe(0);
+    expect(linearMoveTarget("last", 0, 5, 10)).toBe(4);
+    expect(linearMoveTarget("next", 0, 0, 10)).toBe(-1);
+
+    // moveFocusTo selects, extends, or only moves the caret.
+    const paths = ["a", "b", "c", "d"];
+    const start = selectOnly("b");
+    expect(sorted(moveFocusTo(start, paths, 3).selected)).toEqual(["d"]);
+    expect(moveFocusTo(start, paths, 3).focus).toBe("d");
+    const extended = moveFocusTo(start, paths, 3, { shift: true });
+    expect(sorted(extended.selected)).toEqual(["b", "c", "d"]);
+    expect(extended.anchor).toBe("b");
+    const caret = moveFocusTo(start, paths, 0, { ctrl: true });
+    expect(sorted(caret.selected)).toEqual(["b"]);
+    expect(caret.focus).toBe("a");
+    expect(moveFocusTo(start, paths, 99).focus).toBe("d");
+    expect(moveFocusTo(start, paths, -4).focus).toBe("a");
+    expect(moveFocusTo(start, [], 2)).toBe(start);
   });
 
   it("select all, none, invert, and pruning after a refresh", () => {

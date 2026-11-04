@@ -1,0 +1,215 @@
+/* Transfer window and conflict window (Step 09f).
+   Colours come from tokens.css only; sizes come from the step guide. */
+
+.adp-transfer-window.adp-dialog {
+  width: 640px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+}
+
+.adp-transfer-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-width: 0;
+}
+
+.adp-transfer-head {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 36px;
+}
+
+.adp-transfer-current {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--adp-font-body);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-transfer-head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+}
+
+.adp-transfer-metrics {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--adp-space-3);
+  font: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-transfer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+}
+
+.adp-transfer-controls .adp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+}
+
+.adp-transfer-error {
+  margin: 0;
+  font: var(--adp-font-small);
+  color: var(--adp-color-status-caution);
+}
+
+.adp-transfer-report {
+  border-top: 1px solid var(--adp-color-border-subtle);
+  padding-top: var(--adp-space-2);
+}
+
+.adp-transfer-report-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-2);
+  font: var(--adp-font-section);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-transfer-problems {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.adp-transfer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-2);
+  height: 28px;
+  padding: 0 var(--adp-space-1);
+  font: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-transfer-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-transfer-reason {
+  display: inline-flex;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-tertiary);
+}
+
+/* Conflict window: two equal columns, 128 px preview, one safe focus. */
+.adp-conflict-window.adp-dialog {
+  width: 840px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+}
+
+.adp-conflict-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+}
+
+.adp-conflict-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--adp-space-4);
+}
+
+.adp-conflict-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--adp-space-1);
+  min-width: 0;
+  padding: var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-conflict-heading {
+  font: var(--adp-font-caption);
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-conflict-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 128px;
+  height: 128px;
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-chrome);
+  color: var(--adp-color-text-tertiary);
+  font-size: 48px;
+}
+
+.adp-conflict-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--adp-font-body);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-conflict-meta {
+  font: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-conflict-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+}
+
+.adp-conflict-replace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-2);
+}
+
+.adp-conflict-reason {
+  margin: 0;
+  flex-basis: 100%;
+  font: var(--adp-font-small);
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-conflict-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-subtle);
+  padding-top: var(--adp-space-2);
+}
+
+.adp-conflict-apply {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  font: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-conflict-error {
+  margin: 0;
+  font: var(--adp-font-small);
+  color: var(--adp-color-status-caution);
+}

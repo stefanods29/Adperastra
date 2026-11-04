@@ -1,0 +1,90 @@
+/* Movable toolbars, panels and tabs (Step 05c). Colors only through tokens. */
+.adp-dock { display:flex; flex:1; min-width:0; min-height:0; position:relative; }
+.adp-dock--top { flex-direction:column; }
+.adp-dock--bottom { flex-direction:column-reverse; }
+.adp-dock--left { flex-direction:row; }
+.adp-dock--right { flex-direction:row-reverse; }
+.adp-dock-bar { flex:none; display:flex; }
+/* A bar above or below the content fills the row: the command bar measures its
+   own width to decide which buttons fit. */
+.adp-dock--top > .adp-dock-bar > *, .adp-dock--bottom > .adp-dock-bar > * { flex:1 1 auto; min-width:0; }
+.adp-dock-content { flex:1; min-width:0; min-height:0; display:flex; position:relative; }
+
+/* Hide until pointed at: a thin line on the side, over the content. Never a
+   transform on the bar or its parents: it would trap fixed menus inside. */
+.adp-dock--autohide > .adp-dock-bar { position:absolute; z-index:20; overflow:hidden; background:var(--adp-color-border-default); }
+.adp-dock--autohide.adp-dock--top > .adp-dock-bar { top:0; left:0; right:0; height:6px; }
+.adp-dock--autohide.adp-dock--bottom > .adp-dock-bar { bottom:0; left:0; right:0; height:6px; }
+.adp-dock--autohide.adp-dock--left > .adp-dock-bar { top:0; bottom:0; left:0; width:6px; }
+.adp-dock--autohide.adp-dock--right > .adp-dock-bar { top:0; bottom:0; right:0; width:6px; }
+.adp-dock--autohide > .adp-dock-bar:hover:not(.adp-dock-bar--revealed) { background:var(--adp-accent-current); }
+.adp-dock--autohide > .adp-dock-bar--revealed { overflow:visible; height:auto; width:auto; background:var(--adp-color-surface-window); box-shadow:var(--adp-shadow-card); }
+/* Still in the page while hidden, so Tab can reach the toolbar. */
+.adp-dock--autohide > .adp-dock-bar:not(.adp-dock-bar--revealed) > * { opacity:0; }
+
+.adp-dock--bottom .adp-commandbar, .adp-dock--bottom .adp-ribbon { border-bottom:none; border-top:1px solid var(--adp-color-border-default); }
+.adp-dock--left .adp-commandbar, .adp-dock--left .adp-ribbon { border-bottom:none; border-right:1px solid var(--adp-color-border-default); }
+.adp-dock--right .adp-commandbar, .adp-dock--right .adp-ribbon { border-bottom:none; border-left:1px solid var(--adp-color-border-default); }
+
+/* The command bar in every style and on every side (Step 05c). */
+.adp-commandbar--compact { height:40px; }
+.adp-commandbar--compact .adp-cmd-text, .adp-commandbar--compact .adp-cmd-icon { height:28px; }
+.adp-commandbar--vertical { flex-direction:column; align-items:stretch; height:auto; overflow:hidden; width:200px; padding:var(--adp-space-3) var(--adp-space-2); gap:2px; }
+.adp-commandbar--vertical.adp-commandbar--compact { width:168px; }
+.adp-commandbar--vertical.adp-commandbar--icons { align-items:center; width:48px; padding:var(--adp-space-3) 6px; }
+.adp-commandbar--vertical .adp-cmd-wrap, .adp-commandbar--vertical .adp-tooltip-wrap { display:flex; width:100%; }
+.adp-commandbar--vertical .adp-cmd-text { justify-content:flex-start; width:100%; padding:0 var(--adp-space-3); }
+.adp-commandbar--vertical.adp-commandbar--compact .adp-cmd-text, .adp-commandbar--vertical.adp-commandbar--compact .adp-cmd-icon { height:28px; }
+.adp-commandbar--vertical .adp-cmd-sep { width:100%; height:1px; margin:var(--adp-space-1) 0; }
+.adp-commandbar--vertical.adp-commandbar--icons .adp-cmd-sep { width:24px; align-self:center; }
+.adp-commandbar--vertical .adp-cmd-spacer { flex:1; }
+
+/* The ribbon in every style and on every side (Step 05c). */
+.adp-ribbon--compact .adp-ribbon-body { height:40px; }
+.adp-ribbon--compact .adp-ribbon-btn { height:28px; }
+.adp-ribbon--vertical { display:flex; flex-direction:column; width:200px; }
+.adp-ribbon--vertical.adp-ribbon--compact { width:168px; }
+.adp-ribbon--vertical.adp-ribbon--icons { width:48px; }
+.adp-ribbon--vertical .adp-ribbon-body { flex-direction:column; align-items:stretch; flex:1; height:auto; overflow-y:auto; overflow-x:hidden; padding:var(--adp-space-3) 6px; gap:2px; }
+.adp-ribbon--vertical .adp-ribbon-group { flex-direction:column; align-items:stretch; gap:2px; }
+.adp-ribbon--vertical .adp-ribbon-sep { width:100%; height:1px; margin:var(--adp-space-1) 0; }
+.adp-ribbon--vertical .adp-ribbon-btn { justify-content:flex-start; width:100%; }
+.adp-ribbon--vertical.adp-ribbon--compact .adp-ribbon-btn { height:28px; }
+.adp-ribbon--vertical.adp-ribbon--icons .adp-ribbon-btn { justify-content:center; width:36px; padding:0; }
+.adp-ribbon--vertical .adp-ribbon-custom { display:flex; flex-direction:column; align-items:stretch; gap:var(--adp-space-1); }
+.adp-ribbon-tabpick { padding:var(--adp-space-2); }
+.adp-flyout { position:fixed; display:flex; flex-direction:column; min-width:200px; padding:var(--adp-space-4); gap:var(--adp-space-3); overflow-y:auto; z-index:70; background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-lg); box-shadow:var(--adp-shadow-card); }
+.adp-flyout .adp-ribbon-custom { display:flex; flex-direction:column; align-items:stretch; gap:var(--adp-space-1); }
+
+/* The Explorer's docked command bar and its movable panes (Step 05c). */
+.adp-explorer-main { display:flex; flex-direction:column; }
+.adp-explorer-center { display:flex; flex-direction:column; flex:1; min-width:0; min-height:0; }
+.adp-explorer-center > .adp-explorer-content { flex:1; }
+.adp-explorer-body--nav-right > .adp-explorer-nav { order:1; border-right:none; border-left:1px solid var(--adp-color-border-panel); }
+.adp-details-pane--bottom { flex:none; overflow-y:auto; width:auto; height:200px; border-left:none; border-top:1px solid var(--adp-color-border-panel); }
+
+/* Tabs at the top, at the bottom or in a column (Step 05c). */
+.adp-workspace { display:flex; flex:1; min-height:0; }
+.adp-workspace--tabs-top { flex-direction:row; }
+.adp-workspace--tabs-left { flex-direction:row; }
+.adp-workspace--tabs-right { flex-direction:row-reverse; }
+.adp-workspace--tabs-bottom { flex-direction:column-reverse; }
+.adp-workspace > .adp-main { flex:1; min-width:0; min-height:0; }
+.adp-titlebar-title { flex:1; display:flex; align-items:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; padding:0 var(--adp-space-4); color:var(--adp-color-text-secondary); font-size:var(--adp-font-body); }
+.adp-tabbar--bottom { flex:none; display:flex; align-items:flex-start; height:36px; padding:0 var(--adp-space-2); gap:var(--adp-space-1); background:var(--adp-color-surface-chrome); border-top:1px solid var(--adp-color-border-default); }
+.adp-tabbar--bottom .adp-tab { border-top:none; border-radius:0 0 var(--adp-radius-md) var(--adp-radius-md); }
+.adp-tabrail { display:flex; flex-direction:column; flex:none; overflow-y:auto; width:220px; padding:var(--adp-space-2); gap:2px; background:var(--adp-color-surface-chrome); }
+.adp-tabrail--left { border-right:1px solid var(--adp-color-border-default); }
+.adp-tabrail--right { border-left:1px solid var(--adp-color-border-default); }
+.adp-tabrail--collapsed { align-items:center; width:48px; }
+.adp-tabrail .adp-tab { justify-content:flex-start; width:100%; max-width:none; height:36px; border:none; border-radius:var(--adp-radius-sm); }
+.adp-tabrail--collapsed .adp-tab { justify-content:center; width:36px; padding:0; }
+.adp-tabrail--left .adp-tab--active { box-shadow:inset 3px 0 0 var(--adp-accent-current); }
+.adp-tabrail--right .adp-tab--active { box-shadow:inset -3px 0 0 var(--adp-accent-current); }
+.adp-tabrail .adp-tab-close { margin-left:auto; }
+.adp-tab-dirty { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--adp-color-text-secondary); flex:none; }
+.adp-tabrail-toggle { align-self:flex-start; }
+
+/* Settings > Layout (Step 05c). */
+.adp-layout-presets { display:flex; flex-direction:column; list-style:none; margin:0; padding:0; gap:var(--adp-space-2); }
+.adp-layout-preset { display:flex; align-items:center; gap:var(--adp-space-3); }

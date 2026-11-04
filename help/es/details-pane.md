@@ -14,4 +14,4 @@ Haz clic en **Detalles** al final de la barra de comandos, elige **Ver** > **Pan
 
 Los primeros datos aparecen en cuanto haces clic; las fechas y los atributos llegan un momento después. Adperastra los lee sin abrir el archivo, así que un archivo guardado solo en línea nunca se descarga solo para mostrar sus detalles.
 
-Las vistas previas y la información más completa (por ejemplo, datos de fotos y videos) llegan en una versión posterior.
+En el panel aparecen detalles de imágenes, música, videos y documentos. Consulta «Detalles de archivos» para saber qué muestra y «Vista previa rápida» para mirar un archivo sin abrirlo.

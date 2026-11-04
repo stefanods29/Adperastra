@@ -1,0 +1,19 @@
+[package]
+name = "cache-store"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+fs-service = { path = "../fs-service" }
+rusqlite = { version = "0.41", features = ["bundled"] }
+blake3 = "1.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }

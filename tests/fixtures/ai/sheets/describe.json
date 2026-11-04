@@ -1,0 +1,27 @@
+{
+  "revision":1,
+  "cases":[
+    {"id":"d01","en":"Describe the total.","es":"Describe el total.","values":[2,3],"statistic":"sum","expected":{"kind":"number","value":5}},
+    {"id":"d02","en":"Describe the mean.","es":"Describe el promedio.","values":[2,4],"statistic":"mean","expected":{"kind":"number","value":3}},
+    {"id":"d03","en":"Describe the minimum.","es":"Describe el mínimo.","values":[2,3,4],"statistic":"min","expected":{"kind":"number","value":2}},
+    {"id":"d04","en":"Describe the maximum.","es":"Describe el máximo.","values":[2,3,4],"statistic":"max","expected":{"kind":"number","value":4}},
+    {"id":"d05","en":"Describe the numeric count.","es":"Describe el recuento numérico.","values":[2,3,4],"statistic":"count","expected":{"kind":"number","value":3}},
+    {"id":"d06","en":"Describe a zero total.","es":"Describe un total cero.","values":[2,-2],"statistic":"sum","expected":{"kind":"number","value":0}},
+    {"id":"d07","en":"Describe negative values.","es":"Describe valores negativos.","values":[-2,-3],"statistic":"sum","expected":{"kind":"number","value":-5}},
+    {"id":"d08","en":"Describe fractional totals.","es":"Describe totales fraccionarios.","values":[0.5,1.5],"statistic":"sum","expected":{"kind":"number","value":2}},
+    {"id":"d09","en":"Describe one value.","es":"Describe un solo valor.","values":[7],"statistic":"mean","expected":{"kind":"number","value":7}},
+    {"id":"d10","en":"Describe identical values.","es":"Describe valores idénticos.","values":[3,3,3],"statistic":"min","expected":{"kind":"number","value":3}},
+    {"id":"d11","en":"Describe the largest negative.","es":"Describe el mayor negativo.","values":[-5,-2],"statistic":"max","expected":{"kind":"number","value":-2}},
+    {"id":"d12","en":"Describe the smallest negative.","es":"Describe el menor negativo.","values":[-5,-2],"statistic":"min","expected":{"kind":"number","value":-5}},
+    {"id":"d13","en":"Describe mixed signs.","es":"Describe signos distintos.","values":[-2,4],"statistic":"mean","expected":{"kind":"number","value":1}},
+    {"id":"d14","en":"Describe all zeros.","es":"Describe solo ceros.","values":[0,0,0],"statistic":"sum","expected":{"kind":"number","value":0}},
+    {"id":"d15","en":"Describe four entries.","es":"Describe cuatro entradas.","values":[1,2,3,4],"statistic":"count","expected":{"kind":"number","value":4}},
+    {"id":"d16","en":"Describe this sum without changing cells.","es":"Describe esta suma sin cambiar celdas.","values":[10,20,30],"statistic":"sum","expected":{"kind":"number","value":60}},
+    {"id":"d17","en":"Describe quarter values.","es":"Describe valores de cuartos.","values":[0.25,0.75],"statistic":"mean","expected":{"kind":"number","value":0.5}},
+    {"id":"d18","en":"Describe only selected values.","es":"Describe solo los valores seleccionados.","values":[2,3],"unselected":[1000],"statistic":"sum","expected":{"kind":"number","value":5}},
+    {"id":"d19","en":"Reject a claimed total of six.","es":"Rechaza el total afirmado de seis.","values":[2,3],"model_claim":6,"statistic":"sum","expected":{"kind":"number","value":5}},
+    {"id":"d20","en":"Keep numeric-looking identifiers as text.","es":"Conserva como texto identificadores que parecen números.","values":["000123","5",2],"statistic":"count","expected":{"kind":"number","value":1}}
+  ],
+  "oracle":{"native_capture_statistic_ids_required":true,"unknown_statistic_refused":true,"grounded_facts_required":true,"human_rating_min":4,"rating_max":5,"operations":0,"history_changes":0},
+  "integration_gate":"E20 currently has no statistic ID field/export; fixtures are authored oracles, not executable evidence."
+}

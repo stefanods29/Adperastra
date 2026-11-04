@@ -1,0 +1,412 @@
+/* Search modes, filters, saved searches and indexing (Step 11a). */
+
+.adp-search {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: var(--adp-space-2, 6px) var(--adp-space-3, 8px);
+  gap: var(--adp-space-2, 6px);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2, 6px);
+  height: 44px;
+  min-height: 44px;
+  padding: 0 var(--adp-space-2, 6px);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-chrome);
+}
+
+.adp-search-input {
+  flex: 1 1 auto;
+  min-width: 120px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--adp-radius-sm);
+  padding: 0 var(--adp-space-2, 6px);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  font: inherit;
+}
+
+.adp-search-input:focus-visible,
+.adp-search-mode__button:focus-visible,
+.adp-search-mode__option:focus-visible,
+.adp-search-filter button:focus-visible,
+.adp-search-filter input:focus-visible,
+.adp-search-filter select:focus-visible,
+.adp-index-settings button:focus-visible,
+.adp-index-settings input:focus-visible,
+.adp-index-settings select:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+.adp-search-mode {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.adp-search-mode__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1, 4px);
+  height: 32px;
+  padding: 0 var(--adp-space-2, 6px);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adp-search-mode__popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  min-width: 220px;
+  padding: var(--adp-space-1, 4px);
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+  box-shadow: var(--adp-shadow-card);
+}
+
+.adp-search-mode__popup ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-search-mode__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-2, 6px);
+  min-height: 32px;
+  padding: 0 var(--adp-space-2, 6px);
+  border-radius: var(--adp-radius-sm);
+  cursor: pointer;
+}
+
+.adp-search-mode__option--selected,
+.adp-search-mode__option--active {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-search-mode__option--disabled {
+  color: var(--adp-color-text-tertiary);
+  cursor: not-allowed;
+}
+
+.adp-search-mode__help {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1, 4px);
+  width: 100%;
+  min-height: 32px;
+  margin-top: var(--adp-space-1, 4px);
+  padding: 0 var(--adp-space-2, 6px);
+  border: 0;
+  border-top: 1px solid var(--adp-color-border-subtle);
+  background: transparent;
+  color: var(--adp-color-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adp-search-mode__status {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  max-width: 360px;
+  margin: 0;
+  padding: var(--adp-space-1, 4px) var(--adp-space-2, 6px);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-search-notice,
+.adp-search-error {
+  margin: 0;
+  padding: var(--adp-space-1, 4px) var(--adp-space-2, 6px);
+  border-left: 3px solid var(--adp-color-status-caution);
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-search-error {
+  border-left-color: var(--adp-accent-pdf);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-search-summary {
+  display: flex;
+  gap: var(--adp-space-3, 8px);
+  min-height: 20px;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-search-empty {
+  margin: var(--adp-space-4, 12px);
+  color: var(--adp-color-text-secondary);
+  text-align: center;
+}
+
+.adp-search-results {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-top: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-search-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--adp-space-2, 6px);
+}
+
+.adp-search-filter-dialog {
+  width: 760px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-search-filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3, 8px);
+}
+
+.adp-search-filter__match,
+.adp-search-filter__add,
+.adp-search-filter__footer {
+  display: flex;
+  gap: var(--adp-space-2, 6px);
+}
+
+.adp-search-filter__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2, 6px);
+}
+
+.adp-search-filter__row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(100px, 1fr) minmax(160px, 2fr) 32px;
+  gap: var(--adp-space-2, 6px);
+  align-items: center;
+}
+
+.adp-search-filter__row select,
+.adp-search-filter__row .adp-input {
+  min-height: 32px;
+}
+
+.adp-search-filter__folders {
+  max-height: 180px;
+  overflow: auto;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  padding: var(--adp-space-2, 6px);
+}
+
+.adp-search-filter__folders label {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2, 6px);
+  min-height: 28px;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-search-filter__footer {
+  justify-content: flex-end;
+}
+
+.adp-search-save-dialog {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-index-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3, 8px);
+  max-width: 960px;
+}
+
+.adp-settings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-3, 8px);
+}
+
+.adp-index-status {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-index-warning {
+  margin: 0;
+  padding: var(--adp-space-1, 4px) var(--adp-space-2, 6px);
+  border-left: 3px solid var(--adp-color-status-caution);
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-index-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2, 6px);
+}
+
+.adp-index-roots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2, 6px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-index-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2, 6px);
+  padding: var(--adp-space-2, 6px);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-index-root__select {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2, 6px);
+  min-height: 28px;
+}
+
+.adp-index-root__path {
+  overflow-wrap: anywhere;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-index-root__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-3, 8px);
+}
+
+.adp-index-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--adp-space-3, 8px);
+}
+
+.adp-index-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1, 4px);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-index-fields select {
+  min-height: 32px;
+}
+
+.adp-index-usn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1, 4px);
+  padding-top: var(--adp-space-2, 6px);
+  border-top: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-index-usn p {
+  margin: 0;
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+}
+
+/* The Explorer's search overlay (Step 11a): results replace the file list
+   until the overlay closes. */
+.adp-explorer-search-pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.adp-explorer-search-pane > .adp-search {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+.adp-explorer-search-head {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2, 6px);
+  min-height: 36px;
+}
+
+.adp-explorer-search-title {
+  margin: 0;
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+}
+
+.adp-search-saved {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-1, 4px);
+  min-width: 0;
+  max-height: 32px;
+  overflow: auto;
+}
+
+.adp-search-saved__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.adp-search-index-dialog {
+  width: 760px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-search-index-dialog .adp-dialog-body {
+  max-height: 76vh;
+  overflow: auto;
+}
+
+@media (max-width: 600px) {
+  .adp-search-bar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 44px;
+    padding: var(--adp-space-2, 6px);
+  }
+
+  .adp-search-filter__row {
+    grid-template-columns: 1fr;
+  }
+}

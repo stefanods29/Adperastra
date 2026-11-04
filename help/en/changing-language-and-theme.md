@@ -1,11 +1,19 @@
 # Changing language and theme
 
-Open the **Settings** tab to change these options. Changes apply instantly. You do not need to restart the app.
+Open the **Settings** tab to change these options. Changes apply at once; you don't need to restart the app.
 
-**Language:** English or Espanol (Latinoamerica). If a word is missing in your language, the app shows it in English.
+## Language
 
-**Theme:** Light, Dark, or Follow Windows (uses your Windows setting).
+In **General**, choose **English** or **Español**. If a word is missing in your language, the app shows it in English.
 
-**Accent color:** from the design, from Windows, or a custom color you pick.
+## Theme
 
-Settings are saved automatically in a local file on your PC.
+In **Theme**, choose **System** (follows your Windows setting), **Light** or **Dark**, and pick the theme each mode uses from the cards. See "Themes and appearance" for every theme.
+
+## Accent color
+
+Also in **Theme**: the color from the design, from Windows, or a custom color you pick.
+
+Settings are saved automatically in a file on your PC.
+
+See also: "Themes and appearance" and "The Settings page".

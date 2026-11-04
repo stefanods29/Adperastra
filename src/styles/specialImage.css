@@ -1,0 +1,10 @@
+/* RAW and HEIC/HEIF previews (Step 07g). Colors come only from tokens. */
+.adp-special-image { display:flex; flex-direction:column; height:100%; min-height:0; background:var(--adp-color-surface-canvas-media); position:relative; }
+.adp-special-image-stage { flex:1; min-height:0; overflow:auto; display:flex; align-items:center; justify-content:center; padding:var(--adp-space-6); }
+.adp-special-image-picture { object-fit:contain; image-rendering:auto; transform-origin:center center; background:var(--adp-color-surface-pane); }
+.adp-special-image-controls { display:flex; align-items:center; gap:var(--adp-space-2); padding:var(--adp-space-2) var(--adp-space-4); border-top:1px solid var(--adp-color-border-panel); background:var(--adp-color-surface-chrome); flex-wrap:wrap; }
+.adp-special-image-help { max-width:52ch; color:var(--adp-color-text-secondary); }
+.adp-special-image-loading { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--adp-space-3); }
+.adp-special-image-skeleton { width:min(60%,420px); aspect-ratio:4/3; }
+.adp-special-image-paused { position:absolute; inset:0; pointer-events:none; }
+.adp-special-image button:focus-visible { outline:2px solid var(--adp-accent-image); outline-offset:2px; }

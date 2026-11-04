@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-30T05:44:28.146Z",
+  "step": "03b",
+  "build": "release (tauri build --no-bundle)",
+  "method": "Inside the packaged app's page: action dispatched, clock stopped at the next painted frame (two animation frames). Median of 7 runs.",
+  "language": "en",
+  "theme": "light",
+  "results": [
+    {
+      "name": "select item (click)",
+      "median_ms": 8.7,
+      "max_ms": 12.1,
+      "runs": 7
+    },
+    {
+      "name": "add item (Ctrl+click)",
+      "median_ms": 7.5,
+      "max_ms": 8.5,
+      "runs": 7
+    },
+    {
+      "name": "type-ahead jump",
+      "median_ms": 9.9,
+      "max_ms": 12.6,
+      "runs": 7
+    },
+    {
+      "name": "right-click menu on a file",
+      "median_ms": 8.1,
+      "max_ms": 13.5,
+      "runs": 7
+    },
+    {
+      "name": "right-click menu on empty space",
+      "median_ms": 5.6,
+      "max_ms": 8.5,
+      "runs": 7
+    },
+    {
+      "name": "command bar View menu",
+      "median_ms": 4.7,
+      "max_ms": 6.7,
+      "runs": 7
+    },
+    {
+      "name": "rename box (F2)",
+      "median_ms": 8.6,
+      "max_ms": 14.4,
+      "runs": 7
+    },
+    {
+      "name": "details pane filled (dates and attributes)",
+      "median_ms": 8.1,
+      "max_ms": 9.2,
+      "runs": 7
+    },
+    {
+      "name": "details pane hide/show (Alt+Shift+P)",
+      "median_ms": 6.7,
+      "max_ms": 7.4,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: select item (click)",
+      "median_ms": 7.1,
+      "max_ms": 10.5,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: arrow key move",
+      "median_ms": 10.2,
+      "max_ms": 11,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: select all (Ctrl+A)",
+      "median_ms": 27.5,
+      "max_ms": 32.4,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: right-click with all selected",
+      "median_ms": 8.2,
+      "max_ms": 20.5,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: Shift+click range",
+      "median_ms": 30.6,
+      "max_ms": 38.1,
+      "runs": 7
+    },
+    {
+      "name": "100k folder: scroll frame time (p95)",
+      "median_ms": 16.4,
+      "p95_frame_ms": 16.4,
+      "max_ms": 105.5,
+      "runs": 148,
+      "display_frame_ms": 13.1,
+      "dropped_frames": 2,
+      "tier": "smooth"
+    },
+    {
+      "name": "command bar New menu",
+      "median_ms": 9.9,
+      "max_ms": 9.9,
+      "runs": 1
+    },
+    {
+      "name": "copy demo files (job, start to report)",
+      "median_ms": 76.2,
+      "max_ms": 76.2,
+      "runs": 1
+    },
+    {
+      "name": "recycle + restore one file (jobs)",
+      "median_ms": 439.1,
+      "max_ms": 439.1,
+      "runs": 1
+    },
+    {
+      "name": "replace a file, then undo it (jobs)",
+      "median_ms": 436.2,
+      "max_ms": 436.2,
+      "runs": 1
+    },
+    {
+      "name": "Show more options (classic menu, separate process)",
+      "median_ms": 741,
+      "runs": 1,
+      "note": "740.8000000007451"
+    }
+  ]
+}

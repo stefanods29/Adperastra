@@ -1,0 +1,37 @@
+/* Notebook cells (Step 07f): 16px padding, 8px gaps, read-only text. */
+.adp-notebook { flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: var(--adp-space-4); background: var(--adp-color-surface-window); }
+.adp-notebook-cells { display: flex; flex-direction: column; gap: var(--adp-space-4); max-width: 960px; margin: 0 auto; }
+.adp-notebook-cell { border: 1px solid var(--adp-color-border-subtle); border-radius: var(--adp-radius-md); background: var(--adp-color-surface-pane); padding: var(--adp-space-3); }
+.adp-notebook-cell header { display: flex; align-items: baseline; gap: var(--adp-space-2); color: var(--adp-color-text-secondary); font-size: var(--adp-font-small); }
+.adp-notebook-index { font-family: "Cascadia Mono", Consolas, monospace; }
+.adp-notebook-kind { font-weight: 600; color: var(--adp-color-text-primary); }
+.adp-notebook-language { margin-inline-start: auto; }
+.adp-notebook-source, .adp-notebook-text {
+  margin: var(--adp-space-2) 0 0;
+  padding: var(--adp-space-2);
+  overflow: auto;
+  background: var(--adp-color-surface-window);
+  border-radius: var(--adp-radius-sm);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.adp-notebook-outputs { margin-top: var(--adp-space-2); }
+.adp-notebook-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  border: 0;
+  padding: var(--adp-space-1) 0;
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  font-size: var(--adp-font-small);
+  cursor: pointer;
+}
+.adp-notebook-toggle:focus-visible { outline: 2px solid var(--adp-accent-current); outline-offset: 2px; }
+.adp-notebook-output-list { display: flex; flex-direction: column; gap: var(--adp-space-2); margin-top: var(--adp-space-1); }
+.adp-notebook-output img { max-width: 100%; height: auto; background: var(--adp-color-surface-window); }
+.adp-notebook-html { width: 100%; min-height: 80px; max-height: 420px; border: 1px solid var(--adp-color-border-subtle); border-radius: var(--adp-radius-sm); background: var(--adp-color-surface-window); }
+.adp-notebook-error { margin: 0; padding: var(--adp-space-2); border-inline-start: 3px solid var(--adp-accent-pdf); color: var(--adp-accent-pdf); white-space: pre-wrap; }

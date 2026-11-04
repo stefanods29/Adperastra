@@ -14,4 +14,4 @@ Las tarjetas superiores abren tus carpetas principales (Escritorio, Descargas, D
 
 Las dos listas funcionan como cualquier carpeta: selecciona elementos, haz doble clic para abrirlos o clic derecho para ver más, como **Mostrar en la carpeta** para ir a la carpeta que contiene un elemento. Las carpetas ancladas viven en Acceso rápido.
 
-Consulta también: «Anclar carpetas», «Explorar carpetas» y «El menú del clic derecho» en la lista de ayuda de la izquierda.
+Consulta también: «Anclar carpetas», «Explorar carpetas», «La Galería» y «El menú del clic derecho» en la lista de ayuda de la izquierda.

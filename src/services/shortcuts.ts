@@ -12,7 +12,15 @@ const KEY_NAMES: Record<string, string> = {
   right: "keys.right",
   up: "keys.up",
   down: "keys.down",
+  // Effective bindings store arrows in their normalized long names.
+  arrowleft: "keys.left",
+  arrowright: "keys.right",
+  arrowup: "keys.up",
+  arrowdown: "keys.down",
   space: "keys.space",
+  pageup: "keys.pageUp",
+  pagedown: "keys.pageDown",
+  backspace: "keys.backspace",
 };
 
 export function formatShortcut(shortcut: string, t: (key: string) => string): string {

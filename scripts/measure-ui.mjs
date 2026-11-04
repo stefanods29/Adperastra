@@ -3,15 +3,154 @@
 // is dispatched, then the clock stops at the next painted frame (two
 // animation frames), which is what the user sees. Median of RUNS runs.
 //
-// node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme>
+// node scripts/measure-ui.mjs <port> <demoFolder> <bigFolder> <full|screenshots> <outJson|""> <shotDir|""> <lang> <theme> [step]
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { deflateSync } from "node:zlib";
 import { join } from "node:path";
 
 const args = process.argv.slice(2).map((value) => (value === "-" ? "" : value));
-const [port, demo, big, mode, outFile, shotDir, lang, theme] = args;
+const [port, demo, big, mode, outFile, shotDir, lang, theme, stepId] = args;
+if (mode === "full" && outFile && !stepId) throw new Error("measure-ui.mjs needs the step id (9th argument)");
 const RUNS = 7;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Text samples for the 04b measurements: a 5 MB log and a Markdown page. */
+function writeTextSamples(folder) {
+  const lines = [];
+  for (let index = 0; lines.join("\n").length < 5 * 1024 * 1024; index += 1000) {
+    for (let line = index; line < index + 1000; line += 1) {
+      lines.push(`2026-10-28 12:00:${String(line % 60).padStart(2, "0")} INFO  worker-${line % 8} processed item ${line} in ${line % 97} ms`);
+    }
+  }
+  writeFileSync(join(folder, "server-5mb.log"), lines.join("\r\n"));
+  writeFileSync(
+    join(folder, "guide.md"),
+    ["# Project guide", "", "Some **bold** text and a [link](https://example.com).", "", "## Steps", "", "1. One", "2. Two", "", "| Name | Size |", "|---|---|", "| a | 1 |", "", "```js", "const x = 1;", "```"].join("\n"),
+  );
+  // Step 06f: a small table, a 100,000-row table, a JSON tree and a 3 MB
+  // file with one marker at a known offset for the hex search.
+  const pool = ["Ana", "Luis", "Eva", "Mateo", "Sofía", "Diego"];
+  const cities = ["Lima", "Bogotá", "Quito", "Cusco", "Madrid", "Santiago"];
+  const tableRow = (index) => `${pool[index % pool.length]},${20 + (index % 60)},${cities[index % cities.length]}`;
+  const small = ["name,age,city"];
+  for (let index = 1; index <= 200; index += 1) small.push(tableRow(index));
+  writeFileSync(join(folder, "people.csv"), `${small.join("\r\n")}\r\n`);
+  const wide = ["name,age,city"];
+  for (let index = 1; index <= 100_000; index += 1) wide.push(tableRow(index));
+  writeFileSync(join(folder, "big-100k.csv"), `${wide.join("\r\n")}\r\n`);
+  const people = Array.from({ length: 200 }, (_, index) => ({
+    name: `${pool[index % pool.length]} ${index + 1}`,
+    age: 20 + (index % 60),
+    city: cities[index % cities.length],
+  }));
+  writeFileSync(join(folder, "data.json"), JSON.stringify({ people }, null, 2));
+  const searchBytes = Buffer.alloc(3 * 1024 * 1024);
+  searchBytes.write("FINDME", 2_097_150, "ascii");
+  writeFileSync(join(folder, "search-3mb.bin"), searchBytes);
+}
+
+/** Step 06f: a real font for the font measurement and screenshot. */
+function copySampleFont(folder) {
+  const source = "C:\\Windows\\Fonts\\arial.ttf";
+  if (!existsSync(source)) {
+    console.log(`no font at ${source}; the font measurement and screenshot are skipped`);
+    return false;
+  }
+  try {
+    copyFileSync(source, join(folder, "arial.ttf"));
+    return true;
+  } catch (error) {
+    console.log(`could not copy the sample font: ${error.message ?? error}`);
+    return false;
+  }
+}
+
+/** Step 06e sample: one MiB that does not compress away, for creation timing. */
+function writeArchiveSamples(folder) {
+  const bytes = Buffer.alloc(1024 * 1024);
+  let state = 0x12345678;
+  for (let index = 0; index < bytes.length; index += 1) {
+    state = (Math.imul(state, 1103515245) + 12345) >>> 0;
+    bytes[index] = (state >>> 16) & 0xff;
+  }
+  writeFileSync(join(folder, "archive-source.bin"), bytes);
+}
+
+/** Step 04c samples: a 10 s tone as WAV, and a Markdown file marked as
+ * downloaded from the internet (its Zone.Identifier stream). */
+function writeMediaSamples(folder) {
+  const rate = 44100;
+  const samples = rate * 10;
+  const data = Buffer.alloc(samples * 2);
+  for (let i = 0; i < samples; i += 1) data.writeInt16LE(Math.round(Math.sin((2 * Math.PI * 440 * i) / rate) * 8000), i * 2);
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0, "ascii");
+  header.writeUInt32LE(36 + data.length, 4);
+  header.write("WAVEfmt ", 8, "ascii");
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20); // PCM
+  header.writeUInt16LE(1, 22); // mono
+  header.writeUInt32LE(rate, 24);
+  header.writeUInt32LE(rate * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write("data", 36, "ascii");
+  header.writeUInt32LE(data.length, 40);
+  writeFileSync(join(folder, "tone-10s.wav"), Buffer.concat([header, data]));
+  writeFileSync(join(folder, "downloaded.md"), "# Downloaded notes\n\nA [web link](https://example.com).\n");
+  try {
+    writeFileSync(join(folder, "downloaded.md:Zone.Identifier"), "[ZoneTransfer]\r\nZoneId=3\r\n");
+  } catch {
+    // Not NTFS: the protected view screenshot shows no bar.
+  }
+}
+
+/** A real PNG (a color gradient), so "open image" measures a real decode. */
+function writeGradientPng(path, width, height) {
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (buffer) => {
+    let c = 0xffffffff;
+    for (const byte of buffer) c = crcTable[(c ^ byte) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type, data) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+    const sum = Buffer.alloc(4);
+    sum.writeUInt32BE(crc(body));
+    return Buffer.concat([length, body, sum]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8; // bit depth
+  header[9] = 2; // RGB
+  const raw = Buffer.alloc((width * 3 + 1) * height);
+  for (let y = 0; y < height; y += 1) {
+    const row = y * (width * 3 + 1);
+    for (let x = 0; x < width; x += 1) {
+      const offset = row + 1 + x * 3;
+      raw[offset] = Math.round((x / width) * 255);
+      raw[offset + 1] = Math.round((y / height) * 255);
+      raw[offset + 2] = 192;
+    }
+  }
+  writeFileSync(
+    path,
+    Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      chunk("IHDR", header),
+      chunk("IDAT", deflateSync(raw)),
+      chunk("IEND", Buffer.alloc(0)),
+    ]),
+  );
+}
 
 async function connect() {
   const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
@@ -43,14 +182,17 @@ async function connect() {
 const cdp = await connect();
 async function page(expression) {
   const result = await cdp.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
-  if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+  if (result.exceptionDetails) {
+    console.error("page error:", result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+    throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+  }
   return result.result.value;
 }
 
 await page(`window.__m = {
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
   async time(fn) { const t0 = performance.now(); fn(); await this.frame(); return performance.now() - t0; },
-  async timeUntil(fn, done) { const t0 = performance.now(); fn(); while (!done()) await new Promise((r) => requestAnimationFrame(r)); await this.frame(); return performance.now() - t0; },
+  async timeUntil(fn, done) { const t0 = performance.now(); fn(); while (!done()) { if (performance.now() - t0 > 20000) throw new Error('timeUntil timeout'); await new Promise((r) => requestAnimationFrame(r)); } await this.frame(); return performance.now() - t0; },
   async waitFor(pred, ms = 20000) { const t0 = performance.now(); while (!pred()) { if (performance.now() - t0 > ms) throw new Error("timeout"); await new Promise((r) => setTimeout(r, 20)); } },
   rows: () => [...document.querySelectorAll(".adp-filelist-scroll [role=option]")],
   list: () => document.querySelector(".adp-filelist-scroll"),
@@ -60,6 +202,10 @@ await page(`window.__m = {
   closeMenus() { for (const m of document.querySelectorAll(".adp-ctxmenu")) m.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); },
   // Text buttons in the command bar, in order: New, Sort, View, Details.
   menuButton(index) { return document.querySelectorAll(".adp-commandbar .adp-cmd-text")[index]; },
+  // Step 05c: Settings > Layout fields, and the Settings and Explorer tabs.
+  layoutField(field, value) { const select = document.querySelector('select[data-layout-field="' + field + '"]'); if (!select) return false; Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set.call(select, value); select.dispatchEvent(new Event("change", { bubbles: true })); return true; },
+  openSettings() { document.querySelectorAll(".adp-button-row button")[1]?.click(); },
+  openExplorer() { document.querySelector("[role='tab']")?.click(); },
 }; true`);
 await page(`window.__m.waitFor(() => document.querySelector(".adp-explorer"))`);
 
@@ -85,7 +231,18 @@ async function openFolder(path, settleMs = 500) {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(path)});
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input.form.requestSubmit();
-    await window.__m.waitFor(() => document.querySelector(".adp-address-box")?.textContent.includes(${JSON.stringify(name)}) && window.__m.rows().length > 0);
+    try {
+      await window.__m.waitFor(() => document.querySelector(".adp-address-box")?.textContent.includes(${JSON.stringify(name)}) && window.__m.rows().length > 0);
+    } catch (error) {
+      // Say what the page showed instead of a bare timeout.
+      throw new Error("opening " + ${JSON.stringify(name)} + " timed out: " + JSON.stringify({
+        address: document.querySelector(".adp-address-box")?.textContent ?? null,
+        editing: !!document.querySelector(".adp-address-input"),
+        rows: window.__m.rows().length,
+        dialog: document.querySelector("[role=dialog]")?.textContent?.slice(0, 120) ?? null,
+        status: document.querySelector(".adp-statusbar")?.textContent ?? null,
+      }));
+    }
     return true;
   })()`);
   await sleep(settleMs);
@@ -109,6 +266,13 @@ async function measure(name, setup, action, cleanup = "true") {
   return result;
 }
 
+/** The translated "Version history…" label, read from the Details pane. */
+async function versionHistoryLabel() {
+  await page(`(() => { const row = [...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")); if (row) window.__m.click(row); return true; })()`);
+  await sleep(200);
+  return page(`document.querySelector(".adp-details-pane .adp-btn")?.textContent.trim() ?? ""`);
+}
+
 async function shot(name) {
   if (!shotDir) return;
   mkdirSync(shotDir, { recursive: true });
@@ -119,6 +283,11 @@ async function shot(name) {
   console.log(`screenshot ${file}`);
 }
 
+writeGradientPng(join(demo, "photo-1920.png"), 1920, 1080);
+writeTextSamples(demo);
+writeMediaSamples(demo);
+writeArchiveSamples(demo);
+const hasSampleFont = copySampleFont(demo);
 await openFolder(demo);
 const results = [];
 
@@ -160,12 +329,265 @@ if (mode === "full") {
   results.push(await measure("100k folder: select all (Ctrl+A)", `window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "a", ctrlKey: true })`));
   results.push(await measure("100k folder: right-click with all selected", `window.__m.list().focus(); window.__m.key(window.__m.list(), { key: "a", ctrlKey: true }); true`, `window.__m.context(window.__m.rows()[2])`, `window.__m.closeMenus(); true`));
   results.push(await measure("100k folder: Shift+click range", `window.__m.click(window.__m.rows()[0]); true`, `window.__m.click(window.__m.rows()[20], { shiftKey: true })`));
+  // Step 05a: the views. Shortcuts read the key's position, so `code` is
+  // what matters; the typed character is the one Shift produces.
+  results.push(await measure("100k folder: switch to Large icons (Ctrl+Shift+2)", `true`, `window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  results.push(await measure("100k folder: arrow key move in Large icons", `window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true }); window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); true`, `window.__m.key(window.__m.list(), { key: "ArrowRight" })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  results.push(await measure("100k folder: switch to List (Ctrl+Shift+5)", `true`, `window.__m.key(window, { key: "%", code: "Digit5", ctrlKey: true, shiftKey: true })`, `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`));
+  // Step 05b: Column view. The Columns entry is the ninth view in the
+  // default View menu; Ctrl+Shift+6 (back to Details) closes every run.
+  const columnsEntry = `document.querySelectorAll(".adp-ctxmenu [role=menuitemradio]")[8]`;
+  results.push(
+    await measure(
+      "100k folder: switch to Column view (View menu)",
+      `window.__m.menuButton(2).click(); true`,
+      `window.__m.click(${columnsEntry})`,
+      `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`,
+    ),
+  );
+  results.push(
+    await measure(
+      "100k folder: arrow key move in Column view",
+      `(async () => { window.__m.menuButton(2).click(); await window.__m.frame(); ${columnsEntry}.click(); await window.__m.waitFor(() => window.__m.rows().length > 0); window.__m.click(window.__m.rows()[0]); window.__m.list().focus(); return true; })()`,
+      `window.__m.key(window.__m.list(), { key: "ArrowDown" })`,
+      `window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`,
+    ),
+  );
+  {
+    // Switch to Column view once, then open each of the first subfolders.
+    await page(`(async () => {
+      window.__m.menuButton(2).click();
+      await window.__m.frame();
+      ${columnsEntry}.click();
+      await window.__m.waitFor(() => window.__m.rows().length > 0);
+      return true;
+    })()`);
+    const values = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      values.push(
+        await page(
+          `window.__m.timeUntil(() => window.__m.click(window.__m.rows()[${run}]), () => document.querySelector(".adp-colview-column--child")?.querySelector("[role='option'], .adp-empty-note") != null)`,
+        ),
+      );
+    }
+    await page(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true }); true`);
+    const result = { name: "100k folder: show a subfolder's column", median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+    console.log(`${result.name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+    results.push(result);
+  }
+  // Smooth tier: scroll the 100k list one wheel-step per frame for 2 s and
+  // record every frame interval. The display's own frame time is the median
+  // interval; a frame slower than 1.5x of it is a dropped frame.
+  const scroll = await page(`(async () => {
+    const list = window.__m.list(); list.scrollTop = 0; await window.__m.frame();
+    const gaps = []; let last = performance.now(); const end = last + 2000;
+    while (performance.now() < end) {
+      list.scrollTop += 120;
+      await new Promise((r) => requestAnimationFrame(r));
+      const now = performance.now(); gaps.push(now - last); last = now;
+    }
+    gaps.sort((a, b) => a - b);
+    const at = (q) => gaps[Math.min(gaps.length - 1, Math.floor(q * gaps.length))];
+    const display = at(0.5);
+    return { frames: gaps.length, display_ms: display, p95_ms: at(0.95), max_ms: gaps[gaps.length - 1], dropped: gaps.filter((g) => g > display * 1.5).length };
+  })()`);
+  results.push({ name: "100k folder: scroll frame time (p95)", median_ms: Math.round(scroll.p95_ms * 10) / 10, p95_frame_ms: Math.round(scroll.p95_ms * 10) / 10, max_ms: Math.round(scroll.max_ms * 10) / 10, runs: scroll.frames, display_frame_ms: Math.round(scroll.display_ms * 10) / 10, dropped_frames: scroll.dropped, tier: "smooth" });
+  console.log(`100k folder: scroll ${scroll.frames} frames, display ${scroll.display_ms.toFixed(1)} ms, p95 ${scroll.p95_ms.toFixed(1)} ms, dropped ${scroll.dropped}`);
   const menuMs = await page(`Number(document.querySelector(".adp-explorer").dataset.lastMenuOpenMs ?? -1)`);
   console.log(`last instrumented menu open: ${menuMs} ms`);
 
+  // Step 03b: file operations, driven through the app's own commands
+  // with hard deadlines (a failure is recorded, never a hang). These
+  // mutate the demo folder and clean up after themselves with node fs.
+  const cleanup03b = () => {
+    for (const target of [
+      join(demo, "BenchCopy"),
+      join(demo, "Invoices", "notes.txt"),
+      join(demo, "Invoices", "notes (2).txt"),
+    ]) {
+      try { rmSync(target, { recursive: true, force: true }); } catch { /* best effort */ }
+    }
+  };
+  try {
+    cleanup03b();
+    await openFolder(demo);
+    const timed = async (name, expression) => {
+      try {
+        const value = await page(expression);
+        const result = { name, median_ms: typeof value === "number" ? Math.round(value * 10) / 10 : null, max_ms: typeof value === "number" ? Math.round(value * 10) / 10 : null, runs: 1, note: typeof value === "number" ? undefined : String(value) };
+        console.log(`${name}: ${result.median_ms ?? result.note}`);
+        results.push(result);
+      } catch (error) {
+        console.log(`${name}: FAILED ${error.message ?? error}`);
+        results.push({ name, median_ms: null, max_ms: null, runs: 1, note: String(error.message ?? error) });
+      }
+      await sleep(300);
+    };
+    // Instant tier: the New menu in the command bar.
+    await timed("command bar New menu", `window.__m.time(() => { window.__m.menuButton(0).click(); })`);
+    await page(`window.__m.closeMenus(); true`);
+    // Fast tier: a small copy job (all demo files) start-to-report.
+    await timed("copy demo files (job, start to report)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const fs = ${JSON.stringify(["Q4 Budget 2026.xlsx", "Meeting Notes.docx", "notes.txt"])};
+      const dest = ${JSON.stringify(join(demo, "BenchCopy"))};
+      const t0 = performance.now();
+      const id = "bench-copy";
+      await invoke("file_op_start", { request: { kind: "copy", sources: fs.map((f) => ${JSON.stringify(demo)} + "\\\\" + f), dest_dir: dest, conflict: "skip" }, requestId: id });
+      for (let i = 0; i < 200; i += 1) {
+        const poll = await invoke("file_op_poll", { requestId: id });
+        if (poll.done) return performance.now() - t0;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      return "timeout";
+    })()`);
+    // Recycle + restore round trip through the job commands.
+    await timed("recycle + restore one file (jobs)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const target = ${JSON.stringify(join(demo, "BenchCopy", "notes.txt"))};
+      const run = async (kind, sources) => {
+        const id = "bench-" + kind;
+        await invoke("file_op_start", { request: { kind, sources, dest_dir: null, conflict: "skip" }, requestId: id });
+        for (let i = 0; i < 200; i += 1) {
+          const poll = await invoke("file_op_poll", { requestId: id });
+          if (poll.done) return poll.report;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        throw new Error("timeout");
+      };
+      const t0 = performance.now();
+      await run("recycle", [target]);
+      await run("restore", [target]);
+      return performance.now() - t0;
+    })()`);
+    // Keep both + Undo: the numbered copy is created next to the original
+    // and Undo sends only that copy to the Recycle Bin.
+    await timed("copy with Keep both, then undo it (jobs)", `(async () => {
+      const invoke = window.__TAURI_INTERNALS__.invoke;
+      const source = ${JSON.stringify(join(demo, "notes.txt"))};
+      const dest = ${JSON.stringify(join(demo, "BenchCopy"))};
+      const run = async (request) => {
+        const id = "bench-" + request.kind + "-" + Math.random().toString(36).slice(2);
+        await invoke("file_op_start", { request: { dest_dir: null, conflict: "skip", ...request }, requestId: id });
+        for (let i = 0; i < 200; i += 1) {
+          const poll = await invoke("file_op_poll", { requestId: id });
+          if (poll.error) throw new Error(poll.error);
+          if (poll.done) return poll.report;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        throw new Error("timeout");
+      };
+      const t0 = performance.now();
+      const copied = await run({ kind: "copy", sources: [source], dest_dir: dest, conflict: "keepBoth" });
+      const created = (copied.created ?? [])[0];
+      if (!created) return "kept copy not reported: " + JSON.stringify(copied);
+      const recycled = await run({ kind: "recycle", sources: [created.to] });
+      if (recycled.completed.length !== 1) return "undo failed: " + JSON.stringify(recycled);
+      return performance.now() - t0;
+    })()`);
+    cleanup03b();
+  } catch (error) {
+    console.log(`step 03b measurements failed: ${error.message ?? error}`);
+  }
+
+
+
+  // Step 04a: open a real image in a file tab, and switch tabs.
+  try {
+    await openFolder(demo);
+    await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("photo-1920.png")))`);
+    const openValues = [];
+    for (let run = 0; run < 5; run += 1) {
+      openValues.push(
+        await page(`window.__m.timeUntil(
+          () => [...window.__m.rows()].find((r) => r.textContent.includes("photo-1920.png")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+          () => document.querySelector(".adp-filetab:not([hidden]) .adp-image-stage[style]") !== null)`),
+      );
+      await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+      await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+      await sleep(200);
+    }
+    const opened = { name: "open a 1920x1080 PNG in a tab (first view)", median_ms: Math.round(median(openValues) * 10) / 10, max_ms: Math.round(Math.max(...openValues) * 10) / 10, runs: openValues.length };
+    console.log(`${opened.name}: median ${opened.median_ms} ms (max ${opened.max_ms})`);
+    results.push(opened);
+    await page(`[...window.__m.rows()].find((r) => r.textContent.includes("photo-1920.png")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-image-stage[style]") !== null)`);
+    results.push(
+      await measure(
+        "switch tab (image tab to Explorer)",
+        `true`,
+        `document.querySelectorAll(".adp-tab")[0].click()`,
+        `document.querySelectorAll(".adp-tab")[1].click(); true`,
+      ),
+    );
+    await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+    // Closing the last file tab must leave the Explorer active before the
+    // classic-menu measurement opens a folder again.
+    await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+    await page(`document.querySelector(".adp-tabbar [role=tab]").click(); true`);
+    await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
+  } catch (error) {
+    console.log(`step 04a measurements failed: ${error.message ?? error}`);
+  }
+
+  // Step 04b: open a 5 MB log in the text viewer, and a Markdown page.
+  try {
+    await openFolder(demo);
+    const firstView = async (name, fileName, done) => {
+      const values = [];
+      for (let run = 0; run < 5; run += 1) {
+        values.push(
+          await page(`window.__m.timeUntil(
+            () => [...window.__m.rows()].find((r) => r.textContent.includes(${JSON.stringify(fileName)})).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+            () => (${done})())`),
+        );
+        await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+        await sleep(200);
+      }
+      const result = { name, median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+      console.log(`${name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+      results.push(result);
+    };
+    await firstView(
+      "open a 5 MB log in the text viewer (first view)",
+      "server-5mb.log",
+      `() => (document.querySelector(".adp-filetab:not([hidden]) .cm-content")?.textContent ?? "").includes("processed item")`,
+    );
+    await firstView(
+      "open a Markdown file (first view)",
+      "guide.md",
+      `() => document.querySelector(".adp-filetab:not([hidden]) .adp-markdown-frame")?.contentDocument?.querySelector("main h1") != null`,
+    );
+  } catch (error) {
+    console.log(`step 04b measurements failed: ${error.message ?? error}`);
+  }
+
+  // Step 04c: open a WAV file in the player (until its length is known).
+  try {
+    await openFolder(demo);
+    const values = [];
+    for (let run = 0; run < 5; run += 1) {
+      values.push(
+        await page(`window.__m.timeUntil(
+          () => [...window.__m.rows()].find((r) => r.textContent.includes("tone-10s.wav")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+          () => (document.querySelector(".adp-filetab:not([hidden]) audio")?.readyState ?? 0) >= 1)`),
+      );
+      await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+      await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+      await sleep(200);
+    }
+    const result = { name: "open a WAV file in the player (first view)", median_ms: Math.round(median(values) * 10) / 10, max_ms: Math.round(Math.max(...values) * 10) / 10, runs: values.length };
+    console.log(`${result.name}: median ${result.median_ms} ms (max ${result.max_ms})`);
+    results.push(result);
+  } catch (error) {
+    console.log(`step 04c measurements failed: ${error.message ?? error}`);
+  }
+
   // Classic menu: time until the helper's menu is on screen. The runner
-  // closes it afterwards.
-  await openFolder(demo);
+  // closes it afterwards. Closing the image tab returns to the Explorer in
+  // the demo folder, so do not re-enter the path in the address bar here.
+  await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
   const classic = await page(`(async () => {
     const path = ${JSON.stringify(join(demo, "notes.txt"))};
     const t0 = performance.now();
@@ -179,15 +601,467 @@ if (mode === "full") {
   execFileSync("powershell.exe", [
     "-NoProfile",
     "-Command",
-    "Get-CimInstance Win32_Process -Filter \"Name = 'Adperastra.exe'\" | Where-Object { $_.CommandLine -like '*--classic-menu*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
+    "$testId = 0; if (-not [int]::TryParse($env:ADPERASTRA_TEST_APP_PID, [ref]$testId) -or $testId -le 0) { throw 'Missing test app process id' }; Get-CimInstance Win32_Process -Filter \"ParentProcessId=$testId\" | Where-Object { $_.CommandLine -like '*--classic-menu*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
   ]);
   await sleep(500);
+
+  // Step 05c: the toolbar's right-click menu, from the command bar.
+  // Item 0 of the main menu is Toolbar position, item 2 is Layout preset;
+  // radio 2 of the position list is Left, radio 2 of the preset list is
+  // Classic (0 is Standard).
+  const openToolbarMenu = `document.querySelector(".adp-commandbar").dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 300, clientY: 110 }))`;
+  const mainMenuItem = (index) => `document.querySelectorAll(".adp-ctxmenu")[0].querySelectorAll("[role=menuitem]")[${index}].click()`;
+  const submenuRadio = (index) => `document.querySelectorAll(".adp-ctxmenu")[1].querySelectorAll("[role=menuitemradio]")[${index}].click()`;
+  const openSubmenu = (item) => `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(item)}; await window.__m.frame(); })()`;
+
+  results.push(
+    await measure(
+      "move the toolbar to the left (toolbar menu)",
+      openSubmenu(0),
+      submenuRadio(2),
+      `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(0)}; await window.__m.frame(); ${submenuRadio(0)}; })()`,
+    ),
+  );
+  results.push(
+    await measure(
+      "apply the Classic preset (toolbar menu)",
+      openSubmenu(2),
+      submenuRadio(2),
+      `(async () => { ${openToolbarMenu}; await window.__m.frame(); ${mainMenuItem(2)}; await window.__m.frame(); ${submenuRadio(0)}; })()`,
+    ),
+  );
+
+  // Step 05d: switching the theme and the density from the Settings page.
+  const themeMode = (id) => `document.querySelector('[data-theme-mode="${id}"]').click()`;
+  const density = (id) => `document.querySelector('[data-appearance-density="${id}"]').click()`;
+  await page(`window.__m.openSettings()`);
+  await sleep(300);
+  const rememberedMode = await page(`document.querySelector("[data-theme-mode][aria-pressed='true']")?.dataset.themeMode ?? "system"`);
+  results.push(await measure("switch to the dark theme (Settings)", themeMode("light"), themeMode("dark"), `true`));
+  results.push(await measure("change the density (Settings)", density("comfortable"), density("spacious"), density("comfortable")));
+  // Leave the app as it started: the same theme mode, and the Explorer shown.
+  await page(`${themeMode(rememberedMode)}; ${density("comfortable")}; true`);
+  await page(`window.__m.openExplorer()`);
+  await sleep(300);
+
+  // Step 06a: typing in the text editor and saving a small file.
+  try {
+    await openFolder(demo);
+    await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("notes.txt")))`);
+    await page(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`);
+    await page(`window.__m.waitFor(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); return c != null && c.getAttribute("contenteditable") === "true"; }, 15000)`);
+    results.push(
+      await measure(
+        "type a character in the text editor",
+        `document.querySelector(".adp-filetab:not([hidden]) .cm-content").focus()`,
+        `document.execCommand("insertText", false, "x")`,
+        `document.execCommand("undo")`,
+      ),
+    );
+    // The status bar starts with this word while there are unsaved changes
+    // (in whichever language the run uses).
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("insertText", false, "x"); return true; })()`);
+    const unsavedWord = await page(`(document.querySelector(".adp-filetab-status span")?.textContent ?? "")`);
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("undo"); window.__m.key(c, { key: "s", ctrlKey: true }); return true; })()`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tab-dirty") === null)`);
+    const saveValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      saveValues.push(
+        await page(`window.__m.timeUntil(
+          () => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("insertText", false, "x"); window.__m.key(c, { key: "s", ctrlKey: true }); },
+          () => (document.querySelector(".adp-filetab-status span")?.textContent ?? "") !== ${JSON.stringify(unsavedWord)})`),
+      );
+    }
+    const saving = { name: "save a small text file (Ctrl+S)", median_ms: Math.round(median(saveValues) * 10) / 10, max_ms: Math.round(Math.max(...saveValues) * 10) / 10, runs: saveValues.length };
+    console.log(`${saving.name}: median ${saving.median_ms} ms (max ${saving.max_ms})`);
+    results.push(saving);
+    // Undo every typed character and save once more: notes.txt is unchanged.
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); for (let i = 0; i < ${RUNS}; i += 1) window.__m.key(c, { key: "z", ctrlKey: true }); window.__m.key(c, { key: "s", ctrlKey: true }); return true; })()`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tab-dirty") === null)`);
+    await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+  } catch (error) {
+    console.log(`step 06a measurements failed: ${error.message ?? error}`);
+  }
+
+  // Step 06b: saving now keeps a version, and the Version history window.
+  try {
+    await openFolder(demo);
+    await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("notes.txt")))`);
+    await page(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`);
+    await page(`window.__m.waitFor(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); return c != null && c.getAttribute("contenteditable") === "true"; }, 15000)`);
+    const versionUnsavedWord = await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("insertText", false, "x"); return document.querySelector(".adp-filetab-status span")?.textContent ?? ""; })()`);
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("undo"); window.__m.key(c, { key: "s", ctrlKey: true }); return true; })()`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tab-dirty") === null)`);
+    const versionSaveValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      versionSaveValues.push(
+        await page(`window.__m.timeUntil(
+          () => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); document.execCommand("insertText", false, "x"); window.__m.key(c, { key: "s", ctrlKey: true }); },
+          () => (document.querySelector(".adp-filetab-status span")?.textContent ?? "") !== ${JSON.stringify(versionUnsavedWord)})`),
+      );
+    }
+    const savingWithVersion = { name: "save a small text file with version history (Ctrl+S)", median_ms: Math.round(median(versionSaveValues) * 10) / 10, max_ms: Math.round(Math.max(...versionSaveValues) * 10) / 10, runs: versionSaveValues.length };
+    console.log(`${savingWithVersion.name}: median ${savingWithVersion.median_ms} ms (max ${savingWithVersion.max_ms})`);
+    results.push(savingWithVersion);
+    // Undo the typing, save once, close the tab.
+    await page(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); for (let i = 0; i < ${RUNS}; i += 1) window.__m.key(c, { key: "z", ctrlKey: true }); window.__m.key(c, { key: "s", ctrlKey: true }); return true; })()`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tab-dirty") === null)`);
+    await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+    await sleep(200);
+
+    const historyLabel = await versionHistoryLabel();
+    results.push(
+      await measure(
+        "open the version history (right-click menu)",
+        `(() => { const row = [...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")); window.__m.click(row); window.__m.context(row); return true; })()`,
+        `(() => { const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(historyLabel)}); item?.click(); return true; })()`,
+        `(() => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); window.__m.closeMenus(); return true; })()`,
+      ),
+    );
+  } catch (error) {
+    console.log(`step 06b measurements failed: ${error.message ?? error}`);
+  }
+  // Step 06c: the New menu, now with the Markdown, CSV, Office and template
+  // entries.
+  results.push(
+    await measure(
+      "command bar New menu (with templates)",
+      `true`,
+      `window.__m.menuButton(0).click()`,
+      `window.__m.closeMenus(); true`,
+    ),
+  );
+
+  // Step 06d: the archive tab. Opening a 10,000-entry zip, changing folders
+  // and searching it; the archive tab is closed again after each open.
+  const archiveRows = `[...document.querySelectorAll(".adp-filetab:not([hidden]) .adp-archive [role=option]")]`;
+  const archiveReady = `document.querySelector(".adp-filetab:not([hidden]) .adp-archive [role=option]") != null`;
+  const openInTab = (name) =>
+    `[...window.__m.rows()].find((r) => r.textContent.includes(${JSON.stringify(name)})).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`;
+  const closeTab = `window.__m.key(window, { key: "w", ctrlKey: true }); true`;
+  try {
+    await openFolder(join(big, "..", "archives"));
+    const openValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      openValues.push(await page(`window.__m.timeUntil(() => ${openInTab("Big archive.zip")}, () => (${archiveReady}))`));
+      await page(closeTab);
+      await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+      await sleep(200);
+    }
+    const openedArchive = { name: "archive open (10,000 entries)", median_ms: Math.round(median(openValues) * 10) / 10, max_ms: Math.round(Math.max(...openValues) * 10) / 10, runs: openValues.length };
+    console.log(`${openedArchive.name}: median ${openedArchive.median_ms} ms (max ${openedArchive.max_ms})`);
+    results.push(openedArchive);
+
+    // Folder change: the big archive is opened once, then folder 05 opens.
+    await page(`${openInTab("Big archive.zip")}; true`);
+    await page(`window.__m.waitFor(() => (${archiveReady}))`);
+    const folderValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      folderValues.push(
+        await page(`window.__m.timeUntil(
+          () => ${archiveRows}.find((r) => r.textContent.includes("folder 05")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })),
+          () => (${archiveRows}[0]?.textContent ?? "").includes("file 0001"))`),
+      );
+      await page(`document.querySelector(".adp-filetab:not([hidden]) .adp-archive .adp-breadcrumb button")?.click(); true`);
+      await page(`window.__m.waitFor(() => ${archiveRows}.some((r) => r.textContent.includes("folder 05")))`);
+      await sleep(100);
+    }
+    const folderChange = { name: "archive folder change", median_ms: Math.round(median(folderValues) * 10) / 10, max_ms: Math.round(Math.max(...folderValues) * 10) / 10, runs: folderValues.length };
+    console.log(`${folderChange.name}: median ${folderChange.median_ms} ms (max ${folderChange.max_ms})`);
+    results.push(folderChange);
+
+    // Search: the text goes in at once; ten rows mean it is done.
+    const searchBox = `document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input")`;
+    const typeSearch = (text) =>
+      `(() => { const input = ${searchBox}; Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`;
+    const searchValues = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      searchValues.push(
+        await page(`window.__m.timeUntil(
+          () => { ${typeSearch("file 0500")} },
+          () => document.querySelectorAll(".adp-filetab:not([hidden]) .adp-archive [role=option]").length === 10)`),
+      );
+      await page(typeSearch(""));
+      await sleep(200);
+    }
+    const search = { name: "archive search (10,000 entries)", median_ms: Math.round(median(searchValues) * 10) / 10, max_ms: Math.round(Math.max(...searchValues) * 10) / 10, runs: searchValues.length };
+    console.log(`${search.name}: median ${search.median_ms} ms (max ${search.max_ms})`);
+    results.push(search);
+    await page(closeTab);
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+  } catch (error) {
+    console.log(`step 06d measurements failed: ${error.message ?? error}`);
+  }
+
+  // Step 06e: the Compress to window, its encryption choice, opening an
+  // encrypted small ZIP, and creating a small ZIP and an encrypted 7z.
+  if (stepId === "06e") {
+    try {
+      await openFolder(demo);
+      const spanish = String(lang).startsWith("es");
+      const compressLabel = spanish ? "Comprimir en…" : "Compress to…";
+      const createLabel = spanish ? "Crear" : "Create";
+      const openLabel = spanish ? "Abrir" : "Open";
+      const closeTabExpr = `window.__m.key(window, { key: "w", ctrlKey: true }); true`;
+      const dialog = `document.querySelector(".adp-archive-create-dialog") != null`;
+      const openCompress = `(() => {
+        const row = [...window.__m.rows()].find((r) => r.textContent.includes("archive-source.bin"));
+        window.__m.context(row);
+        const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(compressLabel)});
+        item?.click();
+        return true;
+      })()`;
+      const closeDialog = `document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); true`;
+      const setSelect = (selector, value) => `(() => {
+        const select = document.querySelector(${JSON.stringify(selector)});
+        select.value = ${JSON.stringify(value)};
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      })()`;
+      const setName = (value) => `(() => {
+        const input = document.querySelector("#adp-create-name");
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(value)});
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      })()`;
+      const fillPasswords = (secret) => `(() => {
+        const fields = [...document.querySelectorAll(".adp-archive-password-fields input[type=password]")];
+        for (const field of fields) {
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(field, ${JSON.stringify(secret)});
+          field.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        return true;
+      })()`;
+      const clickCreate = `(() => {
+        const button = [...document.querySelectorAll(".adp-archive-create-dialog button")].find((entry) => entry.textContent.trim() === ${JSON.stringify(createLabel)});
+        button?.click();
+        return true;
+      })()`;
+
+      const dialogValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        dialogValues.push(await page(`window.__m.timeUntil(() => { ${openCompress} }, () => (${dialog}))`));
+        await page(closeDialog);
+        await sleep(120);
+      }
+      const openDialog = { name: "open Compress to dialog", median_ms: Math.round(median(dialogValues) * 10) / 10, max_ms: Math.round(Math.max(...dialogValues) * 10) / 10, runs: dialogValues.length };
+      console.log(`${openDialog.name}: median ${openDialog.median_ms} ms (max ${openDialog.max_ms})`);
+      results.push(openDialog);
+
+      const encryptionValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        await page(openCompress);
+        await page(`window.__m.waitFor(() => (${dialog}))`);
+        encryptionValues.push(await page(`window.__m.timeUntil(() => { ${setSelect("#adp-create-encryption", "aes256")} }, () => document.querySelector("#adp-create-encryption")?.value === "aes256")`));
+        await page(closeDialog);
+        await sleep(100);
+      }
+      const switchEncryption = { name: "switch archive encryption option", median_ms: Math.round(median(encryptionValues) * 10) / 10, max_ms: Math.round(Math.max(...encryptionValues) * 10) / 10, runs: encryptionValues.length };
+      console.log(`${switchEncryption.name}: median ${switchEncryption.median_ms} ms (max ${switchEncryption.max_ms})`);
+      results.push(switchEncryption);
+
+      const rowExists = (name) => `[...window.__m.rows()].some((r) => r.textContent.includes(${JSON.stringify(name)}))`;
+      const createArchive = async (name, format, encryption, secret) => {
+        await page(openCompress);
+        await page(`window.__m.waitFor(() => (${dialog}))`);
+        await page(setSelect("#adp-create-format", format));
+        await page(setSelect("#adp-create-encryption", encryption));
+        if (secret) await page(fillPasswords(secret));
+        await page(setName(name));
+        return page(`window.__m.timeUntil(() => { ${clickCreate} }, () => (${rowExists(name)}))`);
+      };
+
+      const zipValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        zipValues.push(await createArchive(`measure-${run}.zip`, "zip", "none", ""));
+        await sleep(100);
+      }
+      const createZip = { name: "create small ZIP (one MiB)", median_ms: Math.round(median(zipValues) * 10) / 10, max_ms: Math.round(Math.max(...zipValues) * 10) / 10, runs: zipValues.length };
+      console.log(`${createZip.name}: median ${createZip.median_ms} ms (max ${createZip.max_ms})`);
+      results.push(createZip);
+
+      const sevenValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        sevenValues.push(await createArchive(`measure-${run}.7z`, "seven_z", "aes256", "synthetic measurement passphrase"));
+        await sleep(100);
+      }
+      const createSeven = { name: "create encrypted small 7z (one MiB)", median_ms: Math.round(median(sevenValues) * 10) / 10, max_ms: Math.round(Math.max(...sevenValues) * 10) / 10, runs: sevenValues.length };
+      console.log(`${createSeven.name}: median ${createSeven.median_ms} ms (max ${createSeven.max_ms})`);
+      results.push(createSeven);
+
+      // Opening an encrypted ZIP starts with its password prompt; the
+      // measurement begins when the password is submitted.
+      await createArchive("measure-encrypted.zip", "zip", "aes256", "synthetic measurement passphrase");
+      const openValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        await page(`[...window.__m.rows()].find((r) => r.textContent.includes("measure-encrypted.zip")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-archive-password-dialog"))`);
+        openValues.push(
+          await page(`window.__m.timeUntil(
+            () => {
+              const field = document.querySelector(".adp-archive-password-dialog input[type=password]");
+              Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(field, "synthetic measurement passphrase");
+              field.dispatchEvent(new Event("input", { bubbles: true }));
+              const button = [...document.querySelectorAll(".adp-archive-password-dialog button")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openLabel)});
+              button?.click();
+            },
+            () => document.querySelector(".adp-filetab:not([hidden]) .adp-archive [role=option]") != null)`),
+        );
+        await page(closeTabExpr);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+        await sleep(150);
+      }
+      const encryptedOpen = { name: "open encrypted small ZIP", median_ms: Math.round(median(openValues) * 10) / 10, max_ms: Math.round(Math.max(...openValues) * 10) / 10, runs: openValues.length };
+      console.log(`${encryptedOpen.name}: median ${encryptedOpen.median_ms} ms (max ${encryptedOpen.max_ms})`);
+      results.push(encryptedOpen);
+    } catch (error) {
+      console.log(`step 06e measurements failed: ${error.message ?? error}`);
+    }
+  }
+
+  // Step 06f: a 100,000-row table and its sort, a JSON tree, a font and a
+  // hex search through 3 MB. Each part logs and continues on failure.
+  if (stepId === "06f") {
+    const spanish = String(lang).startsWith("es");
+    const openAsLabel = spanish ? "Abrir como" : "Open as";
+    const openAsHexLabel = spanish ? "Abrir como hexadecimal" : "Open as hex";
+    const closeTabExpr = `window.__m.key(window, { key: "w", ctrlKey: true }); true`;
+    const settleExplorer = async () => {
+      await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+      await page(`window.__m.openExplorer(); true`);
+      await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
+      await sleep(150);
+    };
+    const openByName = (name) =>
+      `[...window.__m.rows()].find((r) => r.textContent.includes(${JSON.stringify(name)}))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`;
+    const openAsHex = `(() => {
+      const row = [...window.__m.rows()].find((r) => r.textContent.includes("search-3mb.bin"));
+      window.__m.context(row);
+      const openAs = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openAsLabel)});
+      openAs?.click();
+      return true;
+    })()`;
+    const pickHex = `(() => {
+      const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openAsHexLabel)});
+      item?.click();
+      return true;
+    })()`;
+    const push = (name, values) => {
+      const entry = {
+        name,
+        median_ms: Math.round(median(values) * 10) / 10,
+        max_ms: Math.round(Math.max(...values) * 10) / 10,
+        runs: values.length,
+      };
+      console.log(`${entry.name}: median ${entry.median_ms} ms (max ${entry.max_ms})`);
+      results.push(entry);
+    };
+
+    try {
+      await openFolder(demo);
+      const openTableValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        openTableValues.push(
+          await page(`window.__m.timeUntil(
+            () => { ${openByName("big-100k.csv")} },
+            () => document.querySelector(".adp-table-row .adp-table-cell") != null)`),
+        );
+        await page(closeTabExpr);
+        await settleExplorer();
+      }
+      push("open a 100,000-row CSV (first view)", openTableValues);
+    } catch (error) {
+      console.log(`step 06f open table failed: ${error.message ?? error}`);
+    }
+
+    try {
+      const sortValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        await page(openByName("big-100k.csv"));
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-table-row .adp-table-cell") != null, 15000)`);
+        await page(`document.querySelector(".adp-table-head-cell")?.click(); true`);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-table-head-cell[aria-sort='ascending']") != null, 15000)`);
+        sortValues.push(
+          await page(`window.__m.timeUntil(
+            () => { window.__before = document.querySelector(".adp-table-row .adp-table-cell")?.textContent ?? ""; document.querySelector(".adp-table-head-cell")?.click(); },
+            () => { const cell = document.querySelector(".adp-table-row .adp-table-cell"); return cell != null && cell.textContent !== window.__before; })`),
+        );
+        await page(closeTabExpr);
+        await settleExplorer();
+      }
+      push("sort a 100,000-row CSV", sortValues);
+    } catch (error) {
+      console.log(`step 06f sort table failed: ${error.message ?? error}`);
+    }
+
+    try {
+      const jsonValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        jsonValues.push(
+          await page(`window.__m.timeUntil(
+            () => { ${openByName("data.json")} },
+            () => document.querySelector(".adp-json-row") != null)`),
+        );
+        await page(closeTabExpr);
+        await settleExplorer();
+      }
+      push("open a JSON file (first view)", jsonValues);
+    } catch (error) {
+      console.log(`step 06f open JSON failed: ${error.message ?? error}`);
+    }
+
+    if (hasSampleFont) {
+      try {
+        const fontValues = [];
+        for (let run = 0; run < RUNS; run += 1) {
+          fontValues.push(
+            await page(`window.__m.timeUntil(
+              () => { ${openByName("arial.ttf")} },
+              () => document.querySelector(".adp-font-sample") != null)`),
+          );
+          await page(closeTabExpr);
+          await settleExplorer();
+        }
+        push("open a font (first view)", fontValues);
+      } catch (error) {
+        console.log(`step 06f open font failed: ${error.message ?? error}`);
+      }
+    } else {
+      console.log("open a font (first view): skipped, no sample font");
+    }
+
+    try {
+      const hexValues = [];
+      for (let run = 0; run < RUNS; run += 1) {
+        await page(openAsHex);
+        await page(pickHex);
+        await page(`window.__m.waitFor(() => document.querySelector(".adp-hex-row") != null, 15000)`);
+        await page(`(() => {
+          const input = document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input");
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "FINDME");
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          return true;
+        })()`);
+        hexValues.push(
+          await page(`window.__m.timeUntil(
+            () => { const input = document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input"); input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); },
+            () => document.querySelector(".adp-filetab:not([hidden]) .adp-hex [aria-current='true']") != null)`),
+        );
+        await page(closeTabExpr);
+        await settleExplorer();
+      }
+      push("hex search through a 3 MB file", hexValues);
+    } catch (error) {
+      console.log(`step 06f hex search failed: ${error.message ?? error}`);
+    }
+  }
 }
 
 if (outFile && results.length > 0) {
   const record = {
     date: new Date().toISOString(),
-    step: "03a",
+    step: stepId,
     build: "release (tauri build --no-bundle)",
     method: "Inside the packaged app's page: action dispatched, clock stopped at the next painted frame (two animation frames). Median of 7 runs.",
     language: lang,
@@ -256,6 +1130,421 @@ if (shotDir) {
   await sleep(200);
   await shot("06-sort-menu");
   await step(`window.__m.closeMenus()`);
+  // Step 03b screens: undo toast, permanent-delete warning, conflict,
+  // Recent actions, and the jobs panel.
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
+  await step(`window.__m.key(window, { key: "Delete" })`);
+  await sleep(300);
+  await shot("07-delete-toast");
+  await step(`[...document.querySelectorAll(".adp-toast button")].find((b) => b.querySelector("span"))?.click()`);
+  await page(`window.__m.waitFor(() => window.__m.rows().some((r) => r.textContent.includes("notes.txt")), 15000)`);
+  await sleep(300);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
+  await step(`window.__m.key(window, { key: "Delete", shiftKey: true })`);
+  await sleep(300);
+  await shot("08-permanent-delete");
+  await step(`document.querySelector(".adp-dialog-actions .adp-btn--primary")?.click()`);
+  await page(`window.__TAURI_INTERNALS__.invoke("clipboard_set_files", { paths: [${JSON.stringify(join(demo, "notes.txt"))}], cut: false }).then(() => true)`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Invoices")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await sleep(700);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(700);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(400);
+  await shot("09-conflict");
+  await step(`document.querySelectorAll(".adp-dialog-actions .adp-btn")[1]?.click()`);
+  await sleep(300);
+  await step(`document.querySelectorAll(".adp-commandbar .adp-cmd-icon")[6]?.click()`);
+  await sleep(300);
+  await step(`[...document.querySelectorAll(".adp-ctxmenu-item")].pop()?.click()`);
+  await sleep(300);
+  await shot("10-recent-actions");
+  await step(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
+  // A real UI copy of the 100k corpus folder into Archive 2025: long
+  // enough for the jobs panel to open over it; cancelled right after.
+  await openFolder(join(big, ".."), 4000);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("folder-100k")))`);
+  await step(`window.__m.key(window, { key: "c", ctrlKey: true })`);
+  await sleep(400);
+  await openFolder(demo);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Archive 2025")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await sleep(600);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(4500);
+  await shot("11-jobs-panel");
+  await step(`document.querySelector(".adp-jobs-panel .adp-job-row .adp-btn")?.click()`);
+  await sleep(800);
+  // Folder conflict: Merge is the primary action. The source folder is
+  // outside the demo folder so this is a real name clash, not a paste here.
+  const folderSource = join(demo, "..", "adperastra-demo-folder-source");
+  try { rmSync(folderSource, { recursive: true, force: true }); } catch { /* best effort */ }
+  mkdirSync(join(folderSource, "Invoices"), { recursive: true });
+  writeFileSync(join(folderSource, "Invoices", "new.txt"), "new");
+  await openFolder(folderSource);
+  await step(`window.__m.click([...window.__m.rows()].find((r) => r.textContent.includes("Invoices")))`);
+  await step(`window.__m.key(window, { key: "c", ctrlKey: true })`);
+  await sleep(300);
+  await openFolder(demo);
+  await sleep(300);
+  await step(`window.__m.key(window, { key: "v", ctrlKey: true })`);
+  await sleep(600);
+  await shot("12-conflict-folder");
+  await step(`document.querySelector(".adp-dialog-actions .adp-btn")?.click()`);
+  await sleep(300);
+  try { rmSync(folderSource, { recursive: true, force: true }); } catch { /* best effort */ }
+  try { rmSync(join(demo, "Archive 2025", "folder-100k"), { recursive: true, force: true }); } catch { /* best effort */ }
+  try { rmSync(join(demo, "Invoices", "notes.txt"), { force: true }); } catch { /* best effort */ }
+  // Step 04a: an image open in a file tab. The Explorer is still in demo
+  // after the folder-conflict dialog; wait for it to close instead of
+  // typing the path into an address bar that a file tab may own.
+  await page(`window.__m.waitFor(() => document.querySelector("[role=dialog]") === null)`);
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("photo-1920.png")))`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("photo-1920.png"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-image-stage[style]") !== null, 15000)`);
+  await sleep(300);
+  await shot("12-image-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  // Step 04b: the text viewer with its ribbon, and a Markdown page. Closing
+  // the image tab returns to the Explorer in the demo folder, as in Step 04a's
+  // measurement, so do not type the path into the address bar here.
+  await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+  await page(`document.querySelector(".adp-tabbar [role=tab]").click(); true`);
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("server-5mb.log")))`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("server-5mb.log"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => (document.querySelector(".adp-filetab:not([hidden]) .cm-content")?.textContent ?? "").includes("processed item"), 15000)`);
+  await sleep(300);
+  await shot("13-text-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("guide.md"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-markdown-frame")?.contentDocument?.querySelector("main h1") != null, 15000)`);
+  await sleep(300);
+  await shot("14-markdown-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  // Step 04c: the audio player, and a downloaded file in protected view.
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("tone-10s.wav"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => (document.querySelector(".adp-filetab:not([hidden]) audio")?.readyState ?? 0) >= 1, 15000)`);
+  await sleep(300);
+  await shot("15-audio-tab");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("downloaded.md"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-markdown-frame")?.contentDocument?.querySelector("main h1") != null, 15000)`);
+  await sleep(300);
+  await shot("16-protected-view");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  // Step 05a: the views, and the View menu in the chosen order.
+  await step(`window.__m.key(window, { key: "@", code: "Digit2", ctrlKey: true, shiftKey: true })`);
+  await step(`window.__m.click(window.__m.rows()[2])`);
+  await step(`document.activeElement?.blur()`);
+  await sleep(300);
+  await shot("17-large-icons");
+  await step(`window.__m.key(window, { key: "&", code: "Digit7", ctrlKey: true, shiftKey: true })`);
+  await shot("18-tiles");
+  await step(`window.__m.key(window, { key: "*", code: "Digit8", ctrlKey: true, shiftKey: true })`);
+  await shot("19-content");
+  await step(`window.__m.key(window, { key: "%", code: "Digit5", ctrlKey: true, shiftKey: true })`);
+  await shot("20-list");
+  await step(`window.__m.menuButton(2).click()`);
+  await sleep(200);
+  await shot("21-view-menu");
+  await step(`window.__m.closeMenus()`);
+  await step(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true })`);
+  // Step 05b: Column view, and the preview of the selected file.
+  await step(`window.__m.menuButton(2).click()`);
+  await step(`document.querySelectorAll(".adp-ctxmenu [role=menuitemradio]")[8].click()`);
+  await sleep(300);
+  await step(`[...document.querySelectorAll(".adp-colview-row")].find((r) => r.textContent.includes("Invoices"))?.click()`);
+  await sleep(600);
+  await step(`document.activeElement?.blur()`);
+  await shot("22-column-view");
+  await step(`[...document.querySelectorAll(".adp-colview-row")].find((r) => r.textContent.includes("Q4 Budget 2026.xlsx"))?.click()`);
+  await sleep(300);
+  await shot("23-column-preview");
+  await step(`window.__m.key(window, { key: "^", code: "Digit6", ctrlKey: true, shiftKey: true })`);
+
+  // Step 05c: the toolbar, the tabs and the panes in every place.
+  // "settings" = open Settings, set the layout fields, come back.
+  const settings = async (fields) => {
+    await step(`window.__m.openSettings()`);
+    await sleep(300);
+    for (const [field, value] of fields) {
+      await step(`window.__m.layoutField(${JSON.stringify(field)}, ${JSON.stringify(value)})`);
+    }
+    await step(`window.__m.openExplorer()`);
+    await sleep(400);
+  };
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  const rememberedDetails = await page(`document.querySelector('select[data-layout-field="details_pane"]')?.value ?? "hidden"`);
+  await step(`window.__m.openExplorer()`);
+  await sleep(400);
+  await settings([["toolbar_position", "left"]]);
+  await shot("24-toolbar-left");
+  await settings([
+    ["toolbar_position", "bottom"],
+    ["toolbar_mode", "iconsOnly"],
+  ]);
+  await shot("25-toolbar-bottom-icons");
+  await settings([
+    ["toolbar_position", "top"],
+    ["toolbar_mode", "full"],
+    ["tab_bar_position", "left"],
+  ]);
+  await shot("26-tabs-left");
+  await settings([
+    ["tab_bar_position", "top"],
+    ["nav_pane_position", "right"],
+    ["details_pane", "bottom"],
+  ]);
+  await step(`window.__m.click(window.__m.rows()[2])`);
+  await sleep(200);
+  await shot("27-panes-moved");
+  // The file operations screens deleted the demo's notes.txt for good.
+  if (!existsSync(join(demo, "notes.txt"))) writeFileSync(join(demo, "notes.txt"), "notes");
+  // Still in the demo folder: refresh it, because going to the open folder
+  // again empties the list (KI-033).
+  await step(`window.__m.key(window, { key: "F5" })`);
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("notes.txt")))`);
+  await settings([
+    ["nav_pane_position", "left"],
+    ["details_pane", rememberedDetails],
+    ["toolbar_position", "right"],
+    ["toolbar_mode", "iconsOnly"],
+  ]);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await sleep(800);
+  await step(`document.querySelector(".adp-flyout-btn")?.click()`);
+  await shot("28-ribbon-right-icons");
+  await step(`window.__m.key(window, { key: "Escape" })`);
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await settings([["preset", "builtin:classic"]]);
+  await shot("29-classic");
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await shot("30-layout-settings");
+  await step(`window.__m.layoutField("preset", "builtin:standard")`);
+  await step(`window.__m.openExplorer()`);
+
+  // Step 05d: the six themes and the density. The theme chosen for each mode
+  // is put back afterwards, so later runs start from the same settings.
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  const rememberedThemeMode = await page(`document.querySelector("[data-theme-mode][aria-pressed='true']")?.dataset.themeMode ?? "system"`);
+  const showTheme = async (mode, card, name) => {
+    await step(`window.__m.openSettings()`);
+    await sleep(300);
+    await step(`document.querySelector('[data-theme-mode="${mode}"]')?.click()`);
+    await step(`document.querySelector('[data-theme-id="${card}"]')?.click()`);
+    await sleep(200);
+    await step(`window.__m.openExplorer()`);
+    await sleep(300);
+    await step(`window.__m.click(window.__m.rows()[2])`);
+    await sleep(300);
+    await shot(name);
+  };
+  await showTheme("light", "bright", "31-theme-bright");
+  await showTheme("light", "paper", "32-theme-paper");
+  await showTheme("dark", "amoled", "33-theme-amoled");
+  await showTheme("dark", "highContrast", "34-theme-high-contrast");
+  // Standard themes and the mode the app started with, then the two densities.
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await step(`document.querySelector('[data-theme-id="light"]')?.click()`);
+  await step(`document.querySelector('[data-theme-id="dark"]')?.click()`);
+  await step(`document.querySelector('[data-theme-mode="${rememberedThemeMode}"]')?.click()`);
+  await step(`document.querySelector('[data-appearance-density="compact"]')?.click()`);
+  await step(`window.__m.openExplorer()`);
+  await sleep(300);
+  await shot("35-density-compact");
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await step(`document.querySelector('[data-appearance-density="spacious"]')?.click()`);
+  await step(`window.__m.openExplorer()`);
+  await sleep(300);
+  await shot("36-density-spacious");
+  await step(`window.__m.openSettings()`);
+  await sleep(300);
+  await step(`document.querySelector('[data-appearance-density="comfortable"]')?.click()`);
+  await sleep(300);
+  await shot("37-settings-page");
+  // Type into the Settings search box the way the page's own input event does.
+  const typeSearch = (text) =>
+    `(() => { const input = document.querySelector(".adp-settings-search .adp-search-input"); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`;
+  await step(typeSearch("theme"));
+  await sleep(200);
+  await shot("38-settings-search");
+  await step(typeSearch(""));
+  await step(`window.__m.openExplorer()`);
+
+  // Step 06a: editing, find and replace, and the unsaved question.
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("notes.txt")))`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("notes.txt"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); return c != null && c.getAttribute("contenteditable") === "true"; }, 15000)`);
+  await step(`(() => { const c = document.querySelector(".adp-filetab:not([hidden]) .cm-content"); c.focus(); return document.execCommand("insertText", false, "Hello"); })()`);
+  await sleep(300);
+  await shot("39-text-editing");
+  await step(`window.__m.key(window, { key: "h", ctrlKey: true })`);
+  await step(`(() => {
+    const set = (input, value) => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    set(document.querySelector(".adp-filetab-search input"), "Hello");
+    set(document.querySelector(".adp-filetab-replace input"), "Hi");
+    return true;
+  })()`);
+  await sleep(300);
+  await shot("40-find-replace");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await sleep(400);
+  await shot("41-unsaved-dialog");
+  await step(`document.querySelectorAll("[role=dialog] .adp-dialog-actions .adp-btn")[1]?.click()`);
+  // Step 06b: the Version history window, its changes and one version's text.
+  const historyLabel = await versionHistoryLabel();
+  await step(`window.__m.context([...window.__m.rows()].find((r) => r.textContent.includes("notes.txt")))`);
+  await step(`(() => { const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(historyLabel)}); item?.click(); return true; })()`);
+  await sleep(600);
+  await shot("42-version-history");
+  await step(`document.querySelectorAll(".adp-versions-tabs .adp-btn")[1]?.click()`);
+  await sleep(300);
+  await shot("43-version-text");
+  await step(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
+  // Step 06c: the New menu and the template window.
+  await step(`window.__m.menuButton(0).click()`);
+  await sleep(200);
+  await shot("44-new-menu");
+  await step(`[...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].pop()?.click()`);
+  await sleep(600);
+  await shot("45-template-window");
+  await step(`window.__m.key(document, { key: "Escape" })`);
+  // Step 06d: the archive tab, its search, and its Extract menu.
+  await openFolder(join(big, "..", "archives"));
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("Project files.zip")))`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("Project files.zip"))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-filetab:not([hidden]) .adp-archive [role=option]") !== null, 15000)`);
+  await sleep(400);
+  await shot("46-archive-tab");
+  await page(`(() => { const input = document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input"); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "notes"); input.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`);
+  await sleep(500);
+  await shot("47-archive-search");
+  await step(`window.__m.key(window, { key: "w", ctrlKey: true })`);
+  await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+  await page(`document.querySelector(".adp-tabbar [role=tab]").click(); true`);
+  await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
+  await step(`window.__m.context([...window.__m.rows()].find((r) => r.textContent.includes("Project files.zip")))`);
+  // The item menu's submenus: "Open as" first, "Extract" second.
+  await step(`document.querySelectorAll(".adp-ctxmenu [role=menuitem][aria-haspopup=menu]")[1]?.click()`);
+  await sleep(300);
+  await shot("48-extract-menu");
+  await step(`for (const menu of [...document.querySelectorAll(".adp-ctxmenu")].reverse()) menu.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
+  await page(`window.__m.closeMenus(); true`);
+
+  // Step 06e: Compress to, a compression job, and the password prompt. The
+  // synthetic password stays masked in every screenshot.
+  await openFolder(demo);
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("archive-source.bin")))`);
+  const compressLabel = String(lang).startsWith("es") ? "Comprimir en…" : "Compress to…";
+  const createLabel = String(lang).startsWith("es") ? "Crear" : "Create";
+  const openLabel = String(lang).startsWith("es") ? "Abrir" : "Open";
+  await step(`(() => {
+    const row = [...window.__m.rows()].find((r) => r.textContent.includes("archive-source.bin"));
+    window.__m.context(row);
+    const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(compressLabel)});
+    item?.click();
+    return true;
+  })()`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-archive-create-dialog"))`);
+  await step(`(() => { const select = document.querySelector("#adp-create-encryption"); select.value = "aes256"; select.dispatchEvent(new Event("change", { bubbles: true })); return true; })()`);
+  await sleep(200);
+  await shot("49-compress-dialog");
+  await step(`(() => {
+    const fields = [...document.querySelectorAll(".adp-archive-password-fields input[type=password]")];
+    for (const field of fields) {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(field, "synthetic screenshot passphrase");
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    const name = document.querySelector("#adp-create-name");
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(name, "measure-shots.zip");
+    name.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  })()`);
+  await step(`(() => { const button = [...document.querySelectorAll(".adp-archive-create-dialog button")].find((entry) => entry.textContent.trim() === ${JSON.stringify(createLabel)}); button?.click(); return true; })()`);
+  await sleep(120);
+  await shot("51-compression-job");
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("measure-shots.zip")), 15000)`);
+  await step(`[...window.__m.rows()].find((r) => r.textContent.includes("measure-shots.zip")).dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }))`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-archive-password-dialog"), 15000)`);
+  await shot("50-password-open");
+  await step(`(() => {
+    const field = document.querySelector(".adp-archive-password-dialog input[type=password]");
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(field, "synthetic screenshot passphrase");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    const button = [...document.querySelectorAll(".adp-archive-password-dialog button")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openLabel)});
+    button?.click();
+    return true;
+  })()`);
+  await sleep(600);
+  await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-tabpane:not([hidden])") !== null)`);
+
+  // Step 06f: a table, the same table sorted, a JSON tree, a font and a hex
+  // search. The demo folder stays open, so its path is never typed (KI-033).
+  const openAsLabel = String(lang).startsWith("es") ? "Abrir como" : "Open as";
+  const openAsHexLabel = String(lang).startsWith("es") ? "Abrir como hexadecimal" : "Open as hex";
+  const openByName = (name) =>
+    `[...window.__m.rows()].find((r) => r.textContent.includes(${JSON.stringify(name)}))?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true })); true`;
+  const backToExplorer = async () => {
+    await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
+    await page(`window.__m.waitFor(() => document.querySelectorAll(".adp-tabbar [role=tab]").length === 1)`);
+    await step(`window.__m.openExplorer()`);
+    await page(`window.__m.waitFor(() => window.__m.rows().length > 0)`);
+  };
+  await page(`window.__m.waitFor(() => [...window.__m.rows()].some((r) => r.textContent.includes("big-100k.csv")))`);
+  await step(openByName("big-100k.csv"));
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-table-row .adp-table-cell") != null, 20000)`);
+  await sleep(400);
+  await shot("52-table");
+  await step(`document.querySelector(".adp-table-head-cell")?.click()`);
+  await sleep(900);
+  await shot("53-table-sorted");
+  await backToExplorer();
+  await step(openByName("data.json"));
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-json-row") != null, 20000)`);
+  await sleep(400);
+  await shot("54-json-tree");
+  await backToExplorer();
+  if (hasSampleFont) {
+    await step(openByName("arial.ttf"));
+    await page(`window.__m.waitFor(() => document.querySelector(".adp-font-sample") != null, 20000)`);
+    await sleep(400);
+    await shot("55-font");
+    await backToExplorer();
+  } else {
+    console.log("no sample font; 55-font is skipped");
+  }
+  await step(`(() => {
+    const row = [...window.__m.rows()].find((r) => r.textContent.includes("search-3mb.bin"));
+    window.__m.context(row);
+    const openAs = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openAsLabel)});
+    openAs?.click();
+    return true;
+  })()`);
+  await step(`(() => {
+    const item = [...document.querySelectorAll(".adp-ctxmenu [role=menuitem]")].find((entry) => entry.textContent.trim() === ${JSON.stringify(openAsHexLabel)});
+    item?.click();
+    return true;
+  })()`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-hex-row") != null, 20000)`);
+  await step(`(() => {
+    const input = document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input");
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "FINDME");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  })()`);
+  await step(`window.__m.key(document.querySelector(".adp-filetab:not([hidden]) .adp-filetab-search input"), { key: "Enter" })`);
+  await page(`window.__m.waitFor(() => document.querySelector(".adp-hex [aria-current='true']") != null, 15000)`);
+  await sleep(400);
+  await shot("56-hex-search");
+  await page(`window.__m.key(window, { key: "w", ctrlKey: true }); true`);
 }
 
 cdp.close();

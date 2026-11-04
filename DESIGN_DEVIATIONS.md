@@ -3,6 +3,56 @@
 Where the built UI cannot match the Figma design exactly, the closest option
 is recorded here for owner approval (plan/design.md rule 6). Newest first.
 
+## 2026-10-31 - Version history review (Step 06b) - owner hand checks pending
+
+- **What:** the guide defines a dialog 880px wide within 92vw, a 280px history list and a flexible preview. No matching design frame is available for this feature, so comparison is against the guide and shared tokens rather than a claimed exact Figma match.
+- **Correction:** a fixed pale-green diff background made added lines unreadable in dark mode. The reviewed row uses the existing Excel accent mixed with the current surface and primary text. Actual contrast is 13.22:1 light / 12.89:1 dark for additions, 11.48:1 light / 8.78:1 dark for removals.
+- **Evidence:** `docs/screenshots/step-06b/42-version-history-*` and `43-version-text-*`, all six visually inspected; raw release checks in `docs/benchmarks/step-06bc-ui-review-*.json`. The pre-fix dark screenshot remains in `docs/screenshots/review-06bc-before/`.
+- **Status:** local review completed for the captured layouts; owner hand checks remain pending. Existing CSP warnings are KI-075, not hidden by the layout correction.
+
+## 2026-10-30 - The template window (Step 06c) - waiting for the owner's screenshots review
+
+- **What:** the Figma file has no template window and no New menu with templates. It was designed in this step from the measured tokens and the values in `plan/steps/step-06c.md` D7: a dialog `min(640px, 92vw)` wide, two lists with a 260 px maximum height on the panel border and `--adp-radius-md` corners, rows with `--adp-radius-sm` corners and the selected row on `--adp-color-surface-selected-row`, the description line in `--adp-color-text-secondary` at `--adp-font-small`.
+- **Added beyond the guide:** the two sections keep their heading spacing with `--adp-space-3` under each heading and `--adp-space-6` between them, so the headings do not touch the lists.
+- **Evidence:** `docs/screenshots/step-06c/` (`44-new-menu`, `45-template-window`), in English light, Spanish dark and pseudo-locale; all six were visually inspected on 2026-10-31. The generic 520px cap was corrected so measured width is 640px within the viewport (KI-077).
+
+## 2026-10-30 - Themes and appearance (Step 05d) - checked for the owner on 2026-10-30
+
+- **What:** the Figma file has only the light theme. **Bright**, **Paper**, **AMOLED black** and **High contrast** were designed in this step from the same tokens; their values live in `themes/bright.tokens.json`, `themes/paper.tokens.json`, `themes/amoled.tokens.json` and `themes/highContrast.tokens.json`, and the contrast test in `src/__tests__/themes.test.ts` checks every theme.
+- **Dark theme change:** the text on the accent in the dark theme is now `#000000`. White on `#4CC2FF` was only about 2:1; black gives about 10:1.
+- **Spacing and corners:** the density setting replaces the measured spacing tokens and row heights (compact, comfortable and spacious in `plan/steps/step-05d.md`), and the corner radius setting replaces the measured `--adp-radius-*` values with 0, the theme's values or slightly larger ones. The comfortable density and the standard radius keep the measured design.
+- **Owner approval:** the owner asked the agent to check the screenshots instead of reviewing them personally (2026-10-30). The agent found the themes readable in `31-theme-bright` to `38-settings-search` (`docs/screenshots/step-05d/`) and requested no color changes. The owner has not judged the colors personally. Any color they want changed goes in the token files only, and the contrast test must still pass.
+
+## 2026-10-30 - Movable toolbars, panels and tabs (Step 05c) - approved by the owner on 2026-10-30
+
+- **What:** the Figma file has only the top layout. The side toolbars (200, 168 or 48 px columns), the bottom toolbar, the auto-hide line (6 px), the tab column (220 or 48 px, rows 36 px), the bottom tab row (36 px), the navigation pane on the right and the Details pane at the bottom (200 px) were designed in this step from the existing tokens and the measured values in `plan/design-spec.md`.
+- **Owner approval:** approved on 2026-10-30 from the seven screenshots in `docs/screenshots/step-05c/` (`24` to `30`). The problems seen in them are KI-034 and KI-035.
+- **Evidence:** `docs/screenshots/step-05c/` (24 to 30) once the screenshots are taken.
+
+## 2026-10-30 - File tabs and the image viewer (Step 04a)
+
+- **What:** Figma shows file tabs only with Office, PDF and image editors. The Step 04a file tab uses the Figma window chrome: the Explorer tab shrinks to its house icon while files are open; file tabs show the type icon in the type's accent color; the navigation row (56 px) has Show in folder (up arrow), Reload, and the path ending in the file; the image viewer shows the picture on the media canvas color with the image shadow and a checkerboard behind transparency; the file tab has its own status bar with the image size, the file size, and Fit plus a zoom slider at the right.
+- **Closest-option differences:** Back, Forward and the search box are not shown on file tabs yet (search arrives with the text viewer in Step 04b); the zoom slider shows the number without a percent sign (shared Slider component).
+
+## 2026-10-30 - Conflict dialog: Merge instead of Replace, and numbered Keep both (Step 03b) - approved by the owner on 2026-10-30
+
+- **What:** after the safety review found that a path-based Recycle Bin call can remove a file that appeared after the prompt, the owner approved a revised conflict dialog. Figma has no conflict dialog; this is the 2026-10-28 extension with a smaller button set. For two folders with the same name it offers **Merge** (primary), **Skip** and **Keep both**, with the note "Merge adds the new files and keeps the files that are already there. Files with the same name are skipped." For a file it offers **Keep both** (primary) and **Skip**. **Replace** is not offered until the full conflict window can bind recycling to the exact approved item.
+- **Numbering:** New items, downloads and pasted files count from one ("report (1)", "report (2)"). A copied item that keeps both, including a same-folder paste, uses Windows' "report - Copy", then "report - Copy (2)". A moved item that keeps both uses "report (1)". The owner chose the numbered form for new files so duplicates are obviously related, and kept Explorer's copy name for copy-paste.
+- **Closest-option differences:** the note line uses the secondary text color at 11 px; it only appears for folder conflicts. The dialog keeps the 2026-10-28 size, radius, shadow and button order.
+- **Evidence:** `docs/screenshots/step-03b/09-conflict-*.png` will be refreshed after the change; the approved preview was shown in chat on 2026-10-30.
+
+## 2026-10-30 - Accessibility fixes and the setup window's font (Step 03b) - agent decision, for owner review
+
+- **What:** the axe-core check (WCAG 2.2 AA) asks for clickable targets of at least 24 x 24 px. The breadcrumb's small "Folders in ..." chevrons were 15 px; their clickable area is now 24 x 24 px with the same 11 px icon, so the address bar's segments sit a few pixels further apart than in Figma. Column headers keep their look; their sort state is read out in the button label instead of an arrow-only cue.
+- **Setup window font:** egui's bundled fonts are no longer built in (their Ubuntu font license is not allowed, R-LIC-1). The setup window uses Inter as before; only when Inter is missing (the case the setup window exists to repair) it uses the Windows UI font installed on the PC, read at run time and never bundled (R-LIC-5 forbids bundling Microsoft fonts).
+- **Evidence:** `build/verification/<run>/runtime/folder-*.png` from `scripts/test-all.ps1 -Mode full`; accessibility reports in the same folder show no violations in English light, Spanish dark and the pseudo-locale at 100% and 150%.
+
+## 2026-10-28 - File operations: jobs panel, conflict and delete dialogs, Recent actions (Step 03b) - approved by the owner on 2026-10-28
+
+- **What:** Figma has no copy/progress panel, conflict dialog, permanent-delete warning, or Recent actions list (plan/design.md, "Screens still to design"). The owner approved a design preview in chat before building, made from `plan/design-spec.md` tokens: the jobs panel is a 360 px card at the bottom right (radius from the dialog token, card shadow) with the operation verb, current file, progress bar in the Explorer accent, percent, Cancel, and an expandable skipped-items list; finished jobs stay until dismissed. The conflict dialog offers Replace / Skip / Keep both with a "Do this for all conflicts" checkbox; the permanent-delete dialog states the count and that it cannot be undone, with Cancel focused; Recent actions is a dialog listing the undo history with Undo/Redo buttons and shortcut hints. Paste as file and New items reuse the approved 03a rename box (the new file appears with its name selected), so there is no separate naming dialog.
+- **Closest-option differences:** a small "File operations" button at the bottom right reopens the jobs panel when it is closed (the layout engine in Step 05 will give status bars real slots); the drag badge is a dark pill following the pointer ("Copy to <folder>"), since Figma has no drag state; undo toasts stack at the same corner and can cover the jobs button briefly.
+- **Evidence:** `docs/screenshots/step-03b/` - 07 undo toast, 08 permanent-delete warning, 09 conflict dialog, 10 Recent actions, 11 jobs panel mid-copy, in English light, Spanish dark, and the pseudo-locale.
+
 ## 2026-10-28 - Command bar, Details pane, menus and rename (Step 03a) - approved by the owner on 2026-10-28
 
 - **What:** Figma shows the command bar only on the Home frame and has no Details toggle, Details pane, menus, or rename box (plan/design.md, "Screens still to design"). The owner approved a design preview before it was built, made from `plan/design-spec.md` tokens with the Windows 11 Explorer as functional reference: a Details toggle at the right end of the command bar (pressed state in the Explorer accent light), a 280 px Details pane with a 44 px file-type tile and a label/value list, menus 220-360 px wide with radius 8, the card shadow, 30 px items, 16 px icons, shortcuts at the right and an icon row (Cut, Copy, Rename, Share, Delete) on items, and a 22 px rename box with an accent border and a message bubble under it.

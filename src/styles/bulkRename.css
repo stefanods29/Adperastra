@@ -1,0 +1,23 @@
+.adp-rename-dialog { width:960px; max-width:calc(100vw - 32px); min-width:0; max-height:calc(100vh - 32px); }
+.adp-rename-layout { display:grid; grid-template-columns:280px minmax(400px,1fr); gap:var(--adp-space-4); margin-top:var(--adp-space-4); overflow:auto; }
+.adp-rename-operations { min-width:0; max-height:55vh; overflow:auto; margin:0; padding:var(--adp-space-3); background:var(--adp-color-surface-pane); border:1px solid var(--adp-color-border-panel); }
+.adp-rename-operations fieldset { min-width:0; margin:0 0 var(--adp-space-3); border:1px solid var(--adp-color-border-default); }
+.adp-rename-operations label { display:flex; flex-wrap:wrap; gap:var(--adp-space-2); margin-bottom:var(--adp-space-2); }
+.adp-rename-operations input:not([type=checkbox]), .adp-rename-operations select { width:100%; min-width:0; }
+.adp-rename-dialog input, .adp-rename-dialog select { color:var(--adp-color-text-primary); background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-input); }
+.adp-rename-dialog button:not(.adp-btn--primary) { color:var(--adp-color-text-primary); }
+.adp-rename-dialog button:focus-visible, .adp-rename-dialog input:focus-visible, .adp-rename-dialog select:focus-visible { outline:2px solid var(--adp-accent-current); outline-offset:2px; }
+.adp-rename-preset-editor { display:flex; flex-wrap:wrap; align-items:end; gap:var(--adp-space-2); margin:var(--adp-space-2) 0; padding:var(--adp-space-2); background:var(--adp-color-surface-pane); border:1px solid var(--adp-color-border-panel); }
+.adp-rename-preset-editor label { flex:1 1 220px; }
+.adp-rename-preset-editor p { flex:1 1 100%; margin:0; overflow-wrap:anywhere; }
+.adp-rename-preview { min-width:400px; border:1px solid var(--adp-color-border-panel); color:var(--adp-color-text-primary); }
+.adp-rename-preview[aria-busy=true] { opacity:.6; }
+.adp-rename-scroll { height:360px; max-height:50vh; overflow:auto; }
+.adp-rename-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:center; border-bottom:1px solid var(--adp-color-border-panel); }
+.adp-rename-row > span, .adp-rename-row > label { display:flex; gap:var(--adp-space-2); align-items:center; min-width:0; padding:0 var(--adp-space-2); overflow:hidden; }
+.adp-rename-row span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.adp-rename-row input, .adp-rename-row svg { flex:none; }
+.adp-rename-status { font-size:var(--adp-font-small); color:var(--adp-color-text-secondary); }
+.adp-rename-results { max-height:50vh; overflow:auto; padding-left:var(--adp-space-4); user-select:text; }
+.adp-rename-results li { display:flex; flex-direction:column; overflow-wrap:anywhere; margin-bottom:var(--adp-space-3); }
+@media (max-width:740px) { .adp-rename-layout { grid-template-columns:minmax(0,1fr); } .adp-rename-operations { max-height:30vh; } }
