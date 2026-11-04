@@ -40,6 +40,9 @@ export default function ConversionOptions({
 }: ConversionOptionsProps) {
   const { t } = useTranslation();
   const needsAcceptance = requiredWarnings.length > 0 || requiredLosses.length > 0;
+  // Only the image adapters keep source metadata; the PDF combine route
+  // embeds pixels, so offering a promise it cannot keep would be wrong.
+  const keepsMetadata = spec.id.startsWith("image/") || spec.id === "svg/png";
   return (
     <div className="adp-convert-options">
       {spec.options.map((option) => (
@@ -51,15 +54,17 @@ export default function ConversionOptions({
           disabled={disabled}
         />
       ))}
-      <div className="adp-convert-row">
-        <span className="adp-convert-label">{t("convert.keepMetadata")}</span>
-        <Switch
-          checked={metadataKeep}
-          onChange={onMetadataKeep}
-          label={t("convert.keepMetadata")}
-          disabled={disabled}
-        />
-      </div>
+      {keepsMetadata ? (
+        <div className="adp-convert-row">
+          <span className="adp-convert-label">{t("convert.keepMetadata")}</span>
+          <Switch
+            checked={metadataKeep}
+            onChange={onMetadataKeep}
+            label={t("convert.keepMetadata")}
+            disabled={disabled}
+          />
+        </div>
+      ) : null}
       {replaceNotice ? (
         <p className="adp-convert-note" role="status">
           {t("convert.replaceUnavailable")}

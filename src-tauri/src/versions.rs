@@ -25,6 +25,9 @@ pub enum ModifyReason {
     Save,
     SaveAs,
     Restore,
+    /// A privacy cleaner replacing a source in place (disabled until 09f).
+    #[allow(dead_code)]
+    Clean,
 }
 
 /// The reason as it is stored in the history.
@@ -33,6 +36,7 @@ fn reason_text(reason: ModifyReason) -> &'static str {
         ModifyReason::Save => "save",
         ModifyReason::SaveAs => "saveAs",
         ModifyReason::Restore => "restore",
+        ModifyReason::Clean => "clean",
     }
 }
 

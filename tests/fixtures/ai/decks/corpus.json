@@ -1,0 +1,60 @@
+{
+  "schema": "deck-eval-corpus-1",
+  "create_per_group": 10,
+  "styles": {
+    "business": {
+      "en": ["Approve a pilot", "Customer need", "The next decision", "Quarterly priority", "One owner", "Review date", "Budget request", "Partner update", "Team capacity", "Next milestone"],
+      "es": ["Aprobar un piloto", "Necesidad del cliente", "La siguiente decisión", "Prioridad trimestral", "Un responsable", "Fecha de revisión", "Solicitud de presupuesto", "Actualización del socio", "Capacidad del equipo", "Siguiente hito"]
+    },
+    "report": {
+      "en": ["Two measured results", "Compare the same measure", "What the result does not show", "Sample size", "Before and after", "Monthly trend", "Error rate", "Completion count", "One limitation", "Review the units"],
+      "es": ["Dos resultados medidos", "Comparar la misma medida", "Lo que no muestra el resultado", "Tamaño de la muestra", "Antes y después", "Tendencia mensual", "Tasa de error", "Recuento de completados", "Una limitación", "Revisar las unidades"]
+    },
+    "education": {
+      "en": ["File extension", "Try one example", "One idea to remember", "What a folder is", "Read the dialog", "Safe practice", "Check your answer", "Common mistake", "Short exercise", "Explain in your words"],
+      "es": ["Extensión de archivo", "Prueba un ejemplo", "Una idea para recordar", "Qué es una carpeta", "Leer el diálogo", "Práctica segura", "Comprueba tu respuesta", "Error común", "Ejercicio breve", "Explica con tus palabras"]
+    },
+    "minimal": {
+      "en": ["One goal", "Choose the next step", "Less to read", "One message", "Remove decoration", "Keep the essential", "One decision", "One owner", "One date", "One result"],
+      "es": ["Un objetivo", "Elige el siguiente paso", "Menos para leer", "Un mensaje", "Quitar decoración", "Conservar lo esencial", "Una decisión", "Un responsable", "Una fecha", "Un resultado"]
+    },
+    "creative": {
+      "en": ["A visual story", "Let the image speak", "The turning point", "One meaningful image", "A concise caption", "A warm opening", "A lasting moment", "Visual rhythm", "One color accent", "The human detail"],
+      "es": ["Una historia visual", "Deja hablar a la imagen", "El punto de cambio", "Una imagen significativa", "Una descripción breve", "Una apertura cálida", "Un momento duradero", "Ritmo visual", "Un acento de color", "El detalle humano"]
+    },
+    "technical": {
+      "en": ["Cache limit and assumptions", "Compare the trade-off", "Failure keeps the source safe", "Budget: 512 MiB", "One worker at a time", "Measure latency", "State the units", "Known limitation", "Rollback plan", "Deterministic result"],
+      "es": ["Límite de caché y supuestos", "Comparar el compromiso", "El fallo conserva el origen", "Presupuesto: 512 MiB", "Un trabajador a la vez", "Medir latencia", "Indicar las unidades", "Limitación conocida", "Plan de reversión", "Resultado determinista"]
+    },
+    "training": {
+      "en": ["Review before saving", "Practice safely", "Check the result", "Open the preview", "Check the destination", "Confirm the new file", "Use a sample folder", "Cancel once", "Verify both files", "One action per step"],
+      "es": ["Revisar antes de guardar", "Practicar con seguridad", "Comprobar el resultado", "Abrir la vista previa", "Comprobar el destino", "Confirmar el archivo nuevo", "Usar una carpeta de ejemplo", "Cancelar una vez", "Verificar ambos archivos", "Una acción por paso"]
+    },
+    "personal": {
+      "en": ["A day together", "The plan for the day", "Thank you for being here", "Share one memory", "Meet at 10:00", "Bring a favorite photo", "Keep names readable", "Celebrate this moment", "A warm closing", "One favorite detail"],
+      "es": ["Un día juntos", "El plan del día", "Gracias por estar aquí", "Compartir un recuerdo", "Reunirnos a las 10:00", "Traer una foto favorita", "Mantener legibles los nombres", "Celebrar este momento", "Un cierre cálido", "Un detalle favorito"]
+    }
+  },
+  "actions": {
+    "add": {
+      "en": ["Next step", "One risk", "Owner", "Review date", "Open question", "Decision", "Constraint", "Dependency", "First action", "Success check", "Budget note", "Support needed", "Timeline", "Scope", "Measurement", "Fallback", "Contact", "Approval", "Handoff", "Follow-up"],
+      "es": ["Siguiente paso", "Un riesgo", "Responsable", "Fecha de revisión", "Pregunta abierta", "Decisión", "Restricción", "Dependencia", "Primera acción", "Comprobación del éxito", "Nota de presupuesto", "Apoyo necesario", "Cronograma", "Alcance", "Medición", "Plan alternativo", "Contacto", "Aprobación", "Entrega", "Seguimiento"]
+    },
+    "shorten": {
+      "en": ["Shorten the opening", "Remove repetition", "Keep the number", "Keep the date", "Tighten the bullet", "One sentence", "Cut filler", "Keep the owner", "Shorten the caption", "Keep 512 MiB", "Shorter title", "Remove the aside", "Keep the unit", "Trim the closing", "Two words", "Keep the URL", "Shorter note", "One clause", "Remove hedging", "Final trim"],
+      "es": ["Acortar la apertura", "Quitar repetición", "Conservar el número", "Conservar la fecha", "Ajustar la viñeta", "Una oración", "Quitar relleno", "Conservar el responsable", "Acortar la descripción", "Conservar 512 MiB", "Título más corto", "Quitar el aparte", "Conservar la unidad", "Ajustar el cierre", "Dos palabras", "Conservar la URL", "Nota más corta", "Una cláusula", "Quitar matices", "Ajuste final"]
+    },
+    "notes": {
+      "en": ["Add the source", "Mention the limit", "Ask for a decision", "Add the owner", "Add timing", "Warn about units", "Add a reminder", "Note the assumption", "Add the next step", "Keep names", "Add one question", "Note the fallback", "Add the date", "Mention privacy", "Add the contact", "Note the risk", "Add the check", "Keep it brief", "Add context", "Close warmly"],
+      "es": ["Agregar la fuente", "Mencionar el límite", "Pedir una decisión", "Agregar el responsable", "Agregar el tiempo", "Avisar sobre unidades", "Agregar un recordatorio", "Anotar el supuesto", "Agregar el siguiente paso", "Conservar nombres", "Agregar una pregunta", "Anotar el plan alternativo", "Agregar la fecha", "Mencionar privacidad", "Agregar el contacto", "Anotar el riesgo", "Agregar la comprobación", "Mantener breve", "Agregar contexto", "Cerrar con cercanía"]
+    },
+    "layout": {
+      "en": ["Title and body", "Two columns", "Section opener", "Image and caption", "Chart page", "Quote page", "Title only", "Blank spacer", "Compare before and after", "One big number", "Three steps", "Timeline", "Decision page", "Risk page", "Contact page", "Thank you", "Agenda", "Summary", "One question", "Closing"],
+      "es": ["Título y contenido", "Dos columnas", "Apertura de sección", "Imagen y descripción", "Página de gráfico", "Página de cita", "Solo título", "Espacio en blanco", "Comparar antes y después", "Un número grande", "Tres pasos", "Cronología", "Página de decisión", "Página de riesgo", "Página de contacto", "Gracias", "Agenda", "Resumen", "Una pregunta", "Cierre"]
+    },
+    "style": {
+      "en": ["A formal proposal", "A measured report", "A classroom explanation", "A minimal update", "A visual story", "A technical review", "A training guide", "A personal event", "A board decision", "A data summary", "A lesson recap", "A one-message slide", "A photo-led opening", "An engineering trade-off", "A step-by-step task", "A celebration", "A budget request", "A monthly result", "A safety exercise", "A warm closing"],
+      "es": ["Una propuesta formal", "Un informe medido", "Una explicación de clase", "Una actualización mínima", "Una historia visual", "Una revisión técnica", "Una guía de capacitación", "Un evento personal", "Una decisión del consejo", "Un resumen de datos", "Un repaso de lección", "Una diapositiva con un mensaje", "Una apertura con foto", "Un compromiso de ingeniería", "Una tarea paso a paso", "Una celebración", "Una solicitud de presupuesto", "Un resultado mensual", "Un ejercicio de seguridad", "Un cierre cálido"]
+    }
+  }
+}

@@ -51,9 +51,28 @@ export interface ItemViewProps {
   /** Mouse-down on a row, for starting a drag (Step 03b). */
   onItemMouseDown?: (event: ReactMouseEvent, item: ExplorerItem) => void;
   onFirstPaint?: () => void;
+  /** Windows or user double-click delay for the slow-click rename step
+   * (Step 10f D8); 500 ms when the host has no effective value. */
+  doubleClickMs?: number;
   /** Short Home lists render every row; folders virtualize. */
   virtual?: boolean;
+  /** A click-pick lease is active: folders are click drop targets
+   * (Step 10f E4/T5). Selecting with modifiers still works. */
+  pickActive?: boolean;
+  /** Clicking an eligible folder asks the host to negotiate the drop. */
+  onPickTarget?: (item: ExplorerItem) => void;
+  /** Clicking the current folder's empty space drops there too. */
+  onPickCurrentTarget?: () => void;
+  /** Optional background folder size text for this row (Step 11c T6). */
+  folderSizeText?: (item: ExplorerItem) => string | null;
   label: string;
+  /** The open folder, when the host knows it. Folder-level appearance
+   * (background, assigned column set) is resolved from this path. */
+  folderPath?: string;
+  /** Settings > Views: folder backgrounds are drawn behind the items. */
+  folderBackgrounds?: boolean;
+  /** Settings > Views: assigned column sets replace the regular columns. */
+  columnSetsEnabled?: boolean;
 }
 
 /** What a view must tell the hook about its own layout. */
@@ -102,9 +121,19 @@ export function useItemInteractions(props: ItemViewProps, options: InteractionOp
 
   const onItemClick = (event: ReactMouseEvent, item: ExplorerItem) => {
     event.stopPropagation();
+    cancelRenameTimer();
+    if (
+      props.pickActive &&
+      (item.kind === "folder" || item.kind === "drive") &&
+      !event.shiftKey &&
+      !event.ctrlKey &&
+      !event.metaKey
+    ) {
+      props.onPickTarget?.(item);
+      return;
+    }
     const selection = props.selection;
     const wasOnlySelection = selection.selected.size === 1 && selection.selected.has(item.path);
-    cancelRenameTimer();
     if (event.shiftKey) {
       props.onSelectionChange(selectRange(selection, options.order, item.path, event.ctrlKey || event.metaKey));
       return;
@@ -124,13 +153,14 @@ export function useItemInteractions(props: ItemViewProps, options: InteractionOp
       renameTimer.current = window.setTimeout(() => {
         renameTimer.current = null;
         props.onStartRename(item);
-      }, RENAME_CLICK_DELAY_MS);
+      }, props.doubleClickMs ?? RENAME_CLICK_DELAY_MS);
     }
   };
 
   const onItemDoubleClick = (event: ReactMouseEvent, item: ExplorerItem) => {
     event.stopPropagation();
     cancelRenameTimer();
+    if (props.pickActive && (item.kind === "folder" || item.kind === "drive")) return;
     if (props.renamingPath !== item.path) props.onOpen(item);
   };
 
@@ -249,6 +279,10 @@ export function useItemInteractions(props: ItemViewProps, options: InteractionOp
 
   const onListClick = () => {
     cancelRenameTimer();
+    if (props.pickActive && props.onPickCurrentTarget) {
+      props.onPickCurrentTarget();
+      return;
+    }
     if (props.selection.selected.size > 0) props.onSelectionChange({ ...props.selection, selected: new Set() });
   };
 

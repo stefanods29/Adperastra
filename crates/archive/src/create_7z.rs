@@ -1,5 +1,5 @@
 //! Writing a 7z archive into the app-owned spool (Step 06e T6): non-solid
-//! LZMA2 level 6 with an 8 MiB dictionary, AES-256 with 2^19 KDF cycles only
+//! LZMA2 at the selected level with an 8 MiB dictionary, AES-256 with 2^19 KDF cycles only
 //! when chosen, and header encryption only for encrypted archives.
 
 use std::cell::Cell;
@@ -18,8 +18,6 @@ use crate::entry::EntryKind;
 use crate::error::ArchiveError;
 use fs_service::CancellationToken;
 
-/// LZMA2 level 6 and an 8 MiB dictionary (D3).
-pub(crate) const SEVEN_Z_LEVEL: u32 = 6;
 pub(crate) const SEVEN_Z_DICTIONARY: u32 = 8 * 1024 * 1024;
 /// The KDF cycle power D3 requires; the library default of 8 is not accepted.
 pub(crate) const SEVEN_Z_CYCLES_POWER: u8 = 19;
@@ -85,7 +83,7 @@ pub(crate) fn write_7z<W: Write + Seek>(
 }
 
 fn content_methods(options: &CreateOptions) -> Result<Vec<EncoderConfiguration>, ArchiveError> {
-    let mut lzma = Lzma2Options::from_level(SEVEN_Z_LEVEL);
+    let mut lzma = Lzma2Options::from_level(u32::from(options.level));
     lzma.set_dictionary_size(SEVEN_Z_DICTIONARY);
     let mut methods = Vec::new();
     if options.encryption == CreateEncryption::Aes256 {

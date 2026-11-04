@@ -168,6 +168,7 @@ pub fn mime_from_ext(ext: &str) -> &'static str {
         "jpg" | "jpeg" | "jfif" => "image/jpeg",
         "gif" => "image/gif",
         "webp" => "image/webp",
+        "adimage" => "application/vnd.adperastra.image-project+zip",
         "bmp" => "image/bmp",
         "ico" => "image/x-icon",
         "svg" => "image/svg+xml",

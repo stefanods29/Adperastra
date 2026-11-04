@@ -1917,13 +1917,13 @@ Canonical `src/services/officeViewTypes.ts`, native `src-tauri/src/office_view_t
 | OfficeOutlineNode | id string<=128; title string<=512; section_id; page nullablepositiveinteger; depthu8<=32 |
 | OfficeViewState | section_id string; page1default; zoom finite25..400default100; scroll_top finite0..1e9; mode quick/pages defaultpages |
 | OfficeCell | row/column zero-basedu32; text string<=32767UTF16units; value_kind text/number/date/boolean/error/formula; formula nullabletext; cached bool |
-| OfficeCellPage | section_id; row_start u32; rows OfficeCell[][]<=500; total_rows/columns u32; truncated bool; next_cursor nullableUUID |
+| OfficeCellPage | section_id; row_start u32; column_start u32; rows OfficeCell[][]<=500 rows/<=200 columns each; total_rows/columns u32; column_count u32<=200; truncated bool; next_cursor nullablestring "row:column" (first withheld absolute cell, session/section-bound) |
 
 | Ref | Exact export/signature | Consumers |
 |---|---|---|
 | E1 | services/officeView.ts openOfficeView(input:ConversionInput)->Promise<JobHandle<OfficeSession>> |13 viewer,20a view-now seam; native office_view_open_start(request_id,input) |
 | E2 | same officeViewPage(sessionId:string,sectionId:string,page:number,scale:number)->Promise<JobHandle<OfficePage>> | page1-based,scale0.25..4; native office_view_page_start(request_id,session_id,section_id,page,scale) |
-| E3 | same officeViewSections(sessionId,cursor?:string)->Promise<OfficeSectionPage>; officeViewComments(sessionId,sectionId,cursor?:string)->Promise<OfficeCommentPage>; officeViewCells(sessionId,sectionId,rowStart:number,rowCount:number)->Promise<OfficeCellPage> | native office_view_sections/comments/cells; session-bound cursor invalid across sessions |
+| E3 | same officeViewSections(sessionId,cursor?:string)->Promise<OfficeSectionPage>; officeViewComments(sessionId,sectionId,cursor?:string)->Promise<OfficeCommentPage>; officeViewCells(sessionId,sectionId,rowStart:number,rowCount:number,columnStart?:number,columnCount?:number)->Promise<OfficeCellPage> (columnStart default0, columnCount default<=200) | native office_view_sections/comments/cells; session-bound cursor invalid across sessions; cell cursor section-bound |
 | E4 | same closeOfficeView(sessionId)->Promise<void>; native office_view_close | idempotent close cancels jobs/releases leases, no effect on shared dirty edit controller |
 | E5 | handlers/office/OfficeView.tsx OfficeView(props:HandlerViewProps); VirtualOfficeView(props:VirtualViewProps) | Legacy disk adapter and source-aware view share OfficePresenter, no fabricated FileTypeInfo |
 | E6 | officeViewTypes.ts all types above; OfficeFormat reexport fromengineTypes |20a/b/21a/22a read-only previews; no mutation methods |

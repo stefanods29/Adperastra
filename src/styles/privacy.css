@@ -1,0 +1,223 @@
+/* Privacy cleaner and settings (Step 08c). All colors come from tokens. */
+
+.adp-privacy {
+  width: 760px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+.adp-privacy-body {
+  overflow: auto;
+  min-height: 0;
+}
+
+.adp-privacy-scope,
+.adp-privacy-note {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  margin: 0 0 8px;
+}
+
+.adp-privacy-select {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-privacy-columns {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr);
+  gap: 16px;
+  min-height: 0;
+}
+
+.adp-privacy-panel {
+  min-width: 0;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  padding: 12px;
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-privacy-panel h3 {
+  margin: 0 0 8px;
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+}
+
+.adp-privacy-fields,
+.adp-privacy-results {
+  max-height: 360px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-privacy-category {
+  padding: 8px 0;
+  border-top: 1px solid var(--adp-color-border-default);
+}
+
+.adp-privacy-category:first-child {
+  border-top: 0;
+}
+
+.adp-privacy-category-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.adp-privacy-category-head:focus-within,
+.adp-privacy-ack:focus-within,
+.adp-privacy-setting-category:focus-within,
+.adp-privacy-setting-check:focus-within {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-privacy-count {
+  margin-left: auto;
+  color: var(--adp-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.adp-privacy-values {
+  margin: 4px 0 0 26px;
+  padding: 0;
+  list-style: none;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-privacy-values li {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.adp-privacy-label {
+  color: var(--adp-color-text-secondary);
+  flex: none;
+}
+
+.adp-privacy-preview {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.adp-privacy-more {
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-privacy-ack {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-header);
+}
+
+.adp-privacy-error {
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-status-caution);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-privacy-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.adp-privacy-destination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.adp-privacy-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-privacy-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.adp-privacy-results li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--adp-color-border-default);
+}
+
+.adp-privacy-results li:first-child {
+  border-top: 0;
+}
+
+.adp-privacy-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.adp-privacy-setting-group {
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  padding: 12px;
+}
+
+.adp-privacy-setting-mode {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.adp-privacy-setting-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 8px;
+}
+
+.adp-privacy-setting-category,
+.adp-privacy-setting-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 28px;
+}
+
+@media (max-width: 640px) {
+  .adp-privacy-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -177,7 +177,7 @@ describe("gallery settings", () => {
     });
     expect(normalized.cache).toMatchObject({ max_mb: 256 });
     expect(normalized.gallery).toEqual({ sources: [], date_source: "taken" });
-    expect(defaultSettings().schema_version).toBe(16);
+    expect(defaultSettings().schema_version).toBe(56);
   });
 
   it("refuses 33 sources", () => {

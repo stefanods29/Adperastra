@@ -216,7 +216,14 @@ pub fn preflight(
     options: &ConvertOptions,
 ) -> Result<RequiredChanges, ConvertError> {
     let ConvertOptions::Image(image_options) = options else {
-        return Err(ConvertError::BadRequest);
+        // Table and archive adapters compute their own required warnings
+        // from the actual source bytes before `sink.begin`; the shared
+        // preflight has no image facts to inspect for them. Every other
+        // options family is routed away from the helper before this point.
+        return Ok(RequiredChanges {
+            metadata_lost: Vec::new(),
+            warnings: Vec::new(),
+        });
     };
     if !spec.available || !spec.output.is_writable_image() {
         return Err(ConvertError::Unsupported);

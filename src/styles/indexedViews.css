@@ -1,0 +1,420 @@
+/* Indexed views (Step 11b T4-T6): smart folders, Timeline, Calendar,
+ * By kind, Recent activity and the optional photo map. All sizes use the
+ * measured design tokens; the fixed sizes below are the guide's values. */
+
+.adp-indexed-views {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-inline-size: 0;
+}
+
+.adp-view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-1);
+  border-block-end: 1px solid var(--adp-color-border-subtle);
+  padding-block-end: var(--adp-space-2);
+}
+
+.adp-view-tab {
+  min-block-size: 28px;
+  padding-inline: var(--adp-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: var(--adp-color-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adp-view-tab[aria-pressed="true"] {
+  background: var(--adp-color-surface-selected);
+  border-color: var(--adp-color-border-default);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-view-tab:focus-visible,
+.adp-view-result:focus-visible,
+.adp-map-cluster:focus-visible,
+.adp-map-photo-open:focus-visible,
+.adp-calendar-day:focus-visible,
+.adp-activity-path:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+.adp-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-inline-size: 0;
+}
+
+.adp-view-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-2);
+}
+
+.adp-view-title {
+  margin: 0;
+  font-size: var(--adp-font-section);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-view-switch {
+  display: flex;
+  gap: var(--adp-space-1);
+}
+
+.adp-view-source,
+.adp-view-count {
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.adp-view-error {
+  margin: 0;
+  color: var(--adp-color-status-caution);
+}
+
+.adp-view-loading,
+.adp-view-empty,
+.adp-view-note {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-view-more {
+  display: flex;
+  justify-content: center;
+}
+
+.adp-view-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-view-result {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  inline-size: 100%;
+  min-block-size: 32px;
+  padding-inline: var(--adp-space-2);
+  border: 0;
+  border-radius: var(--adp-radius-xs);
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.adp-view-result:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-view-result-name {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-view-result-path {
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-timeline-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+}
+
+.adp-timeline-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: 28px;
+  margin: 0;
+  border-block-end: 1px solid var(--adp-color-border-subtle);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  font-weight: 600;
+}
+
+.adp-calendar {
+  overflow-x: auto;
+}
+
+.adp-calendar-grid {
+  inline-size: 100%;
+  min-inline-size: 560px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.adp-calendar-grid th {
+  block-size: 28px;
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+  font-weight: 600;
+  text-align: center;
+}
+
+.adp-calendar-grid th,
+.adp-calendar-grid td {
+  inline-size: calc(100% / 7);
+  min-inline-size: 80px;
+}
+
+.adp-calendar-grid td {
+  padding: 1px;
+  vertical-align: top;
+}
+
+.adp-calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--adp-space-1);
+  inline-size: 100%;
+  min-block-size: 48px;
+  padding: var(--adp-space-1);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-header);
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adp-calendar-day:disabled {
+  color: var(--adp-color-text-tertiary);
+  background: transparent;
+  cursor: default;
+}
+
+.adp-calendar-day[aria-pressed="true"] {
+  border-color: var(--adp-accent-explorer);
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-calendar-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.adp-calendar-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+}
+
+.adp-kind-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-1);
+}
+
+.adp-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-activity-row {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-block-size: 32px;
+  padding-inline: var(--adp-space-2);
+  border-block-end: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-activity-kind {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-activity-path {
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.adp-activity-source,
+.adp-activity-time {
+  overflow: hidden;
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-activity-source {
+  grid-column: 2;
+}
+
+.adp-activity-time {
+  grid-column: 3;
+  font-variant-numeric: tabular-nums;
+}
+
+.adp-map-consent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-map-warning {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-1);
+  margin: 0;
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-map-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  gap: var(--adp-space-3);
+  min-block-size: 240px;
+}
+
+.adp-map-canvas {
+  position: relative;
+  overflow: hidden;
+  min-block-size: 240px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-segment-track);
+  touch-action: none;
+}
+
+.adp-map-canvas:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+.adp-map-tile {
+  position: absolute;
+  inline-size: 256px;
+  block-size: 256px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.adp-map-cluster {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-pill);
+  background: var(--adp-accent-explorer);
+  color: var(--adp-color-text-on-accent);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.adp-map-attribution {
+  position: absolute;
+  inset-block-end: var(--adp-space-1);
+  inset-inline-end: var(--adp-space-1);
+  padding-inline: var(--adp-space-1);
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-tiny);
+  text-decoration: none;
+}
+
+.adp-map-attribution:hover,
+.adp-map-attribution:focus-visible {
+  color: var(--adp-color-text-primary);
+  text-decoration: underline;
+}
+
+.adp-map-photo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-block-size: 360px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  list-style: none;
+}
+
+.adp-map-photo-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  inline-size: 100%;
+  min-block-size: 36px;
+  padding: var(--adp-space-1) var(--adp-space-2);
+  border: 0;
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.adp-map-photo-open:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-map-photo-name {
+  overflow: hidden;
+  max-inline-size: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-map-photo-open time {
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+}
+
+@media (max-width: 720px) {
+  .adp-map-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adp-map-photo-list {
+    max-block-size: 220px;
+  }
+}

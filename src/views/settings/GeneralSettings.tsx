@@ -1,7 +1,10 @@
-/** Settings > General (Step 05d): language and pasted images. */
+/** Settings > General (Step 05d): language, pasted images and the image
+ * editor defaults added by Step 18a (schema 48). */
 import { useTranslation } from "react-i18next";
 import Button from "../../components/Button";
 import HelpButton from "../../components/HelpButton";
+import Slider from "../../components/Slider";
+import Switch from "../../components/Switch";
 import type { AppSettings, LanguageSetting } from "../../services/settings";
 
 export interface GeneralSettingsProps {
@@ -18,6 +21,9 @@ const LANGUAGES: { id: LanguageSetting; labelKey: string }[] = [
 
 export default function GeneralSettings({ settings, onApply, onOpenHelp }: GeneralSettingsProps) {
   const { t } = useTranslation();
+  const imageEditor = settings.image_editor;
+  const updateImageEditor = (patch: Partial<AppSettings["image_editor"]>) =>
+    onApply({ ...settings, image_editor: { ...imageEditor, ...patch } });
 
   return (
     <section className="adp-settings-section" aria-labelledby="adp-general-title">
@@ -55,6 +61,33 @@ export default function GeneralSettings({ settings, onApply, onOpenHelp }: Gener
               {t(format === "png" ? "settings.formatPng" : "settings.formatJpg")}
             </Button>
           ))}
+        </div>
+      </div>
+      <div className="adp-settings-block" data-adp-image-editor-settings="true">
+        <h4 className="adp-heading">{t("imageEdit.properties")}</h4>
+        <div className="adp-setting-row">
+          <Switch
+            checked={imageEditor.advanced}
+            label={t("layers.advanced")}
+            onChange={(advanced) => updateImageEditor({ advanced })}
+          />
+        </div>
+        <div className="adp-setting-row">
+          <Switch
+            checked={imageEditor.show_history}
+            label={t("layers.history")}
+            onChange={(show_history) => updateImageEditor({ show_history })}
+          />
+        </div>
+        <div className="adp-setting-row">
+          <span className="adp-setting-label">{t("selection.tolerance")}</span>
+          <Slider
+            value={imageEditor.selection_tolerance}
+            min={0}
+            max={100}
+            label={t("selection.tolerance")}
+            onChange={(selection_tolerance) => updateImageEditor({ selection_tolerance })}
+          />
         </div>
       </div>
     </section>

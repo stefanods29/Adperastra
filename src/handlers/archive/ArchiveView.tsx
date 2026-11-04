@@ -397,7 +397,7 @@ export default function ArchiveView(props: HandlerViewProps) {
   return (
     <ViewerFrame
       ribbon={
-        <Ribbon def={ARCHIVE_RIBBON} ctx={ctx} commands={commands} accent="explorer" active={active} />
+        <Ribbon def={ARCHIVE_RIBBON} ctx={ctx} commands={commands} accent="explorer" active={active} handlerId="archive" />
       }
     >
       <div ref={rootRef} className="adp-archive">

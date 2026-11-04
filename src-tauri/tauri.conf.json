@@ -1,6 +1,6 @@
 {
   "productName": "Adperastra",
-  "version": "0.1.0",
+  "version": "0.1.0-preview.1",
   "identifier": "app.adperastra.desktop",
   "build": {
     "frontendDist": "../dist",
@@ -39,6 +39,13 @@
       "../help": "help",
       "../templates": "templates"
     },
-    "icon": []
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerHooks": "../installer/adperastra-hooks.nsh",
+        "languages": ["English", "Spanish"]
+      }
+    },
+    "icon": ["icons/icon.ico"]
   }
 }

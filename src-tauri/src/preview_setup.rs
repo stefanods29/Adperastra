@@ -4,7 +4,7 @@ use std::sync::Arc;
 use tauri::{App, AppHandle, Manager};
 
 use crate::{
-    background, background_queue, background_windows, cache, files, metadata_jobs,
+    background, background_queue, background_windows, cache, files, folder_sizes, metadata_jobs,
     metadata_preview, thumbnail_jobs,
 };
 use crate::{AppState, Settings};
@@ -27,6 +27,10 @@ pub fn initialize(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     scheduler.set_policy(Arc::downgrade(&policy));
     policy.register(background::BackgroundTaskKind::Thumbnails, true)?;
     metadata_jobs::register_background(&policy)?;
+    // Storage scan and folder sizes share the same two-permit scheduler
+    // (Step 11c U2); both start disabled and follow their settings rows.
+    policy.register(background::BackgroundTaskKind::FolderSizes, false)?;
+    policy.register(background::BackgroundTaskKind::StorageScan, false)?;
     let grants = Arc::clone(app.state::<Arc<files::FileGrants>>().inner());
     let cache = Arc::new(cache::CacheService::new(data_dir, grants));
     cache.set_limit_bytes(settings.cache.limit_bytes());
@@ -55,5 +59,12 @@ pub fn apply_settings(app: &AppHandle, settings: &Settings) {
     }
     if let Some(cache) = app.try_state::<Arc<cache::CacheService>>() {
         cache.set_limit_bytes(settings.cache.limit_bytes());
+    }
+    if let Some(sizes) = app.try_state::<Arc<folder_sizes::FolderSizeState>>() {
+        folder_sizes::apply_folder_size_policy(
+            sizes.inner(),
+            settings.folder_sizes.enabled,
+            settings.folder_sizes.network,
+        );
     }
 }

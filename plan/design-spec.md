@@ -1,5 +1,7 @@
 # Design spec (measured from the Figma file)
 
+Owner update, 2026-11-04. Use the supplied close-up horse photograph for the Windows application icon. The square crop is recorded in `src-tauri/icons/icon.png` and the Windows multi-size asset is `src-tauri/icons/icon.ico`.
+
 Measured directly from the Figma file "Adperastra prototype" on 27 Oct 2026 (every value below was read from the file's layers, not guessed). Use this file and the screenshots in `plan/design/screens/` instead of connecting to Figma. If a value you need isn't here, ask me for an exported screenshot rather than guessing.
 
 All visible text in the frames is Spanish example content; the real strings come from the translation files (`rules.md`, section 2). Measurements are in pixels at 100% scale.

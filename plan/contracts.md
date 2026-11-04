@@ -212,3 +212,46 @@ The coordinator integrates shared declarations/registries and later enum extensi
 The producing guide records additive same-handle `CacheStore::open_blob`, `PinnedSource::open_background`, optional thumbnail `sourceRevision`, and shared `subscribeBackgroundEligible` contracts. Existing foreground source opens and wire request shapes retain their behavior. Cache cleanup requires indexed native ownership receipts; helper staging uses kernel delete-on-close lifetime guards.
 
 Cache-store also exposes `with_staging_budget<T>(&self,bytes:u64,create:impl FnOnce()->Result<T,CacheError>)->Result<T,CacheError>`, with callback/physical preallocation rules defined by07a. Thumbnail helpers reserve their full output length under the shared OS cache lock before starting.
+### Addendum to office-edit-1: slide text targets
+
+A rendered textbox node may include an optional `deck_text` object with
+`span: TextSpan` and `text: string`. The node ID remains the shape ID.
+The span identifies one editable block at the render result's model revision.
+Both endpoints must use the same block ID, and the span length in UTF-16
+units must equal the text length, capped at 4,096 units. The native engine
+must validate the block-to-shape relationship again on mutation. When this
+field is absent, the node's accessibility name is only a label and is not
+an editable text value.
+
+A Writer paragraph or heading may supply `document_text` with the same
+bounded `span` and `text` shape. The span block ID must equal the node ID.
+The UI uses `replace_match` with the original text as its expected value.
+Only a node marked editable at the render result's revision can supply it.
+
+The local paper editor may open an immutable Office snapshot through the
+existing read-only Office viewer. Snapshot MIME, revision and sensitivity
+are resolved by ExportSnapshots. The job command `office_view_text_start`
+returns bounded PDF text runs and a `complete` flag for one authorized
+snapshot page. Coordinates
+use unrotated page points and a top-left origin. The UI may associate a run
+with an existing OOXML edit target only when the rendered text match is
+unique and complete. Mutations still use the shared OfficeController and
+the original target text at its expected revision. Each successful change
+renders a fresh immutable snapshot before exposing further edit targets.
+## Independent Home locations (session-3, Office preview)
+
+A folder tab may store the exact reserved UI location `home` instead of an
+absolute filesystem path. All other non-absolute paths remain invalid.
+`home` opens ExplorerHome without an initial filesystem location and never
+creates a filesystem watcher or grant. Navigation to a real folder stores
+its absolute path; navigating back to Home stores `home` again. Each tab
+keeps its independent identity, history and selection.
+
+Session schema 3 writes this additional location. Schema 1/2 inputs remain
+readable; older applications refuse the newer session rather than silently
+rewriting its Home tabs. Filesystem commands still require absolute paths;
+the reserved UI location is never accepted as a filesystem path.
+
+The tab-bar plus action opens and activates a new Home folder tab. Its
+adjacent arrow retains the extra tab menu. The permanent Explorer tab stays
+unique and non-closeable.

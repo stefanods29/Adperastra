@@ -73,6 +73,22 @@ describe("converter registry", () => {
       quality: 90,
       combine: true,
     } })).toBe(false);
+    const imagesPdf = spec({ id: "images/pdf", inputs: ["png"], output: "pdf", input_mode: "combine" });
+    expect(optionsMatchConverter(imagesPdf, { kind: "document", value: {
+      include_images: true,
+      page_size: "source",
+      margin_mm: 20,
+      sanitize: true,
+      encoding: "utf8",
+    } })).toBe(true);
+    expect(optionsMatchConverter(imagesPdf, { kind: "image", value: {
+      quality: 90,
+      keep_aspect: true,
+      allow_upscale: false,
+      background_rgba: [255, 255, 255, 255],
+      first_frame: false,
+      metadata_keep: true,
+    } })).toBe(false);
   });
 
   it("resolves a registered adapter and forgets it after reset", () => {

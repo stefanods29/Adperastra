@@ -215,6 +215,7 @@ fn create(request: &HelperCreate, token: &CancellationToken, reporter: &mut Repo
         password: request.password.clone(),
         encrypt_names: request.encrypt_names,
         include_hidden: request.include_hidden,
+        level: archive::create_types::default_compression_level(),
     };
     match archive::create_spool(
         &plan,

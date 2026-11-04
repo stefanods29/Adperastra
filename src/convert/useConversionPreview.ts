@@ -9,7 +9,7 @@ import type { ConversionInput, ConverterSpec, ConvertOptions } from "./types";
  * cancels the earlier generation; a stale completion can never replace a
  * newer image or its estimate. */
 
-export type PreviewStatus = "idle" | "loading" | "ready" | "failed";
+export type PreviewStatus = "idle" | "loading" | "ready" | "failed" | "unsupported";
 
 export interface PreviewState {
   status: PreviewStatus;
@@ -68,6 +68,16 @@ export function useConversionPreview(params: {
     const first = inputs[0];
     if (!enabled || !converter || !options || !first) {
       setState({ status: "idle", preview: null, error: "", revision: generation });
+      return () => {
+        active = false;
+      };
+    }
+
+    // The native combine route (`images/pdf`) has no single-source preview:
+    // it refuses one before starting a helper. State that explicitly instead
+    // of showing a failed request; the dialog still allows the conversion.
+    if (converter.input_mode === "combine") {
+      setState({ status: "unsupported", preview: null, error: "", revision: generation });
       return () => {
         active = false;
       };

@@ -1,0 +1,282 @@
+/* Local AI upscaling (Step 14c). All values come from src/styles/tokens.css. */
+
+.adp-ai-upscale {
+  width: 920px;
+  max-width: calc(100vw - 32px);
+  height: calc(100vh - 32px);
+  max-height: calc(100vh - 32px);
+}
+
+.adp-ai-upscale .adp-dialog-body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) 48px;
+  gap: var(--adp-space-5);
+  padding: var(--adp-space-7);
+  min-height: 0;
+}
+
+.adp-ai-upscale-head {
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+}
+
+.adp-ai-upscale-content {
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: var(--adp-space-5);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.adp-ai-upscale-controls {
+  display: grid;
+  align-content: start;
+  gap: var(--adp-space-5);
+  min-width: 0;
+}
+
+.adp-ai-field {
+  display: grid;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-ai-select {
+  min-height: 28px;
+  padding: 0 var(--adp-space-3);
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-ai-select:focus-visible,
+.adp-ai-static:focus-visible,
+.adp-ai-compare:focus-visible,
+.adp-ai-crop-field input:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+.adp-ai-note {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-ai-preview {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: var(--adp-space-3);
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.adp-ai-comparison {
+  display: grid;
+  gap: var(--adp-space-3);
+  min-height: 0;
+}
+
+.adp-ai-panes {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--adp-space-3);
+  min-height: 0;
+}
+
+.adp-ai-panes::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--adp-ai-compare, 50%);
+  width: 1px;
+  background: var(--adp-color-border-default);
+  pointer-events: none;
+}
+
+.adp-ai-pane {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  margin: 0;
+  padding: var(--adp-space-3);
+  overflow: hidden;
+  background: var(--adp-color-surface-canvas-doc);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-ai-pane img {
+  display: block;
+  max-width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+}
+
+.adp-ai-pane figcaption {
+  position: absolute;
+  left: var(--adp-space-3);
+  bottom: var(--adp-space-2);
+  padding: 0 var(--adp-space-2);
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-header);
+  border-radius: var(--adp-radius-xs);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-ai-placeholder {
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-ai-compare-row {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+}
+
+.adp-ai-compare-label {
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-ai-compare {
+  flex: 1 1 auto;
+  accent-color: var(--adp-accent-explorer);
+}
+
+.adp-ai-static {
+  min-height: 24px;
+  padding: 0 var(--adp-space-3);
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-ai-crop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--adp-space-3);
+  margin: 0;
+  padding: var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-ai-crop legend {
+  padding: 0 var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-ai-crop-field {
+  display: grid;
+  gap: var(--adp-space-0);
+  width: 64px;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-ai-crop-field input {
+  width: 100%;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-xs);
+}
+
+.adp-ai-progress {
+  display: grid;
+  gap: var(--adp-space-2);
+  padding: var(--adp-space-3);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-ai-error {
+  display: grid;
+  gap: var(--adp-space-2);
+  padding: var(--adp-space-3);
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-status-caution-background);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-ai-upscale-foot {
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--adp-space-3);
+  min-height: 48px;
+}
+
+.adp-ai-runtime-card {
+  max-width: 640px;
+  display: grid;
+  gap: var(--adp-space-5);
+  padding: var(--adp-space-7);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-lg);
+}
+
+.adp-ai-runtime-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-3);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-ai-facts {
+  display: grid;
+  gap: var(--adp-space-2);
+  margin: 0;
+}
+
+.adp-ai-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--adp-space-5);
+}
+
+.adp-ai-facts dt {
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-ai-facts dd {
+  margin: 0;
+  color: var(--adp-color-text-primary);
+}
+
+@media (max-width: 800px) {
+  .adp-ai-upscale-content {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: auto;
+  }
+
+  .adp-ai-upscale-controls {
+    order: 2;
+  }
+}
+
+@media (min-resolution: 2dppx) and (max-width: 640px) {
+  .adp-ai-panes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

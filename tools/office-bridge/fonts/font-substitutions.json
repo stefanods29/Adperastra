@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "note": "Runtime mirror: src-tauri/src/office_fonts.rs substitution_map(). The pack build may use this file for provisioning checks; the Rust function is the activation authority.",
+  "substitutions": {
+    "Calibri": "Carlito",
+    "Cambria": "Caladea",
+    "Arial": "Liberation Sans",
+    "Helvetica": "Liberation Sans",
+    "Times New Roman": "Liberation Serif",
+    "Times": "Liberation Serif",
+    "Courier New": "Liberation Mono",
+    "Courier": "Liberation Mono",
+    "Aptos": "Carlito",
+    "Aptos Display": "Carlito"
+  },
+  "fallback": "Noto Sans",
+  "required_families": [
+    "Carlito",
+    "Caladea",
+    "Liberation Sans",
+    "Liberation Serif",
+    "Liberation Mono",
+    "Noto Sans"
+  ]
+}

@@ -1,6 +1,7 @@
 use super::*;
 use std::sync::atomic::Ordering;
 
+#[allow(clippy::duplicate_mod)]
 #[path = "template_copy_test_junction.rs"]
 mod junction;
 

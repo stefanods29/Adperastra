@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { VIEW_MODE_IDS, type ViewModeId } from "../services/settings";
 import { VIEW_MODE_COMMANDS } from "./explorerCommands";
-import { isCommandVisible, type Command, type CommandContext } from "./registry";
+import { isCommandPresented, type Command, type CommandContext } from "./registry";
 
 /** Menus from commands (contract 9): every menu and bar is data drawn by
  * one renderer, so the menu editor (Step 10b) can change them later
@@ -21,7 +21,7 @@ import { isCommandVisible, type Command, type CommandContext } from "./registry"
 export type MenuEntry =
   | { type: "command"; id: string }
   | { type: "separator" }
-  | { type: "submenu"; id: string; labelKey: string; icon?: LucideIcon; entries: MenuEntry[] }
+  | { type: "submenu"; id: string; labelKey: string; label?: string; icon?: LucideIcon; entries: MenuEntry[] }
   | { type: "iconRow"; ids: string[] };
 
 const cmd = (id: string): MenuEntry => ({ type: "command", id });
@@ -92,6 +92,7 @@ export const ITEM_MENU: MenuEntry[] = [
   { type: "iconRow", ids: ["explorer.cut", "explorer.copy", "explorer.rename", "explorer.share", "explorer.delete"] },
   separator,
   cmd("explorer.open"),
+  cmd("explorer.bulkRename"),
   cmd("explorer.quickPreview"),
   cmd("explorer.openInWindowsApp"),
   cmd("explorer.openWith"),
@@ -105,11 +106,20 @@ export const ITEM_MENU: MenuEntry[] = [
   },
   cmd("explorer.compressTo"),
   cmd("explorer.convertTo"),
+  cmd("explorer.runConversionPreset"),
+  cmd("explorer.batchActions"),
+  cmd("explorer.removeHiddenInfo"),
   cmd("explorer.toggleFavorite"),
+  cmd("explorer.tags"),
+  cmd("explorer.removeTags"),
   cmd("explorer.showInFolder"),
   cmd("explorer.copyPath"),
   cmd("explorer.properties"),
   cmd("explorer.versionHistory"),
+  cmd("explorer.addToShelf"),
+  cmd("explorer.fileLocks"),
+  cmd("explorer.mountImage"),
+  cmd("explorer.ejectImage"),
   cmd("explorer.deletePermanently"),
   separator,
   cmd("explorer.showMoreOptions"),
@@ -201,10 +211,11 @@ export function resolveMenu<C = CommandContext>(
   entries: readonly MenuEntry[],
   ctx: C,
   lookup: (id: string) => Command<C> | undefined,
+  simpleMode = false,
 ): MenuEntry[] {
   const visible = (id: string) => {
     const command = lookup(id);
-    return command !== undefined && isCommandVisible(command, ctx);
+    return command !== undefined && isCommandPresented(command, ctx, simpleMode);
   };
   const kept: MenuEntry[] = [];
   for (const entry of entries) {
@@ -214,7 +225,7 @@ export function resolveMenu<C = CommandContext>(
       const ids = entry.ids.filter(visible);
       if (ids.length > 0) kept.push({ ...entry, ids });
     } else if (entry.type === "submenu") {
-      const sub = resolveMenu(entry.entries, ctx, lookup);
+      const sub = resolveMenu(entry.entries, ctx, lookup, simpleMode);
       if (sub.length > 0) kept.push({ ...entry, entries: sub });
     } else if (kept.length > 0 && kept[kept.length - 1].type !== "separator") {
       kept.push(entry);

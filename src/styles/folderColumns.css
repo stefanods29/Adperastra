@@ -1,0 +1,17 @@
+.adp-column-chooser { width: 480px; max-width: calc(100vw - 32px); }
+.adp-column-chooser .adp-dialog-body { max-height: calc(100vh - 120px); overflow: auto; }
+.adp-column-chooser-row { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.adp-column-chooser-row label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.adp-column-chooser-row button { flex: none; }
+.adp-folder-column { position: relative; flex: none; overflow: hidden; }
+.adp-folder-column-resizer { position: absolute; inset-block: 0; inset-inline-end: 0; width: 8px; cursor: col-resize; touch-action: none; user-select: none; }
+.adp-folder-column-resizer::after { content: ""; position: absolute; inset-block: 0; inset-inline-end: 3px; width: 1px; background: var(--adp-color-border-default); }
+.adp-folder-column-resizer:focus-visible { outline: 2px solid var(--adp-accent-explorer); outline-offset: -2px; }
+.adp-folder-presented { overflow: hidden; }
+.adp-folder-presented > .adp-filelist-header { width: var(--adp-folder-content-width); padding-inline: 8px; box-sizing: border-box; flex: none; transform: translateX(var(--adp-folder-scroll-x, 0px)); }
+.adp-folder-presented .adp-row-check--header { margin: 0 8px 0 0; }
+.adp-folder-presented .adp-filelist-inner { min-width: var(--adp-folder-content-width); }
+.adp-folder-presented .adp-folder-column { box-sizing: border-box; padding-inline: 8px; }
+.adp-folder-presented .adp-filelist-header-cell { width: 100%; padding-inline: 0; }
+.adp-folder-presented .adp-file-row { min-width: var(--adp-folder-content-width); box-sizing: border-box; }
+.adp-selection-band { position: absolute; pointer-events: none; border: 1px solid var(--adp-accent-explorer); background: color-mix(in srgb, var(--adp-color-surface-selected-row) 35%, transparent); box-sizing: border-box; z-index: 2; }

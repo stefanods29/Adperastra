@@ -58,6 +58,7 @@ pub enum WebviewHelperKind {
     Model,
     Psd,
     PdfWrite,
+    OfficeQuick,
     Presentation,
 }
 
@@ -71,6 +72,7 @@ impl WebviewHelperKind {
             WebviewHelperKind::Model => "model",
             WebviewHelperKind::Psd => "psd",
             WebviewHelperKind::PdfWrite => "pdf_write",
+            WebviewHelperKind::OfficeQuick => "office_quick",
             WebviewHelperKind::Presentation => "presentation",
         }
     }
@@ -83,7 +85,8 @@ impl WebviewHelperKind {
             WebviewHelperKind::Notebook => "notebook-helper.html",
             WebviewHelperKind::Model => "model-helper.html",
             WebviewHelperKind::Psd => "psd-helper.html",
-            WebviewHelperKind::PdfWrite => "pdf-helper.html",
+            WebviewHelperKind::PdfWrite => "pdf-write-helper.html",
+            WebviewHelperKind::OfficeQuick => "office-quick-helper.html",
             WebviewHelperKind::Presentation => "presentation-helper.html",
         }
     }
@@ -97,6 +100,7 @@ impl WebviewHelperKind {
             WebviewHelperKind::Model => "webview-helper-model",
             WebviewHelperKind::Psd => "webview-helper-psd",
             WebviewHelperKind::PdfWrite => "webview-helper-pdf-write",
+            WebviewHelperKind::OfficeQuick => "webview-helper-office-quick",
             WebviewHelperKind::Presentation => "webview-helper-presentation",
         }
     }
@@ -145,8 +149,16 @@ pub enum HelperAction {
     PdfWriteImages,
     #[serde(rename = "pdf.write_blocks")]
     PdfWriteBlocks,
+    #[serde(rename = "pdf.edit.inspect")]
+    PdfEditInspect,
+    #[serde(rename = "pdf.edit.serialize")]
+    PdfEditSerialize,
     #[serde(rename = "privacy.xmp")]
     PrivacyXmp,
+    #[serde(rename = "office.quick.open")]
+    OfficeQuickOpen,
+    #[serde(rename = "office.quick.page")]
+    OfficeQuickPage,
     #[serde(rename = "presentation.frame")]
     PresentationFrame,
     #[serde(rename = "presentation.wait_intent")]
@@ -156,6 +168,32 @@ pub enum HelperAction {
 }
 
 impl HelperAction {
+    /// Each child can receive only actions belonging to its compiled entry.
+    pub fn allowed_for(self, kind: WebviewHelperKind) -> bool {
+        match kind {
+            WebviewHelperKind::Pdf => self.is_pdf(),
+            WebviewHelperKind::Book => {
+                matches!(self, Self::BookOpen | Self::BookPage | Self::BookContents)
+            }
+            WebviewHelperKind::Notebook => matches!(self, Self::NotebookOpen | Self::NotebookPage),
+            WebviewHelperKind::Model => matches!(self, Self::ModelOpen | Self::ModelScene),
+            WebviewHelperKind::Psd => matches!(self, Self::PsdOpen | Self::PsdLayers),
+            WebviewHelperKind::PdfWrite => matches!(
+                self,
+                Self::PdfWriteImages
+                    | Self::PdfWriteBlocks
+                    | Self::PdfEditInspect
+                    | Self::PdfEditSerialize
+                    | Self::PrivacyXmp
+            ),
+            WebviewHelperKind::OfficeQuick => self.is_office_quick(),
+            WebviewHelperKind::Presentation => matches!(
+                self,
+                Self::PresentationFrame | Self::PresentationWaitIntent | Self::PresentationEnd
+            ),
+        }
+    }
+
     /// True when this action belongs to the PDF reader (07d).
     pub fn is_pdf(self) -> bool {
         matches!(
@@ -166,6 +204,13 @@ impl HelperAction {
                 | HelperAction::PdfOutline
                 | HelperAction::PdfSearch
                 | HelperAction::PdfPrint
+        )
+    }
+
+    pub fn is_office_quick(self) -> bool {
+        matches!(
+            self,
+            HelperAction::OfficeQuickOpen | HelperAction::OfficeQuickPage
         )
     }
 }
@@ -258,6 +303,17 @@ pub struct HelperInputGrant {
     pub name: String,
     pub mime: String,
     pub source: HelperInputSource,
+}
+
+impl std::fmt::Debug for HelperInputGrant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HelperInputGrant")
+            .field("grant_id", &self.grant_id)
+            .field("name", &self.name)
+            .field("mime", &self.mime)
+            .field("sensitive", &self.source.is_sensitive())
+            .finish()
+    }
 }
 
 impl HelperInputGrant {
@@ -631,5 +687,32 @@ mod tests {
             rect: HelperDisplayRect { width: 0, ..rect },
         };
         assert!(!audience.is_valid());
+    }
+
+    #[test]
+    fn every_helper_accepts_its_own_actions_and_rejects_other_helpers() {
+        let owners = [
+            (WebviewHelperKind::Pdf, HelperAction::PdfRender),
+            (WebviewHelperKind::Book, HelperAction::BookPage),
+            (WebviewHelperKind::Notebook, HelperAction::NotebookPage),
+            (WebviewHelperKind::Model, HelperAction::ModelScene),
+            (WebviewHelperKind::Psd, HelperAction::PsdLayers),
+            (WebviewHelperKind::PdfWrite, HelperAction::PdfWriteBlocks),
+            (
+                WebviewHelperKind::OfficeQuick,
+                HelperAction::OfficeQuickPage,
+            ),
+            (
+                WebviewHelperKind::Presentation,
+                HelperAction::PresentationFrame,
+            ),
+        ];
+        for (owner, action) in owners {
+            for (candidate, _) in owners {
+                assert_eq!(action.allowed_for(candidate), candidate == owner);
+            }
+        }
+        assert!(HelperAction::PdfEditInspect.allowed_for(WebviewHelperKind::PdfWrite));
+        assert!(HelperAction::PrivacyXmp.allowed_for(WebviewHelperKind::PdfWrite));
     }
 }

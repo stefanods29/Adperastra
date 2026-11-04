@@ -26,4 +26,4 @@ En **Configuración** > **Apariencia**:
 - Para volver al aspecto estándar, haz clic en **Restablecer valores predeterminados** debajo de **Tema** o **Apariencia**.
 - Los temas y la apariencia solo cambian cómo se ve la aplicación. Nunca cambian tus archivos.
 
-Consulta también: «La página de configuración» y «Cambiar idioma y tema».
+Consulta también: «Editor de temas», «Temas diurnos y nocturnos», «Colores de énfasis», «La página de configuración» y «Cambiar idioma y tema».

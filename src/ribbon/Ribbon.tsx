@@ -1,15 +1,19 @@
-import { Ellipsis, Layers } from "lucide-react";
+import { CircleAlert, Ellipsis, Layers } from "lucide-react";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import DropdownMenu from "../components/DropdownMenu";
 import KeyTip from "../components/KeyTip";
-import { commandLabelKey, isCommandEnabled, isCommandVisible, type Command } from "../commands/registry";
+import { useAccessibilityOptional } from "../accessibility/AccessibilityContext";
+import { commandLabelKey, isCommandEnabled, isCommandPresented, type Command } from "../commands/registry";
 import type { HandlerAccent } from "../handlers/types";
+import { resolveShortcutText, useShortcutResolutionHost } from "../keyboard/shortcutDisplay";
+import { resolveRibbonGroupControls } from "../layout/toolbarDescriptors";
+import { useToolbarCustomSettings } from "../layout/ToolbarCustomContext";
 import Flyout from "../layout/Flyout";
 import { ToolbarLayoutContext, ribbonLabelVisible } from "../layout/toolbarLayout";
 import { formatShortcut } from "../services/shortcuts";
 import { KeyTipsContext } from "./keyTips";
-import type { RibbonControl, RibbonDef } from "./types";
+import type { RibbonControl, RibbonDef, RibbonGroup } from "./types";
 
 export interface RibbonProps<C> {
   def: RibbonDef;
@@ -18,25 +22,58 @@ export interface RibbonProps<C> {
   accent: HandlerAccent;
   /** Only the visible tab's ribbon answers Alt+letter key tips. */
   active: boolean;
+  /** A viewer that persists its ribbon tab passes the saved tab and receives
+   * every user tab change; the ribbon stays uncontrolled when omitted. */
+  initialTabId?: string;
+  onTabChange?: (id: string) => void;
+  /** The handler id used by saved `ribbon.<handlerId>.<tabId>.<groupId>`
+   * layouts. Omitted keeps the definition order for inline ribbons. */
+  handlerId?: string;
 }
 
 /** One ribbon (Step 04b): a tab row (only when there is more than one tab)
  * and one row of grouped controls, built from commands. Alt shows key
  * tips; Alt+letter picks a tab or runs a control. Step 05c draws it on any
- * side and in any style. */
-export default function Ribbon<C>({ def, ctx, commands, accent, active }: RibbonProps<C>) {
+ * side and in any style. Step 10b applies the saved group layouts. */
+export default function Ribbon<C>({ def, ctx, commands, accent, active, initialTabId, onTabChange, handlerId }: RibbonProps<C>) {
   const { t } = useTranslation();
+  const simpleMode = useAccessibilityOptional()?.settings.simple_mode ?? false;
+  const shortcutHost = useShortcutResolutionHost();
   const showKeyTips = useContext(KeyTipsContext);
+  const customSettings = useToolbarCustomSettings();
+  // Unknown commands stay hidden until a saved layout for this handler
+  // exists; then they show as unavailable instead of vanishing.
+  const layoutActive =
+    handlerId !== undefined &&
+    customSettings !== null &&
+    customSettings.bars.some((bar) => bar.bar_id.startsWith(`ribbon.${handlerId}.`));
   // Where and how the ribbon is drawn (Step 05c); today's look without a provider.
   const toolbar = useContext(ToolbarLayoutContext);
   const vertical = toolbar.orientation === "vertical";
   const iconsOnly = toolbar.mode === "iconsOnly";
   const compact = toolbar.mode === "compact";
-  const [tabId, setTabId] = useState(def.tabs[0]?.id ?? "");
+  const [tabId, setTabIdState] = useState(initialTabId ?? def.tabs[0]?.id ?? "");
+  const setTabId = (id: string) => {
+    setTabIdState(id);
+    onTabChange?.(id);
+  };
+  useEffect(() => {
+    if (initialTabId && def.tabs.some((entry) => entry.id === initialTabId)) setTabIdState(initialTabId);
+  }, [def.tabs, initialTabId]);
   const tab = def.tabs.find((entry) => entry.id === tabId) ?? def.tabs[0];
+  // Saved group layouts change order and hiding only when the viewer names
+  // its handler; a group without a saved bar keeps its definition.
+  const groups = useMemo<RibbonGroup[]>(() => {
+    if (!tab) return [];
+    if (!handlerId) return tab.groups;
+    return tab.groups.map((group) => ({
+      ...group,
+      controls: resolveRibbonGroupControls(handlerId, tab.id, group, customSettings),
+    }));
+  }, [tab, handlerId, customSettings]);
   const byId = useMemo(() => new Map(commands.map((command) => [command.id, command])), [commands]);
-  const live = useRef({ ctx, tab, byId, def });
-  live.current = { ctx, tab, byId, def };
+  const live = useRef({ ctx, tab, groups, byId, def });
+  live.current = { ctx, tab, groups, byId, def };
 
   // Alt+letter: a tab's key tip selects it; a control's key tip runs it.
   useEffect(() => {
@@ -51,7 +88,7 @@ export default function Ribbon<C>({ def, ctx, commands, accent, active }: Ribbon
         setTabId(targetTab.id);
         return;
       }
-      for (const group of current.tab?.groups ?? []) {
+      for (const group of current.groups) {
         for (const control of group.controls) {
           if (control.type === "custom" || control.keyTip !== letter) continue;
           const command = current.byId.get(control.command);
@@ -82,11 +119,31 @@ export default function Ribbon<C>({ def, ctx, commands, accent, active }: Ribbon
       );
     }
     const command = byId.get(control.command);
-    if (!command || !isCommandVisible(command, ctx)) return null;
+    // A saved layout can keep a command this build no longer registers; it
+    // shows as unavailable instead of disappearing silently.
+    if (!command) {
+      if (!layoutActive) return null;
+      const missing = t("toolbarCustom.missing");
+      return (
+        <button
+          key={`missing-${control.command}`}
+          type="button"
+          className="adp-ribbon-btn"
+          aria-label={missing}
+          title={missing}
+          disabled
+        >
+          <CircleAlert size={16} aria-hidden="true" />
+          {ribbonLabelVisible(toolbar, control.showLabel) ? <span>{missing}</span> : null}
+        </button>
+      );
+    }
+    if (!isCommandPresented(command, ctx, simpleMode)) return null;
     const Icon = command.icon;
     const label = t(commandLabelKey(command, ctx));
     const pressed = control.type === "toggle" ? Boolean(command.checkedWhen?.(ctx)) : undefined;
-    const tooltip = command.shortcut ? `${label} (${formatShortcut(command.shortcut, t)})` : label;
+    const shortcutText = resolveShortcutText(shortcutHost, command.id, command.shortcut);
+    const tooltip = shortcutText ? `${label} (${formatShortcut(shortcutText, t)})` : label;
     return (
       <button
         key={control.command}
@@ -111,7 +168,8 @@ export default function Ribbon<C>({ def, ctx, commands, accent, active }: Ribbon
   const isShown = (control: RibbonControl) => {
     if (control.type === "custom") return true;
     const command = byId.get(control.command);
-    return command !== undefined && isCommandVisible(command, ctx);
+    if (!command) return layoutActive;
+    return isCommandPresented(command, ctx, simpleMode);
   };
 
   // In the icons-only column a group of lists alone has nothing to draw.
@@ -123,7 +181,7 @@ export default function Ribbon<C>({ def, ctx, commands, accent, active }: Ribbon
   };
 
   const customControls = movesCustom
-    ? tab.groups.flatMap((group) => group.controls.filter((control) => control.type === "custom"))
+    ? groups.flatMap((group) => group.controls.filter((control) => control.type === "custom"))
     : [];
 
   const classes = ["adp-ribbon"];
@@ -169,7 +227,7 @@ export default function Ribbon<C>({ def, ctx, commands, accent, active }: Ribbon
         aria-label={t(tab.labelKey)}
         aria-orientation={vertical ? "vertical" : undefined}
       >
-        {tab.groups.filter(groupShown).map((group, index) => (
+        {groups.filter(groupShown).map((group, index) => (
           <div key={group.id} className="adp-ribbon-group" role="group" aria-label={t(group.labelKey)}>
             {index > 0 ? <span className="adp-ribbon-sep" aria-hidden="true" /> : null}
             {group.controls.map(renderControl)}

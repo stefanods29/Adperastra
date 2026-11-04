@@ -79,7 +79,10 @@ describe("tab model", () => {
       saved_unix: 1,
     };
     const state = tabsFromSession(session, ["image"]);
-    expect(state.tabs.map((tab) => tab.id)).toEqual(["explorer", "f1", "h1"]);
+    // An unknown handler keeps a recoverable placeholder (Step 09i), while
+    // malformed, duplicated and unknown-kind entries are still dropped.
+    expect(state.tabs.map((tab) => tab.id)).toEqual(["explorer", "f1", "f2", "h1"]);
+    expect(state.tabs.find((tab) => tab.id === "f2")?.missing?.reason).toBe("handler_missing");
     expect(state.activeId).toBe("f1");
   });
 

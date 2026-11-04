@@ -13,6 +13,12 @@ pub struct ConversionSettings {
     pub preserve_metadata: bool,
     #[serde(default = "default_conversion_jobs")]
     pub concurrent_jobs: u8,
+    /// UUID of the last used preset, or none (schema 17, Step 08b).
+    #[serde(default)]
+    pub last_preset: Option<String>,
+    /// Always true; the loss review cannot be hidden (schema 17).
+    #[serde(default = "default_true")]
+    pub prompt_for_losses: bool,
 }
 
 fn default_conversion_destination() -> String {
@@ -34,6 +40,8 @@ impl Default for ConversionSettings {
             default_quality: default_conversion_quality(),
             preserve_metadata: true,
             concurrent_jobs: default_conversion_jobs(),
+            last_preset: None,
+            prompt_for_losses: true,
         }
     }
 }
@@ -47,7 +55,7 @@ mod tests {
             "templates": { "my_folder": "C:\\Templates" }
         }))
         .unwrap();
-        assert_eq!(settings.schema_version, 16);
+        assert_eq!(settings.schema_version, crate::CURRENT_SCHEMA);
         assert_eq!(settings.language, "es");
         assert_eq!(settings.theme.mode, "dark");
         assert_eq!(settings.templates.my_folder, "C:\\Templates");

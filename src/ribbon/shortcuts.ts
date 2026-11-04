@@ -39,7 +39,11 @@ export function useCommandShortcuts<C>(commands: readonly Command<C>[], ctx: C, 
       for (const command of live.current.commands) {
         if (!command.shortcut || !matchesShortcut(event, command.shortcut)) continue;
         const withModifier = event.ctrlKey || event.metaKey || event.altKey;
-        if (typing && (!withModifier || target?.tagName === "INPUT" || target?.tagName === "TEXTAREA")) return;
+        // The command palette is the one shortcut that also works while
+        // typing, and it consumes the key only when it can actually run.
+        const isPalette = command.id === "app.commandPalette";
+        if (!isPalette && typing && (!withModifier || target?.tagName === "INPUT" || target?.tagName === "TEXTAREA")) return;
+        if (isPalette && !isCommandEnabled(command, live.current.ctx)) return;
         event.preventDefault();
         if (isCommandEnabled(command, live.current.ctx)) command.run(live.current.ctx);
         return;

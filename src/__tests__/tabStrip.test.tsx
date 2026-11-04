@@ -49,7 +49,7 @@ function setup() {
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
-  return { onActivate, onClose, onToggleCollapsed, draw };
+  return { onActivate, onClose, onNewTab, onToggleCollapsed, draw };
 }
 
 const tabNodes = () => [...container!.querySelectorAll("[role='tab']")];
@@ -59,6 +59,25 @@ const buttonWith = (name: string) =>
   ) as HTMLButtonElement | undefined;
 
 describe("TabStrip", () => {
+  it("the plus button immediately opens a Home tab without a menu", async () => {
+    const { draw, onNewTab } = setup();
+    await draw("top");
+    await act(async () => buttonWith(i18n.t("tabs.newTab"))!.click());
+    expect(onNewTab).toHaveBeenCalledWith("home");
+    expect(container!.querySelector("[role='menu']")).toBeNull();
+  });
+  it("allows window dragging only on empty space in the top tab bar", async () => {
+    const { draw } = setup();
+    await draw("top");
+    expect(container!.querySelector(".adp-tabbar")!.hasAttribute("data-tauri-drag-region")).toBe(true);
+    expect(container!.querySelector("[role='tab'][data-tauri-drag-region]")).toBeNull();
+    expect(container!.querySelector("button[data-tauri-drag-region]")).toBeNull();
+    await draw("bottom");
+    expect(container!.querySelector(".adp-tabbar")!.hasAttribute("data-tauri-drag-region")).toBe(false);
+    await draw("left");
+    expect(container!.querySelector("[data-tauri-drag-region]")).toBeNull();
+  });
+
   it("a top tab bar draws the tabs in a row", async () => {
     const { draw } = setup();
     await draw("top");

@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Local Office integration: preview-first editing consent, accurate live Word pages and PowerPoint slides with in-place text controls, continuous Word scrolling, slide keyboard navigation, synchronized zoom and safe copy saving. Excel uses the cell grid and workbook tabs. Advanced formatting/object editing remains limited; this is not an Office feature-parity release.
+
 - Step08a: Quick Convert with isolated image/SVG engines, previews, acknowledged format losses, shared jobs, collision-safe new outputs and bounded immutable export snapshots. Conversion Undo remains explicitly unavailable pending exact recovery receipts.
 
 - Step07g: isolated 3D model/PSD previews, RAW and installed-codec image views, AVIF fallback, special thumbnails/metadata and shared helper admission. Model texture keys retain their slots and Fit follows transformed model bounds.

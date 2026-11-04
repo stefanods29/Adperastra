@@ -9,6 +9,17 @@ use thiserror::Error;
 /// helper process both map these to the same stable codes.
 #[derive(Debug, Error)]
 pub enum ConvertError {
+    #[error("convert.invalid_pattern")]
+    InvalidPattern,
+    #[error("convert.invalid_range")]
+    InvalidRange,
+    #[error("convert.invalid_preset")]
+    InvalidPreset,
+    #[error("convert.missing_glyph")]
+    MissingGlyph,
+    #[error("convert.font_unavailable")]
+    FontUnavailable,
+
     #[error("the conversion request is not valid")]
     BadRequest,
     #[error("this conversion is not supported")]
@@ -33,6 +44,12 @@ impl ConvertError {
     /// The stable code the UI translates (`convert.bad_request`, ...).
     pub fn code(&self) -> &'static str {
         match self {
+            ConvertError::InvalidPattern => "convert.invalid_pattern",
+            ConvertError::InvalidRange => "convert.invalid_range",
+            ConvertError::InvalidPreset => "convert.invalid_preset",
+            ConvertError::MissingGlyph => "convert.missing_glyph",
+            ConvertError::FontUnavailable => "convert.font_unavailable",
+
             ConvertError::BadRequest => "convert.bad_request",
             ConvertError::Unsupported => "convert.unsupported",
             ConvertError::TooLarge => "convert.too_large",

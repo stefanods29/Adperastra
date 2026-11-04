@@ -17,6 +17,8 @@ export const WARNING_KEYS: Record<ConversionWarningCode, string> = {
   formula_cached_value: "convert.formulaCachedValue",
   formula_safety_prefix: "convert.formulaSafetyPrefix",
   sheet_selection: "convert.sheetSelection",
+  audio_loss: "convert.audioLoss",
+  frame_rate_change: "convert.frameRateChange",
 };
 
 export interface ConversionPreviewProps {
@@ -74,6 +76,9 @@ export default function ConversionPreview({
                 <span className="adp-convert-pane-note">{t("convert.preparing")}</span>
               ) : null}
             </>
+          ) : null}
+          {preview.status === "unsupported" ? (
+            <span className="adp-convert-pane-note">{t("preview.unavailable")}</span>
           ) : null}
           {preview.status === "failed" ? (
             <div className="adp-convert-pane-note">

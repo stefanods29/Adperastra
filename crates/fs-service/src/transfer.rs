@@ -4,6 +4,7 @@ use super::{
     copy_times, exists, is_drive_root, op_error_reason, remove_file_forced, unique_destination,
     CompletedItem, OpProgress, OpReport, SkippedItem, CHUNK,
 };
+use crate::source_stamp::SourceStamp;
 use crate::{CancellationToken, FsError, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -29,6 +30,17 @@ pub struct TransferEffect {
     pub kind: TransferKind,
     pub source_removed: bool,
     pub destination_created: bool,
+    /// The exact source object when the effect was recorded (new effects).
+    /// Legacy effects recorded before Step 09f carry `None` and are treated
+    /// as unverified history by `transfer_history_validation`.
+    #[serde(default)]
+    pub before_source: Option<SourceStamp>,
+    /// The exact destination object after publication (new effects).
+    #[serde(default)]
+    pub after_destination: Option<SourceStamp>,
+    /// Lower-case BLAKE3 hex when the copy was verified before publication.
+    #[serde(default)]
+    pub verified_hash: Option<String>,
 }
 
 /// Conservative in-memory accounting, independent of JSON encoding.
@@ -633,6 +645,9 @@ mod tests {
             kind: TransferKind::File,
             source_removed: false,
             destination_created: true,
+            before_source: None,
+            after_destination: None,
+            verified_hash: None,
         });
         report.transfer_id = Some("op-history".to_string());
         let value = serde_json::to_value(report).unwrap();

@@ -26,4 +26,4 @@ In **Settings** > **Appearance**:
 - To go back to the standard look, click **Reset to default** under **Theme** or **Appearance**.
 - Themes and appearance only change how the app looks. They never change your files.
 
-See also: "The Settings page" and "Changing language and theme".
+See also: "Theme editor", "Day and night themes", "Accent colours", "The Settings page" and "Changing language and theme".

@@ -719,6 +719,9 @@ impl Runner<'_> {
                             kind: TransferKind::Directory,
                             source_removed: false,
                             destination_created: !existed,
+                            before_source: None,
+                            after_destination: None,
+                            verified_hash: None,
                         });
                         if !existed {
                             new_dirs.insert(key(&dest));
@@ -788,6 +791,9 @@ impl Runner<'_> {
                             kind: TransferKind::File,
                             source_removed: false,
                             destination_created: true,
+                            before_source: None,
+                            after_destination: None,
+                            verified_hash: None,
                         });
                         if !inside_new {
                             report.created.push(CompletedItem {
@@ -1067,6 +1073,9 @@ pub fn move_items(
                 kind: TransferKind::Tree,
                 source_removed: true,
                 destination_created: true,
+                before_source: None,
+                after_destination: None,
+                verified_hash: None,
             });
             report.completed.push(CompletedItem {
                 from: source.clone(),

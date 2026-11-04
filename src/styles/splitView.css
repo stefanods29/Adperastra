@@ -1,0 +1,31 @@
+/* Split views inside one tab (Step 09i). Colors and sizes come from
+   `tokens.css`: a 1 px divider line, 2 px active edge, 6 px hit area. */
+.adp-split-view { display: flex; flex-direction: column; height: 100%; min-width: 0; min-height: 0; background: var(--adp-color-surface-window); }
+.adp-split-controls { flex: none; display: flex; align-items: center; gap: var(--adp-space-2); height: 40px; padding: 0 var(--adp-space-4); border-bottom: 1px solid var(--adp-color-border-panel); background: var(--adp-color-surface-chrome); }
+.adp-split-active { margin-right: var(--adp-space-3); color: var(--adp-color-text-secondary); font-size: var(--adp-font-small); white-space: nowrap; }
+.adp-split-controls-spacer { flex: 1; min-width: 0; }
+.adp-split-switcher { flex: none; display: flex; align-items: center; gap: var(--adp-space-2); padding: var(--adp-space-2) var(--adp-space-4); border-bottom: 1px solid var(--adp-color-border-panel); }
+.adp-split-compact-note { margin-right: var(--adp-space-3); color: var(--adp-color-text-secondary); font-size: var(--adp-font-small); }
+.adp-split-status { flex: none; margin: 0; padding: var(--adp-space-2) var(--adp-space-4); color: var(--adp-color-text-secondary); font-size: var(--adp-font-small); }
+.adp-split-panes { flex: 1; display: flex; min-width: 0; min-height: 0; }
+.adp-split-panes[data-direction="vertical"] { flex-direction: row; }
+.adp-split-panes[data-direction="horizontal"] { flex-direction: column; }
+.adp-split-pane { display: flex; min-width: 0; min-height: 0; }
+.adp-split-pane--first { flex: 0 0 auto; }
+.adp-split-pane--second { flex: 1 1 0; }
+.adp-split-leaf { position: relative; display: flex; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.adp-split-leaf:focus-visible { outline: 2px solid var(--adp-accent-current); outline-offset: -2px; }
+.adp-split-leaf[data-active="true"]::before { content: ""; position: absolute; z-index: 2; background: var(--adp-accent-current); pointer-events: none; }
+.adp-split-panes[data-direction="vertical"] .adp-split-leaf[data-active="true"]::before { inset: 0 auto 0 0; width: 2px; }
+.adp-split-panes[data-direction="horizontal"] .adp-split-leaf[data-active="true"]::before { inset: 0 0 auto 0; height: 2px; }
+.adp-split-divider { position: relative; flex: none; padding: 0; border: 0; background: transparent; touch-action: none; }
+.adp-split-panes[data-direction="vertical"] .adp-split-divider { width: 6px; cursor: col-resize; }
+.adp-split-panes[data-direction="horizontal"] .adp-split-divider { height: 6px; cursor: row-resize; }
+.adp-split-divider::after { content: ""; position: absolute; background: var(--adp-color-border-default); }
+.adp-split-panes[data-direction="vertical"] .adp-split-divider::after { inset: 0 auto 0 50%; width: 1px; transform: translateX(-50%); }
+.adp-split-panes[data-direction="horizontal"] .adp-split-divider::after { inset: 50% 0 auto 0; height: 1px; transform: translateY(-50%); }
+.adp-split-divider:hover::after, .adp-split-divider[data-dragging="true"]::after { background: var(--adp-accent-current); }
+.adp-split-divider:focus-visible { outline: 2px solid var(--adp-accent-current); outline-offset: -2px; }
+.adp-split-compact { position: relative; }
+.adp-split-compact > .adp-split-pane { position: absolute; inset: 0; flex: 1 1 auto; }
+.adp-split-pane--hidden { visibility: hidden; pointer-events: none; }

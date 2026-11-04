@@ -131,6 +131,26 @@ pub(crate) fn handle_identity(file: &std::fs::File) -> std::io::Result<FileIdent
     }
 }
 
+/// The hard-link count of an open file (1 for an ordinary file).
+#[cfg(windows)]
+pub fn handle_link_count(file: &std::fs::File) -> std::io::Result<u32> {
+    use std::os::windows::io::AsRawHandle;
+    use windows::Win32::Foundation::HANDLE;
+    use windows::Win32::Storage::FileSystem::{
+        GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION,
+    };
+    let mut info = BY_HANDLE_FILE_INFORMATION::default();
+    // SAFETY: the caller's handle and the output structure outlive the call.
+    unsafe { GetFileInformationByHandle(HANDLE(file.as_raw_handle()), &mut info) }
+        .map_err(windows_io)?;
+    Ok(info.nNumberOfLinks)
+}
+
+#[cfg(not(windows))]
+pub fn handle_link_count(_file: &std::fs::File) -> std::io::Result<u32> {
+    Ok(1)
+}
+
 /// The attributes Windows stores on the very handle that was opened (so a
 /// reparse point is seen as a reparse point, never followed).
 #[cfg(windows)]

@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { MenuEntry } from "../commands/menus";
 import { commandLabelKey, isCommandEnabled, type Command, type CommandContext } from "../commands/registry";
+import { resolveShortcutText, useShortcutResolutionHost } from "../keyboard/shortcutDisplay";
 import { formatShortcut } from "../services/shortcuts";
 
 /** Where a menu opens: at a point (right-click), below a button
@@ -80,6 +81,7 @@ export default function Menu<C = CommandContext>({
 }: MenuProps<C>) {
   const { t } = useTranslation();
   const menuId = useId();
+  const shortcutHost = useShortcutResolutionHost();
   const ref = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const hoverTimer = useRef<number | null>(null);
@@ -234,7 +236,8 @@ export default function Menu<C = CommandContext>({
     if (!command) return null;
     const enabled = isCommandEnabled(command, ctx);
     const label = t(commandLabelKey(command, ctx));
-    const shortcut = command.shortcut ? formatShortcut(command.shortcut, t) : "";
+    const shortcutText = resolveShortcutText(shortcutHost, command.id, command.shortcut);
+    const shortcut = shortcutText ? formatShortcut(shortcutText, t) : "";
     // Icon buttons have no visible label, so their tooltip says it all.
     const hint = command.pending ? t("commands.comingLater", { label }) : shortcut ? `${label} (${shortcut})` : label;
     const checked = command.checkedWhen ? command.checkedWhen(ctx) : undefined;

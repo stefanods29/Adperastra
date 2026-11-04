@@ -1,0 +1,72 @@
+/* Navigation and status customization (Step 10e T4). */
+
+.adp-navigation-editor,
+.adp-status-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  width: 100%;
+  max-width: 960px;
+  min-width: 0;
+}
+
+.adp-navigation-editor__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  padding-block: var(--adp-space-2);
+  border-block-end: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-navigation-editor__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 36px;
+  padding-inline-start: var(--adp-space-3);
+}
+
+.adp-navigation-editor__item-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-width: 0;
+}
+
+.adp-navigation-editor__path {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-navigation-editor__warning {
+  color: var(--adp-color-status-caution);
+  font-size: var(--adp-font-small);
+}
+
+.adp-navigation-editor__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-2);
+}
+
+.adp-status-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adp-space-4);
+}
+
+.adp-status-field {
+  white-space: nowrap;
+}
+
+.adp-status-fields--critical {
+  color: var(--adp-color-text-primary);
+}

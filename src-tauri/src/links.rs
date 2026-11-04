@@ -25,7 +25,7 @@ pub fn validate_external_url(url: &str) -> Result<&str, String> {
 }
 
 #[cfg(windows)]
-fn shell_open(url: &str) -> Result<(), String> {
+pub(crate) fn shell_open(url: &str) -> Result<(), String> {
     use crate::explorer::{wide_null, ComGuard};
     use windows::core::PCWSTR;
     use windows::Win32::UI::Shell::{ShellExecuteExW, SEE_MASK_NOASYNC, SHELLEXECUTEINFOW};

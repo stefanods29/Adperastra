@@ -138,6 +138,7 @@ export default function ListModeView(props: ItemViewProps) {
       "adp-flowlist-item",
       selected ? "adp-itemgrid-cell--selected" : "",
       focused ? "adp-itemgrid-cell--focused" : "",
+      props.pickActive && isContainer ? "adp-pick-target" : "",
       item.hidden || item.system ? "adp-itemgrid-cell--hidden" : "",
     ]
       .filter(Boolean)

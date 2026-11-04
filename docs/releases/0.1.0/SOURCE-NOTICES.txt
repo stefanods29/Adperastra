@@ -1,0 +1,29 @@
+﻿Adperastra 0.1.0 - source notices
+=================================
+
+Source code
+-----------
+https://github.com/stefanods29/Adperastra
+
+The tagged source for this release is available at:
+https://github.com/stefanods29/Adperastra/tree/v0.1.0
+
+Build inputs
+------------
+Cargo.lock and package-lock.json in the tagged source list the exact Rust
+crates and npm packages used for the build. The build is reproducible from
+those files with Node.js 22.19.0 and Rust 1.99.0.
+
+License
+-------
+Adperastra is released under the MIT License. The full text is in LICENSE.
+
+Third-party components
+----------------------
+Third-party copyright notices, licenses and source links are in
+THIRD_PARTY_LICENSES.txt in the same release.
+
+Signing
+-------
+This is an unsigned release. No code-signing certificate or private key is
+included in any artifact. Verify the published SHA-256 checksums before use.

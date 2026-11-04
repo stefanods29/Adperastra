@@ -1,0 +1,198 @@
+/* Menu editor (Step 10e T2): safe tree plus a read-only preview. */
+
+.adp-menu-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  width: 100%;
+  max-width: 960px;
+  min-width: 0;
+}
+
+.adp-menu-editor__columns {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: var(--adp-space-4);
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .adp-menu-editor__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.adp-menu-editor__pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-2);
+  min-width: 0;
+  padding: var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-menu-editor__pane-title {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-section);
+}
+
+.adp-menu-editor__preview {
+  min-height: 120px;
+}
+
+.adp-menu-editor__preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adp-menu-editor__preview-row {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 36px;
+  padding-inline: var(--adp-space-3);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-command);
+}
+
+.adp-menu-editor__preview-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-accent-light-explorer);
+}
+
+.adp-menu-editor__preview-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-inline-start: var(--adp-space-3);
+}
+
+.adp-menu-editor__preview-submenu {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-menu-editor__preview-separator {
+  height: 1px;
+  margin-block: var(--adp-space-1);
+  background: var(--adp-color-border-subtle);
+}
+
+.adp-menu-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.adp-menu-tree__row {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  min-height: 36px;
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-menu-tree__row--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-menu-tree__select {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  padding: 0 var(--adp-space-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.adp-menu-tree__select:focus-visible,
+.adp-menu-tree__actions button:focus-visible,
+.adp-menu-tree__footer button:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-menu-tree__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-menu-tree__label--missing {
+  color: var(--adp-color-text-tertiary);
+  text-decoration: line-through;
+}
+
+.adp-menu-tree__badge {
+  flex: none;
+  padding: 0 var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-pill);
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-menu-tree__line {
+  width: 100%;
+  height: 1px;
+  background: var(--adp-color-border-default);
+}
+
+.adp-menu-tree__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 1px;
+}
+
+.adp-menu-tree__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+  padding-block-start: var(--adp-space-2);
+  border-block-start: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-menu-editor__submenu-row {
+  display: grid;
+  grid-template-columns: minmax(96px, 128px) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 36px;
+}
+
+.adp-menu-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+}
+
+.adp-menu-editor__error {
+  margin: 0;
+  color: var(--adp-accent-pdf);
+  font-size: var(--adp-font-body);
+}

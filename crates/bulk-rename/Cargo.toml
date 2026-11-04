@@ -1,0 +1,16 @@
+[package]
+name = "bulk-rename"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+fs-service = { path = "../fs-service" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+# Coordinator must verify the exact version/features in API-EVIDENCE before installing.
+regex = { version = "=1.13.1", default-features = false, features = ["std", "perf", "unicode"] }
+
+[dev-dependencies]
+tempfile = "3"

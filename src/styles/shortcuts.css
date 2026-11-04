@@ -1,0 +1,15 @@
+/* Shortcut editor (Step 10b). Colors only through tokens. */
+.adp-shortcut-editor { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 960px; min-width: 0; color: var(--adp-color-text-primary); }
+.adp-shortcut-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.adp-shortcut-editor-presets { display: flex; flex-wrap: wrap; gap: var(--adp-space-2); }
+.adp-shortcut-editor-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--adp-space-1); }
+.adp-shortcut-editor-list li { display: flex; align-items: center; gap: var(--adp-space-2); min-height: 36px; }
+.adp-shortcut-editor-list li > button:first-child { flex: 1; min-width: 0; height: 36px; display: flex; align-items: center; gap: 16px; text-align: left; background: transparent; border: 1px solid transparent; border-radius: var(--adp-radius-sm); color: inherit; font: inherit; cursor: pointer; }
+.adp-shortcut-editor-list li > button[aria-pressed="true"] { background: var(--adp-color-surface-selected); border-color: var(--adp-color-border-default); }
+.adp-shortcut-editor-detail { display: flex; flex-direction: column; gap: 16px; border: 1px solid var(--adp-color-border-panel); border-radius: var(--adp-radius-md); padding: var(--adp-space-4); }
+.adp-shortcut-capture { min-height: 44px; display: flex; align-items: center; gap: 16px; padding: 0 var(--adp-space-4); border: 1px solid var(--adp-color-border-input); border-radius: var(--adp-radius-md); background: var(--adp-color-surface-pane); color: inherit; font: inherit; cursor: pointer; }
+.adp-shortcut-capture-seen { color: var(--adp-color-text-secondary); }
+.adp-shortcut-conflict { display: flex; align-items: center; gap: 16px; padding: var(--adp-space-3); border: 1px solid var(--adp-color-status-caution); border-radius: var(--adp-radius-md); background: var(--adp-color-status-caution-background); }
+.adp-shortcut-editor-error { color: var(--adp-color-status-caution); }
+.adp-shortcut-editor-footer { display: flex; gap: var(--adp-space-3); justify-content: flex-end; }
+.adp-shortcut-editor button:focus-visible, .adp-shortcut-editor select:focus-visible, .adp-shortcut-capture:focus-visible { outline: 2px solid var(--adp-accent-explorer); outline-offset: 1px; }

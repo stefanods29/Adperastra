@@ -31,7 +31,11 @@ export type HelperAction =
   | "psd.layers"
   | "pdf.write_images"
   | "pdf.write_blocks"
+  | "pdf.edit.inspect"
+  | "pdf.edit.serialize"
   | "privacy.xmp"
+  | "office.quick.open"
+  | "office.quick.page"
   | "presentation.frame"
   | "presentation.wait_intent"
   | "presentation.end";

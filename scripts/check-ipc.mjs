@@ -90,7 +90,10 @@ const INJECTED = /^(tauri::)?(WebviewWindow|Window|AppHandle|State<|Webview|ipc:
 
 for (const file of rustFiles) {
   const text = readFileSync(file, "utf8");
-  const attr = /#\[tauri::command(?:\([^)]*\))?\]\s*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+([a-z0-9_]+)\s*(?:<[^>]*>)?\s*\(/g;
+  // Other outer attributes (for example #[allow(clippy::too_many_arguments)])
+  // may sit between the command attribute and the fn; still requires the
+  // #[tauri::command] anchor and a real `fn name(` signature.
+  const attr = /#\[tauri::command(?:\([^)]*\))?\]\s*(?:#\[[^\]]*\]\s*)*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+([a-z0-9_]+)\s*(?:<[^>]*>)?\s*\(/g;
   for (const match of text.matchAll(attr)) {
     const open = match.index + match[0].length - 1;
     const body = enclosed(text, open, "(", ")") ?? "";
@@ -123,17 +126,68 @@ if (handlerNames.length === 0) {
 const handlers = new Set(handlerNames);
 
 // --- Isolation allowlist ---------------------------------------------------
+// The allowlist is built in two shapes; both are parsed, because Step 08a
+// appended the second one after the original Set literal:
+//   var ALLOWED = new Set(['a', 'b', ...]);
+//   ('a,b,' + 'c,d,...').split(',').forEach((name) => ALLOWED.add(name));
 const isolationPath = join(root, "src-tauri", "isolation", "index.html");
 const isolation = existsSync(isolationPath) ? readFileSync(isolationPath, "utf8") : "";
-const setAt = isolation.indexOf("new Set(");
-const allowed = new Set(
-  setAt === -1
-    ? []
-    : [...(enclosed(isolation, isolation.indexOf("[", setAt), "[", "]") ?? "").matchAll(/'([a-z0-9_]+)'|"([a-z0-9_]+)"/g)].map(
-        (m) => m[1] ?? m[2],
-      ),
-);
-if (setAt === -1) problems.push("could not find the ALLOWED set in src-tauri/isolation/index.html");
+const allowed = new Set();
+let foundAllowlist = false;
+const commandLiterals = (text) => {
+  // One quoted entry per name in the Set literal, but the split(',') list
+  // packs many names into each string: split every quoted chunk on commas
+  // and keep only command-shaped tokens (same strictness as before).
+  const names = [];
+  for (const match of text.matchAll(/'([^']*)'|"([^"]*)"/g)) {
+    for (const part of (match[1] ?? match[2]).split(",")) {
+      const name = part.trim();
+      if (/^[a-z0-9_]+$/.test(name)) names.push(name);
+    }
+  }
+  return names;
+};
+
+// 1. The Set([...]) literal.
+const setMatch = /new Set\(\s*\[/.exec(isolation);
+if (setMatch) {
+  const body = enclosed(isolation, setMatch.index + setMatch[0].length - 1, "[", "]");
+  if (body !== null) {
+    foundAllowlist = true;
+    for (const name of commandLiterals(body)) allowed.add(name);
+  }
+}
+
+// 2. A comma-separated string added with .split(',').forEach(ALLOWED.add).
+// Only the callback that adds to ALLOWED counts, and only the parenthesised
+// expression directly before .split is read; other split() calls are ignored.
+for (const match of isolation.matchAll(/\.split\(\s*(['"])\s*,\s*\1\s*\)\s*\.forEach\(/g)) {
+  const callback = enclosed(isolation, match.index + match[0].length - 1, "(", ")");
+  if (callback === null || !/\bALLOWED\s*\.\s*add\s*\(/.test(callback)) continue;
+  let end = match.index - 1;
+  while (end >= 0 && /\s/.test(isolation[end])) end -= 1;
+  if (isolation[end] !== ")") continue;
+  // Walk back to the "(" that opens that parenthesised expression.
+  let depth = 0;
+  let start = -1;
+  for (let i = end; i >= 0; i -= 1) {
+    if (isolation[i] === ")") depth += 1;
+    else if (isolation[i] === "(") {
+      depth -= 1;
+      if (depth === 0) {
+        start = i;
+        break;
+      }
+    }
+  }
+  if (start === -1) continue;
+  const names = commandLiterals(isolation.slice(start + 1, end));
+  if (names.length > 0) {
+    foundAllowlist = true;
+    for (const name of names) allowed.add(name);
+  }
+}
+if (!foundAllowlist) problems.push("could not find the ALLOWED set in src-tauri/isolation/index.html");
 
 // 1. handler list vs allowlist
 for (const name of handlers) {

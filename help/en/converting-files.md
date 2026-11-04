@@ -14,4 +14,8 @@ Select files and choose **Convert to…**. Choose an output format, review the p
 - A file that already finished remains available if you cancel the rest.
 - Unsaved edits are captured for that export without saving over the original.
 
-See also: "The job queue" and "Version history".
+PDF, document, table and archive choices appear when compatible.
+
+Use **Page range** to choose PDF pages and **Sheet** to choose workbook data. Text cells that could act as formulas need the displayed safety prefix. Formulas are not evaluated here.
+
+See also: "The job queue", "Batch conversion and presets" and "Version history".

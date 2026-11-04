@@ -1,0 +1,22 @@
+[
+  {"id":"tab-en-01","locale":"en","degradation":"clean","rows":[["Item","Quantity","Total"],["Pen","2","6.00"],["Book","1","12.00"]]},
+  {"id":"tab-en-02","locale":"en","degradation":"clean","rows":[["Item","Quantity","Total"],["Ink","4","9.60"],["Paper","2","8.40"]]},
+  {"id":"tab-en-03","locale":"en","degradation":"clean","rows":[["Name","Role","Hours"],["Ana","Editor","8"],["Bo","Reviewer","5"]]},
+  {"id":"tab-en-04","locale":"en","degradation":"clean","rows":[["Day","Opening","Closing"],["Monday","09:00","17:00"],["Tuesday","09:00","17:00"]]},
+  {"id":"tab-en-05","locale":"en","degradation":"degraded","rows":[["Item","Quantity","Total"],["Glue","3","4.50"],["Tape","6","3.00"]]},
+  {"id":"tab-en-06","locale":"en","degradation":"clean","rows":[["City","Country","Code"],["Lima","Peru","PE"],["Madrid","Spain","ES"]]},
+  {"id":"tab-en-07","locale":"en","degradation":"clean","rows":[["Product","Unit price","Stock"],["Notebook","3.50","40"],["Pencil","0.80","120"]]},
+  {"id":"tab-en-08","locale":"en","degradation":"degraded","rows":[["Metric","January","February"],["Sales","1200","1350"],["Returns","40","35"]]},
+  {"id":"tab-en-09","locale":"en","degradation":"clean","rows":[["Step","Owner","Done"],["Draft","Ana","yes"],["Review","Bo","no"]]},
+  {"id":"tab-en-10","locale":"en","degradation":"clean","rows":[["Invoice","Date","Amount"],["8801","2026-11-03","240.50"],["8802","2026-11-04","118.00"]]},
+  {"id":"tab-en-11","locale":"en","degradation":"degraded","rows":[["Item","Quantity","Total"],["Folder","10","5.00"],["Label","2","1.20"]]},
+  {"id":"tab-en-12","locale":"en","degradation":"clean","rows":[["Route","Distance","Time"],["A","4.2","12"],["B","7.8","20"]]},
+  {"id":"tab-en-13","locale":"en","degradation":"clean","rows":[["Account","Debit","Credit"],["Rent","950.00","0.00"],["Salary","0.00","2100.00"]]},
+  {"id":"tab-en-14","locale":"en","degradation":"clean","rows":[["File","Size","Modified"],["notes.txt","2 KB","2026-11-01"],["data.csv","8 KB","2026-11-02"]]},
+  {"id":"tab-en-15","locale":"en","degradation":"degraded","rows":[["Name","Score","Grade"],["Ana","92","A"],["Bo","85","B"]]},
+  {"id":"tab-en-16","locale":"en","degradation":"clean","rows":[["Shift","Start","End"],["Morning","07:00","15:00"],["Evening","15:00","23:00"]]},
+  {"id":"tab-en-17","locale":"en","degradation":"clean","rows":[["Item","Serial","Warranty"],["Drive","QX-5510","2028-01-15"],["Mouse","MM-2201","2027-08-01"]]},
+  {"id":"tab-en-18","locale":"en","degradation":"clean","rows":[["Currency","Rate","Date"],["PEN","1.00","2026-11-03"],["USD","3.72","2026-11-03"]]},
+  {"id":"tab-en-19","locale":"en","degradation":"degraded","rows":[["Table","Rows","Columns"],["Contacts","30","4"],["Orders","120","6"]]},
+  {"id":"tab-en-20","locale":"en","degradation":"clean","rows":[["Item","Quantity","Total"],["=SUM(1,2)","1","3.00"],["Stapler","1","7.50"]]}
+]

@@ -1,5 +1,5 @@
-//! Writing a zip archive into the app-owned spool (Step 06e T6). Deflate
-//! level 6, directories as entries, exact timestamps; AES-256 only when the
+//! Writing a zip archive into the app-owned spool (Step 06e T6). Selected
+//! Deflate level, directories as entries, exact timestamps; AES-256 only when the
 //! user chose it, and the weak compatibility mode only when explicitly
 //! selected.
 
@@ -18,9 +18,6 @@ use fs_service::CancellationToken;
 /// Zip options that may borrow the password for the call that writes them.
 type BaseOptions<'a> = zip::write::FileOptions<'a, 'static, ()>;
 
-/// Deflate level 6 for every created zip entry (D3).
-pub(crate) const ZIP_DEFLATE_LEVEL: i64 = 6;
-
 pub(crate) fn write_zip<W: Write + Seek>(
     output: &mut W,
     plan: &CreatePlan,
@@ -38,7 +35,10 @@ pub(crate) fn write_zip<W: Write + Seek>(
         match entry.kind {
             EntryKind::Folder => {
                 writer
-                    .add_directory(entry.inner_path.clone(), base_options(entry.modified_unix))
+                    .add_directory(
+                        entry.inner_path.clone(),
+                        base_options(entry.modified_unix, options.level),
+                    )
                     .map_err(|_| ArchiveError::OutputChanged)?;
                 outcome.folders += 1;
                 progress.item(&entry.source.to_string_lossy());
@@ -55,7 +55,7 @@ pub(crate) fn write_zip<W: Write + Seek>(
                         continue;
                     }
                 };
-                let options = encrypted(base_options(entry.modified_unix), options)?;
+                let options = encrypted(base_options(entry.modified_unix, options.level), options)?;
                 writer
                     .start_file(entry.inner_path.clone(), options)
                     .map_err(|_| ArchiveError::OutputChanged)?;
@@ -76,10 +76,10 @@ pub(crate) fn write_zip<W: Write + Seek>(
     Ok(outcome)
 }
 
-fn base_options<'a>(modified_unix: u64) -> BaseOptions<'a> {
+fn base_options<'a>(modified_unix: u64, level: u8) -> BaseOptions<'a> {
     let mut options: BaseOptions<'a> = zip::write::FileOptions::default()
         .compression_method(CompressionMethod::Deflated)
-        .compression_level(Some(ZIP_DEFLATE_LEVEL))
+        .compression_level(Some(i64::from(level)))
         .large_file(true);
     if let Some((year, month, day, hour, minute, second)) =
         crate::time::unix_to_dos_local(modified_unix)

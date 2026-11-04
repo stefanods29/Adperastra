@@ -81,7 +81,7 @@ impl NativeHelperBackend {
             .file_name()
             .map(|value| value.to_string_lossy().to_string())
             .unwrap_or_else(|| "image".to_string());
-        let cache = self.app.state::<CacheService>();
+        let cache = self.app.state::<Arc<CacheService>>();
         let lease = cache.lease_memory(
             Arc::new(Zeroizing::new(bytes)),
             &name,
@@ -204,7 +204,7 @@ impl ExtraViewBackend for NativeHelperBackend {
         let _ = self.send(&json!({ "op": "close" }));
         let _ = self.receive(250);
         self.helper.kill();
-        let cache = self.app.state::<CacheService>();
+        let cache = self.app.state::<Arc<CacheService>>();
         for lease in self.leases.drain(..) {
             let _ = cache.release(&lease);
         }

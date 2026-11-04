@@ -114,6 +114,9 @@ impl OwnedOutput {
         let target = self.directory.join(name);
         publish(file, &self.staging, &target)?;
         self.published = true;
+        // The file now exists at its final name; keeping the exclusive
+        // staging handle open would block every reader of that path.
+        self.file = None;
         Ok(target)
     }
 }

@@ -30,6 +30,7 @@ import {
   type ExplorerLocation,
 } from "../services/navigation";
 import { displayPath, parentPathOf, pathSegments } from "../services/explorer";
+import en from "../i18n/locales/en.json";
 
 const folder = (path: string): ExplorerLocation => ({ type: "folder", path });
 
@@ -125,9 +126,18 @@ describe("explorer commands", () => {
     for (const id of ["explorer.back", "explorer.forward", "explorer.up", "explorer.refresh", "explorer.open", "explorer.goToPath", "explorer.togglePin"]) {
       expect(ids).toContain(id);
     }
+    // Later steps add feature label namespaces (`gallery.*`, `convert.*`,
+    // `keyboard.*`, ...); every label must still resolve in the catalog.
+    const labelExists = (key: string) =>
+      key.split(".").reduce<unknown>(
+        (value, part) =>
+          value !== null && typeof value === "object"
+            ? (value as Record<string, unknown>)[part]
+            : undefined,
+        en,
+      ) !== undefined;
     for (const command of registry.list()) {
-      // Gallery commands use their own `gallery.*` labels (Step 07c).
-      expect(command.labelKey).toMatch(/^(commands|gallery)\./);
+      expect(labelExists(command.labelKey), command.labelKey).toBe(true);
       expect(command.icon).toBeDefined();
       expect(command.helpSlug).toMatch(/^[a-z-]+$/);
       expect(command.risk).toBeDefined();

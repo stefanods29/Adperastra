@@ -1,5 +1,7 @@
 # Dependency and license table (Step 00 proposal)
 
+Coordinator-only provisioning tool: lessmsi 2.12.9, MIT; not a runtime dependency or bundled program. Extracts the verified Office MSI into a fresh private directory without installer actions. Exact source/license/hash are in docs/integration/lessmsi-provisioning.md.
+
 Rule (plan/rules.md s.10): bundle only MIT, BSD, ISC, Apache-2.0, Zlib, CC0/Unlicense, SIL OFL fonts, MPL-2.0. LGPL only as separate user-replaceable program/DLL with notices + source links. GPL/AGPL/source-available/non-commercial/paid never bundled. Every row re-verified (license + maintenance) in its own deps: commit when adopted; this is a shortlist, not a version approval.
 
 | Area (step) | Recommended first | Alternatives | License notes |
@@ -64,3 +66,40 @@ Explicitly excluded (license gate): Pandoc, MuPDF, Ghostscript, Poppler, ONLYOFF
 - ag-psd 34.1.0, MIT: isolated PSD parsing; base64-js 1.5.1 MIT and pako 2.1.0 MIT AND Zlib.
 - @types/three 0.186.0, MIT: development declarations; the runtime package has no declarations.
 - zip 9.1 direct dependency with deflate only, MIT: bounded 3MF preflight, existing approved crate.
+
+## Integrated handoff direct dependencies (integration record)
+
+These rows record direct dependencies that the integrated manifests now
+declare. Versions are the exact manifest pins; where a manifest gives a
+semver range and the lock file has no entry, the range is shown as
+declared. Licenses were read from the installed package metadata unless
+the row says otherwise. No transitive version, hash, signature or
+lockfile resolution is claimed here. Inter 4.1 and OpenDyslexic are
+bundled font assets, not registry packages. At this record's time,
+Cargo.lock has no entries for age, calamine, rust_xlsxwriter, lopdf or
+unicode-normalization, and package-lock.json has no pdf-lib or
+@pdf-lib/fontkit entry and still marks docx and exceljs as development
+packages; refreshing the locks is a separate task.
+
+| Area (step) | Dependency | Version | License | Purpose and evidence |
+|---|---|---|---|---|
+| Tables (08b, 13) | calamine | 0.37.0 (=0.37.0) | MIT | Reads .xlsx, .xls and .ods for conversion and the sheet quick view; license checked in the installed crate manifest |
+| Tables (08b) | rust_xlsxwriter | 0.102.0 (=0.102.0) | MIT OR Apache-2.0 | Writes .xlsx output; license checked in the installed crate manifest |
+| PDF (08b, 14a) | pdf-lib | 1.17.1 (exact) | MIT | Creates and modifies PDFs in the PDF write helper; LICENSE.md checked in the installed package |
+| PDF fonts (08b, 14a) | @pdf-lib/fontkit | 1.1.1 (exact) | MIT (package metadata) | Registers fontkit and embeds the licensed Inter 4.1 fonts; the installed package has no LICENSE file, so bundled third-party notices remain an open audit |
+| PDF privacy (08c) | lopdf | 0.46.0 (=0.46.0) | MIT | Removes hidden metadata from PDFs; license checked in the installed crate manifest |
+| Bulk rename and search (09e, 11a) | regex | 1.13.1 (=1.13.1 in bulk-rename; 1.13.1 in the lock) | MIT OR Apache-2.0 | Bounded patterns for bulk rename and the search index, default features off; license checked in the installed crate manifest |
+| Locked folders (09k) | age | 0.12.1 (=0.12.1, default features off) | MIT OR Apache-2.0 | X25519 and scrypt encryption for locked-folder containers; version and license match plan/parallel/API-EVIDENCE.md and the crates.io 0.12.1 metadata, and the crate is not in the current Cargo.lock |
+| Tags and dictation (11b, 17b) | unicode-normalization | 0.1.24 declared (semver range; no Cargo.lock entry) | MIT OR Apache-2.0 | NFC normalization of tag names and dictation text; license checked in the crates.io 0.1.24 metadata, with no resolved patch recorded because the lock has no entry |
+| Recovery envelope (09h) | hex | 0.4.3 (locked; manifest ^0.4.3) | MIT OR Apache-2.0 | Hex encoding of recovery-envelope hashes; license checked in the installed crate manifest and Cargo.lock |
+| Office export (17d) | docx, exceljs | 9.15.0, 4.4.0 (exact) | MIT | Helper-only encoding of reviewed extraction exports, plus developer template building in 06c; both moved from devDependencies to dependencies, while the package-lock still marks them development packages |
+| Fonts (08b, 14a) | Inter | 4.1 | SIL OFL 1.1 | Four static TTFs and LICENSE.txt in assets/fonts/inter-4.1 and public/fonts/inter-4.1; sizes and SHA-256 match plan/parallel/API-EVIDENCE.md |
+| Accessibility fonts (10f) | OpenDyslexic | commit 1824da5c0e41dc3e13ffc7f3a636dcaf695d61b7 | SIL OFL 1.1 | Four WOFF2 files and OFL.txt in src/assets/fonts; sizes and SHA-256 match plan/steps/step-10f.md |
+| Limited Office worker and retained preflight (20a T4 integration) | roxmltree | 0.21.2 exact | MIT OR Apache-2.0 | Bounded XML inspection and preserved-part range edits in the first-party tools/office-edit-preflight library, linked by the application and executed in its isolated helper. Root Cargo.lock pins the admitted application dependencies. |
+
+Office preview security correction (2026-11-04): calamine 0.38.0 (MIT), age
+0.11.5 (MIT OR Apache-2.0, Scrypt/X25519 APIs), and retained little_exif 0.6.23
+(MIT OR Apache-2.0) with quick-xml 0.42.0 (MIT) remove the four reported Rust
+dependency vulnerabilities. The EXIF patch and original licenses are in
+crates/vendor/little_exif. ExcelJS is build-only; scoped build-tool overrides
+use uuid 11.1.1 and image-size 2.0.4 (MIT). No advisory ignores were introduced.

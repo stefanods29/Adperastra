@@ -67,6 +67,11 @@ pub struct HelperRequest {
     pub max_output_bytes: u64,
     pub input_index: u32,
     pub source: HelperSource,
+    /// The native-owned intermediate root for bounded adapter work (archive
+    /// extraction). The parent derives it from the job's app data folder; a
+    /// helper never picks its own root.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub work_root: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -108,6 +113,15 @@ pub struct ConversionPreview {
     pub estimated_ms: Option<u64>,
     pub warnings: Vec<convert::ConversionWarningCode>,
     pub metadata_lost: Vec<MetadataCategory>,
+}
+
+/// One `combine` adapter invocation: several inputs, one output. Every input
+/// is reported in selection order; the single published file carries all of
+/// their indices.
+pub struct CombineOutcome {
+    pub items: Vec<convert::WorkItemResult>,
+    pub outputs: Vec<convert::ConversionOutput>,
+    pub cancelled: bool,
 }
 
 struct HelperOutcome {

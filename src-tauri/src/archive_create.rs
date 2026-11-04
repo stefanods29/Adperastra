@@ -104,6 +104,7 @@ pub fn validate_request(
         password: request.password.clone(),
         encrypt_names: request.encrypt_names,
         include_hidden: show_hidden,
+        level: archive::create_types::default_compression_level(),
     };
     options
         .validate()

@@ -120,14 +120,33 @@ impl Default for TableConversionOptions {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ArchiveConversionOptions {
     pub format: String,
     pub level: u8,
     pub password: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_password: Option<String>,
     pub encrypt_names: bool,
     pub preserve_timestamps: bool,
+}
+
+impl std::fmt::Debug for ArchiveConversionOptions {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("ArchiveConversionOptions")
+            .field("format", &self.format)
+            .field("level", &self.level)
+            .field("password", &self.password.as_ref().map(|_| "<redacted>"))
+            .field(
+                "source_password",
+                &self.source_password.as_ref().map(|_| "<redacted>"),
+            )
+            .field("encrypt_names", &self.encrypt_names)
+            .field("preserve_timestamps", &self.preserve_timestamps)
+            .finish()
+    }
 }
 
 impl Default for ArchiveConversionOptions {
@@ -136,6 +155,7 @@ impl Default for ArchiveConversionOptions {
             format: "zip".to_string(),
             level: 6,
             password: None,
+            source_password: None,
             encrypt_names: false,
             preserve_timestamps: true,
         }
@@ -272,6 +292,10 @@ impl ConvertOptions {
                 if !matches!(options.format.as_str(), "zip" | "seven_z")
                     || options.level > 9
                     || options.password.as_ref().is_some_and(|value| value.len() > 1024)
+                    || options
+                        .source_password
+                        .as_ref()
+                        .is_some_and(|value| value.len() > 1024)
                 {
                     return Err(ConvertError::BadRequest);
                 }

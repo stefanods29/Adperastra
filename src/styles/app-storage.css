@@ -1,0 +1,211 @@
+/* Settings > App storage and Background work (Step 12a). Tokens only. This file is intentionally separate from Step 11c's `storage.css` to avoid class collisions. */
+
+.adp-appstorage-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-5);
+  margin-top: var(--adp-space-7);
+}
+
+.adp-appstorage-subtitle,
+.adp-background-subtitle {
+  margin-top: var(--adp-space-7);
+}
+
+.adp-appstorage-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 960px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  overflow: hidden;
+}
+
+.adp-appstorage-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.2fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1fr) auto;
+  align-items: center;
+  gap: var(--adp-space-5);
+  min-height: 44px;
+  padding: 0 var(--adp-space-5);
+  border-bottom: 1px solid var(--adp-color-border-default);
+  font-size: var(--adp-font-body);
+}
+
+.adp-appstorage-row:last-child {
+  border-bottom: none;
+}
+
+.adp-appstorage-row--header {
+  min-height: 36px;
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-secondary);
+  font-weight: 600;
+}
+
+.adp-appstorage-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-appstorage-pending {
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-5);
+  width: 100%;
+  max-width: 960px;
+}
+
+.adp-pack-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--adp-space-5);
+  width: 100%;
+  min-height: 96px;
+  padding: var(--adp-space-7);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-window);
+}
+
+.adp-pack-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.adp-pack-card-title {
+  margin: 0;
+  font-size: var(--adp-font-section);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-pack-card-description,
+.adp-pack-card-meta,
+.adp-pack-card-status {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-pack-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-5);
+}
+
+.adp-pack-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-3);
+  justify-content: flex-end;
+}
+
+.adp-pack-missing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  max-width: 480px;
+  padding: var(--adp-space-7);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-dialog.adp-appstorage-clear-dialog {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-background-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-5);
+  max-width: 960px;
+  padding: var(--adp-space-5);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-background-table {
+  display: flex;
+  flex-direction: column;
+  max-width: 960px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  overflow: hidden;
+}
+
+.adp-background-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+  align-items: center;
+  gap: var(--adp-space-5);
+  min-height: 44px;
+  padding: 0 var(--adp-space-5);
+  border-bottom: 1px solid var(--adp-color-border-default);
+}
+
+.adp-background-row:last-child {
+  border-bottom: none;
+}
+
+.adp-background-quiet {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 160px auto 160px auto;
+  align-items: center;
+  gap: var(--adp-space-5);
+}
+
+.adp-background-cpu {
+  display: grid;
+  grid-template-columns: 160px minmax(200px, 1fr) auto;
+  align-items: center;
+  gap: var(--adp-space-5);
+}
+
+.adp-background-row input[type="range"] {
+  accent-color: var(--adp-accent-explorer);
+}
+
+@media (max-width: 720px) {
+  .adp-appstorage-row {
+    grid-template-columns: minmax(120px, 1fr) minmax(100px, 1fr);
+    padding: var(--adp-space-3) var(--adp-space-5);
+  }
+
+  .adp-appstorage-row--header {
+    display: none;
+  }
+
+  .adp-pack-card {
+    flex-direction: column;
+  }
+
+  .adp-pack-card-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .adp-background-quiet {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .adp-background-cpu {
+    grid-template-columns: 1fr;
+  }
+}
+
+

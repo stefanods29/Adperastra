@@ -243,7 +243,28 @@ pub fn run_helper() -> i32 {
         _ => return send_error("convert.bad_request"),
     };
     let _pin = pin;
-    let registry = convert::builtin_registry();
+    // Only the native parent names the bounded intermediate root, and only
+    // inside the app data folder. Without it the archive adapters are absent
+    // and archive requests fail closed.
+    let registry = match request
+        .work_root
+        .as_deref()
+        .map(str::trim)
+        .filter(|root| !root.is_empty())
+    {
+        Some(root) => {
+            let root = PathBuf::from(root);
+            // A root outside the native app data folder is ignored rather
+            // than trusted: the archive adapters then stay absent while
+            // image/table work still runs.
+            if root.is_absolute() && root.starts_with(crate::resolve_data_dir()) {
+                convert::builtin_registry_with_work_root(root)
+            } else {
+                convert::builtin_registry()
+            }
+        }
+        None => convert::builtin_registry(),
+    };
     let Some(converter) = registry.get(request.converter_id.as_str()) else {
         return send_error("convert.bad_request");
     };

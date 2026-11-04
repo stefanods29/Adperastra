@@ -1,20 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_COMBINE_IMAGES,
   defaultDestination,
   convertersForInputs,
+  documentOptionsFromValues,
   imageOptionsFromValues,
   inputFormats,
   lossesAccepted,
   optionsFromValues,
   retryInputs,
+  staticPreviewChanges,
   utcToday,
   valuesFromSpec,
 } from "../convert/convertOptions";
-import { APP_CONVERTERS } from "../convert/registry";
+import { APP_CONVERTERS, QUICK_CONVERT_CONVERTERS } from "../convert/registry";
 import type { ConversionInput, ConversionReport } from "../convert/types";
 import { defaultSettings, normalizeSettings } from "../services/settings";
 
 const png = APP_CONVERTERS.find((spec) => spec.id === "image/png")!;
+const imagesPdf = QUICK_CONVERT_CONVERTERS.find((spec) => spec.id === "images/pdf")!;
 
 function report(overrides: Partial<ConversionReport> = {}): ConversionReport {
   return {
@@ -49,6 +53,33 @@ describe("conversion options", () => {
     expect(options.keep_aspect).toBe(true);
     expect(options.allow_upscale).toBe(false);
     expect(optionsFromValues(png, values).kind).toBe("image");
+  });
+
+  it("maps images/pdf to the document page-size and margin options", () => {
+    const values = valuesFromSpec(imagesPdf);
+    values.page_size = "letter";
+    values.margin_mm = 12;
+    expect(optionsFromValues(imagesPdf, values)).toEqual({
+      kind: "document",
+      value: {
+        include_images: true,
+        page_size: "letter",
+        margin_mm: 12,
+        sanitize: true,
+        encoding: "utf8",
+      },
+    });
+    expect(documentOptionsFromValues(imagesPdf, { ...values, margin_mm: 99 }).margin_mm).toBe(50);
+  });
+
+  it("surfaces the static metadata and animated-GIF acknowledgements", () => {
+    const changes = staticPreviewChanges(imagesPdf, [
+      { kind: "file", path: "C:\\Pictures\\one.gif" },
+    ]);
+    expect(changes.warnings).toEqual(["animation_first_frame"]);
+    expect(changes.metadata_lost).toContain("exif");
+    expect(staticPreviewChanges(imagesPdf, [{ kind: "file", path: "C:\\Pictures\\one.png" }]).warnings).toEqual([]);
+    expect(MAX_COMBINE_IMAGES).toBe(256);
   });
 
   it("keeps metadata unless the user turns it off", () => {

@@ -40,6 +40,10 @@ pub enum CreateEncryption {
     ZipCrypto,
 }
 
+pub const fn default_compression_level() -> u8 {
+    6
+}
+
 /// Everything the writer needs to know.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CreateOptions {
@@ -48,6 +52,8 @@ pub struct CreateOptions {
     pub password: Option<String>,
     pub encrypt_names: bool,
     pub include_hidden: bool,
+    #[serde(default = "default_compression_level")]
+    pub level: u8,
 }
 
 impl fmt::Debug for CreateOptions {
@@ -59,6 +65,7 @@ impl fmt::Debug for CreateOptions {
             .field("password", &self.password.as_ref().map(|_| "<redacted>"))
             .field("encrypt_names", &self.encrypt_names)
             .field("include_hidden", &self.include_hidden)
+            .field("level", &self.level)
             .finish()
     }
 }
@@ -67,6 +74,9 @@ impl CreateOptions {
     /// Every combination the dialog may offer; anything else is refused
     /// before a spool or a job exists.
     pub fn validate(&self) -> Result<(), ArchiveError> {
+        if self.level > 9 {
+            return Err(ArchiveError::BadRequest);
+        }
         if self.encrypt_names
             && (self.format != CreateFormat::SevenZ || self.encryption == CreateEncryption::None)
         {

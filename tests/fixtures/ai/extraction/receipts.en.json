@@ -1,0 +1,22 @@
+[
+  {"id":"rec-en-01","locale":"en","fields":{"date":"2026-11-03","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"100.00","tax":"18.00","total":"118.00"}},
+  {"id":"rec-en-02","locale":"en","fields":{"date":"2026-10-28","vendor":"North Supply","tax_id":"004571","currency":"USD","subtotal":"40.00","tax":"4.00","total":"44.00"}},
+  {"id":"rec-en-03","locale":"en","fields":{"date":"2026-09-30","vendor":"Paper Mill","tax_id":"778812","currency":"EUR","subtotal":"80.00","tax":"16.80","total":"96.80"}},
+  {"id":"rec-en-04","locale":"en","fields":{"date":"2026-11-01","vendor":"City Books","tax_id":"000987","currency":"GBP","subtotal":"25.00","tax":"5.00","total":"30.00"}},
+  {"id":"rec-en-05","locale":"en","fields":{"date":"03/04/2026","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"100.00","tax":"18.00","total":"118.00"}},
+  {"id":"rec-en-06","locale":"en","fields":{"date":"2026-12-01","vendor":"Transit Co","tax_id":"112233","currency":"MXN","subtotal":"250.00","tax":"40.00","total":"290.00"}},
+  {"id":"rec-en-07","locale":"en","fields":{"date":"2026-11-02","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"100.00","tax":"18.00","total":"117.98"}},
+  {"id":"rec-en-08","locale":"en","fields":{"date":"2026-08-14","vendor":"Tokyo Parts","tax_id":"556677","currency":"JPY","subtotal":"1000","tax":"80","total":"1080"}},
+  {"id":"rec-en-09","locale":"en","fields":{"date":"2026-07-19","vendor":"Andes Market","tax_id":"000045","currency":"PEN","subtotal":"60.00","tax":"10.80","total":"70.80"}},
+  {"id":"rec-en-10","locale":"en","fields":{"date":"13/04/2026","vendor":"Harbor Cafe","tax_id":"006677","currency":"USD","subtotal":"12.00","tax":"1.20","total":"13.20"}},
+  {"id":"rec-en-11","locale":"en","fields":{"date":"04/13/2026","vendor":"Harbor Cafe","tax_id":"006677","currency":"USD","subtotal":"20.00","tax":"2.00","total":"22.00"}},
+  {"id":"rec-en-12","locale":"en","fields":{"date":"2026-06-05","vendor":"Green Power","tax_id":"000321","currency":"EUR","subtotal":"64.20","tax":"0.00","total":"64.20"}},
+  {"id":"rec-en-13","locale":"en","fields":{"date":"2026-05-21","vendor":"Blue Water","tax_id":"000654","currency":"PEN","subtotal":"21.10","tax":"3.80","total":"24.90"}},
+  {"id":"rec-en-14","locale":"en","fields":{"date":"2026-04-02","vendor":"Office Hub","tax_id":"000888","currency":"USD","subtotal":"300.00","tax":"45.00","total":"345.00"}},
+  {"id":"rec-en-15","locale":"en","fields":{"date":"2026-03-30","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"15.00","tax":"2.70","total":"17.70"}},
+  {"id":"rec-en-16","locale":"en","fields":{"date":"2026-02-11","vendor":"Metro Print","tax_id":"000777","currency":"EUR","subtotal":"48.50","tax":"8.73","total":"57.23"}},
+  {"id":"rec-en-17","locale":"en","fields":{"date":"2026-01-09","vendor":"Lake Hotel","tax_id":"000222","currency":"USD","subtotal":"390.00","tax":"70.20","total":"460.20"}},
+  {"id":"rec-en-18","locale":"en","fields":{"date":"2026-11-04","vendor":"Corner Shop","tax_id":"000999","currency":"GBP","subtotal":"9.99","tax":"1.80","total":"11.79"}},
+  {"id":"rec-en-19","locale":"en","fields":{"date":"2026-11-05","vendor":"Unknown Vendor","tax_id":"000001","currency":"","subtotal":"100.00","tax":"18.00","total":"118.00"}},
+  {"id":"rec-en-20","locale":"en","fields":{"date":"2026-11-06","vendor":"Acme","tax_id":"000123","currency":"PEN","subtotal":"1.00","tax":"0.00","total":"1.00"}}
+]

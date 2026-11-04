@@ -11,6 +11,75 @@ that fixed it.
 
 ## Open
 
+
+### KI-110 - Limited Office editing does not yet reproduce original layouts (Major)
+- **Layout viewer follow-up:** a signed Office pack is installed in the separate portable local build. Word, Excel print pages and PowerPoint slides were verified in the app, including the embedded picture on slide 3. The Kit launcher converts pinned Windows drive path prefixes before passing paths to the worker. Word/PowerPoint now use this renderer for live paper editing; release pack distribution remains pending.
+- **Found in:** owner Office formatting and Excel grid requests, 2026-11-04.
+- **Current repair:** the first-party worker now connects to the shared editing controller, preserving untouched OOXML package parts. Native Word/Excel/PowerPoint edit/capture/undo/redo/discard/copy checks passed on disposable fixtures. Word editing and native Save a Copy passed in a live tab. The XLSX follow-up connects real workbook tabs and bounded cell windows to SheetEditor, with row/column headings and basic saved styles.
+- **Paper editing follow-up:** Word/PowerPoint now render the live captured model with text controls positioned on the page/slide. Files open in preview and acquire editing only after acceptance. Live Word and PowerPoint edits refreshed their rendered pages and saved separate copies; only their intended XML parts changed. A refresh failure caused by comparing snapshot size to original source size was repaired with a passing native regression test and verified in both live surfaces. Slide 3 retained its embedded image after editing slide 1. Final project checks passed (2,254 UI tests plus complete Rust workspace checks).
+- **Remaining:** numeric/date display formats, merged geometry and original row/column dimensions in the grid, full text formatting controls and non-text object editing. Empty-cell insertion and live grid save checks passed. Accurate original-layout viewing requires the signed Office renderer; full editing parity is not enabled by installing LibreOffice alone. Older DOC/XLS/PPT and OpenDocument formats are not supported by this first-party edit worker.
+- **Target:** local Office integration, then Step 20a/20b/21a/21b qualification. Do not ship a full-format or Microsoft Office parity claim from these limited checks.
+
+### KI-109 - Word quick preview stops at one page and simplifies the layout (Major)
+- **Found in:** owner report, 2026-11-04. The quick viewer reported one page and drew only the first screen of text in a single font.
+- **Repair:** paginate the extracted text and use a continuous scroll surface for multi-page document tabs. Left/Right Arrow and Page Up/Down navigate when that surface has focus. Quick pages remain structural and their page breaks may differ from Word.
+- **Local test build:** after verifying scrolling and keyboard navigation, refresh the generated `build/Adperastra/Adperastra-Preview.exe` when it is closed.
+- **Remaining:** the accurate viewer needs an activated signed Office pack. Both the read-session producer and a native Kit one-shot PDF connector are implemented; only disposable isolated engine probes have run. The in-app signed pack path and original-format comparison remain unverified. Track original formatting under Step 13. Editing remains separate and unqualified after the preservation failure.
+
+### KI-107 - Office quick preview rejects ordinary package layout (Major)
+- **Found in:** packaged Office smoke test, 2026-11-04. A disposable DOCX rendered successfully. A disposable one-slide PPTX returned `office.unsupported` during open, including a copy without explicit ZIP directory entries.
+- **Cause:** the inspector rejects explicit directory entries and any `..` in a relationship target, including normal internal links such as `../slideLayouts/slideLayout1.xml`. Both occur in the PowerPoint fixture. The Word file reported by the owner contains one parent-relative internal relationship and no external relationships.
+- **Repair:** validate explicit ZIP directory paths and resolve relationship path segments against the package root. Keep refusing external URLs, encoded paths and traversal beyond the package root.
+- **Verification:** six focused native tests passed. The local preview build displayed the reported Word file and the one-slide PowerPoint fixture in their file tabs.
+- **Target:** Step 13 integration. Preserve the traversal and external relationship protections while validating internal links against the ZIP package root.
+
+### KI-108 - Office editor fallback sends ordinary disk files as unsupported snapshots (Major)
+- **Found in:** owner report and live file-tab check, 2026-11-04. The read-only Office page rendered through its native file route, but the tab still failed after the edit engine returned `office_edit.engine_missing`.
+- **Repair:** the shared Office viewer uses the file route for ordinary disk documents. Sensitive and non-disk documents keep their existing snapshot route.
+- **Verification:** two frontend tests passed. The reported Word file rendered in the normal tab and its SHA-256 was unchanged after the check.
+
+### KI-105 - Windows rejects confined engine startup without LOCALAPPDATA (Major; repair verified in a standalone probe)
+- **Found in:** Step 20a LibreOfficeKit preflight, 2026-11-04.
+- **What:** Windows returned error 203 before starting the engine. The explicit child environment omitted the variable Windows uses to find the AppContainer profile.
+- **Repair:** forward only the Windows profile location plus the existing per-engine allowlist. The confined helper started after the change. A separate adjustment to the probe's extracted-pack permissions let LibreOfficeKit initialize. Step 20a still needs verified production pack permissions and preservation checks.
+
+### KI-106 - Office quick previews can omit text or misreport helper errors (Major; repairs awaiting full in-app verification)
+- **Found in:** Office integration, 2026-11-04.
+- **What:** Word paragraphs and OpenDocument text can contain nested formatting runs. The extractor skipped those paragraphs. Native open also hid quick-helper failures behind the missing-pack message.
+- **Repair:** extract matching paragraph text across nested runs and propagate quick-helper failures. The frontend build passed.
+
+### KI-104 - The image editor canvas collapses to zero width in a file tab (Blocker; repaired, final package pending)
+- **Found in:** owner report and packaged-app reproduction, 2026-11-03, Step 14b integration.
+- **What:** an opened image decoded and rendered into its bitmap, but the editor stayed at its 348px content width instead of filling the file tab. Its center grid track and canvas therefore collapsed to 0px, leaving no visible image.
+- **Repair:** let the editor grow and shrink as the file body's flex item with a zero minimum width. The `file_tab_canvas_uses_available_width` regression failed before the change and passes after it; packaged canvas bounds remain to be verified.
+
+### KI-101 - The security frame adds an outer page scrollbar (Major; repaired, final package pending)
+- **Found in:** live integration review, 2026-11-03.
+- **What:** Tauri's isolation iframe occupies 154px below the 900px app, creating an unwanted outer scrollbar. This is internal infrastructure, not app content.
+- **Repair:** hide only `#__tauri_isolation__` from layout through CSS. Live check reduced document scroll height to the 900px viewport and a secure native settings request still succeeded. Do not remove the frame or disable isolation.
+
+### KI-102 - Helper page policy blocks its own isolation frame (Blocker; repair awaiting live validation)
+- **Found in:** real Word preview failure, 2026-11-03. Native open succeeded but page rendering returned office.pack_missing because helper startup failed.
+- **Cause:** helper HTML and native helper CSP both set frame-src none, blocking the random Tauri isolation origin. Captured directly through helper security logs; helper exited without acknowledging readiness.
+- **Repair:** use the native policy as the sole authority, default-src none with Tauri's exact runtime isolation origin, no frame-src/child-src override, and retain explicit script/connect/image/font/object/base/form restrictions. No wildcard origins or network exception.
+
+### KI-103 - Non-PDF helper requests are routed through the PDF allowlist (Major; repair awaiting live validation)
+- **Found in:** helper integration review, 2026-11-03.
+- **What:** book, notebook, model, PSD, writer and presentation helper actions were rejected as PDF actions. Office quick had its own case.
+- **Repair:** exhaustive per-kind ownership checks, including rejection of every cross-kind request; frontend action types include the two Office quick actions. No catch-all action permission.
+
+### KI-099 - Empty top tab-bar space cannot drag the window (Major; repair awaiting packaged verification)
+- **Found in:** owner report, 2026-11-03, Step 09a integration.
+- **What:** the tab-strip element covers the header drag region without having its own drag-region attribute. Tauri checks the actual pointer target.
+- **Repair:** mark the top strip's empty surface as draggable. Tabs and buttons remain interactive; bottom and side bars do not move the window. Regression test failed before the change; all 6 tab-strip tests pass after it. Windows packaged verification remains pending.
+
+### KI-100 - Optional engines and assistant have incomplete runtime connections (Major)
+- **Found in:** integration review, 2026-11-03.
+- **What:** pack installation has no signed catalog/download activation; accurate Office, media, local AI, speech and assistant generation still need production bridges. Downloaded upstream binaries are not verified app pack helpers. The API key alone cannot activate generation.
+- **Workaround:** basic Office structural previews where supported, or Open in my chosen app. No release acceptance is claimed.
+- **Office transport progress, 2026-11-04:** bounded worker messages and the native codec passed isolated Word/Excel/PowerPoint edit/undo/redo/capture checks and source/untouched-part comparisons. The live application binding, layout and reusable capture ownership are still absent; these results do not activate editing. See `docs/office-engine/results/ooxml-preservation/worker-protocol-results.json`.
+- **Target:** integration of 12a/12b/13/14c/17a/17b before a release. Meta account Test/List now has a native bounded HTTP adapter; chat generation remains separate work.
+
 ### KI-098 - Fixed-layout e-books are paginated like reflowable text (Minor)
 - **Found in:** Step 07f integration, 2026-11-03. **Severity:** Minor (a fixed-layout book still opens and its pages are readable; only the original viewport and scale-to-fit are missing).
 - **What:** The book helper builds deterministic text/image pages (4,000 scalars or 24 blocks) and does not read the EPUB rendition layout. A pre-paginated (fixed-layout) book, usually comics or children's books, is therefore split by text length instead of keeping its designed page size and scaling to the window.
@@ -234,6 +303,39 @@ that fixed it.
 - **Target:** review with Windows integration (Step 16).
 
 ## Fixed
+
+### KI-115 - Release dependency scan found vulnerable transitive packages (Blocker; fixed for Office preview)
+- **Found in:** owner-authorized GitHub Office preview preparation, 2026-11-04.
+- **Repair:** calamine 0.38.0 replaces the vulnerable workbook parser; age 0.11.5 retains Scrypt/X25519 support while removing unused vulnerable P256 dependencies; the retained little_exif source uses patched quick-xml 0.42.0. Scoped development-tool overrides patch uuid and image-size, and ExcelJS is correctly classified as build-only.
+- **Evidence:** Rust and npm audits report zero vulnerabilities; template writers passed their workbook and presentation-with-image checks. The complete hardened gate passed: native file-safety/recovery/encryption/conversion/Office tests plus 2,256 UI tests. No advisory ignores, reduced password work factors or disabled tests were added.
+- **Release condition:** only the rebuilt, audited executable is packaged; its clean portable runtime check is recorded with the release evidence.
+
+
+### KI-114 - Office copy commands can advertise a blocked save and retain temporary snapshots (Major, fixed locally)
+- **Found in:** Office save integration review. The controller marked copying available independently of the engine, and a finished copy left its private snapshot retained until expiry.
+- **Repair:** publish the actual engine save capability and preservation status, reject blocked native capture before encoding, and release the snapshot after the copy job succeeds or fails.
+- **Verification:** focused registry and Office tests passed, including saving an older captured revision while newer changes stay dirty. The native copy publication regression passed with the real snapshot and document stores for all three Office extensions. Full project gate is still running.
+
+### KI-113 - Word viewport has no direct text edit control (Major, fixed locally)
+- **Found in:** Office editing integration review. The raster viewport could select a paragraph, but offered no direct text replacement.
+- **Repair:** accept explicit revision-bound paragraph text from the rendering engine, offer a keyboard-accessible edit control, and submit the original value and span through the existing checked replacement transaction. Refresh the render after document revision changes.
+- **Verification:** focused UI test passed with a simulated paragraph response. It confirms a stale draft is refused and a current draft submits the expected text and revision. Live editing still requires a native engine.
+
+### KI-112 - Slide text editing guessed its target from the accessibility label (Major, fixed locally)
+- **Found in:** Office editing integration review. A shape ID was reused as the paragraph ID, the label as the editable text, and a delayed commit used the current rather than the captured revision.
+- **Repair:** require the rendered textbox to supply an explicit revision-bound span, preserve the unchanged prefix and suffix, and request a new render after a model change.
+- **Verification:** focused transaction construction and stale revision tests. A live engine must still supply and honor the target before PowerPoint editing is available.
+
+### KI-111 - Office editor session is reopened at mount and some copy actions are disconnected (Major, fixed locally)
+- **Found in:** Office editing integration review. The three Office tabs released their probe session before mounting the editor, and Word did not consistently honor preview-only mode. Word's Save a Copy host was empty and Excel's command was permanently disabled.
+- **Repair:** retain the probe lease through editor mount, share preview-only behavior, and route supported Word and Excel copy actions through the current document handle's snapshot-backed save path.
+- **Verification:** focused Office tests and TypeScript check passed. Tests cover retaining a session through mount, releasing a late session, checking the workbook save capability, and cancelling or accepting the copy picker. An approved editor and live disposable-file save checks are still needed before declaring in-app editing available.
+
+### KI-110 - Copied preview binary tries to load a development server (Blocker, fixed locally)
+- **Found in:** owner screenshot, 2026-11-04: localhost connection refused on startup.
+- **Cause:** the preview was copied from an ordinary cargo debug build. Without `tauri/custom-protocol`, Tauri selects `build.devUrl` instead of embedding `dist`, regardless of the frontend build succeeding.
+- **Repair:** `scripts/package-preview.ps1` builds frontend assets and enables `tauri/custom-protocol` before copying the standalone debug preview. Leave the development server configuration available for actual development.
+- **Verification:** the replacement opened the normal Home screen at `http://tauri.localhost/` in a fresh test profile while port 5173 had no listener. Existing UI commands loaded the Recent list. Replacement SHA-256: `a9dafd5074ce8e534a71e5c99564952d4dd38319ad7e38fef5a862c8753857ee`. Complete gate passed; no release/remote change. Local integration remains uncommitted.
 
 ### KI-101 - Idle export snapshots could retain the budget until restart (Major, fixed during08a integration)
 

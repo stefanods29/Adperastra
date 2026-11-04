@@ -136,10 +136,20 @@ pub fn open_input(
 ) -> Result<PdfSession, String> {
     let cache = app.state::<Arc<CacheService>>();
     let sessions = app.state::<PdfSessions>();
+    let (grant, identity, retention) = grant_for_input(cache.inner(), input, sessions.inner())?;
+    open_granted(app, cancel, (grant, identity, retention), password)
+}
+
+pub(crate) fn open_granted(
+    app: &AppHandle,
+    cancel: &fs_service::CancellationToken,
+    (grant, identity, retention): GrantedPdfInput,
+    password: Option<String>,
+) -> Result<PdfSession, String> {
+    let sessions = app.state::<PdfSessions>();
     let data_dir = app.state::<crate::AppState>().data_dir().to_path_buf();
     let _operation = sessions.operation(cancel)?;
     sessions.make_room_for_helper(None)?;
-    let (grant, identity, retention) = grant_for_input(cache.inner(), input, sessions.inner())?;
     let session_id = Uuid::new_v4();
     let resume = Arc::new(PdfResume {
         grant,

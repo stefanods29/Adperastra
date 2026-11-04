@@ -145,6 +145,7 @@ export default function FileGrid({ mode, ...props }: FileGridProps) {
       `adp-itemgrid-cell--${spec.layout}`,
       selected ? "adp-itemgrid-cell--selected" : "",
       focused ? "adp-itemgrid-cell--focused" : "",
+      props.pickActive && isContainer ? "adp-pick-target" : "",
       item.hidden || item.system ? "adp-itemgrid-cell--hidden" : "",
     ]
       .filter(Boolean)

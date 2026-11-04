@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ComponentType, LazyExoticComponent } from "react";
 import type { ArchiveExtractRequest } from "../services/archive";
 import type { FileTypeInfo } from "../services/files";
+import type { SerializableViewState, VirtualViewComponent } from "../documents/types";
 
 /** File-type handlers (contract 13, Step 04a). A handler shows one kind of
  * file inside a file tab. Later steps add a ribbon (04b), an editor (06a)
@@ -52,6 +53,12 @@ export interface ExportHandle {
 export interface HandlerViewProps {
   registerExport?: (handle: ExportHandle | null) => void;
   info: FileTypeInfo;
+  /** Shared document identity for this view; runtime only, never persisted. */
+  documentId?: string;
+  /** Stable split-leaf identity used by scroll synchronization (Step 09i). */
+  syncViewId?: string;
+  /** Open the app's Help center at a specific page. */
+  onOpenHelp?: (slug: string) => void;
   /** Where the file's bytes are served (`fileUrl(token, name)`). */
   url: string;
   /** True while this tab is the visible one; views pause work when false. */
@@ -85,6 +92,10 @@ export interface HandlerViewProps {
   onExtractArchive?: (request: ArchiveExtractRequest) => void;
   /** Open this file in the text viewer (Step 06f). */
   onOpenAsText?: () => void;
+  /** Open this media as a new editable recipe while the source stays
+   * untouched (Step 15). `subtitlePath` carries the subtitle the player is
+   * showing, so the recipe can start with those cues. */
+  onEditMedia?: (subtitlePath?: string) => void;
 }
 
 export interface Handler {
@@ -121,4 +132,13 @@ export interface Handler {
   /** The view follows replace requests from the search row (Step 06a). */
   supportsReplace?: boolean;
   view: LazyExoticComponent<ComponentType<HandlerViewProps>>;
+  /** Source-aware presenter used by shared document providers (Step 09a).
+   * Read-only Office viewers may expose this without becoming editable.
+   * Lazy components keep the viewer out of the startup bundle. */
+  virtualView?: VirtualViewComponent | LazyExoticComponent<VirtualViewComponent>;
+  /** Optional bounded session codec. Registries normally use
+   * `registerViewStateCodec`; these fields let a handler carry the same
+   * contract without changing existing disk-view props. */
+  encodeViewState?: (state: unknown) => SerializableViewState | null;
+  decodeViewState?: (state: SerializableViewState) => unknown | null;
 }

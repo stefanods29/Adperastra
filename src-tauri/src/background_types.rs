@@ -14,9 +14,24 @@ pub enum BackgroundTaskKind {
     StorageScan,
     VersionCleanup,
     PackDownload,
+    MediaProxy,
 }
 
 impl BackgroundTaskKind {
+    /// Every kind, in the order Settings > Background work shows them.
+    pub const ALL: [BackgroundTaskKind; 10] = [
+        BackgroundTaskKind::Thumbnails,
+        BackgroundTaskKind::Metadata,
+        BackgroundTaskKind::Ocr,
+        BackgroundTaskKind::FilenameIndex,
+        BackgroundTaskKind::ContentIndex,
+        BackgroundTaskKind::FolderSizes,
+        BackgroundTaskKind::StorageScan,
+        BackgroundTaskKind::VersionCleanup,
+        BackgroundTaskKind::PackDownload,
+        BackgroundTaskKind::MediaProxy,
+    ];
+
     pub fn as_str(&self) -> &'static str {
         match self {
             BackgroundTaskKind::Thumbnails => "thumbnails",
@@ -28,6 +43,7 @@ impl BackgroundTaskKind {
             BackgroundTaskKind::StorageScan => "storage_scan",
             BackgroundTaskKind::VersionCleanup => "version_cleanup",
             BackgroundTaskKind::PackDownload => "pack_download",
+            BackgroundTaskKind::MediaProxy => "media_proxy",
         }
     }
 
@@ -42,6 +58,7 @@ impl BackgroundTaskKind {
             "storage_scan" => BackgroundTaskKind::StorageScan,
             "version_cleanup" => BackgroundTaskKind::VersionCleanup,
             "pack_download" => BackgroundTaskKind::PackDownload,
+            "media_proxy" => BackgroundTaskKind::MediaProxy,
             _ => return None,
         })
     }
@@ -59,7 +76,36 @@ impl BackgroundTaskKind {
     }
 }
 
-/// Schema 12's background section.
+/// Quiet hours in Windows local time, as minutes since midnight (schema 37).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct QuietHoursSettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_quiet_start")]
+    pub start_minute: u16,
+    #[serde(default = "default_quiet_end")]
+    pub end_minute: u16,
+}
+
+fn default_quiet_start() -> u16 {
+    1320
+}
+
+fn default_quiet_end() -> u16 {
+    420
+}
+
+impl Default for QuietHoursSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            start_minute: default_quiet_start(),
+            end_minute: default_quiet_end(),
+        }
+    }
+}
+
+/// Schema 12's background section; schema 37 adds scheduling limits.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BackgroundSettings {
     #[serde(default = "default_true")]
@@ -72,6 +118,16 @@ pub struct BackgroundSettings {
     pub paused: bool,
     #[serde(default = "default_tasks")]
     pub tasks: BTreeMap<String, bool>,
+    #[serde(default = "default_true")]
+    pub pause_fullscreen: bool,
+    #[serde(default)]
+    pub quiet_hours: QuietHoursSettings,
+    #[serde(default = "default_cpu_percent")]
+    pub cpu_percent: u8,
+}
+
+fn default_cpu_percent() -> u8 {
+    25
 }
 
 fn default_true() -> bool {
@@ -90,6 +146,7 @@ fn default_tasks() -> BTreeMap<String, bool> {
         BackgroundTaskKind::StorageScan,
         BackgroundTaskKind::VersionCleanup,
         BackgroundTaskKind::PackDownload,
+        BackgroundTaskKind::MediaProxy,
     ] {
         tasks.insert(kind.as_str().to_string(), kind.enabled_by_default());
     }
@@ -104,6 +161,9 @@ impl Default for BackgroundSettings {
             only_ac: false,
             paused: false,
             tasks: default_tasks(),
+            pause_fullscreen: true,
+            quiet_hours: QuietHoursSettings::default(),
+            cpu_percent: default_cpu_percent(),
         }
     }
 }

@@ -217,6 +217,32 @@ impl BackgroundScheduler {
         }
     }
 
+    /// (running, queued) for one task kind, so the bounded task list can show
+    /// per-task progress without a second scheduler.
+    pub fn counts_for(&self, kind: BackgroundTaskKind) -> (u32, u32) {
+        match self.lock() {
+            Ok(state) => (
+                u32::try_from(
+                    state
+                        .active
+                        .iter()
+                        .filter(|entry| entry.kind == kind)
+                        .count(),
+                )
+                .unwrap_or(u32::MAX),
+                u32::try_from(
+                    state
+                        .waiting
+                        .iter()
+                        .filter(|entry| entry.kind == kind)
+                        .count(),
+                )
+                .unwrap_or(u32::MAX),
+            ),
+            Err(_) => (0, 0),
+        }
+    }
+
     fn wait(
         self: &Arc<Self>,
         kind: BackgroundTaskKind,

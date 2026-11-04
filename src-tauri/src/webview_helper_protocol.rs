@@ -75,13 +75,35 @@ pub fn allowed_error_code(code: &str) -> bool {
         "pdf.snapshot_unavailable",
         "pdf.unsupported_feature",
     ];
+    const PDF_EDIT: [&str; 8] = [
+        "pdf_edit.bad_request",
+        "pdf_edit.read_only",
+        "pdf_edit.unsupported",
+        "pdf_edit.too_large",
+        "pdf_edit.changed",
+        "pdf_edit.missing_glyph",
+        "pdf_edit.signature_change",
+        "pdf_edit.failed",
+    ];
     const HELPER: [&str; 4] = [
         "helper.busy",
         "helper.failed",
         "helper.timeout",
         "helper.sensitive_unsupported",
     ];
-    PDF.contains(&code) || HELPER.contains(&code)
+    // The Office quick helper reports the same bounded codes as the native
+    // view command layer; an unknown code is still replaced by helper.failed.
+    const OFFICE: [&str; 5] = [
+        "office.bad_request",
+        "office.unsupported",
+        "office.too_large",
+        "office.changed",
+        "office.engine_failed",
+    ];
+    PDF.contains(&code)
+        || PDF_EDIT.contains(&code)
+        || HELPER.contains(&code)
+        || OFFICE.contains(&code)
 }
 
 /// True for 64 lower-case hex characters.

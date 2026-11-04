@@ -9,6 +9,8 @@ export interface ThemeSettingsProps {
   settings: AppSettings;
   onApply: (settings: AppSettings) => void;
   onOpenHelp: (slug: string) => void;
+  /** Opens the custom theme editor (Step 10a). */
+  onEditTheme?: () => void;
 }
 
 const MODES = [
@@ -23,17 +25,33 @@ const ACCENTS = [
   { id: "custom", labelKey: "settings.accentCustom" },
 ] as const;
 
-export default function ThemeSettings({ settings, onApply, onOpenHelp }: ThemeSettingsProps) {
+export default function ThemeSettings({ settings, onApply, onOpenHelp, onEditTheme }: ThemeSettingsProps) {
   const { t } = useTranslation();
-  const chosen = (scheme: ThemeScheme) =>
-    scheme === "light" ? settings.theme.light_theme : settings.theme.dark_theme;
+  const chosen = (scheme: ThemeScheme) => {
+    const reference = scheme === "light" ? settings.theme_custom.day : settings.theme_custom.night;
+    return reference.kind === "builtin" ? reference.id : "";
+  };
 
   const chooseTheme = (scheme: ThemeScheme, id: string) => {
     const theme =
       scheme === "light"
         ? { ...settings.theme, light_theme: id as LightThemeId }
         : { ...settings.theme, dark_theme: id as DarkThemeId };
-    onApply({ ...settings, theme });
+    // The day/night resolver is authoritative (Step 10a); keep the legacy
+    // cards functional by pointing the matching slot at the chosen built-in.
+    const theme_custom =
+      scheme === "light"
+        ? { ...settings.theme_custom, day: { kind: "builtin" as const, id: id as LightThemeId } }
+        : { ...settings.theme_custom, night: { kind: "builtin" as const, id: id as DarkThemeId } };
+    onApply({ ...settings, theme, theme_custom });
+  };
+
+  const chooseMode = (mode: ThemeMode) => {
+    const theme_custom =
+      mode === "system"
+        ? { ...settings.theme_custom, mode: "windows" as const }
+        : { ...settings.theme_custom, mode: "manual" as const, manual_scheme: mode };
+    onApply({ ...settings, theme: { ...settings.theme, mode }, theme_custom });
   };
 
   const cards = (scheme: ThemeScheme, labelKey: string) => (
@@ -83,7 +101,7 @@ export default function ThemeSettings({ settings, onApply, onOpenHelp }: ThemeSe
               variant={settings.theme.mode === mode.id ? "primary" : "default"}
               aria-pressed={settings.theme.mode === mode.id}
               data-theme-mode={mode.id as ThemeMode}
-              onClick={() => onApply({ ...settings, theme: { ...settings.theme, mode: mode.id } })}
+              onClick={() => chooseMode(mode.id)}
             >
               {t(mode.labelKey)}
             </Button>
@@ -121,6 +139,12 @@ export default function ThemeSettings({ settings, onApply, onOpenHelp }: ThemeSe
           ) : null}
         </div>
       </div>
+      {onEditTheme ? (
+        <div className="adp-setting-row">
+          <span className="adp-setting-label">{t("themeEditor.new")}</span>
+          <Button onClick={onEditTheme}>{t("themeEditor.title")}</Button>
+        </div>
+      ) : null}
     </section>
   );
 }

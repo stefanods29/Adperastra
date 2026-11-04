@@ -1,10 +1,12 @@
-import { Music, Pause, Play, Repeat } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Music, Pause, Pencil, Play, Repeat } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
+import { useAccessibilityOptional } from "../../accessibility/AccessibilityContext";
 import Button from "../../components/Button";
 import type { Command } from "../../commands/registry";
 import { fileGrant, fileRevoke, fileUrl } from "../../services/files";
 import { formatSize } from "../../services/format";
+import type { SubtitleAccessibility } from "../../services/accessibility";
 import { mediaSidecars } from "../../services/media";
 import { isTauriRuntime } from "../../services/settings";
 import Ribbon from "../../ribbon/Ribbon";
@@ -41,6 +43,18 @@ function nameOf(path: string): string {
   return path.split(/[\\/]/).pop() ?? path;
 }
 
+/** Cue styling for the native track: the WebVTT renderer reads these
+ * variables through `video::cue` (media.css). Position is the platform
+ * renderer's own bottom placement. */
+function subtitleCueStyle(subtitle: SubtitleAccessibility): CSSProperties {
+  const channel = (at: number) => parseInt(subtitle.background_color.slice(at, at + 2), 16);
+  return {
+    "--adp-a11y-subtitle-color": subtitle.text_color,
+    "--adp-a11y-subtitle-background": `rgba(${channel(1)}, ${channel(3)}, ${channel(5)}, ${subtitle.background_opacity})`,
+    "--adp-a11y-subtitle-scale": String(subtitle.font_percent / 100),
+  } as CSSProperties;
+}
+
 /** Read a subtitle file through a file token; returns a WebVTT Blob URL
  * (the caller revokes it). */
 async function loadSubtitle(path: string): Promise<string> {
@@ -59,8 +73,10 @@ async function loadSubtitle(path: string): Promise<string> {
 /** Audio and video player (Step 04c): the webview's own player and its
  * controls, plus a ribbon for play, loop, speed and subtitles. It keeps
  * playing while another tab is shown. */
-export default function MediaView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, previewOnly = false }: HandlerViewProps) {
+export default function MediaView({ info, url, active, savedState, onStateChange, onStatus, onOpenInWindowsApp, onEditMedia, previewOnly = false }: HandlerViewProps) {
   const { t, i18n } = useTranslation();
+  const accessibility = useAccessibilityOptional();
+  const cueStyle = accessibility ? subtitleCueStyle(accessibility.settings.subtitle) : undefined;
   const video = isVideo(info);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const [settings, setSettings] = useState<SavedMediaState>(() => readSaved(savedState));
@@ -204,8 +220,21 @@ export default function MediaView({ info, url, active, savedState, onStateChange
         enabledWhen: () => true,
         run: (c) => update({ loop: !c.loop }),
       },
+      // Only registered when the host can create the recipe tab; the source
+      // file is never written by editing.
+      ...(onEditMedia && isTauriRuntime()
+        ? [{
+            id: "media.edit",
+            labelKey: "mediaEdit.edit",
+            icon: Pencil,
+            risk: "read-only" as const,
+            helpSlug: "media-trimming",
+            enabledWhen: (c: MediaCtx) => c.ready,
+            run: () => onEditMedia?.(subtitle || undefined),
+          }]
+        : []),
     ],
-    [update],
+    [onEditMedia, subtitle, update],
   );
 
   const groups: RibbonGroup[] = [
@@ -241,6 +270,13 @@ export default function MediaView({ info, url, active, savedState, onStateChange
       ],
     },
   ];
+  if (onEditMedia && isTauriRuntime()) {
+    groups.push({
+      id: "edit",
+      labelKey: "mediaEdit.edit",
+      controls: [{ type: "button", command: "media.edit", keyTip: "E" }],
+    });
+  }
   if (video) {
     groups.push({
       id: "subtitles",
@@ -305,6 +341,7 @@ export default function MediaView({ info, url, active, savedState, onStateChange
               }}
               className="adp-media-video"
               src={url}
+              style={cueStyle}
               controls
               controlsList="nodownload noremoteplayback"
               disablePictureInPicture

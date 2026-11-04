@@ -82,6 +82,16 @@ pub enum FormatId {
     Xlsx,
     Zip,
     SevenZ,
+    Mp4,
+    Mkv,
+    Mov,
+    Webm,
+    Mp3,
+    Wav,
+    Flac,
+    Ogg,
+    Opus,
+    Aac,
 }
 
 impl FormatId {
@@ -103,6 +113,16 @@ impl FormatId {
             FormatId::Xlsx => "xlsx",
             FormatId::Zip => "zip",
             FormatId::SevenZ => "7z",
+            FormatId::Mp4 => "mp4",
+            FormatId::Mkv => "mkv",
+            FormatId::Mov => "mov",
+            FormatId::Webm => "webm",
+            FormatId::Mp3 => "mp3",
+            FormatId::Wav => "wav",
+            FormatId::Flac => "flac",
+            FormatId::Ogg => "ogg",
+            FormatId::Opus => "opus",
+            FormatId::Aac => "aac",
         }
     }
 
@@ -124,6 +144,16 @@ impl FormatId {
             "xlsx" => FormatId::Xlsx,
             "zip" => FormatId::Zip,
             "7z" | "seven_z" => FormatId::SevenZ,
+            "mp4" | "m4v" | "m4a" => FormatId::Mp4,
+            "mkv" => FormatId::Mkv,
+            "mov" | "qt" => FormatId::Mov,
+            "webm" => FormatId::Webm,
+            "mp3" => FormatId::Mp3,
+            "wav" => FormatId::Wav,
+            "flac" => FormatId::Flac,
+            "ogg" | "oga" => FormatId::Ogg,
+            "opus" => FormatId::Opus,
+            "aac" => FormatId::Aac,
             _ => return None,
         })
     }
@@ -143,6 +173,16 @@ impl FormatId {
             "text/html" => FormatId::Html,
             "text/markdown" => FormatId::Md,
             "text/csv" => FormatId::Csv,
+            "video/mp4" | "audio/mp4" => FormatId::Mp4,
+            "video/x-matroska" => FormatId::Mkv,
+            "video/quicktime" => FormatId::Mov,
+            "video/webm" | "audio/webm" => FormatId::Webm,
+            "audio/mpeg" | "audio/mp3" => FormatId::Mp3,
+            "audio/wav" | "audio/x-wav" | "audio/wave" => FormatId::Wav,
+            "audio/flac" | "audio/x-flac" => FormatId::Flac,
+            "audio/ogg" | "application/ogg" => FormatId::Ogg,
+            "audio/opus" => FormatId::Opus,
+            "audio/aac" | "audio/x-aac" => FormatId::Aac,
             _ => return None,
         })
     }
@@ -165,6 +205,16 @@ impl FormatId {
             FormatId::Xlsx => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             FormatId::Zip => "application/zip",
             FormatId::SevenZ => "application/x-7z-compressed",
+            FormatId::Mp4 => "video/mp4",
+            FormatId::Mkv => "video/x-matroska",
+            FormatId::Mov => "video/quicktime",
+            FormatId::Webm => "video/webm",
+            FormatId::Mp3 => "audio/mpeg",
+            FormatId::Wav => "audio/wav",
+            FormatId::Flac => "audio/flac",
+            FormatId::Ogg => "audio/ogg",
+            FormatId::Opus => "audio/opus",
+            FormatId::Aac => "audio/aac",
         }
     }
 
@@ -209,9 +259,15 @@ pub enum MetadataCategory {
     Annotations,
     Scripts,
     Timestamps,
+    LastModifiedBy,
+    Company,
+    TrackedChanges,
+    HiddenText,
+    SpeakerNotes,
+    Encoder,
 }
 
-/// A loss the user must acknowledge before pixels are written.
+/// A loss the user must acknowledge before output begins.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ConversionWarningCode {
@@ -222,5 +278,11 @@ pub enum ConversionWarningCode {
     FormulaCachedValue,
     FormulaSafetyPrefix,
     SheetSelection,
+    /// The output carries no audio although the source had some.
+    #[serde(rename = "audio_loss")]
+    AudioLoss,
+    /// The output cannot keep the source frame timing exactly.
+    #[serde(rename = "frame_rate_change")]
+    FrameRateChange,
 }
 

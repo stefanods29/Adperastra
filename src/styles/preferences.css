@@ -1,0 +1,129 @@
+/** Step 10c preferences: tab options, formats, profiles and portable copy.
+ * Sizes and gaps follow the step guide; colours come only from tokens.css. */
+
+.adp-preferences-section {
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.adp-preferences-section .adp-setting-row {
+  gap: 12px;
+}
+
+@media (min-width: 720px) {
+  .adp-preferences-section .adp-setting-row {
+    display: grid;
+    grid-template-columns: 128px minmax(240px, 1fr);
+    align-items: center;
+    gap: 16px;
+  }
+
+  .adp-preferences-section .adp-setting-row--column {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+.adp-profiles-path {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.adp-profiles-path-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  direction: ltr;
+  unicode-bidi: plaintext;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-profiles-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  max-width: 960px;
+}
+
+.adp-profiles-row {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  padding-block: var(--adp-space-1);
+  padding-inline: var(--adp-space-3);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-profiles-row--active {
+  border-color: var(--adp-accent-explorer);
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-profiles-name {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-profiles-switch-dialog {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-portable-copy {
+  width: 560px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-portable-destination {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-width: 240px;
+  flex: 1;
+}
+
+.adp-format-extensions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--adp-space-2);
+  max-height: 280px;
+  overflow-y: auto;
+  padding-inline-end: var(--adp-space-2);
+}
+
+.adp-format-extension {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-2);
+  min-height: 32px;
+}
+
+.adp-format-extension-name {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-note--error {
+  color: var(--adp-color-status-caution);
+  background: var(--adp-color-status-caution-background);
+  border-radius: var(--adp-radius-sm);
+  padding: var(--adp-space-2) var(--adp-space-3);
+}

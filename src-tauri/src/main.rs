@@ -6,12 +6,15 @@
 //! (session, help) is intentionally stateless file-per-call work, so no
 //! other locks are needed and a crash can never leave a lock poisoned.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![recursion_limit = "256"]
+
+mod window_chrome;
 
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -73,6 +76,7 @@ mod thumbnail_providers;
 mod thumbnails;
 #[cfg(windows)]
 pub(crate) use clipboard::bounded_stream;
+mod app_resident;
 mod book_backend;
 mod book_loader;
 mod book_settings;
@@ -102,6 +106,7 @@ mod gallery_types;
 mod gallery_watch;
 mod helper;
 mod helper_frames;
+mod integrated_setup;
 mod jobs;
 mod links;
 mod media;
@@ -128,6 +133,8 @@ mod ocr_types;
 mod ocr_windows;
 mod operation_safety;
 mod pdf;
+mod pdf_edit;
+mod pdf_edit_types;
 mod pdf_helper;
 mod pdf_helper_process;
 mod pdf_helper_types;
@@ -150,8 +157,9 @@ mod webview_helper_protocol;
 mod webview_helper_types;
 mod webview_private;
 mod zone;
+include!("integrated_modules.rs");
 
-pub const CURRENT_SCHEMA: u32 = 16;
+pub const CURRENT_SCHEMA: u32 = 56;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -185,19 +193,50 @@ fn unix_now() -> u64 {
 }
 
 /// Data dir: `$ADPERASTRA_DATA_DIR`, else `%LOCALAPPDATA%\Adperastra`
-/// (same location the setup launcher uses), else `./adperastra-data`.
+/// (same location the setup launcher uses), else `adperastra-data` under the
+/// process folder.
 pub fn resolve_data_dir() -> PathBuf {
     if let Ok(value) = std::env::var("ADPERASTRA_DATA_DIR") {
         if !value.trim().is_empty() {
             return PathBuf::from(value);
         }
     }
+    installed_data_fallback()
+}
+
+/// The installed data folder, anchored to the process folder when even
+/// `%LOCALAPPDATA%` is unavailable.
+fn installed_data_fallback() -> PathBuf {
     if let Ok(value) = std::env::var("LOCALAPPDATA") {
         if !value.trim().is_empty() {
             return PathBuf::from(value).join("Adperastra");
         }
     }
-    PathBuf::from("./adperastra-data")
+    match std::env::current_dir() {
+        Ok(cwd) => cwd.join("adperastra-data"),
+        Err(_) => PathBuf::from("adperastra-data"),
+    }
+}
+
+/// Step 10c E5: the profile base is always absolute and free of `..`.
+/// `portable::locate` refuses a traversing explicit base; keeping the
+/// installed default here prevents the profile resolver from failing startup.
+fn absolute_data_dir(path: PathBuf) -> PathBuf {
+    let absolute = if path.is_absolute() {
+        path
+    } else {
+        match std::env::current_dir() {
+            Ok(cwd) => cwd.join(&path),
+            Err(_) => installed_data_fallback(),
+        }
+    };
+    if absolute
+        .components()
+        .any(|component| matches!(component, std::path::Component::ParentDir))
+    {
+        return installed_data_fallback();
+    }
+    absolute
 }
 
 fn settings_path(data_dir: &Path) -> PathBuf {
@@ -343,6 +382,12 @@ pub struct ExplorerViewSettings {
     /// Column view shows a preview of the selected file (schema 7).
     #[serde(default = "default_true")]
     pub column_preview: bool,
+    /// Folder backgrounds (schema 31, Step 10d). Off by default.
+    #[serde(default)]
+    pub folder_backgrounds: bool,
+    /// Custom column sets (schema 31, Step 10d). Off by default.
+    #[serde(default)]
+    pub column_sets_enabled: bool,
 }
 
 impl Default for ExplorerViewSettings {
@@ -359,6 +404,8 @@ impl Default for ExplorerViewSettings {
             hidden_view_modes: Vec::new(),
             column_width: default_column_width(),
             column_preview: true,
+            folder_backgrounds: false,
+            column_sets_enabled: false,
         }
     }
 }
@@ -455,8 +502,8 @@ impl Default for LayoutSettings {
     }
 }
 
-/// Every UI scale, in percent (schema 9, Step 05d).
-pub const UI_SCALES: [u32; 8] = [75, 90, 100, 110, 125, 150, 175, 200];
+/// Every UI scale, in percent (schema 9, Step 05d; schema 33 adds 225-300).
+pub const UI_SCALES: [u32; 12] = [75, 90, 100, 110, 125, 150, 175, 200, 225, 250, 275, 300];
 
 fn default_ui_scale() -> u32 {
     100
@@ -612,6 +659,508 @@ impl Default for OpenSettings {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Settings sections added by steps 08b-22b, in schema order.
+// ---------------------------------------------------------------------------
+
+/// Startup behavior (schema 20, Step 09a; schema 43, Step 16).
+fn default_startup_mode() -> String {
+    "home".to_string()
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StartupSettings {
+    /// `home`, `restore` or `folder`.
+    #[serde(default = "default_startup_mode")]
+    pub mode: String,
+    /// Empty unless `mode` is `folder`; otherwise an absolute path.
+    #[serde(default)]
+    pub folder: String,
+    #[serde(default)]
+    pub stay_in_background: bool,
+    #[serde(default)]
+    pub start_with_windows: bool,
+}
+
+impl Default for StartupSettings {
+    fn default() -> Self {
+        Self {
+            mode: default_startup_mode(),
+            folder: String::new(),
+            stay_in_background: false,
+            start_with_windows: false,
+        }
+    }
+}
+
+/// Tabs behavior (schema 21, Step 09c D2).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TabsSettings {
+    /// Delay before a file drag over a tab activates it; 200..2000 ms.
+    #[serde(default = "default_drag_hover_ms")]
+    pub drag_hover_ms: u32,
+}
+
+fn default_drag_hover_ms() -> u32 {
+    600
+}
+
+impl Default for TabsSettings {
+    fn default() -> Self {
+        Self {
+            drag_hover_ms: default_drag_hover_ms(),
+        }
+    }
+}
+
+/// Command palette state (schema 22, Step 09d). Only ids are stored.
+pub const PALETTE_MAX_RECENT_IDS: usize = 50;
+pub const PALETTE_MAX_ID_CHARS: usize = 32_768;
+
+fn default_palette_show_disabled() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PaletteSettings {
+    #[serde(default)]
+    pub recent_ids: Vec<String>,
+    #[serde(default = "default_palette_show_disabled")]
+    pub show_disabled: bool,
+}
+
+impl Default for PaletteSettings {
+    fn default() -> Self {
+        Self {
+            recent_ids: Vec::new(),
+            show_disabled: true,
+        }
+    }
+}
+
+/// Copy and move safety (schema 23, Step 09f).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TransferSettings {
+    /// Hash and compare every copy before it is published.
+    #[serde(default)]
+    pub verify_copies: bool,
+    /// One transfer per destination volume at a time. Always true: it is a
+    /// safety property, not a preference (the UI shows it disabled).
+    #[serde(default = "default_true")]
+    pub queue_per_volume: bool,
+    /// How many transfers may run at once (1 or 2).
+    #[serde(default = "default_transfer_parallel")]
+    pub max_parallel: u8,
+}
+
+fn default_transfer_parallel() -> u8 {
+    2
+}
+
+impl Default for TransferSettings {
+    fn default() -> Self {
+        Self {
+            verify_copies: false,
+            queue_per_volume: true,
+            max_parallel: default_transfer_parallel(),
+        }
+    }
+}
+
+/// Shelf side values (schema 24, Step 09g).
+pub const SHELF_WIDTH_DEFAULT: u32 = 320;
+pub const SHELF_WIDTH_MIN: u32 = 240;
+pub const SHELF_WIDTH_MAX: u32 = 600;
+pub const SHELF_HEIGHT_DEFAULT: u32 = 180;
+pub const SHELF_HEIGHT_MIN: u32 = 120;
+pub const SHELF_HEIGHT_MAX: u32 = 400;
+
+fn default_shelf_side() -> String {
+    "bottom".to_string()
+}
+
+fn default_shelf_size() -> u32 {
+    SHELF_HEIGHT_DEFAULT
+}
+
+/// The dockable shelf (schema 24, Step 09g). `size` is a width on the
+/// left or right and a height at the bottom; `visible` is the panel's
+/// visibility. The shelf is a panel, not a toolbar.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ShelfSettings {
+    #[serde(default)]
+    pub visible: bool,
+    #[serde(default = "default_shelf_side")]
+    pub side: String,
+    #[serde(default = "default_shelf_size")]
+    pub size: u32,
+}
+
+impl Default for ShelfSettings {
+    fn default() -> Self {
+        Self {
+            visible: false,
+            side: default_shelf_side(),
+            size: default_shelf_size(),
+        }
+    }
+}
+
+/// Crash recovery and diagnostics (schema 25, Step 09h).
+fn default_recovery_enabled() -> bool {
+    true
+}
+
+fn default_recovery_interval() -> u16 {
+    10
+}
+
+fn default_recovery_max_mib() -> u32 {
+    1024
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RecoverySettings {
+    #[serde(default = "default_recovery_enabled")]
+    pub enabled: bool,
+    #[serde(default = "default_recovery_interval")]
+    pub interval_seconds: u16,
+    #[serde(default = "default_recovery_max_mib")]
+    pub max_mib: u32,
+    #[serde(default)]
+    pub diagnostics_include_dumps: bool,
+}
+
+impl Default for RecoverySettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            interval_seconds: default_recovery_interval(),
+            max_mib: default_recovery_max_mib(),
+            diagnostics_include_dumps: false,
+        }
+    }
+}
+
+impl RecoverySettings {
+    pub fn validate(&self) -> Result<(), String> {
+        if !(10..=300).contains(&self.interval_seconds) {
+            return Err("recovery interval must be 10..=300".to_string());
+        }
+        if !(128..=4096).contains(&self.max_mib) {
+            return Err("recovery max_mib must be 128..=4096".to_string());
+        }
+        Ok(())
+    }
+}
+
+/// Folder size measurement (schema 36, Step 11c).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct FolderSizeSettings {
+    pub enabled: bool,
+    pub network: bool,
+    pub details: bool,
+}
+
+/// Pack catalog state (schema 37, Step 12a).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct PackCatalogSettings {
+    pub last_checked_unix: Option<u64>,
+}
+
+/// Office viewer preferences (schema 38, Step 13).
+fn default_office_idle() -> u16 {
+    60
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OfficeViewSettings {
+    #[serde(default = "default_true")]
+    pub prefer_accurate: bool,
+    #[serde(default)]
+    pub show_comments: bool,
+    #[serde(default = "default_true")]
+    pub keep_engine_warm: bool,
+    #[serde(default = "default_office_idle")]
+    pub idle_seconds: u16,
+}
+
+impl Default for OfficeViewSettings {
+    fn default() -> Self {
+        Self {
+            prefer_accurate: true,
+            show_comments: false,
+            keep_engine_warm: true,
+            idle_seconds: default_office_idle(),
+        }
+    }
+}
+
+/// PDF annotation author (schema 39, Step 14a). Never read from the login.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct PdfToolsSettings {
+    pub author: String,
+}
+
+impl PdfToolsSettings {
+    pub fn validate(&self) -> Result<(), AppError> {
+        if self.author.chars().count() > 128 {
+            return Err(AppError::Validation(
+                "pdf_tools.author is too long".to_string(),
+            ));
+        }
+        Ok(())
+    }
+}
+
+/// Image editor preferences (schema 40, Step 14b; schema 48, Step 18a).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ImageEditorSettings {
+    pub default_mode: String,
+    pub background_rgba: [u8; 4],
+    pub history_limit_mb: u32,
+    pub advanced: bool,
+    pub selection_tolerance: u8,
+    pub show_history: bool,
+}
+
+impl Default for ImageEditorSettings {
+    fn default() -> Self {
+        Self {
+            default_mode: "edit".to_string(),
+            background_rgba: [255, 255, 255, 255],
+            history_limit_mb: 256,
+            advanced: false,
+            selection_tolerance: 15,
+            show_history: false,
+        }
+    }
+}
+
+/// Media editor preferences (schema 42, Step 15).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MediaEditorSettings {
+    #[serde(default = "default_media_preview_quality")]
+    pub preview_quality: String,
+    #[serde(default = "default_true")]
+    pub waveform: bool,
+    #[serde(default = "default_true")]
+    pub keep_pitch: bool,
+}
+
+fn default_media_preview_quality() -> String {
+    "960".to_string()
+}
+
+impl Default for MediaEditorSettings {
+    fn default() -> Self {
+        Self {
+            preview_quality: default_media_preview_quality(),
+            waveform: true,
+            keep_pitch: true,
+        }
+    }
+}
+
+/// AI writing preferences (schema 47, Step 17d D8).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+#[derive(Default)]
+pub struct AiInlineEnabledTypes {
+    #[serde(default)]
+    pub text: bool,
+    #[serde(default)]
+    pub markdown: bool,
+    #[serde(default)]
+    pub code: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+#[derive(Default)]
+pub struct AiInlineSettings {
+    #[serde(default)]
+    pub inline_enabled: bool,
+    #[serde(default)]
+    pub enabled_types: AiInlineEnabledTypes,
+}
+
+/// Sheet AI opt-ins (schema 54, Step 21b).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SheetAiSettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub experimental_actions: Vec<office_sheet_ai_types::SheetAiAction>,
+}
+
+/// Deck AI opt-ins (schema 56, Step 22b).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeckAiSettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub experimental_actions: Vec<String>,
+}
+
+/// Nested AI preferences. Each block arrived in its own schema:
+/// writing 47, documents 52, sheets 54, decks 56.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct AiSettings {
+    #[serde(default)]
+    pub writing: AiInlineSettings,
+    #[serde(default)]
+    pub documents: office_document_ai_types::DocumentAiSettings,
+    #[serde(default)]
+    pub sheets: SheetAiSettings,
+    #[serde(default)]
+    pub decks: DeckAiSettings,
+}
+
+/// Timeline preview quality (schema 49, Step 19a).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TimelinePreviewQuality {
+    Source,
+    #[serde(rename = "512")]
+    Edge512,
+    #[serde(rename = "960")]
+    Edge960,
+}
+
+fn default_timeline_quality() -> TimelinePreviewQuality {
+    TimelinePreviewQuality::Edge960
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineSettings {
+    #[serde(default = "default_timeline_quality")]
+    pub preview_quality: TimelinePreviewQuality,
+    #[serde(default = "default_true")]
+    pub snap_enabled: bool,
+    #[serde(default)]
+    pub proxy_enabled: bool,
+}
+
+impl Default for TimelineSettings {
+    fn default() -> Self {
+        Self {
+            preview_quality: default_timeline_quality(),
+            snap_enabled: true,
+            proxy_enabled: false,
+        }
+    }
+}
+
+/// Office editing (schema 50, Step 20a). Loading settings never grants a
+/// capability: the engine approval and the explicit switch stay separate.
+fn default_office_edit_idle() -> u16 {
+    5
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OfficeEditSettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub autosave_default: bool,
+    #[serde(default = "default_office_edit_idle")]
+    pub idle_minutes: u16,
+}
+
+impl Default for OfficeEditSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            autosave_default: false,
+            idle_minutes: default_office_edit_idle(),
+        }
+    }
+}
+
+/// Document editor preferences (schema 51, Step 20b).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DocumentEditorSettings {
+    #[serde(default)]
+    pub autosave_default: bool,
+    #[serde(default = "default_true")]
+    pub show_ruler: bool,
+    #[serde(default)]
+    pub show_navigation: bool,
+    #[serde(default = "default_true")]
+    pub spelling: bool,
+}
+
+impl Default for DocumentEditorSettings {
+    fn default() -> Self {
+        Self {
+            autosave_default: false,
+            show_ruler: true,
+            show_navigation: false,
+            spelling: true,
+        }
+    }
+}
+
+/// Sheet editor preferences (schema 53, Step 21a).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SheetEditorSettings {
+    #[serde(default = "default_true")]
+    pub show_formula_bar: bool,
+    #[serde(default = "default_true")]
+    pub show_gridlines: bool,
+    #[serde(default = "default_true")]
+    pub show_headings: bool,
+    #[serde(default = "default_sheet_zoom")]
+    pub default_zoom: f64,
+}
+
+fn default_sheet_zoom() -> f64 {
+    100.0
+}
+
+impl Default for SheetEditorSettings {
+    fn default() -> Self {
+        Self {
+            show_formula_bar: true,
+            show_gridlines: true,
+            show_headings: true,
+            default_zoom: default_sheet_zoom(),
+        }
+    }
+}
+
+/// Deck editor preferences (schema 55, Step 22a).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeckEditorSettings {
+    #[serde(default = "default_true")]
+    pub show_notes: bool,
+    #[serde(default)]
+    pub snap_to_grid: bool,
+    #[serde(default = "default_deck_aspect")]
+    pub default_aspect: String,
+    #[serde(default = "default_true")]
+    pub presenter_view: bool,
+}
+
+fn default_deck_aspect() -> String {
+    "wide".to_string()
+}
+
+impl Default for DeckEditorSettings {
+    fn default() -> Self {
+        Self {
+            show_notes: true,
+            snap_to_grid: false,
+            default_aspect: default_deck_aspect(),
+            presenter_view: true,
+        }
+    }
+}
+
 /// An extension as `open_with` stores it: 1 to 16 characters from a-z,
 /// 0-9, `_`, `+` and `-`.
 fn is_valid_extension_key(ext: &str) -> bool {
@@ -622,7 +1171,7 @@ fn is_valid_extension_key(ext: &str) -> bool {
             .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '_' | '+' | '-'))
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default = "default_schema_version")]
     pub schema_version: u32,
@@ -656,6 +1205,114 @@ pub struct Settings {
     pub reading: book_settings::ReadingSettings,
     #[serde(default)]
     pub conversion: ConversionSettings,
+    /// Schema 18 (Step 08c).
+    #[serde(default)]
+    pub privacy: privacy::PrivacySettings,
+    /// Schema 19 (Step 08d).
+    #[serde(default)]
+    pub updates: updates::UpdateSettings,
+    /// Schema 20 (Step 09a); schema 43 adds the two resident switches.
+    #[serde(default)]
+    pub startup: StartupSettings,
+    /// Schema 21 (Step 09c).
+    #[serde(default)]
+    pub tabs: TabsSettings,
+    /// Schema 22 (Step 09d).
+    #[serde(default)]
+    pub palette: PaletteSettings,
+    /// Schema 23 (Step 09f).
+    #[serde(default)]
+    pub transfers: TransferSettings,
+    /// Schema 24 (Step 09g).
+    #[serde(default)]
+    pub shelf: ShelfSettings,
+    /// Schema 25 (Step 09h).
+    #[serde(default)]
+    pub recovery: RecoverySettings,
+    /// Schema 26 (Step 09j).
+    #[serde(default)]
+    pub clipboard_history: clipboard_history_types::ClipboardHistorySettings,
+    /// Schema 27 (Step 09k).
+    #[serde(default)]
+    pub locked: locked_store::types::LockedSettings,
+    /// Schema 28 (Step 10a).
+    #[serde(default)]
+    pub theme_custom: fs_service::theme_data::ThemeCustomSettings,
+    /// Schema 29 (Step 10b).
+    #[serde(default)]
+    pub toolbar_custom: command_layout_types::ToolbarCustomSettings,
+    /// Schema 29 (Step 10b).
+    #[serde(default)]
+    pub keyboard_custom: keyboard_map_types::KeyboardCustomSettings,
+    /// Schema 30 (Step 10c).
+    #[serde(default)]
+    pub tab_options: preferences_validation::TabOptions,
+    /// Schema 30 (Step 10c).
+    #[serde(default)]
+    pub format_options: preferences_validation::FormatOptions,
+    /// Schema 30 (Step 10c).
+    #[serde(default)]
+    pub behavior: preferences_validation::BehaviorSettings,
+    /// Schema 32 (Step 10e).
+    #[serde(default)]
+    pub shell_custom: shell_custom_types::ShellCustomization,
+    /// Schema 33 (Step 10f).
+    #[serde(default)]
+    pub accessibility: accessibility_types::AccessibilitySettings,
+    /// Schema 34 (Step 11a).
+    #[serde(default)]
+    pub search: search_index::SearchSettings,
+    /// Schema 35 (Step 11b).
+    #[serde(default)]
+    pub views: crate::smart_view_types::ViewsSettings,
+    /// Schema 36 (Step 11c).
+    #[serde(default)]
+    pub folder_sizes: FolderSizeSettings,
+    /// Schema 37 (Step 12a).
+    #[serde(default)]
+    pub pack_catalog: PackCatalogSettings,
+    /// Schema 38 (Step 13).
+    #[serde(default)]
+    pub office_view: OfficeViewSettings,
+    /// Schema 39 (Step 14a).
+    #[serde(default)]
+    pub pdf_tools: PdfToolsSettings,
+    /// Schema 40 (Step 14b); schema 48 adds layers and selections.
+    #[serde(default)]
+    pub image_editor: ImageEditorSettings,
+    /// Schema 41 (Step 14c).
+    #[serde(default)]
+    pub local_ai: ai_runtime::types_ui::LocalAiSettings,
+    /// Schema 42 (Step 15).
+    #[serde(default)]
+    pub media_editor: MediaEditorSettings,
+    /// Schema 44 (Step 17a).
+    #[serde(default)]
+    pub assistant: crate::assistant_types::AssistantSettings,
+    /// Schema 45 (Step 17b).
+    #[serde(default)]
+    pub ai_actions: ai_action_types::AiActionsSettings,
+    /// Schema 46 (Step 17c).
+    #[serde(default)]
+    pub ai_search: ai_search_types::AiSearchSettings,
+    /// Schema 47 (Step 17d); 52/54/56 add documents, sheets and decks.
+    #[serde(default)]
+    pub ai: AiSettings,
+    /// Schema 49 (Step 19a).
+    #[serde(default)]
+    pub timeline: TimelineSettings,
+    /// Schema 50 (Step 20a).
+    #[serde(default)]
+    pub office_edit: OfficeEditSettings,
+    /// Schema 51 (Step 20b).
+    #[serde(default)]
+    pub document_editor: DocumentEditorSettings,
+    /// Schema 53 (Step 21a).
+    #[serde(default)]
+    pub sheet_editor: SheetEditorSettings,
+    /// Schema 55 (Step 22a).
+    #[serde(default)]
+    pub deck_editor: DeckEditorSettings,
 }
 
 impl Default for Settings {
@@ -677,6 +1334,42 @@ impl Default for Settings {
             ocr: ocr_types::OcrSettings::default(),
             reading: book_settings::ReadingSettings::default(),
             conversion: ConversionSettings::default(),
+            privacy: privacy::PrivacySettings::default(),
+            updates: updates::UpdateSettings::default(),
+            startup: StartupSettings::default(),
+            tabs: TabsSettings::default(),
+            palette: PaletteSettings::default(),
+            transfers: TransferSettings::default(),
+            shelf: ShelfSettings::default(),
+            recovery: RecoverySettings::default(),
+            clipboard_history: clipboard_history_types::ClipboardHistorySettings::default(),
+            locked: locked_store::types::LockedSettings::default(),
+            theme_custom: fs_service::theme_data::ThemeCustomSettings::default(),
+            toolbar_custom: command_layout_types::ToolbarCustomSettings::default(),
+            keyboard_custom: keyboard_map_types::KeyboardCustomSettings::default(),
+            tab_options: preferences_validation::TabOptions::default(),
+            format_options: preferences_validation::FormatOptions::default(),
+            behavior: preferences_validation::BehaviorSettings::default(),
+            shell_custom: shell_custom_types::ShellCustomization::default(),
+            accessibility: accessibility_types::AccessibilitySettings::default(),
+            search: search_index::SearchSettings::default(),
+            views: crate::smart_view_types::ViewsSettings::default(),
+            folder_sizes: FolderSizeSettings::default(),
+            pack_catalog: PackCatalogSettings::default(),
+            office_view: OfficeViewSettings::default(),
+            pdf_tools: PdfToolsSettings::default(),
+            image_editor: ImageEditorSettings::default(),
+            local_ai: ai_runtime::types_ui::LocalAiSettings::default(),
+            media_editor: MediaEditorSettings::default(),
+            assistant: crate::assistant_types::AssistantSettings::default(),
+            ai_actions: ai_action_types::AiActionsSettings::default(),
+            ai_search: ai_search_types::AiSearchSettings::default(),
+            ai: AiSettings::default(),
+            timeline: TimelineSettings::default(),
+            office_edit: OfficeEditSettings::default(),
+            document_editor: DocumentEditorSettings::default(),
+            sheet_editor: SheetEditorSettings::default(),
+            deck_editor: DeckEditorSettings::default(),
         }
     }
 }
@@ -766,6 +1459,18 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
     if !matches!(settings.conversion.concurrent_jobs, 1 | 2) {
         return Err(AppError::Validation(
             "conversion.concurrent_jobs must be 1 or 2".to_string(),
+        ));
+    }
+    if let Some(preset) = &settings.conversion.last_preset {
+        if uuid::Uuid::parse_str(preset).is_err() {
+            return Err(AppError::Validation(
+                "conversion.last_preset is not a UUID".to_string(),
+            ));
+        }
+    }
+    if !settings.conversion.prompt_for_losses {
+        return Err(AppError::Validation(
+            "conversion.prompt_for_losses must stay true".to_string(),
         ));
     }
     if settings.schema_version != CURRENT_SCHEMA {
@@ -879,6 +1584,10 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
     }
     gallery_types::validate_gallery_settings(&settings.gallery)
         .map_err(|code| AppError::Validation(format!("gallery settings: {code}")))?;
+    settings
+        .search
+        .validate()
+        .map_err(|_| AppError::Validation("search: invalid settings".to_string()))?;
     settings.ocr.validate().map_err(AppError::Validation)?;
     if let Some(error) = settings.reading.validate() {
         return Err(AppError::Validation(format!("reading: {error}")));
@@ -1008,6 +1717,206 @@ pub fn validate(settings: &Settings) -> Result<(), AppError> {
             "saved preset",
         )?;
     }
+    settings.privacy.validate().map_err(AppError::Validation)?;
+    settings.updates.validate().map_err(AppError::Validation)?;
+    check_layout_choice(
+        "startup",
+        "mode",
+        &settings.startup.mode,
+        &["home", "restore", "folder"],
+    )?;
+    if !settings.startup.folder.is_empty() {
+        validate_absolute_path(&settings.startup.folder).map_err(|_| {
+            AppError::Validation(format!(
+                "startup.folder {:?} is not an absolute path",
+                settings.startup.folder
+            ))
+        })?;
+    }
+    if settings.startup.start_with_windows && !settings.startup.stay_in_background {
+        return Err(AppError::Validation(
+            "startup.start_with_windows requires startup.stay_in_background".to_string(),
+        ));
+    }
+    if !(200..=2000).contains(&settings.tabs.drag_hover_ms) {
+        return Err(AppError::Validation(format!(
+            "unsupported tabs.drag_hover_ms {} (expected 200..2000)",
+            settings.tabs.drag_hover_ms
+        )));
+    }
+    if settings.palette.recent_ids.len() > PALETTE_MAX_RECENT_IDS
+        || settings.palette.recent_ids.iter().any(|id| {
+            id.is_empty() || id.chars().count() > PALETTE_MAX_ID_CHARS || id.contains('\0')
+        })
+    {
+        return Err(AppError::Validation("palette.invalid".to_string()));
+    }
+    if !(1..=2).contains(&settings.transfers.max_parallel) {
+        return Err(AppError::Validation(
+            "transfers.max_parallel must be 1 or 2".to_string(),
+        ));
+    }
+    if !settings.transfers.queue_per_volume {
+        return Err(AppError::Validation(
+            "transfers.queue_per_volume must stay true".to_string(),
+        ));
+    }
+    check_layout_choice(
+        "shelf",
+        "side",
+        &settings.shelf.side,
+        &["left", "right", "bottom"],
+    )?;
+    let (shelf_min, shelf_max) = if settings.shelf.side == "bottom" {
+        (SHELF_HEIGHT_MIN, SHELF_HEIGHT_MAX)
+    } else {
+        (SHELF_WIDTH_MIN, SHELF_WIDTH_MAX)
+    };
+    if settings.shelf.size < shelf_min || settings.shelf.size > shelf_max {
+        return Err(AppError::Validation(format!(
+            "shelf: size {} is outside {}..={} for side {}",
+            settings.shelf.size, shelf_min, shelf_max, settings.shelf.side
+        )));
+    }
+    settings.recovery.validate().map_err(AppError::Validation)?;
+    settings
+        .clipboard_history
+        .validate()
+        .map_err(AppError::Validation)?;
+    settings
+        .locked
+        .validate()
+        .map_err(|_| AppError::Validation("locked.auto_lock_minutes is invalid".to_string()))?;
+    fs_service::theme_data::validate_theme_custom_settings(&settings.theme_custom)
+        .map_err(|_| AppError::Validation("theme_custom is not valid".to_string()))?;
+    command_layout_types::validate_toolbar_custom_settings(&settings.toolbar_custom)
+        .map_err(AppError::Validation)?;
+    keyboard_map_types::validate_keyboard_custom_settings(&settings.keyboard_custom)
+        .map_err(AppError::Validation)?;
+    preferences_validation::validate_tab_options(&settings.tab_options)
+        .map_err(AppError::Validation)?;
+    preferences_validation::validate_format_options(&settings.format_options)
+        .map_err(AppError::Validation)?;
+    preferences_validation::validate_behavior(&settings.behavior).map_err(AppError::Validation)?;
+    shell_custom_validation::validate_shell_custom(&settings.shell_custom)
+        .map_err(AppError::Validation)?;
+    accessibility_types::validate_accessibility_settings(&settings.accessibility)
+        .map_err(AppError::Validation)?;
+    settings
+        .search
+        .validate()
+        .map_err(|error| AppError::Validation(error.code().to_string()))?;
+    if let Some(unix) = settings.pack_catalog.last_checked_unix {
+        if unix > 9_007_199_254_740_991 {
+            return Err(AppError::Validation(
+                "pack_catalog.last_checked_unix is unsafe".to_string(),
+            ));
+        }
+    }
+    crate::background_policy::validate_quiet_hours(&crate::background_policy::QuietHours {
+        enabled: settings.background.quiet_hours.enabled,
+        start_minute: settings.background.quiet_hours.start_minute,
+        end_minute: settings.background.quiet_hours.end_minute,
+    })
+    .map_err(AppError::Validation)?;
+    crate::background_policy::validate_cpu_percent(settings.background.cpu_percent)
+        .map_err(AppError::Validation)?;
+    if settings.office_view.idle_seconds != default_office_idle() {
+        return Err(AppError::Validation(
+            "office_view.idle_seconds is fixed at 60".to_string(),
+        ));
+    }
+    settings.pdf_tools.validate()?;
+    if !matches!(settings.image_editor.default_mode.as_str(), "edit" | "draw") {
+        return Err(AppError::Validation(
+            "image_editor.default_mode is invalid".to_string(),
+        ));
+    }
+    if !(64..=256).contains(&settings.image_editor.history_limit_mb) {
+        return Err(AppError::Validation(
+            "image_editor.history_limit_mb is invalid".to_string(),
+        ));
+    }
+    if settings.image_editor.selection_tolerance > 100 {
+        return Err(AppError::Validation(
+            "image_editor.selection_tolerance is invalid".to_string(),
+        ));
+    }
+    settings
+        .local_ai
+        .validate()
+        .map_err(|_| AppError::Validation("settings.local_ai".to_string()))?;
+    if !matches!(
+        settings.media_editor.preview_quality.as_str(),
+        "source" | "960" | "512"
+    ) {
+        return Err(AppError::Validation(
+            "media_editor.preview_quality is invalid".to_string(),
+        ));
+    }
+    settings
+        .assistant
+        .validate()
+        .map_err(AppError::Validation)?;
+    settings
+        .ai_actions
+        .validate()
+        .map_err(AppError::Validation)?;
+    settings
+        .ai_search
+        .validate(&settings.search.roots, &[])
+        .map_err(|error| AppError::Validation(error.code().to_string()))?;
+    {
+        let mut seen: Vec<office_document_ai_types::DocumentAiAction> = Vec::new();
+        for action in &settings.ai.documents.experimental_actions {
+            if seen.contains(action) {
+                return Err(AppError::Validation(
+                    "ai.documents.experimental_actions lists an action twice".to_string(),
+                ));
+            }
+            seen.push(*action);
+        }
+    }
+    if !settings.sheet_editor.default_zoom.is_finite()
+        || !(25.0..=400.0).contains(&settings.sheet_editor.default_zoom)
+    {
+        return Err(AppError::Validation(
+            "sheet_editor.default_zoom must be 25..=400".to_string(),
+        ));
+    }
+    {
+        let mut seen: Vec<office_sheet_ai_types::SheetAiAction> = Vec::new();
+        for action in &settings.ai.sheets.experimental_actions {
+            if seen.contains(action) {
+                return Err(AppError::Validation(
+                    "ai.sheets.experimental_actions lists an action twice".to_string(),
+                ));
+            }
+            seen.push(action.clone());
+        }
+    }
+    if !matches!(settings.deck_editor.default_aspect.as_str(), "wide") {
+        return Err(AppError::Validation(
+            "deck_editor.default_aspect must stay wide".to_string(),
+        ));
+    }
+    {
+        let allowed = ["create", "add", "shorten", "notes", "layout", "style"];
+        let mut seen = Vec::new();
+        for action in &settings.ai.decks.experimental_actions {
+            if !allowed.contains(&action.as_str()) || seen.contains(action) {
+                return Err(AppError::Validation(
+                    "ai.decks.experimental_actions is invalid".to_string(),
+                ));
+            }
+            seen.push(action.clone());
+        }
+    }
+    if settings.office_edit.idle_minutes != default_office_edit_idle() {
+        return Err(AppError::Validation(
+            "office_edit.idle_minutes is fixed at 5".to_string(),
+        ));
+    }
     Ok(())
 }
 
@@ -1024,27 +1933,17 @@ fn migrate_v1(obj: &serde_json::Map<String, serde_json::Value>) -> Settings {
         .filter(|m| matches!(*m, "light" | "dark" | "system"))
         .unwrap_or("system")
         .to_string();
-    Settings {
-        schema_version: CURRENT_SCHEMA,
+    let mut settings = Settings {
         language,
         theme: ThemeSettings {
             mode,
             ..ThemeSettings::default()
         },
-        explorer: ExplorerViewSettings::default(),
-        files: FileSettings::default(),
-        open: OpenSettings::default(),
-        layout: LayoutSettings::default(),
-        appearance: AppearanceSettings::default(),
-        versions: VersionSettings::default(),
-        templates: TemplateSettings::default(),
-        background: background::BackgroundSettings::default(),
-        cache: background::CacheSettings::default(),
-        gallery: gallery_types::GallerySettings::default(),
-        ocr: ocr_types::OcrSettings::default(),
-        reading: book_settings::ReadingSettings::default(),
-        conversion: ConversionSettings::default(),
-    }
+        ..Settings::default()
+    };
+    // A v1 file predates size options and keeps the legacy KB/MB labels.
+    settings.format_options.size_base = "legacy".to_string();
+    settings
 }
 
 /// Schema 3 had no file-operation choices; schema 4 adds them with the
@@ -1054,6 +1953,7 @@ fn migrate_v3(value: serde_json::Value) -> Settings {
         Ok(mut settings) => {
             settings.schema_version = CURRENT_SCHEMA;
             settings.files = FileSettings::default();
+            settings.format_options.size_base = "legacy".to_string();
             if validate(&settings).is_ok() {
                 settings
             } else {
@@ -1071,6 +1971,30 @@ fn migrate_v2(value: serde_json::Value) -> Settings {
         Ok(mut settings) => {
             settings.schema_version = CURRENT_SCHEMA;
             settings.explorer = ExplorerViewSettings::default();
+            settings.format_options.size_base = "legacy".to_string();
+            if validate(&settings).is_ok() {
+                settings
+            } else {
+                Settings::default()
+            }
+        }
+        Err(_) => Settings::default(),
+    }
+}
+
+/// Schema 27 predates the day/night section (schema 28): keep the actual
+/// light/dark choices and the legacy size labels while adding the new
+/// defaults.
+fn migrate_v27(value: serde_json::Value) -> Settings {
+    match serde_json::from_value::<Settings>(value) {
+        Ok(mut settings) => {
+            settings.schema_version = CURRENT_SCHEMA;
+            settings.theme_custom = fs_service::theme_data::ThemeCustomSettings::from_legacy(
+                &settings.theme.light_theme,
+                &settings.theme.dark_theme,
+                &settings.theme.mode,
+            );
+            settings.format_options.size_base = "legacy".to_string();
             if validate(&settings).is_ok() {
                 settings
             } else {
@@ -1082,11 +2006,16 @@ fn migrate_v2(value: serde_json::Value) -> Settings {
 }
 
 /// Older files keep everything they have; fields added since then
-/// come from their serde defaults. Invalid files fall back to defaults.
+/// come from their serde defaults. A file without `format_options`
+/// predates schema 30 and keeps the legacy KB/MB labels.
 fn migrate_keep_known(value: serde_json::Value) -> Settings {
+    let legacy_sizes = value.get("format_options").is_none();
     match serde_json::from_value::<Settings>(value) {
         Ok(mut settings) => {
             settings.schema_version = CURRENT_SCHEMA;
+            if legacy_sizes {
+                settings.format_options.size_base = "legacy".to_string();
+            }
             if validate(&settings).is_ok() {
                 settings
             } else {
@@ -1114,8 +2043,8 @@ pub fn migrate(value: serde_json::Value) -> Result<Settings, AppError> {
                     _ => Ok(Settings::default()),
                 }
             }
-            Some(4) | Some(5) | Some(6) | Some(7) | Some(8) | Some(9) | Some(10) | Some(11)
-            | Some(12) | Some(13) | Some(14) | Some(15) => Ok(migrate_keep_known(value.clone())),
+            Some(27) => Ok(migrate_v27(value.clone())),
+            Some(v) if (4..=55).contains(&v) => Ok(migrate_keep_known(value.clone())),
             Some(3) => Ok(migrate_v3(value.clone())),
             Some(2) => Ok(migrate_v2(value.clone())),
             Some(1) => Ok(migrate_v1(obj)),
@@ -1468,6 +2397,19 @@ fn install_panic_hook(logs_dir: PathBuf) {
 /// Written by the frontend (`set_maximize_rect`) on mount and on window
 /// resize; read by the window subclass below on every `WM_NCHITTEST`.
 static MAXIMIZE_RECT: Mutex<Option<[f64; 4]>> = Mutex::new(None);
+static TITLEBAR_DRAG_RECT: Mutex<Option<[f64; 4]>> = Mutex::new(None);
+
+#[tauri::command]
+fn set_titlebar_drag_rect(window: WebviewWindow, rect: Option<[f64; 4]>) -> Result<(), String> {
+    ensure_main(window.label())?;
+    if !window_chrome::valid_caption_rect(rect) {
+        return Err("ops.invalid_request".to_string());
+    }
+    *TITLEBAR_DRAG_RECT
+        .lock()
+        .map_err(|_| "ops.invalid_request".to_string())? = rect;
+    Ok(())
+}
 
 /// Half-open hit test: left/top edges inclusive, right/bottom exclusive,
 /// so two buttons sharing an edge can never both claim the same pixel.
@@ -1541,7 +2483,9 @@ unsafe extern "system" fn snap_subclass_proc(
     use windows::Win32::Foundation::{LRESULT, POINT};
     use windows::Win32::Graphics::Gdi::ScreenToClient;
     use windows::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass};
-    use windows::Win32::UI::WindowsAndMessaging::{HTMAXBUTTON, WM_NCDESTROY, WM_NCHITTEST};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        HTCAPTION, HTMAXBUTTON, WM_NCDESTROY, WM_NCHITTEST,
+    };
 
     if msg == WM_NCHITTEST {
         // `lparam` packs the cursor position in screen coordinates as two
@@ -1562,6 +2506,14 @@ unsafe extern "system" fn snap_subclass_proc(
                 .is_some_and(|rect| point_in_rect(f64::from(point.x), f64::from(point.y), rect));
             if inside {
                 return LRESULT(HTMAXBUTTON as isize);
+            }
+            let caption = TITLEBAR_DRAG_RECT
+                .lock()
+                .ok()
+                .and_then(|stored| *stored)
+                .is_some_and(|rect| point_in_rect(f64::from(point.x), f64::from(point.y), rect));
+            if caption {
+                return LRESULT(HTCAPTION as isize);
             }
         }
     } else if msg == WM_NCDESTROY {
@@ -1590,9 +2542,42 @@ pub struct AppState {
 }
 
 impl AppState {
-    /// The app's data folder: caches, versions, helper profiles (R-BG-2).
+    /// The active profile's data folder: settings, sessions, caches,
+    /// versions and helper profiles (Step 10c). The catalog and shared
+    /// packs stay at the base location outside this folder.
     pub fn data_dir(&self) -> &std::path::Path {
         &self.data_dir
+    }
+
+    /// The Step 11b views section, read under the same lock as every setting.
+    pub fn views_settings(&self) -> Result<crate::smart_view_types::ViewsSettings, String> {
+        self.settings
+            .lock()
+            .map(|settings| settings.views.clone())
+            .map_err(|_| "views.unavailable".to_string())
+    }
+
+    /// Folder size measurement switches (schema 36). A lock failure keeps
+    /// both walks and network roots off.
+    pub fn folder_size_options(&self) -> folder_sizes::FolderSizeOptions {
+        match self.settings.lock() {
+            Ok(settings) => folder_sizes::FolderSizeOptions {
+                enabled: settings.folder_sizes.enabled,
+                network: settings.folder_sizes.network,
+            },
+            Err(_) => folder_sizes::FolderSizeOptions {
+                enabled: false,
+                network: false,
+            },
+        }
+    }
+
+    /// Schema 23: the default for `TransferRequest.verify` when it is omitted.
+    pub fn verify_copies(&self) -> bool {
+        self.settings
+            .lock()
+            .map(|settings| settings.transfers.verify_copies)
+            .unwrap_or(false)
     }
 }
 
@@ -1631,9 +2616,13 @@ fn save_settings(
     window: WebviewWindow,
     app: AppHandle,
     state: State<'_, AppState>,
+    safe: State<'_, safe_mode::SafeMode>,
     settings: Settings,
 ) -> Result<Settings, String> {
     ensure_main(window.label())?;
+    // Step 09h: safe mode uses default settings in memory and never
+    // rewrites the saved file (the original bytes stay for the restart).
+    safe.settings_writable()?;
     validate(&settings).map_err(String::from)?;
     save_settings_to_dir(&state.data_dir, &settings).map_err(String::from)?;
     let mut cached = state
@@ -1646,22 +2635,75 @@ fn save_settings(
     Ok(settings)
 }
 
+/// Saves one custom keyboard map, or activates a builtin preset, through the
+/// ordinary atomic settings save (Step 10b E4). The map is validated and
+/// normalized again here; builtin presets never enter custom_maps, so preset
+/// activation stays on the settings path. Returns the stored map.
+#[tauri::command]
+fn keyboard_map_save(
+    window: WebviewWindow,
+    app: AppHandle,
+    state: State<'_, AppState>,
+    safe: State<'_, safe_mode::SafeMode>,
+    map: keyboard_map_types::KeyboardMap,
+) -> Result<keyboard_map_types::KeyboardMap, String> {
+    ensure_main(window.label())?;
+    // Step 09h: safe mode keeps the saved settings read-only, so a custom
+    // keyboard map is refused before it can reach settings.json.
+    safe.settings_writable()?;
+    let mut cached = state
+        .settings
+        .lock()
+        .map_err(|_| "settings lock poisoned".to_string())?;
+    let mut next = cached.clone();
+    let saved = keyboard_map_types::apply_keyboard_map(&mut next.keyboard_custom, &map)?;
+    // save_settings_to_dir validates again and replaces settings.json
+    // atomically through atomic_write; the cached session follows only after
+    // the file is written.
+    save_settings_to_dir(&state.data_dir, &next).map_err(String::from)?;
+    *cached = next.clone();
+    drop(cached);
+    preview_setup::apply_settings(&app, &next);
+    Ok(saved)
+}
+
 #[tauri::command]
 fn get_session(
     window: WebviewWindow,
     state: State<'_, AppState>,
 ) -> Result<Option<SessionState>, String> {
     ensure_main(window.label())?;
+    // Step 09h: reading the session is read-only. The launch becomes ready
+    // only through `startup_ready` after the restored tabs painted and clean
+    // only on a normal app exit, so a failed or repeated startup restore can
+    // never hide a crash loop.
     Ok(load_session_from_dir(&state.data_dir))
+}
+
+/// Step 09h: the first successful paint/session restore. A reload calls it
+/// again; `StartupHealth::mark_ready` is idempotent and never downgrades a
+/// clean launch. The first call returns the 30-second deadline result; a
+/// marker write error leaves the launch unclean (fail-closed).
+#[tauri::command]
+fn startup_ready(
+    window: WebviewWindow,
+    health: State<'_, startup_health::StartupHealth>,
+) -> Result<bool, String> {
+    ensure_main(window.label())?;
+    health.mark_ready(unix_now())
 }
 
 #[tauri::command]
 fn save_session(
     window: WebviewWindow,
     state: State<'_, AppState>,
+    safe: State<'_, safe_mode::SafeMode>,
     session: SessionState,
 ) -> Result<(), String> {
     ensure_main(window.label())?;
+    // Step 09h: safe mode keeps the saved session read-only; the in-memory
+    // tabs still work and only the explicit "Restart normally" leaves it.
+    safe.state_writable()?;
     save_session_to_dir(&state.data_dir, &session).map_err(String::from)
 }
 
@@ -3075,7 +4117,50 @@ fn watch_stop(window: WebviewWindow, state: State<'_, AppState>) -> Result<(), S
     }
     Ok(())
 }
+
+/// Fixed switches startup consumes itself: `--background` (Step 16) and
+/// every helper/static flag handled before instance arbitration. A helper
+/// launch exits before the queue exists, so one that still reaches a normal
+/// launch is dropped instead of being read as a file path (Step 09c D10).
+fn is_startup_switch(argument: &str) -> bool {
+    if argument == "--background" {
+        return true;
+    }
+    #[cfg(windows)]
+    {
+        if argument == clipboard_image_helper::HELPER_FLAG {
+            return true;
+        }
+    }
+    argument == convert_helper::HELPER_FLAG
+        || argument == office_ooxml_worker::FLAG
+        || argument == office_ooxml_check::FLAG
+        || argument == raw_helper::HELPER_FLAG
+        || argument == pdf_helper::HELPER_FLAG
+        || argument == extra_view_helper::HELPER_FLAG
+        || argument == ocr_helper::HELPER_FLAG
+        || argument == webview_helper::HELPER_FLAG
+        || argument == thumbnail_helper::HELPER_FLAG
+        || argument == metadata_helper::HELPER_FLAG
+        || argument == classic_menu::HELPER_FLAG
+        || argument == archive_helper::HELPER_FLAG
+        || argument == pack_helper::HELPER_FLAG
+        || argument == font_helper::HELPER_FLAG
+        || argument == office_sheet::HELPER_FLAG
+        || argument == disk_broker::HELPER_FLAG
+        || argument == privacy_helper::HELPER_FLAG
+        || argument == file_locks::HELPER_FLAG
+        || argument == artifact_inventory::HELPER_FLAG
+        || argument == usn_index_helper::HELPER_FLAG
+        || argument == portable::MARKER_HELPER_FLAG
+        || argument == installer_data::RECYCLE_DATA_FLAG
+        || argument == integration_commands::RESTORE_FLAG
+}
+
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some(office_ooxml_check::FLAG) {
+        std::process::exit(office_ooxml_check::main());
+    }
     if std::env::args().nth(1).as_deref() == Some(convert_helper::HELPER_FLAG) {
         std::process::exit(convert_helper::run_helper());
     }
@@ -3104,6 +4189,7 @@ fn main() {
             Some("model") => webview_helper_types::WebviewHelperKind::Model,
             Some("psd") => webview_helper_types::WebviewHelperKind::Psd,
             Some("pdf_write") => webview_helper_types::WebviewHelperKind::PdfWrite,
+            Some("office_quick") => webview_helper_types::WebviewHelperKind::OfficeQuick,
             Some("presentation") => webview_helper_types::WebviewHelperKind::Presentation,
             _ => std::process::exit(2),
         };
@@ -3133,18 +4219,171 @@ fn main() {
     if std::env::args().nth(1).as_deref() == Some(archive_helper::HELPER_FLAG) {
         std::process::exit(archive_helper::run_helper());
     }
+    // The pack helper (Step 12a H04) parses one signed pack ZIP in its own
+    // memory-limited process and exits; the app process never extracts it.
+    if std::env::args().nth(1).as_deref() == Some(pack_helper::HELPER_FLAG) {
+        std::process::exit(pack_helper::run_helper());
+    }
+    if std::env::args().nth(1).as_deref() == Some(office_ooxml_worker::FLAG) {
+        std::process::exit(office_ooxml_worker::helper());
+    }
     // The font helper (Step 06f) reads font files in its own process, inside
     // a memory-limited job.
     if std::env::args().nth(1).as_deref() == Some(font_helper::HELPER_FLAG) {
         std::process::exit(font_helper::run_helper());
     }
-    let data_dir = resolve_data_dir();
-    let _ = fs::create_dir_all(&data_dir);
+    // The sheet helper (Step 13) is this executable with a static flag: it
+    // reads one bounded request line on stdin, answers once on stdout and
+    // exits, inside the parent's 256 MiB / 5 s helper limits. The workbook
+    // path travels in the request, never on the command line.
+    if std::env::args().nth(1).as_deref() == Some(office_sheet::HELPER_FLAG) {
+        std::process::exit(match office_sheet::run_sheet_helper() {
+            Ok(()) => 0,
+            Err(code) => {
+                eprintln!("{code}");
+                2
+            }
+        });
+    }
+    // Helpers integrated after Step 08a are the same executable with a
+    // static flag; each one exits before any window or app state exists.
+    if std::env::args().nth(1).as_deref() == Some(disk_broker::HELPER_FLAG) {
+        let pipe_name = std::env::args().nth(2).unwrap_or_default();
+        let parent_pid = std::env::args()
+            .nth(3)
+            .and_then(|value| value.parse::<u32>().ok())
+            .unwrap_or(0);
+        let parent_ticks = std::env::args().nth(4).unwrap_or_default();
+        std::process::exit(
+            match disk_broker::run_disk_broker(&pipe_name, parent_pid, &parent_ticks) {
+                Ok(()) => 0,
+                Err(_) => 2,
+            },
+        );
+    }
+    if std::env::args().nth(1).as_deref() == Some(privacy_helper::HELPER_FLAG) {
+        std::process::exit(privacy_helper::run_privacy_helper());
+    }
+    if std::env::args().nth(1).as_deref() == Some(file_locks::HELPER_FLAG) {
+        std::process::exit(file_locks::run_helper());
+    }
+    if std::env::args().nth(1).as_deref() == Some(artifact_inventory::HELPER_FLAG) {
+        std::process::exit(artifact_inventory::run_helper());
+    }
+    if std::env::args().nth(1).as_deref() == Some(usn_index_helper::HELPER_FLAG) {
+        std::process::exit(match usn_index_helper::run() {
+            Ok(()) => 0,
+            Err(code) => {
+                eprintln!("{code}");
+                2
+            }
+        });
+    }
+    if std::env::args().nth(1).as_deref() == Some(portable::MARKER_HELPER_FLAG) {
+        std::process::exit(portable::run_marker_helper());
+    }
+    if std::env::args().nth(1).as_deref() == Some(installer_data::RECYCLE_DATA_FLAG) {
+        std::process::exit(installer_data::run_helper());
+    }
+    if std::env::args().nth(1).as_deref() == Some(integration_commands::RESTORE_FLAG) {
+        std::process::exit(integration_commands::run_restore_helper());
+    }
+    // Step 09c D10: the helper flags above are handled before arbitration
+    // and can never travel through the activation pipe. The per-user mutex
+    // decides the primary; a second instance forwards only validated
+    // absolute file paths and exits after the ack.
+    let mut activation_args: Vec<String> = std::env::args().skip(1).collect();
+    // Step 16: `--background` is the fixed flag the owned HKCU Run value
+    // writes. Parse it before arbitration and remove it, so a second
+    // instance never forwards it as if it were a file path.
+    let background_start = activation_args.iter().any(|arg| arg == "--background");
+    activation_args.retain(|arg| arg != "--background");
+    let _instance_guard = match activation_security::acquire_instance() {
+        Ok(activation_security::Instance::Primary(guard)) => Some(guard),
+        Ok(activation_security::Instance::Secondary) => {
+            activation_pipe::run_secondary(&activation_args)
+        }
+        Err(_) => None,
+    };
+    // Step 10c: resolve the portable/installed base and then the active
+    // profile before any profile-owned folder is opened. The catalog is
+    // read-only here: a missing file is the fresh default, and a damaged
+    // one keeps its bytes while the legacy default root keeps the app
+    // usable.
+    let installed_data_dir = absolute_data_dir(resolve_data_dir());
+    let app_dir = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(Path::to_path_buf))
+        .unwrap_or_else(|| installed_data_dir.clone());
+    let mut location = portable::locate(&app_dir, &installed_data_dir).unwrap_or_else(|error| {
+        eprintln!("portable location: {error}");
+        portable::PortableLocation {
+            app_dir: app_dir.clone(),
+            data_dir: installed_data_dir.clone(),
+            portable: false,
+            writable: portable::writable_preflight(&installed_data_dir),
+        }
+    });
+    let base_dir = location.data_dir.clone();
+    let _ = fs::create_dir_all(&base_dir);
+    // `locate` probes before the base may exist; check the created folder so
+    // a nested data location is not mistaken for a read-only one.
+    location.writable = portable::writable_preflight(&base_dir);
+    let catalog = profile_catalog::load_catalog(&base_dir).unwrap_or_else(|error| {
+        eprintln!("profile catalog: {error}");
+        profile_types::ProfileCatalog::new(profile_types::now_unix())
+    });
+    let selection = profile_switch::startup_selection(&catalog).unwrap_or_else(|error| {
+        eprintln!("profile selection: {error}");
+        profile_switch::StartupSelection {
+            profile_id: profile_types::DEFAULT_PROFILE_ID.to_string(),
+            pending: false,
+        }
+    });
+    let mut opened_profile = selection.profile_id.clone();
+    let startup_was_pending = selection.pending;
+    let mut active_root =
+        profile_root::resolve_profile_root_for(&location, &catalog, &opened_profile)
+            .expect("resolve the active profile root");
+    if profile_root::ensure_profile_writable(&location, &active_root).is_err()
+        && startup_was_pending
+    {
+        // A pending target that cannot store data must not become active:
+        // clear the marker and keep the previous profile (Step 10c).
+        let _ = profile_switch::commit_startup_profile(&base_dir, &opened_profile, false);
+        opened_profile = catalog.active_id.clone();
+        active_root = profile_root::resolve_profile_root_for(&location, &catalog, &opened_profile)
+            .expect("resolve the previous profile root");
+        let _ = profile_root::ensure_profile_writable(&location, &active_root);
+    }
+    let data_dir = active_root.profile_dir.clone();
     let logs = logs_dir(&data_dir);
     let _ = fs::create_dir_all(&logs);
+    // Step 09h: record this launch before any settings, session, cleanup or
+    // window work, so an early crash is still evidence and the decision sees
+    // only earlier launches. A marker that cannot be written never blocks
+    // startup: the decision already computed in memory is used, so a failed
+    // write can neither invent a clean launch nor hide a recorded crash loop.
+    let startup_health = startup_health::StartupHealth::open(&data_dir);
+    let startup_decision = match startup_health.begin_launch(unix_now()) {
+        Ok(decision) => decision,
+        Err(error) => {
+            eprintln!("startup health: {error}");
+            startup_health.decision()
+        }
+    };
+    // The local name never shadows the `safe_mode` module, whose commands
+    // are still registered by path below.
+    let safe_mode_state = safe_mode::SafeMode::new(startup_decision.failed_starts);
     // Copies of files opened from archives are the app's own temporary
     // files; the ones a day old go at every start (Step 06d).
     archive::start_cleanup(data_dir.clone());
+    // Clean recovery records past their seven-day retention go at every
+    // start, then once a day while the app runs (Step 09h).
+    recovery_store::start_cleanup(data_dir.clone());
+    // Recovered plaintext copies are trimmed to their 1 GiB budget before any
+    // window or grant exists; this must never run while the app is in use.
+    let _ = recovery_open::cleanup_open_copies(&data_dir);
     install_panic_hook(logs);
     if std::env::var_os("ADPERASTRA_FORCE_CRASH").is_some() {
         panic!("forced crash (test)");
@@ -3165,32 +4404,199 @@ fn main() {
             )),
         ))
         .expect("register snapshot resolver");
+    // Integrated states (steps after 08a). Each one is the single app-wide
+    // instance; the 07a-08a cache, jobs and grant registries stay the ones
+    // `preview_setup` and the existing builder entries already create.
+    // Step 10c: every profile-owned service below receives the resolved
+    // profile root; only the catalog and shared engine packs stay at the
+    // base.
+    let state_profile_dir = data_dir.clone();
+    let shared_packs_dir = active_root.shared_packs_dir.clone();
+    // The Office preview release pins its signed offline catalog public key.
+    // A portable debug build may explicitly choose a separate test catalog.
+    let pack_public_key = if cfg!(debug_assertions) && location.portable {
+        option_env!("ADPERASTRA_LOCAL_OFFICE_PACK_PUBLIC_KEY")
+            .unwrap_or(include_str!("../../assets/office-preview-pack.pub").trim())
+    } else {
+        include_str!("../../assets/office-preview-pack.pub").trim()
+    };
+    let transfer_history = Arc::new(Mutex::new(transfer_history::TransferHistory::default()));
+    let transfer_coordinator = Arc::new(transfer_control::TransferCoordinator::default());
+    transfer_coordinator.set_history(Arc::clone(&transfer_history));
+    let activation_queue = Arc::new(activation::ActivationQueue::new());
+    // Step 09c D9: a primary launch that carries file paths is the initial
+    // activation. It goes through the same parser, request shape and bounded
+    // queue as a second instance, and stays queued until `activation_ready`
+    // drains it after the window listener (and the helpers it needs) exist,
+    // so nothing opens while the window is still starting.
+    if let Some(request) =
+        activation::initial_activation_request(&activation_args, is_startup_switch)
+    {
+        if let Err(error) = activation::process_activation(request, &activation_queue) {
+            eprintln!("activation: {error}");
+        }
+    }
+    let snapshot_authority: Arc<dyn documents::SnapshotAuthorityPort> = export_snapshots.clone();
+    let snapshot_port: Arc<dyn documents::SnapshotPort> = export_snapshots.clone();
+    let snapshot_upload: Arc<dyn documents::SnapshotUploadPort> = export_snapshots.clone();
+    let document_store = Arc::new(documents::DocumentStore::new(
+        snapshot_authority,
+        snapshot_port,
+        snapshot_upload,
+    ));
+    let transfer_source: Arc<dyn content_transfer::TransferSourcePort> = document_store.clone();
+    let transfer_snapshot: Arc<dyn content_transfer::TransferSnapshotPort> =
+        export_snapshots.clone();
+    let content_transfers = Arc::new(content_transfer::ContentTransfers::new(
+        transfer_source,
+        transfer_snapshot,
+    ));
+    let storage_providers = storage::StorageProviders::new();
+    // The semantic tables are the only implemented provider so far; every
+    // other category stays absent instead of reporting invented bytes.
+    let _ = storage_providers.register(Arc::new(
+        ai_semantic_storage::AiSemanticStorageProvider::new(&state_profile_dir),
+    ));
+    // Pack download partials live under the shared packs root (Step 12a).
+    let _ = storage_providers.register(Arc::new(storage::PackDownloadsProvider::new(
+        &shared_packs_dir,
+    )));
+    let exe_dir = app_dir.clone();
+    // Step 10c: profile commands resolve the catalog against the same base
+    // location startup used; the resolved root above never replaces it, so
+    // `profiles.json` stays at the base.
+    let profile_service = profile_root::ProfileServiceState {
+        location,
+        switch: profile_switch::ProfileSwitchState::default(),
+    };
     tauri::Builder::default()
         .manage(AppState {
             data_dir,
             settings: Mutex::new(initial_settings),
             list_jobs: Mutex::new(HashMap::new()),
             file_jobs: Mutex::new(HashMap::new()),
-            transfer_history: Arc::new(Mutex::new(transfer_history::TransferHistory::default())),
+            transfer_history: Arc::clone(&transfer_history),
             explorer_state_lock: Mutex::new(()),
             watch: Mutex::new(None),
             watch_next_id: AtomicU64::new(0),
         })
         .manage(Arc::new(files::FileGrants::default()))
         .manage(folder_views::FolderViewsLock::default())
+        .manage(folder_customization_store::FolderCustomizationLock::default())
         .manage(jobs::Jobs::default())
+        .manage(setups::SetupPreviews::default())
+        .manage(bulk_rename::RenamePlans::default())
         .manage(archive::ArchiveSessions::default())
         .manage(archive_passwords::ArchivePasswords::default())
         .manage(data_views::DataSessions::default())
         .manage(gallery::GallerySessions::default())
         .manage(export_snapshots)
+        .manage(image_project_jobs::ProjectPayloadSessions::default())
         .manage(convert_jobs::ConvertGate::default())
         .manage(convert_reports::ConversionReports::default())
         .manage(pdf_resolvers)
         .manage(pdf_sessions)
         .manage(ocr::OcrService::new())
+        .manage(transfer_coordinator)
+        .manage(activation_queue)
+        .manage(document_store)
+        .manage(content_transfers)
+        .manage(storage_providers)
+        .manage(profile_service)
+        .manage(startup_health)
+        .manage(safe_mode_state)
+        .manage(Arc::new(
+            duplicate_cleanup::DuplicateCleanupService::default(),
+        ))
+        .manage(Arc::new(duplicates::DuplicatesState::new()))
+        .manage(Arc::new(folder_sizes::FolderSizeState::new(
+            state_profile_dir.clone(),
+        )))
+        .manage(Arc::new(storage_scan::StorageState::new(
+            state_profile_dir.clone(),
+        )))
+        .manage(Arc::new(waveforms::WaveformService::default()))
+        .manage(Arc::new(media_recipe_export::MediaRecipeExport::default()))
+        .manage(Arc::new(proxy::ProxyService::default()))
+        .manage(Arc::new(local_ai_artifacts::AiArtifactStore::default()))
+        .manage(search_index::SearchIndexState::new(
+            state_profile_dir.clone(),
+        ))
+        .manage(integrated_setup::ai_semantic_state(
+            state_profile_dir.clone(),
+        ))
+        .manage(ai_extraction_runtime::AiExtractionRuntime::default())
+        .manage(assistant::AssistantService::new(
+            assistant_types::AssistantSettings::default(),
+            None,
+            None,
+        ))
+        // History is off until the assistant settings coordinator enables
+        // it; a disabled store reads and writes no bytes.
+        .manage(assistant_history_store::HistoryStore::new(
+            state_profile_dir.clone(),
+            Arc::new(assistant_credentials::WindowsDpapi),
+            false,
+        ))
+        // Step 17a provider/outbound states. The native editor, origin prompt,
+        // outbound approval and inference host are design adapters that are
+        // not registered yet. Meta Test/List has a bounded native transport;
+        // while another port is `None`
+        // its command fails closed instead of inventing a result. The
+        // credential store is registered in `setup` for the resolved active
+        // profile root, so the default profile and UUID profiles both work.
+        .manage(assistant_provider::ProviderConfig::new(Some(Arc::new(
+            assistant_http::MetaHttp,
+        ))))
+        .manage(assistant_provider::CredentialEditorState::default())
+        .manage(assistant_provider::OriginPromptState::default())
+        .manage(assistant_outbound::OutboundRegistry::default())
+        .manage(assistant_outbound::OutboundApprovalState::default())
+        .manage(assistant_outbound::InferenceRuntime::new(None))
+        // Step 17a action drafts. No native confirmation dialog or producer
+        // execution adapter is registered yet, so Apply fails closed instead
+        // of inventing a write; Preview and Cancel stay on the draft store.
+        .manage(assistant_actions::AssistantActionState::new(None, None))
+        .manage(conversion_presets::ConversionPresetsStore::from_data_dir(
+            &state_profile_dir,
+        ))
+        .manage(conversion_documents::DocumentBlockPages::default())
+        .manage(diagnostics_sessions::DiagnosticsSessions::default())
+        .manage(integration_commands::IntegrationState::new(
+            exe_dir,
+            env!("CARGO_PKG_VERSION").to_string(),
+        ))
+        .manage(map_tiles::MapViewLeases::default())
+        .manage(indexed_views::ViewCursorStore::default())
+        .manage(geo_points::GeoCursorStore::default())
+        .manage(office_view_sessions::OfficeViewSessions::default())
+        // Step 20a: one edit registry for the active profile; no engine is
+        // installed here, so engine-dependent commands fail closed.
+        .manage(office_edit_sessions::OfficeEditState::new(&opened_profile))
+        // Draft creation and deck-template parsing have no approved provider
+        // in this build: both registries are empty and the commands fail
+        // closed instead of fabricating a document or a theme.
+        .manage(office_drafts::OfficeDraftState::default())
+        .manage(office_deck_template::DeckTemplateState::default())
+        .manage(Arc::new(document_drafts::DocumentDrafts::default()))
+        // Steps 20c/21b/22b shared AI boundary. No proposal/generation
+        // provider is installed here, so every AI start fails closed with
+        // `office_ai.engine_missing`.
+        .manage(office_ai::OfficeAiState::new())
+        .manage(privacy_sessions::PrivacySessions::default())
+        .manage(read_aloud::ReadAloudSessions::default())
+        .manage(tag_transfer::TagTransfer::default())
+        .manage(updates::UpdatesService::default())
+        .manage(watcher_sessions::WatcherSessions::default())
+        .manage(speech_dictation::DictationController::new())
+        .manage(speech_microphone::MicrophoneConsent::default())
+        // The honest platform device for this build; AudioGraph stays
+        // unavailable until its signatures are verified, so Start fails
+        // closed with `speech.device_unavailable` instead of opening an
+        // unverified path.
+        .manage(speech_dictation::DictationDeviceState::platform())
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, files::protocol)
-        .setup(|app| {
+        .setup(move |app| {
             // The main window is created here, not from tauri.conf.json, so
             // its WebView2 profile lives under the app's data folder
             // (R-BG-2): ADPERASTRA_DATA_DIR then isolates every instance,
@@ -3204,9 +4610,82 @@ fn main() {
                 .cloned()
                 .ok_or("main window missing from tauri.conf.json")?;
             let profile = webview_profile_dir(&app.state::<AppState>().data_dir);
+            // Step 16: only the fixed `--background` flag combined with the
+            // user's saved opt-in creates the window hidden. A stale Run
+            // value without the setting still starts visibly.
+            let (stay_in_background, start_with_windows) =
+                match app.state::<AppState>().settings.lock() {
+                    Ok(settings) => (
+                        settings.startup.stay_in_background,
+                        settings.startup.start_with_windows,
+                    ),
+                    Err(_) => (false, false),
+                };
+            let start_resident = background_start && stay_in_background;
             let window = tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?
                 .data_directory(profile)
+                .visible(!start_resident)
                 .build()?;
+            // The one resident runtime for the app. Every resident or tray
+            // command reads this managed state; a missing runtime fails
+            // closed instead of inventing a host.
+            let resident_active_jobs = Arc::new(AtomicU32::new(0));
+            let resident_host: Arc<dyn resident_state::ResidentHost> =
+                Arc::new(app_resident::AppResidentHost::new(
+                    app.handle().clone(),
+                    Arc::clone(&resident_active_jobs),
+                ));
+            let resident_coordinator = Arc::new(resident_state::ResidentCoordinator::new(
+                resident_host,
+                stay_in_background,
+                start_with_windows,
+            ));
+            if start_resident {
+                resident_coordinator
+                    .mark_started_resident()
+                    .map_err(|error| error.to_string())?;
+            }
+            app.manage(resident::ResidentRuntime::new(
+                Arc::clone(&resident_coordinator),
+                resident_active_jobs,
+            ));
+            app.manage(resident::TrayLabelsState::default());
+            // A window close asks the coordinator first. While residence is
+            // off the normal UI close flow stays in charge; while it is on
+            // the coordinator decides between hiding and exiting without
+            // ever discarding unsaved work.
+            window.on_window_event({
+                let coordinator = Arc::clone(&resident_coordinator);
+                move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        if coordinator.enabled() {
+                            api.prevent_close();
+                            let _ = coordinator.request_close_now();
+                        }
+                    }
+                }
+            });
+            // Step 10c: if startup aborts after this pending target opened,
+            // keep the previous profile instead of retrying a broken target
+            // on every launch. The successful commit disarms this.
+            struct PendingStartupCommit<'a> {
+                base: &'a Path,
+                opened: &'a str,
+                armed: bool,
+            }
+            impl Drop for PendingStartupCommit<'_> {
+                fn drop(&mut self) {
+                    if self.armed {
+                        let _ =
+                            profile_switch::commit_startup_profile(self.base, self.opened, false);
+                    }
+                }
+            }
+            let mut startup_commit = PendingStartupCommit {
+                base: &base_dir,
+                opened: &opened_profile,
+                armed: startup_was_pending,
+            };
             // The saved UI scale, before the page paints (Step 05d D5).
             let ui_scale = match app.state::<AppState>().settings.lock() {
                 Ok(settings) => settings.appearance.ui_scale,
@@ -3217,6 +4696,10 @@ fn main() {
             // custom maximize button as the native maximize button.
             #[cfg(windows)]
             install_snap_subclass(&window);
+            // The clipboard-history listener is a second subclass of the same
+            // window; it stays idle until Windows capture is enabled.
+            #[cfg(windows)]
+            let _ = clipboard_history_listener::install(&window, app.handle().clone());
             #[cfg(not(windows))]
             let _ = window;
             // Keep versions of file changes in the background (Step 06b).
@@ -3227,6 +4710,169 @@ fn main() {
                 .register_pdf(std::sync::Arc::new(pdf::PdfOcrAdapter::new(
                     app.handle().clone(),
                 )))?;
+            // The single-instance activation pipe owns the per-user queue.
+            activation_pipe::start_pipe_server(
+                app.handle().clone(),
+                Arc::clone(app.state::<Arc<activation::ActivationQueue>>().inner()),
+            );
+            // States whose constructor can fail stay unmanaged on error, so
+            // their commands report "state not managed" instead of running on
+            // an empty or invented registry.
+            let setup_data_dir = app.state::<AppState>().data_dir.clone();
+            app.state::<office_edit_sessions::OfficeEditState>()
+                .install_engine(Arc::new(office_ooxml_binding::BasicOfficeEngine::new(
+                    setup_data_dir.clone(),
+                )))
+                .map_err(|error| error.code().to_owned())?;
+            // Step 12a: one pack manager. No catalog URL pair is configured
+            // by this build, so refresh stays unavailable; listing, leases
+            // and removal still work. Install/resume fail closed until the
+            // bounded pack helper exists (H04).
+            if let Ok(packs) =
+                packs::Packs::new(shared_packs_dir, pack_public_key.to_string(), None)
+            {
+                // Step 12b: one engine host over that same pack manager and
+                // the active profile's own data folder. Preview, probe,
+                // capability and conversion commands resolve this exact
+                // `Arc<EngineHost>`; a missing or unsigned media/office pack
+                // stays `engines.pack_missing`/`engines.unsafe_build` through
+                // `Packs::acquire`, never a fallback launcher.
+                app.manage(Arc::new(engine_process::EngineHost::new(
+                    Arc::new(packs.clone()),
+                    setup_data_dir.clone(),
+                )));
+                app.manage(Arc::new(
+                    office_pool::OfficeReadPool::new(
+                        Arc::new(office_pool_actor::EngineHostSessionFactory::new(
+                            app.state::<Arc<engine_process::EngineHost>>()
+                                .inner()
+                                .clone(),
+                        )),
+                        office_pool::OfficeWarmOptions {
+                            keep_warm: false,
+                            idle_seconds: 60,
+                        },
+                    )
+                    .map_err(std::io::Error::other)?,
+                ));
+                app.manage(packs);
+            }
+            // Step 17b: speech does not depend on the assistant. The 12a
+            // registry exposes no verified `ai_speech` record to this build
+            // (pack activation stays out of process, H04), so the installed
+            // source carries no pack and reports `pack_missing` instead of
+            // inventing a model. The whisper adapter and PCM source have no
+            // concrete provider yet and therefore stay uninstalled, which
+            // keeps every speech command fail-closed.
+            let _ = speech::install_capability_source(Box::new(speech::VerifiedSpeechPack {
+                pack: None,
+                model_id: None,
+            }));
+            // Step 17a/D3: credentials are stored inside the active profile
+            // root. The default profile keeps the legacy base directory and
+            // every other profile lives under `profiles/<uuid>`, so the
+            // store receives the already-resolved root instead of assuming
+            // a UUID. A root it cannot confine stays unmanaged so its
+            // commands fail closed.
+            if let Ok(credentials) = assistant_credentials::CredentialStore::new(
+                setup_data_dir.clone(),
+                Arc::new(assistant_credentials::WindowsDpapi),
+                None,
+            ) {
+                app.manage(credentials);
+            }
+            let ai_settings = app
+                .state::<AppState>()
+                .settings
+                .lock()
+                .map(|settings| settings.local_ai.clone())
+                .unwrap_or_default();
+            if let Some(packs) = app.try_state::<packs::Packs>() {
+                if let Ok(runtime) = local_ai::LocalAiRuntime::for_app(
+                    ai_settings,
+                    Arc::clone(
+                        app.state::<Arc<local_ai_artifacts::AiArtifactStore>>()
+                            .inner(),
+                    ),
+                    Arc::clone(app.state::<Arc<documents::DocumentStore>>().inner()),
+                    Arc::clone(app.state::<Arc<files::FileGrants>>().inner()),
+                    packs.inner().clone(),
+                    Arc::clone(
+                        app.state::<Arc<export_snapshots::ExportSnapshots>>()
+                            .inner(),
+                    ),
+                    setup_data_dir.join("local-ai-jobs"),
+                ) {
+                    app.manage(runtime);
+                }
+            }
+            // Step 17b: one capability source and the active profile scope.
+            // The model executor is not registered: this build has no
+            // verified action producer, so rows stay typed unavailable.
+            if let Err(error) = ai_action_wiring::install(app.handle(), &opened_profile) {
+                eprintln!("ai actions: {error}");
+            }
+            if let Ok(store) = tag_store::TagStore::open(&setup_data_dir) {
+                // Startup crash recovery (Step 11b): the mirror queue is in
+                // memory only, so replay every membership once and drain it
+                // into the search index. Both steps are best effort; the tag
+                // database stays authoritative. A store that cannot be opened
+                // stays unmanaged, so tag commands fail closed instead of
+                // running on invented state.
+                let _ = tag_identity_effects::reconcile_mirrors(&store);
+                app.manage(store);
+                let _ = tag_search_bridge::flush_after_commit(app.handle());
+            }
+            if let Ok(store) =
+                map_tiles::MapTileStore::new(&setup_data_dir, env!("CARGO_PKG_VERSION"))
+            {
+                app.manage(store);
+            }
+            if let Ok(sessions) = locked_sessions::LockedSessions::new(
+                setup_data_dir.join("locked-pending"),
+                locked_store::types::LockedSettings::default(),
+            ) {
+                app.manage(Arc::new(sessions));
+            }
+            // Disk-image mounts (Step 09j). The registry is managed only
+            // with the live document store behind its eject guard: without
+            // exact open-document paths an eject could detach a volume
+            // whose files are still open. A missing store leaves the state
+            // unmanaged, so the mount and eject commands fail closed.
+            struct OpenDocumentsAdapter(Arc<documents::DocumentStore>);
+            impl disk_images::OpenDocuments for OpenDocumentsAdapter {
+                fn under(&self, roots: &[String]) -> Vec<String> {
+                    self.0
+                        .open_documents_under(roots)
+                        .into_iter()
+                        .map(|(_, path)| path)
+                        .collect()
+                }
+            }
+            if let Some(document_store) = app.try_state::<Arc<documents::DocumentStore>>() {
+                let host = disk_images::WindowsDiskHost::new(Arc::new(OpenDocumentsAdapter(
+                    document_store.inner().clone(),
+                )));
+                app.manage(Arc::new(disk_mounts::DiskMounts::new(Arc::new(host))));
+            } else {
+                eprintln!("disk mounts: document store missing; state stays unmanaged");
+            }
+            let snapshots = app
+                .state::<Arc<export_snapshots::ExportSnapshots>>()
+                .inner()
+                .clone();
+            let transfers = app
+                .state::<Arc<content_transfer::ContentTransfers>>()
+                .inner()
+                .clone();
+            if let Ok(history) = clipboard_history::ClipboardHistoryState::new(
+                clipboard_history_types::ClipboardHistorySettings::default(),
+                setup_data_dir.join("clipboard-history"),
+                transfers,
+                snapshots,
+            ) {
+                app.manage(history);
+            }
             let extra_app = app.handle().clone();
             app.manage(extra_view_sessions::ExtraViewSessions::new(
                 Box::new(book_backend::ExtraViewFactory {
@@ -3236,8 +4882,40 @@ fn main() {
                     book: book_backend::BookBackendFactory { app: extra_app },
                 }),
                 Box::new(extra_view_sessions::FsStampProvider),
-                resolve_data_dir().join("extra-view-open"),
+                setup_data_dir.join("extra-view-open"),
             ));
+            crate::search_index::ensure_started(app.handle().clone());
+            // Step 17b: recordings, transcripts and caption tracks all have
+            // idle bounds, but a viewer that is never touched again must
+            // still release them. This follows the same bounded background
+            // loop as the export snapshots and calls only the cleanup methods
+            // those stores already expose.
+            {
+                let cleanup_app = app.handle().clone();
+                let _ = std::thread::Builder::new()
+                    .name("speech-cleanup".to_string())
+                    .spawn(move || loop {
+                        std::thread::sleep(std::time::Duration::from_secs(60));
+                        if cleanup_app.get_webview_window("main").is_none() {
+                            break;
+                        }
+                        cleanup_app
+                            .state::<speech_dictation::DictationController>()
+                            .cleanup_idle();
+                        speech::transcript_store().cleanup();
+                        speech_captions::caption_generations().cleanup();
+                    });
+            }
+            // Step 10c: a pending profile becomes active only after every
+            // startup step above succeeded; this is a no-op when no switch
+            // was pending. A failed commit keeps the pending marker for the
+            // next launch instead of clearing it as a failed open.
+            startup_commit.armed = false;
+            if let Err(error) =
+                profile_switch::commit_startup_profile(&base_dir, &opened_profile, true)
+            {
+                eprintln!("profile startup commit: {error}");
+            }
             Ok(())
         })
         .manage(special_view_session::SpecialViews::default())
@@ -3248,6 +4926,15 @@ fn main() {
             export_snapshots::export_snapshot_authorize_file,
             export_snapshots::export_snapshot_authorize_new,
             export_snapshots::export_snapshot_begin,
+            image_encode::image_encode_plan,
+            image_encode::image_encode,
+            image_project_jobs::image_project_open_start,
+            image_project_jobs::image_project_payload_start,
+            image_project_jobs::image_project_payload_page,
+            image_project_jobs::image_project_payload_release,
+            image_project_jobs::image_project_capture_start,
+            image_project_jobs::image_project_psd_scan_start,
+            image_project_jobs::image_project_psd_import_start,
             export_snapshots::export_snapshot_finish,
             export_snapshots::export_snapshot_release,
             export_snapshots::export_snapshot_abort,
@@ -3259,7 +4946,9 @@ fn main() {
             special_views::special_view_close,
             get_settings,
             save_settings,
+            keyboard_map_save,
             get_session,
+            startup_ready,
             save_session,
             list_help,
             get_help_page,
@@ -3267,6 +4956,7 @@ fn main() {
             get_windows_accent,
             open_help_window,
             set_maximize_rect,
+            set_titlebar_drag_rect,
             list_dir_start,
             list_dir_poll,
             list_dir_cancel,
@@ -3317,6 +5007,11 @@ fn main() {
             appearance::appearance_set_zoom,
             settings_file::settings_export,
             settings_file::settings_import,
+            setups::setup_pick_import,
+            setups::setup_preview_start,
+            setups::setup_apply_start,
+            setups::setup_release,
+            setups::setup_export_start,
             text_save::text_save,
             text_save::text_pick_save_path,
             versions::versions_list,
@@ -3325,9 +5020,6 @@ fn main() {
             versions::versions_save_copy,
             versions::versions_delete_all,
             versions::versions_store_size,
-            recovery::recovery_write,
-            recovery::recovery_read,
-            recovery::recovery_delete,
             jobs::job_poll,
             jobs::job_cancel,
             archive::archive_open_start,
@@ -3366,6 +5058,8 @@ fn main() {
             pdf::pdf_text_page,
             pdf::pdf_outline,
             pdf::pdf_search_start,
+            pdf_edit::pdf_edit_inspect_start,
+            pdf_edit::pdf_edit_serialize_start,
             pdf_print::pdf_print_start,
             ocr::ocr_languages,
             ocr::ocr_start,
@@ -3383,6 +5077,8 @@ fn main() {
             cache::cache_clear,
             cache::cache_release,
             background::background_status,
+            background::background_tasks,
+            background::background_pause_all,
             thumbnails::thumbnail_request_start,
             thumbnails::thumbnail_lookup,
             thumbnails::thumbnail_release,
@@ -3391,9 +5087,355 @@ fn main() {
             metadata_preview::preview_detect,
             metadata_preview::preview_grant,
             metadata_preview::preview_revoke,
+            accessibility_system::accessibility_system_state,
+            activation_pipe::activation_ready,
+            activity::activity_status,
+            activity::activity_list,
+            activity::activity_clear,
+            activity::activity_set_paused,
+            ai_actions::ai_action_start,
+            ai_action_sources::ai_action_sources,
+            ai_actions::ai_mask_artifact_create,
+            ai_actions::ai_action_result,
+            ai_actions::ai_action_result_release,
+            ai_action_export::ai_action_result_export_start,
+            ai_extraction_commands::ai_extract_prepare_start,
+            ai_extraction_commands::ai_extract_start,
+            ai_extraction_commands::ai_extract_page,
+            ai_extraction_commands::ai_extract_correct,
+            ai_extraction_commands::ai_extract_capture_start,
+            ai_extraction_commands::ai_extract_release,
+            ai_extraction_commands::ai_inline_start,
+            ai_eval_commands::ai_eval_start,
+            ai_eval_commands::ai_eval_page,
+            ai_name_suggestions::ai_names_suggest_start,
+            ai_query_preview::ai_query_preview_start,
+            ai_semantic_search::ai_semantic_search_start,
+            ai_semantic_search::ai_semantic_status,
+            ai_semantic_search::ai_semantic_rebuild_start,
+            ai_sort_history::ai_sort_history_reset,
+            ai_sort_suggestions::ai_sort_suggest_start,
+            assistant::assistant_chat_create,
+            assistant::assistant_messages,
+            assistant::assistant_turn_start,
+            assistant::assistant_turn_stop,
+            assistant::assistant_scope_request,
+            assistant::assistant_scope,
+            assistant::assistant_scope_revoke,
+            assistant_history::assistant_history_list,
+            assistant_history::assistant_history_clear,
+            assistant_history::assistant_history_export,
+            assistant_provider::assistant_credential_status,
+            assistant_provider::assistant_credential_edit,
+            assistant_provider::assistant_credential_remove,
+            assistant_provider::assistant_provider_models,
+            assistant_provider::assistant_provider_test,
+            assistant_provider::assistant_endpoint_configure,
+            assistant_provider::assistant_endpoint_status,
+            assistant_provider::assistant_endpoint_probe,
+            assistant_outbound::assistant_inference_prepare,
+            assistant_outbound::assistant_outbound_confirm,
+            assistant_outbound::assistant_inference_start,
+            assistant_actions::assistant_action_preview,
+            assistant_actions::assistant_action_apply,
+            assistant_actions::assistant_action_cancel,
+            assistant_recycle::assistant_recycle_confirm,
+            clipboard_history_commands::clipboard_history_list,
+            clipboard_history_commands::clipboard_history_patch,
+            clipboard_history_commands::clipboard_history_resolve,
+            clipboard_history_commands::clipboard_history_record,
+            content_transfer::transfer_create,
+            content_transfer::transfer_get,
+            content_transfer::transfer_release,
+            conversion_documents::doc_blocks_start,
+            conversion_documents::doc_blocks_page,
+            conversion_presets::conversion_presets_list,
+            conversion_presets::conversion_preset_save,
+            conversion_presets::conversion_preset_remove,
+            conversion_presets::conversion_presets_replace,
+            conversion_presets::conversion_presets_import,
+            custom_theme_store::theme_list,
+            custom_theme_store::theme_read,
+            custom_theme_store::theme_save,
+            custom_theme_store::theme_remove,
+            deck_style_application::deck_style_prepare,
+            deck_style_application::deck_style_apply,
+            deck_style_exchange::deck_style_file_import_start,
+            deck_style_exchange::deck_style_file_export_start,
+            deck_style_import::deck_style_import_start,
+            deck_styles::deck_styles_list,
+            deck_styles::deck_styles_save,
+            deck_styles::deck_styles_remove,
+            diagnostics_archive::diagnostics_open_issue,
+            diagnostics_sessions::diagnostics_create_start,
+            diagnostics_sessions::diagnostics_edit,
+            diagnostics_sessions::diagnostics_save_start,
+            diagnostics_sessions::diagnostics_close,
+            disk_mounts_commands::disk_mount_start,
+            disk_mounts_commands::disk_eject_start,
+            disk_mounts_commands::disk_mounts,
+            document_commit::document_commit_start,
+            document_rebind::document_save_as_new_start,
+            documents::document_open,
+            documents::document_release,
+            documents::document_snapshot_begin,
+            duplicates::duplicates_start,
+            duplicates::duplicates_page,
+            duplicates::duplicates_release,
+            duplicates::duplicates_cleanup_prepare,
+            duplicates::duplicates_cleanup_start,
+            engine_process::engines_capabilities,
+            file_locks::locks_inspect_start,
+            file_locks::locks_close_start,
+            folder_presentation_store::folder_presentation_get,
+            folder_presentation_store::folder_presentation_set,
+            folder_presentation_store::folder_presentation_clear,
+            folder_customization_store::folder_decorations,
+            folder_customization_store::folder_customize_start,
+            folder_customization_store::folder_reset_start,
+            folder_customization_store::column_sets_list,
+            folder_customization_store::column_set_save,
+            folder_customization_store::column_set_remove,
+            folder_sizes::folder_size_request,
+            folder_sizes::folder_size_release,
+            geo_points::geo_points_start,
+            indexed_views::indexed_view_start,
+            integration_commands::windows_integration_status,
+            integration_commands::windows_integration_apply,
+            integration_commands::windows_integration_open_defaults,
+            local_ai::ai_capabilities,
+            local_ai::ai_hardware,
+            local_ai::ai_task_start,
+            local_ai::ai_text_page,
+            local_ai::ai_shutdown,
+            local_ai::ai_input_acquire,
+            local_ai::ai_document_input_acquire,
+            local_ai::ai_input_release,
+            local_ai_artifacts::ai_artifact_describe,
+            local_ai_artifacts::ai_artifact_read,
+            local_ai_artifacts::ai_artifact_release,
+            locked_create::locked_create_start,
+            locked_create::locked_unlock_start,
+            locked_create::locked_pick_recovery_path,
+            locked_lock::locked_persist_start,
+            locked_lock::locked_lock_start,
+            locked_lock::locked_save_copy_start,
+            locked_lock::locked_recovery_list,
+            locked_lock::locked_recovery_choose,
+            locked_lock::locked_mark_dirty,
+            locked_lock::locked_touch,
+            locked_lock::locked_idle_check,
+            locked_provider::locked_list,
+            locked_provider::locked_entry_info,
+            locked_provider::locked_entry_grant,
+            locked_provider::locked_entry_release,
+            locked_provider::locked_export_start,
+            map_tiles::map_view_open,
+            map_tiles::map_view_close,
+            map_tiles::map_tile_get,
+            map_tiles::map_tile_release,
+            map_tiles::map_tile_clear,
+            media_probe::media_probe_start,
+            media_preview::media_preview_start,
+            media_recipe_export::media_recipe_export_start,
+            office_ai::office_ai_context_start,
+            office_ai::office_ai_context_release,
+            office_ai::office_ai_proposal_evaluate_start,
+            office_ai::office_ai_proposal_page,
+            office_ai::office_ai_proposal_release,
+            office_ai::office_ai_proposal_confirm,
+            office_ai::office_ai_proposal_apply,
+            office_edit::office_edit_open_start,
+            office_edit::office_edit_close,
+            office_edit::office_edit_state,
+            office_edit_basic::office_edit_basic_page,
+            office_edit::office_edit_transact,
+            office_edit::office_edit_undo,
+            office_edit::office_edit_redo,
+            office_edit::office_edit_mode,
+            office_edit::office_edit_discard_saved,
+            office_edit::office_edit_items,
+            office_edit::office_edit_formatting,
+            office_edit::office_edit_cell_window,
+            office_edit::office_edit_formula_parse,
+            office_edit::office_edit_formula_format,
+            office_edit::office_edit_find,
+            office_edit::office_edit_spelling,
+            office_edit::office_edit_document_stats,
+            office_edit::office_edit_functions,
+            office_edit::office_edit_release_lease,
+            office_edit::office_edit_print_start,
+            office_edit_render::office_edit_render_start,
+            office_edit_capture::office_edit_capture_start,
+            office_edit_capture::office_edit_export_start,
+            office_drafts::office_draft_create_start,
+            office_drafts::office_blank_draft_create_start,
+            office_deck_template::office_deck_template_inspect_start,
+            office_deck_template::office_deck_template_import,
+            office_view::office_view_open_start,
+            office_view::office_view_page_start,
+            office_view_text::office_view_text_start,
+            office_view::office_view_sections,
+            office_view::office_view_comments,
+            office_view::office_view_cells,
+            office_view::office_view_close,
+            packs::pack_list,
+            packs::catalog_refresh_start,
+            packs::install_start,
+            packs::download_pause,
+            packs::download_resume_start,
+            packs::remove_start,
+            portable_copy::portable_copy_start,
+            presentation::office_presentation_displays,
+            presentation::office_presentation_start,
+            presentation::office_presentation_navigate,
+            presentation::office_presentation_end,
+            privacy_jobs::privacy_inspect_start,
+            privacy_jobs::privacy_inspection_page,
+            privacy_jobs::privacy_effective_categories,
+            privacy_jobs::privacy_clean_start,
+            privacy_jobs::privacy_release,
+            profile_catalog::profiles_list,
+            profile_catalog::profile_create,
+            profile_catalog::profile_rename,
+            profile_root::profile_root,
+            profile_switch::profile_switch_prepare,
+            profile_switch::profile_switch_commit,
+            proxy::media_proxy_start,
+            read_aloud::read_voices,
+            read_aloud::read_aloud_start,
+            read_aloud::read_aloud_chunk,
+            read_aloud::read_aloud_stop,
+            recovery_open::recovery_open_start,
+            recovery_store::recovery_save_start,
+            recovery_store::recovery_list,
+            recovery_store::recovery_legacy_count,
+            recovery_store::recovery_legacy_import_start,
+            recovery_store::recovery_discard,
+            recovery_store::recovery_legacy_read,
+            resident::resident_status,
+            resident::resident_set,
+            resident::resident_show,
+            resident::resident_close_confirmed,
+            resident::resident_tray_labels,
+            safe_mode::safe_mode_status,
+            safe_mode::restart_normal,
+            saved_group_store::saved_groups_list,
+            saved_group_store::saved_group_write,
+            saved_group_store::saved_group_remove,
+            saved_group_transfer::saved_groups_export,
+            saved_group_transfer::saved_groups_import,
+            saved_group_transfer::saved_groups_pick_import,
+            crate::search_index::search_start,
+            crate::search_index::search_page_start,
+            crate::search_index::index_status,
+            crate::search_index::index_rebuild_start,
+            crate::search_index::index_pause,
+            crate::search_index::saved_searches_list,
+            crate::search_index::saved_search_save,
+            crate::search_index::saved_search_remove,
+            shelf_store::shelf_get,
+            shelf_store::shelf_patch,
+            shelf_store::shelf_refresh_start,
+            smart_folders::smart_folders_list,
+            smart_folders::smart_folder_save,
+            smart_folders::smart_folder_remove,
+            speech::speech_transcribe_start,
+            speech::speech_captions_start,
+            speech::speech_transcript_page,
+            speech::speech_transcript_release,
+            speech_dictation::speech_dictation_start,
+            speech_dictation::speech_dictation_stop,
+            speech_dictation::speech_dictation_cancel,
+            storage::storage_report,
+            storage::storage_clear_start,
+            storage::storage_set_limit,
+            crate::storage_scan::storage_scan_start,
+            crate::storage_scan::storage_page,
+            crate::storage_scan::storage_release,
+            tag_identity_effects::tag_identity_apply,
+            tag_transactions::tags_catalog,
+            tag_transactions::tag_save,
+            tag_transactions::tag_merge,
+            tag_transactions::tag_delete,
+            tag_transactions::tag_assignments,
+            tag_transactions::tag_mutate_start,
+            tag_transactions::tag_undo,
+            tag_transfer::tags_import_preview,
+            tag_transfer::tags_import_apply,
+            tag_transfer::tags_export_start,
+            tag_transfer::tags_write_start,
+            tag_transfer::tags_pick_import,
+            tag_transfer::tags_pick_export,
+            theme_assets::theme_background_import,
+            theme_assets::theme_background_lease,
+            theme_assets::theme_pick_background,
+            theme_fonts::theme_system_fonts,
+            theme_material::theme_apply_material,
+            theme_transfer::theme_import,
+            theme_transfer::theme_export,
+            theme_transfer::theme_pick_import,
+            theme_transfer::theme_pick_export,
+            theme_wallpaper::theme_wallpaper_palette,
+            timeline_export::timeline_export_preview_start,
+            timeline_export::timeline_export_start,
+            timeline_proxy::timeline_proxy_start,
+            timeline_proxy::timeline_proxy_release,
+            timeline_types::timeline_open_start,
+            transfer_commands::transfer_start,
+            transfer_commands::transfer_state,
+            transfer_commands::transfer_control,
+            transfer_commands::transfer_decide,
+            transfer_commands::transfer_report_page,
+            transfer_commands::transfer_replay_check,
+            crate::bulk_rename::rename_preview_start,
+            crate::bulk_rename::rename_preview_page,
+            crate::bulk_rename::rename_execute_start,
+            crate::bulk_rename::rename_report_page,
+            crate::bulk_rename::rename_plan_release,
+            rename_presets::rename_presets_list,
+            rename_presets::rename_preset_write,
+            rename_presets::rename_preset_remove,
+            updates::update_check,
+            updates::update_mark_seen,
+            updates::update_open_page,
+            waveforms::media_waveform_page,
+            watcher_sessions::watch_subscribe,
+            watcher_sessions::watch_unsubscribe,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Adperastra");
+        .build(tauri::generate_context!())
+        .expect("error while building Adperastra")
+        .run(|app_handle, event| {
+            // A normal exit stops queued and running transfers; completed
+            // files stay. Nothing is cancelled while a shutdown is merely
+            // requested, because that request may still be cancelled.
+            if matches!(event, tauri::RunEvent::Exit) {
+                // Step 09h: the event loop exits only after the one window
+                // close destroyed the window (the UI runs the dirty-close
+                // decision first) or after the accepted resident quit. A
+                // crash or a killed process never reaches this event, so the
+                // launch stays unclean. Safe mode keeps its launch unclean
+                // until the explicit "Restart normally".
+                if let Some(health) = app_handle.try_state::<startup_health::StartupHealth>() {
+                    // The existing safe-mode guard is fail-closed: an active
+                    // or poisoned safe-mode state refuses the marker write.
+                    let launch_writable = app_handle
+                        .try_state::<safe_mode::SafeMode>()
+                        .map(|safe| safe.state_writable().is_ok())
+                        .unwrap_or(false);
+                    if launch_writable {
+                        if let Err(error) = health.mark_clean(unix_now()) {
+                            eprintln!("startup health: {error}");
+                        }
+                    }
+                }
+                if let Some(coordinator) =
+                    app_handle.try_state::<Arc<transfer_control::TransferCoordinator>>()
+                {
+                    coordinator.cancel_all();
+                }
+            }
+        });
 }
 
 // ---------------------------------------------------------------------------
@@ -3420,6 +5462,49 @@ mod tests {
         let back = serde_json::to_value(&session).unwrap();
         assert_eq!(back["tabs"][1]["handler"], "image");
         assert!(back["tabs"][0].get("path").is_none());
+    }
+
+    #[test]
+    fn startup_switches_never_become_activation_paths() {
+        for flag in [
+            "--background",
+            convert_helper::HELPER_FLAG,
+            raw_helper::HELPER_FLAG,
+            pdf_helper::HELPER_FLAG,
+            extra_view_helper::HELPER_FLAG,
+            ocr_helper::HELPER_FLAG,
+            webview_helper::HELPER_FLAG,
+            thumbnail_helper::HELPER_FLAG,
+            metadata_helper::HELPER_FLAG,
+            classic_menu::HELPER_FLAG,
+            archive_helper::HELPER_FLAG,
+            pack_helper::HELPER_FLAG,
+            font_helper::HELPER_FLAG,
+            office_sheet::HELPER_FLAG,
+            disk_broker::HELPER_FLAG,
+            privacy_helper::HELPER_FLAG,
+            file_locks::HELPER_FLAG,
+            artifact_inventory::HELPER_FLAG,
+            usn_index_helper::HELPER_FLAG,
+            portable::MARKER_HELPER_FLAG,
+            installer_data::RECYCLE_DATA_FLAG,
+            integration_commands::RESTORE_FLAG,
+        ] {
+            assert!(is_startup_switch(flag), "{flag} must stay a startup switch");
+        }
+        for argument in [r"C:\alpha.txt", "--open", "--convert", "--", "--shell"] {
+            assert!(!is_startup_switch(argument), "{argument} is not startup");
+        }
+        // The real predicate feeds the primary-startup request: a startup
+        // switch beside one path is dropped, never opened as a file.
+        let args = vec![
+            "--background".to_string(),
+            font_helper::HELPER_FLAG.to_string(),
+            r"C:\alpha.txt".to_string(),
+        ];
+        let request =
+            activation::initial_activation_request(&args, is_startup_switch).expect("one request");
+        assert_eq!(request.paths, vec![r"C:\alpha.txt".to_string()]);
     }
 
     #[test]
@@ -3490,7 +5575,7 @@ mod tests {
     fn settings_defaults() {
         let settings = Settings::default();
         assert_eq!(settings.schema_version, CURRENT_SCHEMA);
-        assert_eq!(settings.schema_version, 16);
+        assert_eq!(settings.schema_version, 56);
         assert_eq!(settings.reading, book_settings::ReadingSettings::default());
         assert_eq!(settings.language, "en");
         assert_eq!(settings.theme.mode, "system");
@@ -4433,5 +6518,334 @@ mod tests {
         assert_eq!(found[0].slug, "tabs");
         assert!(search_help_in(&root, "en", "  ").is_empty());
         let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn settings_v55_migrates_to_v56_and_preserves_existing_sections() {
+        let value = serde_json::json!({
+            "schema_version": 55,
+            "language": "es",
+            "theme": { "mode": "dark" },
+            "tabs": { "drag_hover_ms": 800 },
+            "shelf": { "visible": true, "side": "left", "size": 400 },
+            "startup": { "mode": "restore", "folder": "C:\\Work" },
+            "transfers": { "verify_copies": true, "queue_per_volume": true, "max_parallel": 1 },
+            "ai": {
+                "writing": { "inline_enabled": true, "enabled_types": { "text": true } },
+                "documents": { "enabled": true, "experimental_actions": ["rewrite"] },
+                "sheets": { "enabled": true, "experimental_actions": ["formula"] }
+            }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 56);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.tabs.drag_hover_ms, 800);
+        assert!(settings.shelf.visible);
+        assert_eq!(settings.shelf.side, "left");
+        assert_eq!(settings.shelf.size, 400);
+        assert_eq!(settings.startup.mode, "restore");
+        assert_eq!(settings.startup.folder, "C:\\Work");
+        assert!(settings.transfers.verify_copies);
+        assert_eq!(settings.transfers.max_parallel, 1);
+        assert!(settings.ai.writing.inline_enabled);
+        assert_eq!(
+            settings.ai.documents.experimental_actions,
+            vec![office_document_ai_types::DocumentAiAction::Rewrite]
+        );
+        assert_eq!(
+            settings.ai.sheets.experimental_actions,
+            vec![office_sheet_ai_types::SheetAiAction::Formula]
+        );
+        assert_eq!(settings.ai.decks, DeckAiSettings::default());
+    }
+
+    #[test]
+    fn settings_v27_migrates_to_v28_keeping_day_night_refs() {
+        let value = serde_json::json!({
+            "schema_version": 27,
+            "language": "es",
+            "theme": {
+                "mode": "dark",
+                "accent_source": "design",
+                "accent_custom": "#0067C0",
+                "light_theme": "paper",
+                "dark_theme": "amoled"
+            }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 56);
+        assert_eq!(settings.language, "es");
+        assert_eq!(
+            settings.theme_custom.day,
+            fs_service::theme_data::ThemeRef::builtin("paper")
+        );
+        assert_eq!(
+            settings.theme_custom.night,
+            fs_service::theme_data::ThemeRef::builtin("amoled")
+        );
+        assert_eq!(settings.theme_custom.mode, "manual");
+        assert_eq!(settings.theme_custom.manual_scheme, "dark");
+    }
+
+    #[test]
+    fn settings_v29_migrates_to_v30_keeping_language_and_theme_and_legacy_sizes() {
+        let value = serde_json::json!({
+            "schema_version": 29,
+            "language": "es",
+            "theme": { "mode": "dark" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 56);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.format_options.size_base, "legacy");
+        assert_eq!(
+            settings.tab_options,
+            preferences_validation::TabOptions::default()
+        );
+        assert_eq!(
+            settings.behavior,
+            preferences_validation::BehaviorSettings::default()
+        );
+    }
+
+    #[test]
+    fn settings_v40_migrates_to_v41_adding_local_ai() {
+        let value = serde_json::json!({
+            "schema_version": 40,
+            "language": "es",
+            "theme": { "mode": "dark" },
+            "templates": { "my_folder": "C:\\T" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 56);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert_eq!(settings.templates.my_folder, "C:\\T");
+        assert_eq!(
+            settings.local_ai,
+            ai_runtime::types_ui::LocalAiSettings::default()
+        );
+    }
+
+    #[test]
+    fn settings_v46_migrates_to_v47_keeping_language_and_theme() {
+        let value = serde_json::json!({
+            "schema_version": 46,
+            "language": "es",
+            "theme": { "mode": "dark" }
+        });
+        let settings = migrate(value).unwrap();
+        assert_eq!(settings.schema_version, 56);
+        assert_eq!(settings.language, "es");
+        assert_eq!(settings.theme.mode, "dark");
+        assert!(!settings.ai.writing.inline_enabled);
+        assert_eq!(
+            settings.ai.writing.enabled_types,
+            AiInlineEnabledTypes::default()
+        );
+    }
+
+    #[test]
+    fn settings_defaults_for_new_sections() {
+        let settings = Settings::default();
+        assert_eq!(settings.schema_version, 56);
+        assert_eq!(settings.startup, StartupSettings::default());
+        assert_eq!(settings.tabs.drag_hover_ms, 600);
+        assert_eq!(settings.palette, PaletteSettings::default());
+        assert_eq!(settings.transfers, TransferSettings::default());
+        assert_eq!(settings.shelf, ShelfSettings::default());
+        assert_eq!(settings.recovery, RecoverySettings::default());
+        assert_eq!(settings.folder_sizes, FolderSizeSettings::default());
+        assert_eq!(settings.pack_catalog, PackCatalogSettings::default());
+        assert_eq!(settings.office_view.idle_seconds, 60);
+        assert_eq!(settings.pdf_tools.author, "");
+        assert_eq!(settings.image_editor.selection_tolerance, 15);
+        assert_eq!(settings.media_editor.preview_quality, "960");
+        assert_eq!(settings.office_edit.idle_minutes, 5);
+        assert_eq!(settings.sheet_editor.default_zoom, 100.0);
+        assert_eq!(settings.deck_editor.default_aspect, "wide");
+        assert!(!settings.ai.decks.enabled);
+        assert!(settings.ai.decks.experimental_actions.is_empty());
+        assert!(validate(&settings).is_ok());
+    }
+
+    #[test]
+    fn settings_validate_rejects_bad_new_sections() {
+        let mut startup_mode = Settings::default();
+        startup_mode.startup.mode = "elsewhere".to_string();
+        assert!(validate(&startup_mode).is_err());
+
+        let mut startup_folder = Settings::default();
+        startup_folder.startup.folder = "relative".to_string();
+        assert!(validate(&startup_folder).is_err());
+
+        let mut startup_resident = Settings::default();
+        startup_resident.startup.start_with_windows = true;
+        assert!(validate(&startup_resident).is_err());
+
+        let mut tab_hover = Settings::default();
+        tab_hover.tabs.drag_hover_ms = 199;
+        assert!(validate(&tab_hover).is_err());
+
+        let mut palette = Settings::default();
+        palette.palette.recent_ids = (0..=PALETTE_MAX_RECENT_IDS)
+            .map(|index| format!("command.{index}"))
+            .collect();
+        assert!(validate(&palette).is_err());
+
+        let mut transfer_parallel = Settings::default();
+        transfer_parallel.transfers.max_parallel = 3;
+        assert!(validate(&transfer_parallel).is_err());
+
+        let mut transfer_queue = Settings::default();
+        transfer_queue.transfers.queue_per_volume = false;
+        assert!(validate(&transfer_queue).is_err());
+
+        let mut shelf_side = Settings::default();
+        shelf_side.shelf.side = "top".to_string();
+        assert!(validate(&shelf_side).is_err());
+
+        let mut shelf_size = Settings::default();
+        shelf_size.shelf.size = 119;
+        assert!(validate(&shelf_size).is_err());
+
+        let mut recovery = Settings::default();
+        recovery.recovery.interval_seconds = 9;
+        assert!(validate(&recovery).is_err());
+
+        let mut clipboard = Settings::default();
+        clipboard.clipboard_history.max_items = 9;
+        assert!(validate(&clipboard).is_err());
+
+        let mut locked = Settings::default();
+        locked.locked.auto_lock_minutes = 2;
+        assert!(validate(&locked).is_err());
+
+        let mut tab_options = Settings::default();
+        tab_options.tab_options.title_limit = 11;
+        assert!(validate(&tab_options).is_err());
+
+        let mut format_options = Settings::default();
+        format_options.format_options.decimals = 5;
+        assert!(validate(&format_options).is_err());
+
+        let mut accessibility = Settings::default();
+        accessibility.accessibility.focus_px = 5;
+        assert!(validate(&accessibility).is_err());
+
+        let mut search = Settings::default();
+        search.search.index_limit_mb = 100;
+        assert!(validate(&search).is_err());
+
+        let mut pack_catalog = Settings::default();
+        pack_catalog.pack_catalog.last_checked_unix = Some(9_007_199_254_740_992);
+        assert!(validate(&pack_catalog).is_err());
+
+        let mut cpu = Settings::default();
+        cpu.background.cpu_percent = 4;
+        assert!(validate(&cpu).is_err());
+
+        let mut office_view = Settings::default();
+        office_view.office_view.idle_seconds = 30;
+        assert!(validate(&office_view).is_err());
+
+        let mut pdf_author = Settings::default();
+        pdf_author.pdf_tools.author = "a".repeat(129);
+        assert!(validate(&pdf_author).is_err());
+
+        let mut image_mode = Settings::default();
+        image_mode.image_editor.default_mode = "crop".to_string();
+        assert!(validate(&image_mode).is_err());
+
+        let mut image_tolerance = Settings::default();
+        image_tolerance.image_editor.selection_tolerance = 101;
+        assert!(validate(&image_tolerance).is_err());
+
+        let mut media_quality = Settings::default();
+        media_quality.media_editor.preview_quality = "480".to_string();
+        assert!(validate(&media_quality).is_err());
+
+        let mut assistant = Settings::default();
+        assistant.assistant.local_server_port = 80;
+        assert!(validate(&assistant).is_err());
+
+        let mut ai_actions = Settings::default();
+        ai_actions.ai_actions.caption_window_seconds = 10;
+        assert!(validate(&ai_actions).is_err());
+
+        let mut ai_search = Settings::default();
+        ai_search.ai_search.roots = vec![ai_search_types::AiSemanticRoot {
+            root_id: "not-a-uuid".to_string(),
+            text: true,
+            photos: false,
+        }];
+        assert!(validate(&ai_search).is_err());
+
+        let mut document_ai = Settings::default();
+        document_ai.ai.documents.experimental_actions = vec![
+            office_document_ai_types::DocumentAiAction::Rewrite,
+            office_document_ai_types::DocumentAiAction::Rewrite,
+        ];
+        assert!(validate(&document_ai).is_err());
+
+        let mut sheet_zoom = Settings::default();
+        sheet_zoom.sheet_editor.default_zoom = 500.0;
+        assert!(validate(&sheet_zoom).is_err());
+
+        let mut sheet_ai = Settings::default();
+        sheet_ai.ai.sheets.experimental_actions = vec![
+            office_sheet_ai_types::SheetAiAction::Formula,
+            office_sheet_ai_types::SheetAiAction::Formula,
+        ];
+        assert!(validate(&sheet_ai).is_err());
+
+        let mut deck_aspect = Settings::default();
+        deck_aspect.deck_editor.default_aspect = "4:3".to_string();
+        assert!(validate(&deck_aspect).is_err());
+
+        let mut deck_ai = Settings::default();
+        deck_ai.ai.decks.experimental_actions = vec!["delete".to_string()];
+        assert!(validate(&deck_ai).is_err());
+
+        let mut office_edit = Settings::default();
+        office_edit.office_edit.idle_minutes = 10;
+        assert!(validate(&office_edit).is_err());
+    }
+
+    #[test]
+    fn settings_round_trip_keeps_all_sections() {
+        let settings = Settings::default();
+        let value = serde_json::to_value(&settings).unwrap();
+        let back: Settings = serde_json::from_value(value).unwrap();
+        assert_eq!(back, settings);
+        assert!(validate(&back).is_ok());
+    }
+
+    #[test]
+    fn app_state_accessors_use_current_settings_fields() {
+        let state = AppState {
+            data_dir: PathBuf::from("."),
+            settings: Mutex::new(Settings::default()),
+            list_jobs: Mutex::new(HashMap::new()),
+            file_jobs: Mutex::new(HashMap::new()),
+            transfer_history: Arc::new(Mutex::new(transfer_history::TransferHistory::default())),
+            explorer_state_lock: Mutex::new(()),
+            watch: Mutex::new(None),
+            watch_next_id: AtomicU64::new(0),
+        };
+        {
+            let mut settings = state.settings.lock().unwrap();
+            settings.views.map_online_enabled = true;
+            settings.folder_sizes.enabled = true;
+            settings.folder_sizes.network = true;
+            settings.transfers.verify_copies = true;
+        }
+        assert!(state.views_settings().unwrap().map_online_enabled);
+        let options = state.folder_size_options();
+        assert!(options.enabled);
+        assert!(options.network);
+        assert!(state.verify_copies());
     }
 }

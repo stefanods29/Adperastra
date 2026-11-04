@@ -19,10 +19,10 @@ import {
 } from "../../services/specialViews";
 import Ribbon from "../../ribbon/Ribbon";
 import { useCommandShortcuts } from "../../ribbon/shortcuts";
-import type { RibbonDef } from "../../ribbon/types";
 import ViewerFrame from "../../ribbon/ViewerFrame";
 import type { HandlerViewProps } from "../types";
 import { createModelCommands, type ModelCommandContext } from "./modelCommands";
+import { MODEL_RIBBON } from "./ribbon";
 import {
   boundsCenter,
   defaultView,
@@ -43,27 +43,6 @@ import {
   type RendererBundle,
 } from "./modelRenderer";
 import { decodeSafeScene } from "./safeScene";
-
-const RIBBON: RibbonDef = {
-  tabs: [
-    {
-      id: "view",
-      labelKey: "ribbon.view",
-      keyTip: "V",
-      groups: [
-        {
-          id: "camera",
-          labelKey: "ribbon.zoom",
-          controls: [
-            { type: "button", command: "model.fit", keyTip: "F" },
-            { type: "toggle", command: "model.wireframe", keyTip: "W" },
-            { type: "toggle", command: "model.measure", keyTip: "M" },
-          ],
-        },
-      ],
-    },
-  ],
-};
 
 const UNIT_KEYS: Record<SceneUnit, string> = {
   none: "model.unitNone",
@@ -292,7 +271,7 @@ export default function ModelView({ info, active, savedState, onStateChange, onS
     setMeasure({ points: next, distance: next.length === 2 ? Math.hypot(next[0][0] - next[1][0], next[0][1] - next[1][1], next[0][2] - next[1][2]) : null });
   };
 
-  const ribbon = <Ribbon def={RIBBON} ctx={context} commands={commands as Command<ModelCommandContext>[]} accent="image" active={active} />;
+  const ribbon = <Ribbon def={MODEL_RIBBON} ctx={context} commands={commands as Command<ModelCommandContext>[]} accent="image" active={active} handlerId="model" />;
 
   return (
     <ViewerFrame ribbon={ribbon}>

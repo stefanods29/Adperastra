@@ -1,0 +1,33 @@
+Adperastra 0.1.0-preview.1 - source and dependency notices
+
+Application source: https://github.com/stefanods29/Adperastra/tree/v0.1.0-preview.1
+Application license: MIT (LICENSE in the portable folder).
+
+The Office engine is a separate, replaceable program. It is not linked into
+Adperastra. Its signed installed files are under:
+AdperastraData/packs/versions/office/0.1.3/
+
+Engine distribution and wrapper source:
+https://github.com/deepseek-ai/dsh-libreoffice-kit
+The included sources/ directory retains the distribution's source metadata,
+worker/build scripts, LibreOffice build configuration and core-changes.patch.
+LibreOffice corresponding source revision:
+https://github.com/LibreOffice/core/tree/bce0998afefdbc355585ca324285661a2170ba77
+Apply the included sources/core-changes.patch for this distribution's changes.
+Preserve the engine's licenses/ directory, including its MPL and third-party
+license notices. This engine and its original notices remain separate from
+the MIT application. See sources/core.json for the native build configuration.
+
+Compatible fonts: Caladea (Apache-2.0); Carlito, Liberation Mono/Sans/Serif and
+Noto Sans (OFL-1.1). See FONT-LICENSES.txt for the exact embedded copyright
+notices and Apache-2.0.txt / OFL-1.1.txt for license text. No Microsoft fonts
+are redistributed. The font files are unchanged.
+
+The public catalog key is assets/office-preview-pack.pub in application
+source. The catalog and detached signature are shipped with the pack. This
+preview pins this immutable offline catalog; no private signing key, account
+credential or automatic online pack-update feed is included.
+
+THIRD_PARTY_LICENSES.md lists the application's other dependency notices.
+This preview contains no AI model, API key or FFmpeg/media engine pack.
+The Windows application executable has no Authenticode signing certificate.

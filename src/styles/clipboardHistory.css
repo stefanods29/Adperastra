@@ -1,0 +1,204 @@
+/* Clipboard history panel and disk mount dialog (Step 09j T6).
+   Colors and sizes come from the current tokens only. */
+
+.adp-clipboard-panel {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+.adp-clipboard-panel .adp-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-3);
+  min-height: 0;
+  padding: var(--adp-space-4) var(--adp-space-5);
+}
+
+.adp-clipboard-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+}
+
+.adp-clipboard-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.adp-clipboard-scroll {
+  height: min(400px, calc(100vh - 260px));
+  min-height: 120px;
+  overflow-y: auto;
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-clipboard-list {
+  position: relative;
+  width: 100%;
+}
+
+.adp-clipboard-list:focus-visible {
+  outline: 2px solid var(--adp-color-border-input);
+  outline-offset: -2px;
+}
+
+.adp-clipboard-row {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  padding: 0 var(--adp-space-2);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-clipboard-row:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-clipboard-row--selected,
+.adp-clipboard-row[aria-selected="true"] {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-clipboard-thumb {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-header);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-clipboard-thumb--image {
+  color: var(--adp-accent-image);
+}
+
+.adp-clipboard-thumb--files {
+  color: var(--adp-accent-explorer);
+}
+
+.adp-clipboard-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+}
+
+.adp-clipboard-preview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  font-size: var(--adp-font-body);
+}
+
+.adp-clipboard-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adp-space-2);
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-clipboard-missing {
+  color: var(--adp-color-status-caution);
+  font-size: var(--adp-font-small);
+}
+
+.adp-clipboard-pin {
+  flex: 0 0 auto;
+}
+
+.adp-clipboard-footer,
+.adp-clipboard-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-2);
+}
+
+.adp-clipboard-footer {
+  padding-top: var(--adp-space-2);
+  border-top: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-clipboard-empty {
+  margin: 0;
+  padding: var(--adp-space-6);
+  text-align: center;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-clipboard-error {
+  margin: 0;
+  color: var(--adp-color-status-caution);
+  font-size: var(--adp-font-small);
+}
+
+.adp-clipboard-include {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  font-size: var(--adp-font-small);
+}
+
+.adp-clipboard-count {
+  display: none;
+}
+
+.adp-disk-dialog {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-disk-title {
+  margin: 0;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-command);
+  overflow-wrap: anywhere;
+}
+
+.adp-disk-readonly {
+  margin: 0;
+  font-weight: 600;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-disk-warning {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-disk-roots {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.adp-disk-elapsed {
+  margin: 0;
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-disk-kind {
+  margin-inline-start: var(--adp-space-1);
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-tiny);
+}

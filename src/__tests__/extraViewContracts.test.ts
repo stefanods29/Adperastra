@@ -65,7 +65,7 @@ describe("extra viewer contracts", () => {
       language: "en",
       theme: { mode: "dark" },
     });
-    expect(settings.schema_version).toBe(14);
+    expect(settings.schema_version).toBe(56);
     expect(settings.language).toBe("en");
     expect(settings.theme.mode).toBe("dark");
     expect(settings.reading).toEqual({ font_px: 18, theme: "app" });

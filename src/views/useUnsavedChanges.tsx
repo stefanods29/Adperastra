@@ -19,6 +19,8 @@ export interface UnsavedChanges {
   registerSave: (id: string, handle: SaveHandle | null) => void;
   /** True when every dirty tab among `ids` was saved or set aside. */
   confirmClose: (ids: readonly string[]) => Promise<boolean>;
+  /** A closed or replaced view leaves no dirty state behind. */
+  forget: (ids: readonly string[]) => void;
   /** The question while one is open, else null. */
   dialog: ReactNode;
 }
@@ -31,6 +33,9 @@ export function useUnsavedChanges(tabs: readonly TabState[]): UnsavedChanges {
   tabsRef.current = tabs;
   const dirtyRef = useRef(dirtyIds);
   dirtyRef.current = dirtyIds;
+  // Discard intent is collected while the dialog is open; it is applied
+  // only after the whole close plan resolves true (Step 09a E11).
+  const discardIds = useRef(new Set<string>());
 
   const onDirtyChange = useCallback((id: string, dirty: boolean) => {
     setDirtyIds((current) => {
@@ -47,12 +52,33 @@ export function useUnsavedChanges(tabs: readonly TabState[]): UnsavedChanges {
     else handles.current.delete(id);
   }, []);
 
+  const forget = useCallback((ids: readonly string[]) => {
+    if (ids.length === 0) return;
+    for (const id of ids) handles.current.delete(id);
+    setDirtyIds((current) => {
+      if (!ids.some((id) => current.has(id))) return current;
+      const next = new Set(current);
+      for (const id of ids) next.delete(id);
+      return next;
+    });
+  }, []);
+
   const confirmClose = useCallback((ids: readonly string[]): Promise<boolean> => {
     const dirty = ids.filter((id) => dirtyRef.current.has(id));
     if (dirty.length === 0) return Promise.resolve(true);
     const names = dirty.map((id) => tabsRef.current.find((tab) => tab.id === id)?.title ?? "");
     return new Promise<boolean>((resolve) => {
-      setQuestion({ ids: dirty, names, resolve });
+      setQuestion({
+        ids: dirty,
+        names,
+        resolve: (proceed: boolean) => {
+          if (proceed) {
+            for (const id of discardIds.current) handles.current.get(id)?.discard();
+          }
+          discardIds.current.clear();
+          resolve(proceed);
+        },
+      });
     });
   }, []);
 
@@ -65,7 +91,9 @@ export function useUnsavedChanges(tabs: readonly TabState[]): UnsavedChanges {
       return;
     }
     if (choice === "discard") {
-      for (const id of current.ids) handles.current.get(id)?.discard();
+      // Remember the intent; the editor/model is dropped only after the
+      // complete close plan passes.
+      discardIds.current = new Set(current.ids);
       current.resolve(true);
       return;
     }
@@ -81,6 +109,7 @@ export function useUnsavedChanges(tabs: readonly TabState[]): UnsavedChanges {
         return;
       }
     }
+    discardIds.current.clear();
     current.resolve(true);
   };
 
@@ -93,5 +122,5 @@ export function useUnsavedChanges(tabs: readonly TabState[]): UnsavedChanges {
     />
   ) : null;
 
-  return { dirtyIds, onDirtyChange, registerSave, confirmClose, dialog };
+  return { dirtyIds, onDirtyChange, registerSave, confirmClose, forget, dialog };
 }

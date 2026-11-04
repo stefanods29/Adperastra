@@ -23,7 +23,17 @@ export type FormatId =
   | "csv"
   | "xlsx"
   | "zip"
-  | "seven_z";
+  | "seven_z"
+  | "mp4"
+  | "mkv"
+  | "mov"
+  | "webm"
+  | "mp3"
+  | "wav"
+  | "flac"
+  | "ogg"
+  | "opus"
+  | "aac";
 
 export type MetadataCategory =
   | "exif"
@@ -39,7 +49,13 @@ export type MetadataCategory =
   | "forms"
   | "annotations"
   | "scripts"
-  | "timestamps";
+  | "timestamps"
+  | "last_modified_by"
+  | "company"
+  | "tracked_changes"
+  | "hidden_text"
+  | "speaker_notes"
+  | "encoder";
 
 export type ConversionWarningCode =
   | "transparency_loss"
@@ -48,7 +64,9 @@ export type ConversionWarningCode =
   | "layout_loss"
   | "formula_cached_value"
   | "formula_safety_prefix"
-  | "sheet_selection";
+  | "sheet_selection"
+  | "audio_loss"
+  | "frame_rate_change";
 
 export interface OptionChoice {
   value: string;
@@ -127,15 +145,16 @@ export interface ArchiveConversionOptions {
   format: "zip" | "seven_z";
   level: number;
   password?: string;
+  source_password?: string;
   encrypt_names: boolean;
   preserve_timestamps: boolean;
 }
 
 export interface MediaConversionOptions {
-  start_ms?: number;
-  end_ms?: number;
-  width?: number;
-  height?: number;
+  start_ms?: number | null;
+  end_ms?: number | null;
+  width?: number | null;
+  height?: number | null;
   video_codec:
     | "auto"
     | "vp9"
@@ -152,8 +171,8 @@ export interface MediaConversionOptions {
     | "mp3"
     | "aac_os"
     | "copy";
-  bitrate_kbps?: number;
-  sample_rate?: number;
+  bitrate_kbps?: number | null;
+  sample_rate?: number | null;
   keep_metadata: boolean;
   burn_subtitles: boolean;
   speed: number;
@@ -183,6 +202,13 @@ export type ConvertOptions =
 export type ConversionInput =
   | { kind: "file"; path: string; expected?: SourceStamp }
   | { kind: "snapshot"; snapshot_id: string; document_id: string; revision: number };
+
+/** The part of the output name an adapter contributes. Exact mirror of
+ * `convert::types::OutputNamePart`; `page` is a Rust `u32`. */
+export type OutputNamePart =
+  | { kind: "none" }
+  | { kind: "page"; page: number }
+  | { kind: "sheet"; sheet: string };
 
 export interface ConversionNaming {
   pattern: string;
@@ -283,12 +309,15 @@ export function defaultImageOptions(quality = 90): ImageOptions {
   };
 }
 
-/** True when the options family matches the adapter family. 08a registers
- * only image/SVG adapters, so anything else is refused. */
+/** True when the options family matches the adapter family. The 08a image
+ * adapters take image options; the 08b combine adapter `images/pdf` takes
+ * document options. Anything else is refused. */
 export function optionsMatchConverter(
   spec: ConverterSpec,
   options: ConvertOptions,
 ): boolean {
+  if (spec.engine_id === "media") return options.kind === "media";
+  if (spec.id === "images/pdf") return options.kind === "document";
   return (
     (spec.id.startsWith("image/") || spec.id === "svg/png") &&
     options.kind === "image"

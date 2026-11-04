@@ -19,6 +19,8 @@ pub struct SourceIdentity {
     pub index: u64,
     pub size: u64,
     pub modified_unix: u64,
+    /// 100 ns ticks since the Unix epoch; detects rewrites inside one second.
+    pub modified_ticks: u64,
     pub attributes: u32,
 }
 
@@ -50,6 +52,12 @@ impl SourceIdentity {
                 .ok()
                 .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
                 .map(|age| age.as_secs())
+                .unwrap_or(0),
+            modified_ticks: metadata
+                .modified()
+                .ok()
+                .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+                .map(|age| u64::try_from(age.as_nanos() / 100).unwrap_or(u64::MAX))
                 .unwrap_or(0),
             attributes: super::handle_attributes(file)?,
         })

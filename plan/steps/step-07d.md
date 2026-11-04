@@ -1,5 +1,7 @@
 # Step 07d: PDF viewer
 
+Coordinator correction, 2026-11-03: the helper CSP in D4 must be owned solely by `src-tauri/tauri.helper.conf.json`, with `default-src 'none'` and no explicit `frame-src` or `child-src` directive. Keep all resource-specific restrictions in D4 and add `form-action 'none'`. Do not duplicate CSP in helper HTML meta elements. Installed Tauri 2.12.5 `src/manager/mod.rs::get_asset` adds the exact random isolation origin to default-src at runtime; the old static frame-src none blocked its own isolation frame, so helpers never acknowledged readiness. No wildcard origin or general network access is added. Live helper startup must prove the isolation frame runs before accepting this correction.
+
 | Field | Value |
 |---|---|
 | State | guide; documentation reviewed; implementation not started |

@@ -28,7 +28,12 @@ import {
 /** One text document in a tab (Step 06a): loads, edits, saves, keeps
  * recovery copies. Used by the text and Markdown views. */
 
-/** How long after the last change a recovery copy is written. */
+/** How long after the last change a recovery copy is written. This is the
+ * Step 06a compatibility path: the text editor still owns its CodeMirror
+ * model instead of a `DocumentHandle`, so the canonical capture scheduler
+ * (Step 09h E3, `useRecoveryCapture`) cannot lease it yet. The encrypted
+ * `writeDraft` facade keeps unsaved text recoverable and is discarded on
+ * save, reload and discard. Delay matches the scheduler's 2 s debounce. */
 export const DRAFT_DELAY_MS = 2000;
 const SAMPLE_CHARS = 65_536;
 const PART_BYTES = 1024 * 1024;

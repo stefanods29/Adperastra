@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "source": "LibreOffice 26.8.2 MSI; extracted SourceDir/Fonts",
+  "source_sha256": "ff4b911403b67ee9e6249f820f9782c44bb32c94fdaa45b0da53a8e419e5307a",
+  "method": "name-table metadata read with pinned @pdf-lib/fontkit 1.1.1; redistribution notices/source review still required",
+  "installed_in_app": false,
+  "files": [
+    {
+      "path": "Caladea-Bold.ttf",
+      "bytes": 58892,
+      "sha256": "74eda4fc5ffba0d8dc4aa76d41499f5ab76168d9ed6141c6417064c6244db9b6",
+      "family": "Caladea",
+      "version": "Version 1.002",
+      "license": "Apache-2.0",
+      "license_urls": [
+        "http://www.apache.org/licenses/LICENSE-2.0"
+      ]
+    },
+    {
+      "path": "Caladea-BoldItalic.ttf",
+      "bytes": 61828,
+      "sha256": "f47a35ad6cd0efa9914d93f9d03c93e30c55da43674bccfabac73b3c0d522c01",
+      "family": "Caladea",
+      "version": "Version 1.002",
+      "license": "Apache-2.0",
+      "license_urls": [
+        "http://www.apache.org/licenses/LICENSE-2.0"
+      ]
+    },
+    {
+      "path": "Caladea-Italic.ttf",
+      "bytes": 61860,
+      "sha256": "9c968bf60ba1e851cdfea77c71e3540c57792f77482dd241acc29d1425569c4e",
+      "family": "Caladea",
+      "version": "Version 1.002",
+      "license": "Apache-2.0",
+      "license_urls": [
+        "http://www.apache.org/licenses/LICENSE-2.0"
+      ]
+    },
+    {
+      "path": "Caladea-Regular.ttf",
+      "bytes": 58964,
+      "sha256": "d2f6cad33f191e65b68bd74e6d4f7708080a41b32db635866109df3090265d91",
+      "family": "Caladea",
+      "version": "Version 1.002",
+      "license": "Apache-2.0",
+      "license_urls": [
+        "http://www.apache.org/licenses/LICENSE-2.0"
+      ]
+    },
+    {
+      "path": "Carlito-Bold.ttf",
+      "bytes": 690516,
+      "sha256": "0f62ab34ad5d079a0a28fac01bcf7c7a724a4db4d6cb99cab9cabff382fbb80f",
+      "family": "Carlito",
+      "version": "Version 1.103; Beta1; all basic design good, some composites may be off;; ttfautohint (v0.96) -l 8 -r 50 -G 200 -x 0 -w \"G\" -W -f",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "Carlito-BoldItalic.ttf",
+      "bytes": 816716,
+      "sha256": "380764b6898d7b73ceae6384b2958b196d2a0428962ef3adf138d27947228666",
+      "family": "Carlito",
+      "version": "Version 1.103; Beta1; Latin basic design good, other scripts temporary, some composites may be off;; ttfautohint (v0.96) -l 8 -r 50 -G 200 -x 0 -w \"G\" -W -f",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "Carlito-Italic.ttf",
+      "bytes": 623416,
+      "sha256": "718a0663864d37a4868220a19b9668a5fe10a46197f6df367b4c2c30c04c026c",
+      "family": "Carlito",
+      "version": "Version 1.103; Beta1; Latin basic design good, other scripts temporary, some composites may be off;; ttfautohint (v0.96) -l 8 -r 50 -G 200 -x 0 -w \"G\" -W -f",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "Carlito-Regular.ttf",
+      "bytes": 635996,
+      "sha256": "b4ff23ba370cc95a3c349336b73f9c28514a1371210f89832efc85c4b1ea7131",
+      "family": "Carlito",
+      "version": "Version 1.103; Beta1; all basic design good, some composites may be off;; ttfautohint (v0.96) -l 8 -r 50 -G 200 -x 0 -w \"G\" -W -f",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationMono-Bold.ttf",
+      "bytes": 307996,
+      "sha256": "bd62a0672d0b9b6710b01df434c80ad54fa5f0835207eb7b17b7a761463067bb",
+      "family": "Liberation Mono",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationMono-BoldItalic.ttf",
+      "bytes": 284068,
+      "sha256": "79451f3c09fe25116098853b7a2ca6e2436220ccc11af022979adbcf195be130",
+      "family": "Liberation Mono",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationMono-Italic.ttf",
+      "bytes": 281536,
+      "sha256": "605c01c711b44480a7508d349dfbf3264e81fa43d69e61cfa7d10b86e764c4d1",
+      "family": "Liberation Mono",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationMono-Regular.ttf",
+      "bytes": 319508,
+      "sha256": "f2b83c763e8afd21709333370bed4774337fae82267937e2b5aea7e2fbd922c1",
+      "family": "Liberation Mono",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationSans-Bold.ttf",
+      "bytes": 414456,
+      "sha256": "788abee4c806d660e8aee46689dd8540cd4bb98da03dcc9d171ce3efd99a9173",
+      "family": "Liberation Sans",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationSans-BoldItalic.ttf",
+      "bytes": 408996,
+      "sha256": "698da70fc191cc5f33ad4d6d3fe830fe4624b898ea2e3169955928b7c491f1ee",
+      "family": "Liberation Sans",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationSans-Italic.ttf",
+      "bytes": 415816,
+      "sha256": "e5bae5c4cde31f22142753855f4f8fb86da6ff39955ed3c0a11248b0d16948b0",
+      "family": "Liberation Sans",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationSans-Regular.ttf",
+      "bytes": 410712,
+      "sha256": "76d04c18ea243f426b7de1f3ad208e927008f961dc5945e5aad352d0dfde8ee8",
+      "family": "Liberation Sans",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationSerif-Bold.ttf",
+      "bytes": 370096,
+      "sha256": "d754ba427cfe0bca54ae052384baa8f842da5bd6550ad4da024ac441e7a7d5ce",
+      "family": "Liberation Serif",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationSerif-BoldItalic.ttf",
+      "bytes": 376772,
+      "sha256": "f17db8af71e24d2066b587546021d4f0b296be389512b658dec3c09affeb11a7",
+      "family": "Liberation Serif",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationSerif-Italic.ttf",
+      "bytes": 375632,
+      "sha256": "0e3dea9f8d613e006ccfa62201f33e265d19167bd0907725c3e145368b04fc2e",
+      "family": "Liberation Serif",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "LiberationSerif-Regular.ttf",
+      "bytes": 393576,
+      "sha256": "058ea80864aef09a23f45cbec2bb5400bc3dfbdea01c3f10538a21fcb497fb74",
+      "family": "Liberation Serif",
+      "version": "Version 2.1.5",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "http://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "NotoSans-Bold.ttf",
+      "bytes": 838072,
+      "sha256": "3a08a47daa00cade516425c15c57615aef2fd418ec9811a7b9f465088f92cc05",
+      "family": "Noto Sans",
+      "version": "Version 2.015; ttfautohint (v1.8.4.7-5d5b)",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "https://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "NotoSans-BoldItalic.ttf",
+      "bytes": 853344,
+      "sha256": "2e34b41a4b9c234b1be7dff6d06cba18811ecb694b41350873edf0ec16a0f0fa",
+      "family": "Noto Sans",
+      "version": "Version 2.015; ttfautohint (v1.8.4.7-5d5b)",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "https://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "NotoSans-Italic.ttf",
+      "bytes": 845312,
+      "sha256": "126522ae1bb9cd92120287fc47dfc74ef981e73931d93e52c565fb7e09b2d74a",
+      "family": "Noto Sans",
+      "version": "Version 2.015; ttfautohint (v1.8.4.7-5d5b)",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "https://scripts.sil.org/OFL"
+      ]
+    },
+    {
+      "path": "NotoSans-Regular.ttf",
+      "bytes": 825628,
+      "sha256": "f5f552c8c5edb61fe6efb824baf4d4de47b1a8689ab4925ff43f7bd6a4ebece5",
+      "family": "Noto Sans",
+      "version": "Version 2.015; ttfautohint (v1.8.4.7-5d5b)",
+      "license": "OFL-1.1",
+      "license_urls": [
+        "https://scripts.sil.org/OFL"
+      ]
+    }
+  ]
+}

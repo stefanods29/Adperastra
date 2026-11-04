@@ -1,0 +1,11 @@
+/* Update controls in Settings > General (Step 08d T5). */
+.adp-updates-status {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  flex-wrap: wrap;
+}
+
+.adp-updates-status .adp-note {
+  margin: 0;
+}

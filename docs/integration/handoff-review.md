@@ -54,6 +54,13 @@ Move archive validation/extraction into the bounded pack helper before registeri
 
 Evidence: `handoff/step-12a/README.md`.
 
+Progress 2026-11-06: the fixed `--pack-helper` framed protocol, 1 GiB job
+object, parent wall/cancel limits, independent `verify_staging` before
+`activate_verified`, and the fail-closed install path are written (not built
+or tested). Install still returns `packs.unavailable`: the production signed
+catalog source, completed-download handoff, production probe and 12b artifact
+hashes/signatures/licenses are not configured.
+
 ### H05: C++host dispatch accepts onlytask6 upscale. Llama and Whisper bridges explicitly return unsupported.17a provides protocol/policy but no productionTurnEngine/reqwest execution;17b has no concrete Whisper/PCM/microphone providers.
 
 Steps: 14c, 17a, 17b, 17c, 17d, 20c, 21b, 22b. Severity:Major.

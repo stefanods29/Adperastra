@@ -1,5 +1,26 @@
 # Libraries (locked list)
 
+Limited first-party Office fallback integration: `ooxml-editor-probe` 0.1.0
+is linked from `tools/office-edit-preflight` and runs only as the app's confined
+helper. The delegated selection and exact scope are recorded in
+`docs/office-engine/basic-fallback-selection.md`. roxmltree 0.21.2 is admitted
+as a direct helper dependency in this route, in addition to the preflight
+admission below. This does not activate any external unsigned Office pack.
+
+Coordinator Office I/O preflight (2026-11-04): `roxmltree` 0.21.2 exact,
+MIT OR Apache-2.0, Rust 1.60 minimum. Used only in the standalone
+`tools/office-edit-preflight` candidate to inspect bounded XML and patch
+existing text/cell ranges without reconstructing untouched OOXML parts.
+The cached upstream Cargo metadata and source identify
+https://github.com/RazrFalcon/roxmltree. No application dependency, selected
+engine, pack activation or full editor support is implied by this admission.
+Other probe dependencies reuse the admitted serde/serde_json, uuid, zip and
+Windows families, with exact versions retained in its own lock file.
+
+Coordinator Office engine evaluation (2026-11-04): `@deepseek-ai/libreoffice-kit` and `@deepseek-ai/libreoffice-kit-win32-x64` 0.1.3, MPL-2.0. Install outside the repository with scripts disabled to evaluate an available prebuilt native LibreOfficeKit distribution after the extracted upstream runtime's integration failures. This is a Step 20a candidate evaluation, with no application dependency or engine approval implied. Retain package integrity metadata, source receipts and component notices before bundling. Primary source and license are in https://github.com/deepseek-ai/dsh-libreoffice-kit.
+
+Coordinator-only provisioning tool (2026-11-03): lessmsi 2.12.9, MIT, not bundled with the app. Used to extract verified official Office MSI files into a fresh user-owned directory without running installer actions or requiring administrator rights. Exact release hash, license and command: docs/integration/lessmsi-provisioning.md.
+
 Only the libraries on this page may be used, at the version given. A step recipe or guide says when each one is added (recipe `plan/recipes/add-dependency.md`: its own `deps:` commit, plus `THIRD_PARTY_LICENSES.md` and `docs/dependency-and-license-table.md`). Never pick another version, and never swap a library for "something better". If a library does not work as the step describes, first check its real API (`plan/pitfalls.md` P-26). Only if it truly cannot do the job, choose another one whose license is allowed (`plan/rules.md` R-LIC), add it to this page with the reason, then add it with the recipe (AGENTS.md section 5).
 
 Licenses allowed: `plan/rules.md` R-LIC.
@@ -111,6 +132,27 @@ Owner scope2026-11-02 includes AI and a Local AI/API-key assistant with Meta pri
 | Meta Model API transport |17a assistant-provider-1 usingexistingreqwest/serde |Hosteduser-configuredservice,notbundledweights |MetaAPIprioritized;nativeprotectedkey,explicitoutboundpayloadconsent. NoSDK/newOpenAIdependencyneeded;localAIdefaultandnocloudfallback |
 
 Planned newnativefeatureflagsarelistedineachproducerandverifiedfrompinnedwindowssource:WIC/propertysystem/idle/power/OCR/RestartManager/Vhd/tray/DPAPI/speech. A guide'sdependencytaskandthecoordinatorlicenseauditownmanifest/lockfiles. Productionpack/modelsignatureacceptancealwaysusespublicverificationkeys;guideworkneverreadstheprivate.adperastrasigningdirectory.
+
+## Present in the integrated manifests (integration record)
+
+These direct dependencies are declared by the integrated `Cargo.toml`/`package.json` files. This note records presence, not completion of the steps' acceptance. Versions are the manifest pins; where the lock file has no entry, no resolved version is claimed.
+
+- From the planned tables above, now declared directly: `age` 0.12.1 (`crates/locked-store`), `regex` 1.13.1 (`crates/bulk-rename`, `crates/search-index`), `calamine` 0.37.0 and `rust_xlsxwriter` 0.102.0 (`crates/convert`), `lopdf` 0.46.0 (`crates/privacy`), `pdf-lib` 1.17.1 and `@pdf-lib/fontkit` 1.1.1 (frontend and PDF write helper), `docx` 9.15.0 and `exceljs` 4.4.0 (moved from devDependencies to dependencies for helper-only export encoding), and the Inter 4.1 and OpenDyslexic font assets.
+- Newly listed direct dependencies:
+
+| Library | Version | License | Used for |
+|---|---|---|---|
+| unicode-normalization | 0.1.24 declared (semver range; no Cargo.lock entry yet) | MIT OR Apache-2.0 | NFC normalization of tag names (11b) and dictation text (17b); the license field was checked in the crates.io 0.1.24 metadata |
+| hex | 0.4.3 (Cargo.lock; manifest ^0.4.3) | MIT OR Apache-2.0 | Hex encoding of recovery-envelope hashes (09h); checked in the installed package manifest and Cargo.lock |
+
+## Office preview security pins (owner-authorized release, 2026-11-04)
+
+- calamine **0.38.0**, MIT: replaces 0.37.0, fixing RUSTSEC-2026-0436 in the isolated workbook readers.
+- age **0.11.5**, MIT OR Apache-2.0, defaults disabled: retains the application's Scrypt and X25519 container/recovery APIs while removing the unused P256/tag backend introduced by 0.12.1, whose crypto-bigint dependency is affected by RUSTSEC-2026-0387. Container format, password work factors, recovery and authentication checks remain unchanged and must pass their existing tests.
+- little_exif **0.6.23**, MIT OR Apache-2.0: retained under `crates/vendor/little_exif` with quick-xml **0.42.0**, MIT, and the five string-API adaptations documented in ADPERASTRA-PATCHES.md. Upstream still pins vulnerable quick-xml 0.37.5; the patch removes RUSTSEC-2026-0194/0195 without disabling parser checks.
+- ExcelJS **4.4.0**, MIT, is development-only (scripts/build-templates.mjs); its UUID v4 dependency is pinned through a scoped override to uuid **11.1.1**, MIT. Template writing was exercised with the patched API.
+- pptxgenjs **4.0.1**, MIT, remains development-only; a scoped override pins image-size **2.0.4**, MIT, fixing the published image-parser DoS advisories. A deck with text and an image was generated successfully.
+- Development builds optimize the existing scrypt implementation (`opt-level=3`); password parameters and test cases are unchanged. Public builds use the existing release optimizations.
 
 ## Never use
 

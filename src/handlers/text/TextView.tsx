@@ -2,16 +2,24 @@ import { useTextExport } from "../../convert/useTextExport";
 import { Compartment } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { ChevronLeft, ChevronRight, Hash, History, Redo2, Save, SaveAll, Scan, SpellCheck, Undo2, WrapText, ZoomIn, ZoomOut } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../../components/Button";
 import Dialog from "../../components/Dialog";
+import ReadAloudToolbar from "../../accessibility/ReadAloudToolbar";
+import { MAX_READ_TEXT_SCALARS } from "../../services/readAloud";
 import type { Command } from "../../commands/registry";
 import { useTextDocument } from "../../editor/useTextDocument";
 import { SAVE_ENCODING_LABELS, SAVE_ENCODINGS, spellcheckDefault, type SaveEncodingId } from "../../editor/saveEncoding";
 import { showProperties } from "../../services/explorer";
+import { errorText } from "../../services/errors";
+import { getTransfer } from "../../services/contentTransfer";
 import { formatDate, formatSize } from "../../services/format";
 import { isTauriRuntime } from "../../services/settings";
+import TransferChoiceDialog from "../../transfer/TransferChoiceDialog";
+import { appTransferRegistry } from "../../transfer/TransferRegistry";
+import { readDropPayload } from "../../transfer/tabDropRouting";
+import { createTextEditorTarget, useContentPaste } from "../../transfer/useContentPaste";
 import VersionHistoryDialog from "../../versions/VersionHistoryDialog";
 import Ribbon from "../../ribbon/Ribbon";
 import { useCommandShortcuts } from "../../ribbon/shortcuts";
@@ -76,6 +84,7 @@ export default function TextView({
   onOpenInWindowsApp,
   find,
   protectedView,
+  documentId,
   previewOnly = false,
   onDirtyChange,
   registerSave,
@@ -127,6 +136,40 @@ export default function TextView({
     onPathChange,
   });
   const { viewRef, encoding, readOnly, dirty, cursor } = doc;
+  // Read aloud captures the selection, or the start of the document when
+  // nothing is selected, at the moment Start is pressed.
+  const captureReadText = () => {
+    const view = viewRef.current;
+    if (!view) return "";
+    const range = view.state.selection.main;
+    const raw =
+      range.from !== range.to
+        ? view.state.sliceDoc(range.from, range.to)
+        : view.state.sliceDoc(0, Math.min(view.state.doc.length, MAX_READ_TEXT_SCALARS));
+    return [...raw].slice(0, MAX_READ_TEXT_SCALARS).join("");
+  };
+  // Step 09c T3/E2: this editor is the one existing mutation target. The
+  // target advertises nothing until the editor exists and is editable.
+  const transferTargetId = useId();
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
+  useEffect(() => {
+    const target = createTextEditorTarget({
+      targetId: `text:${transferTargetId}`,
+      ...(documentId === undefined ? {} : { documentId }),
+      view: () => viewRef.current,
+      readOnly: () => readOnlyRef.current !== null,
+    });
+    const unregister = appTransferRegistry.register(target);
+    return () => {
+      unregister();
+      target.dispose();
+    };
+  }, [documentId, transferTargetId, viewRef]);
+  const transfer = useContentPaste({
+    registry: appTransferRegistry,
+    targetId: `text:${transferTargetId}`,
+  });
   useTextExport(url, doc.viewRef, !previewOnly && !paged && !doc.failed, registerExport);
   const editable = readOnly === null;
 
@@ -242,6 +285,23 @@ export default function TextView({
           ? t("editor.readOnlyAttribute")
           : t("editor.readOnlyEncoding", { encoding: encoding ? ENCODING_LABELS[encoding] : "" });
 
+  // Step 09c T3: a content drag becomes an envelope only through the
+  // native registry; the editor pane negotiates it with the target above.
+  const onTransferDragOver = (event: DragEvent<HTMLElement>) => {
+    if (readDropPayload(event.dataTransfer as unknown as import("../../transfer/tabDropRouting").DropDataTransfer).kind !== "content") return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  };
+  const onTransferDrop = (event: DragEvent<HTMLElement>) => {
+    const payload = readDropPayload(event.dataTransfer as unknown as import("../../transfer/tabDropRouting").DropDataTransfer);
+    if (payload.kind !== "content") return;
+    event.preventDefault();
+    event.stopPropagation();
+    void getTransfer(payload.transferId)
+      .then((envelope) => transfer.paste(envelope))
+      .catch(() => undefined);
+  };
+
   const ribbon: RibbonDef = {
     tabs: [
       {
@@ -282,6 +342,25 @@ export default function TextView({
               { type: "toggle", command: "text.wordWrap", keyTip: "W" },
               { type: "toggle", command: "text.lineNumbers", keyTip: "N" },
               { type: "toggle", command: "text.spellcheck", keyTip: "K" },
+            ],
+          },
+          {
+            id: "readAloud",
+            labelKey: "accessibility.read",
+            controls: [
+              {
+                type: "custom",
+                id: "readAloud",
+                render: () => (
+                  // The document id lets the native side force the real
+                  // sensitivity; the caller's flag is only a hint.
+                  <ReadAloudToolbar
+                    text={captureReadText}
+                    documentId={documentId}
+                    sensitive={false}
+                  />
+                ),
+              },
             ],
           },
           {
@@ -380,6 +459,38 @@ export default function TextView({
           {note}
         </div>
       ) : null}
+      {transfer.choice ? (
+        <TransferChoiceDialog
+          envelope={transfer.choice.envelope}
+          actions={transfer.choice.actions}
+          onChoose={async (actionId) => {
+            await transfer.choose(actionId);
+          }}
+          onCancel={transfer.cancel}
+        />
+      ) : null}
+      {transfer.sensitive ? (
+        <Dialog
+          title={t("transfer.choose")}
+          onClose={transfer.cancelSensitive}
+          className="adp-transfer-choice"
+        >
+          <p className="adp-transfer-warning" role="status">
+            {t("transfer.sensitiveCopy")}
+          </p>
+          <div className="adp-dialog-actions">
+            <Button variant="primary" onClick={() => void transfer.confirmSensitive()}>
+              {t(transfer.sensitive.action.label_key)}
+            </Button>
+            <Button onClick={transfer.cancelSensitive}>{t("common.cancel")}</Button>
+          </div>
+        </Dialog>
+      ) : null}
+      {transfer.error ? (
+        <p className="adp-note" role="alert">
+          {errorText(t, transfer.error, "transfer")}
+        </p>
+      ) : null}
       {doc.draft ? (
         <div className="adp-editor-bar" role="status">
           <span>
@@ -411,6 +522,8 @@ export default function TextView({
         ref={doc.hostRef}
         className="adp-text-host"
         hidden={doc.failed}
+        onDragOver={onTransferDragOver}
+        onDrop={onTransferDrop}
         style={{ ["--adp-text-zoom" as string]: String(settings.zoom) }}
       />
       {showHistory && !paged ? (

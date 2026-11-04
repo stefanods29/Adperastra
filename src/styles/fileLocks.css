@@ -1,0 +1,111 @@
+/* Files in use (Step 09g). Colors only through tokens. */
+
+.adp-locks-dialog {
+  width: 600px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-locks-confirm {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+}
+
+.adp-locks-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--adp-space-3);
+}
+
+.adp-locks-subtitle {
+  margin: 0 0 var(--adp-space-3);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-locks-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-locks-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-4);
+  min-height: 48px;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-locks-row:last-child {
+  border-bottom: none;
+}
+
+.adp-locks-person {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.adp-locks-name {
+  overflow: hidden;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-locks-app {
+  overflow: hidden;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-locks-note,
+.adp-locks-none {
+  margin: var(--adp-space-3) 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-locks-none {
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-locks-warning {
+  margin: 0 0 var(--adp-space-4);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+  line-height: 1.5;
+}
+
+.adp-locks-result {
+  margin: var(--adp-space-3) 0;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+}
+
+.adp-locks-error {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  margin: var(--adp-space-3) 0;
+  color: var(--adp-color-status-caution);
+  font-size: var(--adp-font-small);
+}
+
+.adp-locks-dialog .adp-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--adp-space-2);
+  margin-top: var(--adp-space-4);
+}

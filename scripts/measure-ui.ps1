@@ -94,22 +94,80 @@ if (-not $scopedReview -and -not (Test-Path $archives)) {
 $dataDir = Join-Path $env:TEMP ("adperastra-ui-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force $dataDir | Out-Null
 $settings = @{
-  schema_version = 16; language = $Language
+  schema_version = 56; language = $Language
   files = @{ paste_image_format = "png" }
   open = @{ protected_view = $true; open_with = @{} }
   theme = @{ mode = $Theme; accent_source = "design"; accent_custom = "#0067C0"; light_theme = "light"; dark_theme = "dark" }
   appearance = @{ ui_scale = 100; density = "comfortable"; corner_radius = "standard"; animations = "full" }
-  explorer = @{ show_hidden = $false; show_extensions = $true; item_checkboxes = $false; details_pane = $true; group_by = "none"; view_mode = "details"; remember_view_per_folder = $true; view_mode_order = @("extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content", "columns"); hidden_view_modes = @(); column_width = 240; column_preview = $true }
+  explorer = @{ show_hidden = $false; show_extensions = $true; item_checkboxes = $false; details_pane = $true; group_by = "none"; view_mode = "details"; remember_view_per_folder = $true; view_mode_order = @("extraLargeIcons", "largeIcons", "mediumIcons", "smallIcons", "list", "details", "tiles", "content", "columns"); hidden_view_modes = @(); column_width = 240; column_preview = $true; folder_backgrounds = $false; column_sets_enabled = $false }
   layout = @{ toolbar_position = "top"; toolbar_mode = "full"; tab_bar_position = "top"; tab_bar_collapsed = $false; nav_pane_position = "left"; details_pane_position = "right"; saved_presets = @() }
   versions = @{ enabled = $true; keep_days = 30; max_mb = 1024 }
   templates = @{ my_folder = "" }
-  background = @{ enabled = $true; only_idle = $false; only_ac = $false; paused = $false; tasks = @{ thumbnails = $true; metadata = $true; ocr = $true; version_cleanup = $true; filename_index = $false; content_index = $false; folder_sizes = $false; storage_scan = $false; pack_download = $false } }
+  background = @{ enabled = $true; only_idle = $false; only_ac = $false; paused = $false; tasks = @{ thumbnails = $true; metadata = $true; ocr = $true; version_cleanup = $true; filename_index = $false; content_index = $false; folder_sizes = $false; storage_scan = $false; pack_download = $false; media_proxy = $false }; pause_fullscreen = $true; quiet_hours = @{ enabled = $false; start_minute = 1320; end_minute = 420 }; cpu_percent = 25 }
   cache = @{ max_mb = 512 }
   gallery = @{ sources = @(); date_source = "taken" }
   ocr = @{ language = "auto"; enabled = true }
   reading = @{ font_px = 18; theme = "app" }
+  conversion = @{ default_destination = "source"; default_quality = 90; preserve_metadata = $true; concurrent_jobs = 2; last_preset = $null; prompt_for_losses = $true }
+  privacy = @{ mode = "keep"; image_mode = "keep"; pdf_mode = "keep"; image_categories = @(); pdf_categories = @(); location_warning = $false; sharing_prompt = $false }
+  updates = @{ enabled = $false; last_seen_version = ""; last_check_unix = 0 }
+  startup = @{ mode = "home"; folder = ""; stay_in_background = $false; start_with_windows = $false }
+  tabs = @{ drag_hover_ms = 600 }
+  palette = @{ recent_ids = @(); show_disabled = $true }
+  transfers = @{ verify_copies = $false; queue_per_volume = $true; max_parallel = 2 }
+  shelf = @{ visible = $false; side = "bottom"; size = 180 }
+  recovery = @{ enabled = $true; interval_seconds = 10; max_mib = 1024; diagnostics_include_dumps = $false }
+  clipboard_history = @{ enabled = $true; capture_windows = $false; persist = $false; max_items = 100; max_mib = 64 }
+  locked = @{ auto_lock_minutes = 5; lock_on_workstation = $true }
+  theme_custom = @{ day = @{ kind = "builtin"; id = "light" }; night = @{ kind = "builtin"; id = "dark" }; mode = "windows"; manual_scheme = "light"; day_start_minute = 420; night_start_minute = 1140; follow_wallpaper = $false; type_accents = @{} }
+  toolbar_custom = @{ classic_menu = $false; bars = @(); quick_access = @("explorer.undo", "explorer.redo", "explorer.copyPath") }
+  keyboard_custom = @{ active_map = "builtin:windows"; custom_maps = @(); allow_bare_navigation = $false }
+  tab_options = @{
+    width_mode = "fixed"; fixed_width_px = 180; close_button = "always"
+    new_position = "end"; close_activation = "mru"; hover_preview = $false
+    hover_delay_ms = 500; type_icons = $true; type_underline = $true
+    title_limit = 40; overflow = "scroll"; double_click_new = $true
+  }
+  format_options = @{
+    locale = "system"; date_style = "short"; custom_date = "YYYY-MM-DD HH:mm"
+    time_cycle = "system"; week_start = "system"; size_base = "binary"
+    decimals = 1; name_truncation = "end"; extension_overrides = @{}
+  }
+  behavior = @{
+    open_click = "double"; confirm_changes = $false
+    confirmations = @{ recycle = $false; move = $false; rename = $false
+      convert = $false; clean = $false; save = $false }
+  }
+  shell_custom = @{}
+  accessibility = @{
+    large_targets = $false; focus_px = 2; cursor = "normal"; color_mode = "none"
+    dyslexic_font = $false; letter_spacing_em = 0; word_spacing_em = 0; line_height = 1.4
+    simple_mode = $false; persistent_toasts = $false; reduced_motion = "system"; no_autoplay = $false
+    hover_ms = 600; drag_threshold_px = 4; completion_sound = $false; sound_volume = 0.2
+    subtitle = @{ font_percent = 100; text_color = "#FFFFFF"; background_color = "#000000"; background_opacity = 0.75; position = "bottom" }
+    read_rate = 1; read_volume = 1; auto_captions = $false
+  }
+  search = @{ roots = @(); default_mode = "name"; index_limit_mb = 2048; content_max_chars = 100000; usn_enabled = $false; excluded_paths = @() }
+  views = @{ enabled_views = @{ timeline = $true; calendar = $true; by_kind = $true; recent_activity = $true; map = $false }; date_source = "modified"; activity_enabled = $true; map_online_enabled = $false; write_embedded_tags = $false }
+  folder_sizes = @{ enabled = $false; network = $false; details = $false }
+  pack_catalog = @{ last_checked_unix = $null }
+  office_view = @{ prefer_accurate = $true; show_comments = $false; keep_engine_warm = $true; idle_seconds = 60 }
+  pdf_tools = @{ author = "" }
+  image_editor = @{ default_mode = "edit"; background_rgba = @(255,255,255,255); history_limit_mb = 256; advanced = $false; selection_tolerance = 15; show_history = $false }
+  local_ai = @{ enabled = $false; device = "auto"; tier = "auto"; idle_unload_seconds = 120; memory_limit_mb = 4096;
+    tasks = @{ structured_text = $false; vision_answer = $false; embed_text = $false; embed_image = $false; transcribe = $false; upscale = $false; foreground_mask = $false; inpaint = $false } }
+  media_editor = @{ preview_quality = "960"; waveform = $true; keep_pitch = $true }
+  assistant = @{ enabled = $false; backend = "local"; provider_id = "meta"; custom_endpoint_id = $null; api_model_id = "muse-spark-1.3"; local_source = "bundled"; local_server_port = 11434; local_server_address = "127.0.0.1"; name = ""; answer_length = "normal"; tone = "neutral"; language = "app"; show_steps = $false; allow_read_contents = $false; automatic_tools = @{ open_tab = $true; switch_tab = $true; search_files = $true; read_file = $false; group_tabs = $true }; denied_folders = @(); keep_history = $false }
+  ai_actions = @{ enabled = @{ remove_background = $false; blur_background = $false; erase_object = $false; describe_image = $false; ask_image = $false; upscale = $false; summarize = $false; create_faq = $false; translate = $false; key_points = $false; ask_file = $false; transcribe = $false; summarize_media = $false; find_moments = $false; compare_documents = $false; summarize_folder = $false }; transcription_language = "auto"; caption_language = "auto"; caption_window_seconds = 30; dictation_language = "en" }
+  ai_search = @{ semantic_text = $false; photo_index = $false; natural_query = $false; rename = $false; sort = $false; roots = @(); destinations = @(); disabled_sort_extensions = @() }
+  ai = @{ writing = @{ inline_enabled = $false; enabled_types = @{ text = $false; markdown = $false; code = $false } }; documents = @{ enabled = $false; experimental_actions = @() }; sheets = @{ enabled = $false; experimental_actions = @() }; decks = @{ enabled = $false; experimental_actions = @() } }
+  timeline = @{ preview_quality = "960"; snap_enabled = $true; proxy_enabled = $false }
+  office_edit = @{ enabled = $false; autosave_default = $false; idle_minutes = 5 }
+  document_editor = @{ autosave_default = $false; show_ruler = $true; show_navigation = $false; spelling = $true }
+  sheet_editor = @{ show_formula_bar = $true; show_gridlines = $true; show_headings = $true; default_zoom = 100 }
+  deck_editor = @{ show_notes = $true; snap_to_grid = $false; default_aspect = "wide"; presenter_view = $true }
 }
-[IO.File]::WriteAllText((Join-Path $dataDir "settings.json"), ($settings | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding($false)))
+[IO.File]::WriteAllText((Join-Path $dataDir "settings.json"), ($settings | ConvertTo-Json -Depth 12), (New-Object Text.UTF8Encoding($false)))
 
 $savedData = $env:ADPERASTRA_DATA_DIR
 $savedBrowserArgs = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS

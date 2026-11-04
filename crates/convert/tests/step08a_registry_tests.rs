@@ -91,10 +91,13 @@ fn mismatched_typed_options_are_refused_before_any_output() {
 fn unsupported_avif_output_is_not_advertised() {
     let registry = builtin_registry();
     let specs = registry.specs();
-    assert!(!specs.is_empty());
-    for spec in &specs {
+    let images: Vec<_> = specs
+        .iter()
+        .filter(|spec| spec.output.mime().starts_with("image/"))
+        .collect();
+    assert!(!images.is_empty());
+    for spec in images {
         assert_ne!(spec.id.as_str(), "image/avif");
-        assert!(spec.output.mime().starts_with("image/"));
         assert!(spec.available);
         assert!(spec.output.is_writable_image());
     }

@@ -262,16 +262,17 @@ export default function ColumnPane(props: ColumnPaneProps) {
             const focused = isActive && view.selection.focus === item.path;
             const renaming = isActive && view.renamingPath === item.path;
             const atPath = role === "parent" && virtualRow.index === pathIndex;
+            const container = isFolderLike(item);
             const className = [
               "adp-colview-row",
               item.hidden || item.system ? "adp-colview-row--hidden" : "",
               selected ? "adp-colview-row--selected" : "",
+              view.pickActive && container ? "adp-pick-target" : "",
               focused ? "adp-colview-row--focused" : "",
               atPath ? "adp-colview-row--path" : "",
             ]
               .filter(Boolean)
               .join(" ");
-            const container = isFolderLike(item);
             return (
               <div
                 key={item.path}

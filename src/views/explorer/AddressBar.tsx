@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Clock3 } from "lucide-react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import IconButton from "../../components/IconButton";
 import SearchBox from "../../components/SearchBox";
@@ -29,6 +29,8 @@ export interface AddressBarProps {
   onHistory: (distance: number) => void;
   search: string;
   onSearch: (value: string) => void;
+  /** Host tools that sit beside the search box (Step 17b AI actions). */
+  extra?: ReactNode;
 }
 
 export default function AddressBar(props: AddressBarProps) {
@@ -92,8 +94,8 @@ export default function AddressBar(props: AddressBarProps) {
   return (
     <div className="adp-addressbar">
       <div className="adp-nav-buttons">
-        <IconButton icon={props.backCommand.icon} labelKey={props.backCommand.labelKey} shortcut={props.backCommand.shortcut} disabled={!props.backCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.backCommand)} />
-        <IconButton icon={props.forwardCommand.icon} labelKey={props.forwardCommand.labelKey} shortcut={props.forwardCommand.shortcut} disabled={!props.forwardCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.forwardCommand)} />
+        <IconButton icon={props.backCommand.icon} labelKey={props.backCommand.labelKey} shortcut={props.backCommand.shortcut} commandId={props.backCommand.id} disabled={!props.backCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.backCommand)} />
+        <IconButton icon={props.forwardCommand.icon} labelKey={props.forwardCommand.labelKey} shortcut={props.forwardCommand.shortcut} commandId={props.forwardCommand.id} disabled={!props.forwardCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.forwardCommand)} />
         <div className="adp-dropdown">
           <button type="button" className="adp-icon-btn" aria-label={t("explorer.history")} title={t("explorer.history")} disabled={props.historyEntries.length === 0} onClick={() => setOpenSegment(openSegment === -1 ? null : -1)}>
             <Clock3 size={14} aria-hidden="true" />
@@ -110,8 +112,8 @@ export default function AddressBar(props: AddressBarProps) {
             </ul>
           ) : null}
         </div>
-        <IconButton icon={props.upCommand.icon} labelKey={props.upCommand.labelKey} shortcut={props.upCommand.shortcut} disabled={!props.upCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.upCommand)} />
-        <IconButton icon={props.refreshCommand.icon} labelKey={props.refreshCommand.labelKey} shortcut={props.refreshCommand.shortcut} disabled={!props.refreshCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.refreshCommand)} />
+        <IconButton icon={props.upCommand.icon} labelKey={props.upCommand.labelKey} shortcut={props.upCommand.shortcut} commandId={props.upCommand.id} disabled={!props.upCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.upCommand)} />
+        <IconButton icon={props.refreshCommand.icon} labelKey={props.refreshCommand.labelKey} shortcut={props.refreshCommand.shortcut} commandId={props.refreshCommand.id} disabled={!props.refreshCommand.enabledWhen(props.commandCtx)} onClick={() => props.onRun(props.refreshCommand)} />
       </div>
 
       {editing ? (
@@ -190,6 +192,7 @@ export default function AddressBar(props: AddressBarProps) {
       <div className="adp-address-search">
         <SearchBox value={props.search} onChange={props.onSearch} placeholder={t("explorer.searchIn", { name: props.placeLabel })} />
       </div>
+      {props.extra ? <div className="adp-address-extra">{props.extra}</div> : null}
     </div>
   );
 }

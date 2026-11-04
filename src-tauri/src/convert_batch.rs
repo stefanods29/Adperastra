@@ -4,11 +4,16 @@ pub fn run_job(
     mut request: ConversionRequest,
     context: &crate::jobs::JobContext,
 ) -> Result<convert::ConversionReport, String> {
-    let registry = convert::builtin_registry();
+    let registry = crate::convert::conversion_registry(app);
     let spec = registry
         .get(request.converter_id.as_str())
         .ok_or_else(|| "convert.bad_request".to_string())?
         .spec();
+    if !spec.available {
+        return Err(crate::convert::unavailable_converter_code(&spec).to_string());
+    }
+    let route = crate::convert::route_for(spec.id.as_str(), &request.options)
+        .ok_or_else(|| "convert.bad_request".to_string())?;
     request
         .validate()
         .map_err(|error| error.code().to_string())?;
@@ -30,6 +35,13 @@ pub fn run_job(
         .unwrap_or(MAX_CONCURRENT_CONVERSIONS);
     let gate = app.state::<ConvertGate>();
     let _permit = gate.acquire_with(concurrent_jobs, context.token())?;
+    // A `combine` adapter runs once for the whole ordered selection and
+    // publishes one file; every other adapter runs once per input.
+    if route == crate::convert::ConvertRoute::NativeImagesPdf {
+        let outcome = run_combine(&snapshots, &spec, &request, context);
+        let report = StoredReport::new(outcome.items, outcome.outputs, outcome.cancelled);
+        return app.state::<ConversionReports>().insert(report);
+    }
     let mut items = Vec::new();
     let mut outputs = Vec::new();
     let mut cancelled = false;
@@ -50,6 +62,7 @@ pub fn run_job(
         let outcome = run_one(
             &snapshots,
             &spec,
+            route,
             &request,
             index as u32,
             input,

@@ -1,11 +1,69 @@
 # Status
 
+**Owner release authorization (2026-11-04):** The owner explicitly requests
+the plus button to open independent Home tabs, a complete usage README,
+compilation, pushing the current integration to GitHub and publication of an
+actual downloadable release. Prepare `v0.1.0-preview.1` as an experimental
+portable Office preview, with current feature limits disclosed; this does
+not mark the unfinished roadmap milestones accepted. Preserve original
+handoffs and personal application data. Never include a developer profile,
+credentials or private signing keys in source or artifacts. The signed
+offline Office catalog's public verification key is pinned in
+`assets/office-preview-pack.pub` for the public build.
+
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `08b` (next, paused by owner after08a; no active implementation). Steps07a–08a are integrated locally on codex/integrate-handoffs. The08a implementation commit is3ba4c4b; final gate passed875Rust and808UI tests, plus5actual debug conversion-helper checks. Packaged-app fidelity, screenshots, speed and real-device checks remain pending. Conversion Undo remains explicitly unavailable until09f exact recovery receipts. Original handoffs are preserved. Early08b work was moved to handoff/resume-08b-after-08a/files and the source restored to verified08a. Resume only when the owner asks.
+**Current step:** `08b` and local handoff integration resumed by owner, 2026-11-03. Branch: codex/integrate-handoffs. The working tree contains the unfinished later-step integration; preserve it and the original handoffs. Owner prioritizes working engine connections, design/lag fixes and window dragging. Provisioning and verification limitations are recorded in docs/integration/provisioning-2026-11-03.md. Basic Office previews are implemented; accurate Office, pack activation, AI generation, speech integration and exact-object replacement must not be claimed complete until their real paths pass checks. No main/remote/publication changes authorized.
 
 **Last tag:** `v0.0.6-step03b` (local)
+
+**Office editing priority (2026-11-04):** Step 20a T4 Windows preflight exposed and reproduced an engine-launch bug. The app now supplies the Windows profile location required by AppContainer. LibreOfficeKit initialized in an isolated probe after correcting its engine-directory access and saved a disposable Word copy. The [preflight record](../docs/office-engine/results/libreofficekit/26.8.2.2/preflight.md) records why the initial mutation and preservation tests did not qualify editing. The engine comparison and Step 20a checkpoint remain pending.
 **Next step tag:** `v0.0.7-step04a`
+
+**Live paper/slide editing follow-up (2026-11-04):** The separate local
+portable build now has a verified signed Office renderer and preview-first
+editing consent. Word and PowerPoint use accurate pages/slides from the live
+immutable model, with text controls at their rendered positions. Live edits,
+rendered refresh and safe separate copies passed; untouched OOXML parts and
+original hashes matched. Excel opens its real cell grid after acceptance,
+including eligible empty-cell edits. This remains limited OOXML editing:
+full formatting controls, object editing, formula evaluation and legacy
+editing remain unfinished. The first paper-editor gate passed; the final
+follow-up gate passed (2,254 UI tests; complete Rust workspace checks). Current local build:
+`build/Adperastra-Office-Layout/Adperastra.exe`; Desktop shortcut:
+`Adperastra Office Editing`. Seven superseded executables were moved to the
+Recycle Bin, preserving packs and application data. Details are in
+`docs/integration/office-live-editing-2026-11-04.md`.
+
+**Office connector follow-up (2026-11-04):** The accurate source now supports
+verified one-shot PDF producers for Writer/Impress, with complete Writer
+pagination and strict slide-to-PDF mapping. Native Kit arguments and a private
+graphics desktop were exercised using the actual application launcher in an
+outside disposable probe. Signed pack activation, in-app evidence and safe
+editing remain pending; no editing/save capability has been enabled.
+
+**Owner clarification (2026-11-04):** Excel spreadsheets are explicitly in
+the Office viewing, editing and safe-save scope alongside Word documents and
+PowerPoint presentations. The standalone preview startup regression takes
+priority before resuming those engine connections.
+
+**Office worker transport (2026-11-04):** The retained OOXML preflight now has
+a bounded worker protocol and a compiled native message codec. Disposable
+Word, Excel and PowerPoint copies passed the actual Windows AppContainer
+list/edit/stale-edit/undo/redo/capture checks; originals and untouched package
+parts were verified unchanged. Evidence and exact source/artifact hashes are
+in `docs/office-engine/results/ooxml-preservation/worker-protocol-results.json`.
+The limited first-party worker is now connected to the native binding and
+shared OfficeController. Actual App.exe disposable checks passed DOCX/XLSX/PPTX
+edits, repeatable captures, undo/redo/discard, and safe copy publication.
+A live Word tab also edited and saved a copy through the native file dialog;
+the original and untouched package parts were verified unchanged. The local
+`build/Adperastra/Adperastra-Office.exe` now connects XLSX to the existing
+bounded sheet grid, formula bar and real workbook tabs, defaulting to the grid.
+The full gate passed after this change. Grid runtime interaction and complete
+packaged checks are pending because user input overlapped the live check.
+Original-layout rendering, blank-cell insertion, formula calculation and full
+Office feature parity remain unfinished. Step 20a is not complete.
 
 ## Steps
 
@@ -99,6 +157,8 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 - 2026-10-31: `measure-ui.ps1 -Review06bc` uses fresh retained data/fixtures and never invokes legacy permanent cleanup. Test processes are closed through their own job handles. The original unscoped runner is not authorized for this review. No project/worktree/build/session was deleted; no remote operation or main change was made.
 
 ## Owner decisions log (newest first)
+
+- 2026-11-03 (this chat): Owner resumes local implementation and requests working optional engines, design/lag repairs and top-bar dragging. Installing required tools, engines and a small AI model is authorized. Owner explicitly selects Meta `muse-spark-1.3-contributor` with `minimal` reasoning effort, overriding the earlier Standard-only restriction for this selection. Keep secrets encrypted and out of Git; no publication or remote changes. Provisioning and remaining runtime gaps are recorded in docs/integration/provisioning-2026-11-03.md. Downloads alone do not count as working features.
 
 - 2026-11-03: Owner authorizes continuous integration through all remaining steps, separate-step subagents and autonomous implementation choices while unavailable. Start the next available step as an agent finishes; coordinator retains compilation/testing and reports “step <id> implemented.” only after its implementation checks. Preserve source/user data and original handoffs; keep publication/remotes unchanged unless specifically required. Obsolete build cleanup is authorized; attempted deletion of the 12.4 GiB repository target folder was rejected by automatic command approval review, so no deletion occurred.
 

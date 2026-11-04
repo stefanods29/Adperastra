@@ -1,0 +1,27 @@
+{
+  "revision":1,
+  "source":"A1=2,A2=3,A3=4; formula is selected in C1",
+  "cases":[
+    {"id":"e01","en":"Explain this sum.","es":"Explica esta suma.","formula":"=SUM(A1:A2)","function_ids":["SUM"],"cites":["A1:A2"],"fact":"adds selected values"},
+    {"id":"e02","en":"Explain the average.","es":"Explica el promedio.","formula":"=AVERAGE(A1:A3)","function_ids":["AVERAGE"],"cites":["A1:A3"],"fact":"arithmetic mean"},
+    {"id":"e03","en":"Explain the minimum.","es":"Explica el mínimo.","formula":"=MIN(A1:A3)","function_ids":["MIN"],"cites":["A1:A3"],"fact":"smallest value"},
+    {"id":"e04","en":"Explain the maximum.","es":"Explica el máximo.","formula":"=MAX(A1:A3)","function_ids":["MAX"],"cites":["A1:A3"],"fact":"largest value"},
+    {"id":"e05","en":"Explain numeric counting.","es":"Explica el recuento numérico.","formula":"=COUNT(A1:A3)","function_ids":["COUNT"],"cites":["A1:A3"],"fact":"counts numeric cells"},
+    {"id":"e06","en":"Explain occupied-cell counting.","es":"Explica el recuento de celdas ocupadas.","formula":"=COUNTA(A1:A3)","function_ids":["COUNTA"],"cites":["A1:A3"],"fact":"counts nonblank cells"},
+    {"id":"e07","en":"Explain this condition.","es":"Explica esta condición.","formula":"=IF(A1<A2,10,20)","function_ids":["IF"],"cites":["A1:A2"],"fact":"10 when A1<A2, otherwise 20"},
+    {"id":"e08","en":"Explain both comparisons.","es":"Explica ambas comparaciones.","formula":"=AND(A1<A2,A2<A3)","function_ids":["AND"],"cites":["A1:A3"],"fact":"both comparisons must be true"},
+    {"id":"e09","en":"Explain either comparison.","es":"Explica cualquiera de las comparaciones.","formula":"=OR(A1>A2,A2<A3)","function_ids":["OR"],"cites":["A1:A3"],"fact":"at least one comparison must be true"},
+    {"id":"e10","en":"Explain negation.","es":"Explica la negación.","formula":"=NOT(A1>A2)","function_ids":["NOT"],"cites":["A1:A2"],"fact":"reverses comparison truth"},
+    {"id":"e11","en":"Explain rounding.","es":"Explica el redondeo.","formula":"=ROUND(A2/A1,1)","function_ids":["ROUND"],"cites":["A1:A2"],"fact":"rounds quotient to one decimal"},
+    {"id":"e12","en":"Explain conditional sum.","es":"Explica la suma condicional.","formula":"=SUMIF(A1:A3,\">2\")","function_ids":["SUMIF"],"cites":["A1:A3"],"fact":"sums values above 2"},
+    {"id":"e13","en":"Explain conditional count.","es":"Explica el recuento condicional.","formula":"=COUNTIF(A1:A3,\">2\")","function_ids":["COUNTIF"],"cites":["A1:A3"],"fact":"counts values above 2"},
+    {"id":"e14","en":"Explain this lookup.","es":"Explica esta búsqueda.","formula":"=VLOOKUP(3,A1:A3,1,0)","function_ids":["VLOOKUP"],"cites":["A1:A3"],"fact":"exact lookup returning first column"},
+    {"id":"e15","en":"Explain positional retrieval.","es":"Explica la recuperación por posición.","formula":"=INDEX(A1:A3,2)","function_ids":["INDEX"],"cites":["A1:A3"],"fact":"returns second value"},
+    {"id":"e16","en":"Explain matching.","es":"Explica la coincidencia.","formula":"=MATCH(3,A1:A3,0)","function_ids":["MATCH"],"cites":["A1:A3"],"fact":"returns exact-match position"},
+    {"id":"e17","en":"Explain nested functions.","es":"Explica las funciones anidadas.","formula":"=ROUND(AVERAGE(A1:A3),1)","function_ids":["ROUND","AVERAGE"],"cites":["A1:A3"],"fact":"averages then rounds"},
+    {"id":"e18","en":"Explain the text literal.","es":"Explica el texto literal.","formula":"=\"SUMA;\"","function_ids":[],"cites":[],"fact":"returns literal text, not a function"},
+    {"id":"e19","en":"Explain subtraction without changing it.","es":"Explica la resta sin cambiarla.","formula":"=A2-A1","function_ids":[],"cites":["A1:A2"],"fact":"subtracts A1 from A2"},
+    {"id":"e20","en":"Explain the two-stage calculation.","es":"Explica el cálculo en dos etapas.","formula":"=MAX(A1:A3)-MIN(A1:A3)","function_ids":["MAX","MIN"],"cites":["A1:A3"],"fact":"range of selected numeric values"}
+  ],
+  "oracle":{"operations":0,"history_changes":0,"human_rating_min":4,"rating_max":5,"function_ids_in_parsed_capture":true,"citations_in_capture":true,"grounded_facts_required":true}
+}

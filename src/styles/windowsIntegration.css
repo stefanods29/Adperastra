@@ -1,0 +1,64 @@
+/* Step 16: Windows integration and resident settings. */
+
+.adp-integration-section {
+  max-width: 960px;
+}
+
+.adp-integration-check {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  font-size: var(--adp-font-body);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-integration-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--adp-space-5);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-integration-list {
+  position: relative;
+  max-height: 336px;
+  overflow-y: auto;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-integration-list-inner {
+  position: relative;
+  width: 100%;
+}
+
+.adp-integration-row {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 8px;
+  font-size: var(--adp-font-body);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-integration-row:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-resident-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-5);
+}
+
+.adp-resident-memory {
+  font-size: var(--adp-font-body);
+  color: var(--adp-color-text-secondary);
+}

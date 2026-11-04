@@ -1,5 +1,9 @@
 # Owner tasks
 
+## LibreOffice for local testing (2026-11-04)
+
+The verified LibreOffice files were extracted locally and used to render disposable Word and PowerPoint documents. A system-wide installation is optional. Adperastra still needs a confined engine and a verified pack to use these capabilities in the app.
+
 These checks need the owner and do not authorize publishing or changing GitHub.
 Use only disposable test files and folders for file-operation checks. Report any
 problem so it can be recorded and fixed.

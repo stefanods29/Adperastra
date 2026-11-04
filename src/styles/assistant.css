@@ -1,0 +1,388 @@
+/* Assistant dock and review surfaces (Step 17a T6).
+   Every color comes from tokens.css; sizes follow the step guide. */
+
+/* The assistant sits beside the tab content, independent of which edge the
+   tab strip uses. */
+.adp-workspace-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.adp-workspace-main > .adp-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.adp-workspace-main > .adp-assistant {
+  flex: none;
+}
+
+.adp-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: clamp(300px, 360px, 600px);
+  min-width: 300px;
+  max-width: 600px;
+  height: 100%;
+  min-height: 0;
+  padding: 8px;
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  border-left: 1px solid var(--adp-color-border-default);
+  overflow: auto;
+}
+
+.adp-assistant-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.adp-assistant-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+}
+
+.adp-assistant-modelbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.adp-assistant-backend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-assistant-radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.adp-assistant-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+}
+
+.adp-assistant-label {
+  font-size: var(--adp-font-body);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-assistant-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adp-assistant-key-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.adp-assistant-field input,
+.adp-assistant-field select {
+  min-height: 32px;
+  padding: 4px 8px;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-assistant-notice {
+  margin: 0;
+  padding: 8px;
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+  background: var(--adp-color-surface-pane);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-assistant-messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-assistant-message {
+  padding: 8px;
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-window);
+}
+
+.adp-assistant-message--user {
+  border-left: 3px solid var(--adp-accent-explorer);
+}
+
+.adp-assistant-message--assistant {
+  border-left: 3px solid var(--adp-color-border-default);
+}
+
+.adp-assistant-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.adp-assistant-empty {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-assistant-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-assistant-composer.is-focused {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 1px;
+}
+
+.adp-assistant-input {
+  min-height: 72px;
+  max-height: 200px;
+  resize: vertical;
+  padding: 8px;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  font: inherit;
+}
+
+.adp-assistant-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.adp-assistant-action {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-assistant-action-title {
+  margin: 0;
+  font-size: var(--adp-font-body);
+  font-weight: 600;
+}
+
+.adp-assistant-action-rows {
+  max-height: 280px;
+  overflow: auto;
+}
+
+.adp-assistant-action-row {
+  min-height: 28px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--adp-color-border-default);
+}
+
+.adp-assistant-action-label {
+  overflow-wrap: anywhere;
+}
+
+.adp-assistant-excerpt {
+  margin: 4px 0;
+  max-height: 120px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--adp-font-mono, ui-monospace, "Cascadia Mono", monospace);
+  font-size: var(--adp-font-small);
+  user-select: text;
+}
+
+.adp-assistant-warnings {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-assistant-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.adp-assistant-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.adp-assistant-citation {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 2px 8px;
+  color: var(--adp-accent-explorer);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  cursor: pointer;
+}
+
+.adp-assistant-citation:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+.adp-assistant-error {
+  margin: 0;
+  padding: 8px;
+  color: var(--adp-color-text-primary);
+  border-left: 3px solid var(--adp-accent-pdf);
+}
+
+.adp-assistant-outbound-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--adp-color-surface-window) 72%, transparent);
+  z-index: 40;
+}
+
+.adp-assistant-outbound {
+  width: min(960px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-assistant-outbound-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.adp-assistant-outbound-source {
+  padding: 8px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-assistant-outbound-source h3 {
+  margin: 0 0 4px;
+  font-size: var(--adp-font-body);
+}
+
+.adp-assistant-outbound-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+}
+
+.adp-assistant-outbound-facts > div {
+  display: contents;
+}
+
+.adp-assistant-outbound-facts dt {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-assistant-outbound-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.adp-assistant-outbound-hash {
+  font-family: var(--adp-font-mono, monospace);
+  overflow-wrap: anywhere;
+}
+
+.adp-assistant-meta {
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-assistant-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 960px;
+}
+
+.adp-assistant-settings fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adp-assistant *,
+  .adp-assistant-outbound * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .adp-assistant,
+  .adp-assistant-action,
+  .adp-assistant-outbound {
+    border: 1px solid CanvasText;
+  }
+  .adp-assistant-citation:focus-visible,
+  .adp-assistant-composer.is-focused {
+    outline: 2px solid Highlight;
+  }
+}

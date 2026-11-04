@@ -105,6 +105,11 @@ impl WebviewHelperSession {
         self.inputs.is_sensitive()
     }
 
+    /// True once the helper answered the private-profile proof.
+    pub fn private_profile_verified(&self) -> bool {
+        self.proof.is_some()
+    }
+
     /// The browser-safe grants the next request envelope carries.
     pub fn browser_grants(&self) -> &[HelperGrantDTO] {
         self.inputs.browser_grants()
@@ -127,7 +132,9 @@ impl WebviewHelperSession {
         }
         let mut reserved_total = 0u64;
         for spec in &request.output_specs {
-            if !spec.is_valid(self.config.max_output_bytes) || spec.mime != "image/png" {
+            if !spec.is_valid(self.config.max_output_bytes)
+                || !helper_output_mime_allowed(self.kind, &spec.mime)
+            {
                 return Err("pdf.bad_request".to_string());
             }
             reserved_total = reserved_total.saturating_add(spec.max_bytes);
@@ -160,6 +167,13 @@ impl WebviewHelperSession {
                 FIRST_RENDER_TIMEOUT
             }
             crate::webview_helper_types::HelperAction::PdfPrint => Duration::from_secs(300),
+            // One combine call may embed up to the helper input cap; a small
+            // fixed timeout would kill it halfway through.
+            crate::webview_helper_types::HelperAction::PdfWriteImages => Duration::from_secs(300),
+            crate::webview_helper_types::HelperAction::PdfEditInspect
+            | crate::webview_helper_types::HelperAction::PdfEditSerialize => {
+                Duration::from_secs(60)
+            }
             _ => REQUEST_TIMEOUT,
         };
         let reply = match self.collect_reply(&active, timeout, &cancel) {
@@ -170,7 +184,7 @@ impl WebviewHelperSession {
             }
         };
         let verified = validate_reply(&active, &reply)?;
-        let outputs = self.collect_outputs(&reservations, &verified.outputs, &cancel)?;
+        let outputs = self.collect_outputs(&reservations, &verified.outputs, &cancel, timeout)?;
         self.rendered_once |=
             request.action == crate::webview_helper_types::HelperAction::PdfRender;
         Ok(WebviewHelperResult {
@@ -351,11 +365,12 @@ impl WebviewHelperSession {
         reservations: &[HelperOutputReservation],
         announced: &[crate::webview_helper_types::HelperOutputDTO],
         cancel: &CancellationToken,
+        timeout: Duration,
     ) -> Result<Vec<HelperOutput>, String> {
         if announced.is_empty() {
             return Ok(Vec::new());
         }
-        let deadline = Instant::now() + REQUEST_TIMEOUT;
+        let deadline = Instant::now() + timeout;
         let mut bodies: HashMap<Uuid, Vec<u8>> = HashMap::new();
         let mut done: HashMap<Uuid, (u64, [u8; 32])> = HashMap::new();
         while done.len() < announced.len() {
@@ -559,6 +574,25 @@ fn sha256_bytes(bytes: &[u8]) -> [u8; 32] {
     let mut out = [0u8; 32];
     out.copy_from_slice(&digest);
     out
+}
+
+/// The reader only ever produces page PNGs. The PDF writer kind also
+/// produces the bounded document formats its own actions declare; any other
+/// helper kind stays PNG-only.
+fn helper_output_mime_allowed(kind: WebviewHelperKind, mime: &str) -> bool {
+    if kind == WebviewHelperKind::PdfWrite {
+        matches!(
+            mime,
+            "application/pdf"
+                | "application/json"
+                | "application/xml"
+                | "text/html"
+                | "image/png"
+                | "image/jpeg"
+        )
+    } else {
+        mime == "image/png"
+    }
 }
 
 fn mint_reservations(
@@ -949,8 +983,16 @@ fn run_child_loop(app: tauri::AppHandle, kind: WebviewHelperKind, window: Webvie
                         }
                     }
                     HelperControlFrame::Request { request } => {
-                        if !request.action.is_pdf() {
-                            let _ = write_error("pdf.bad_request");
+                        // Every kind sees only its own actions. The Office
+                        // quick helper owns the two `office.quick.*` actions;
+                        // the PDF reader keeps its fixed PDF set. A mismatched
+                        // action is refused before it reaches the child JS.
+                        let allowed = request.action.allowed_for(kind);
+                        if !allowed {
+                            let _ = write_error(match kind {
+                                WebviewHelperKind::OfficeQuick => "office.bad_request",
+                                _ => "pdf.bad_request",
+                            });
                             continue;
                         }
                         if run_request(&app, request).is_err() {

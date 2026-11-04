@@ -1,0 +1,251 @@
+/* The shelf (Step 09g). Width 320 default, 240 to 600; the bottom panel
+ * is 180 tall by default, 120 to 400. Colors only through tokens. */
+
+.adp-shelf {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: var(--adp-shelf-size, 320px);
+  min-width: 240px;
+  max-width: 600px;
+  height: 100%;
+  min-height: 0;
+  background: var(--adp-color-surface-sidebar);
+  border-left: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-shelf--left {
+  border-left: none;
+  border-right: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-shelf--bottom {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: var(--adp-shelf-size, 180px);
+  min-height: 120px;
+  max-height: 400px;
+  border-left: none;
+  border-top: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-main-body--shelf-left .adp-shelf {
+  border-left: none;
+  border-right: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-main-body--shelf-bottom .adp-shelf {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: var(--adp-shelf-size, 180px);
+  min-height: 120px;
+  max-height: 400px;
+  border-left: none;
+  border-top: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-main-body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.adp-main-body--shelf-bottom {
+  flex-direction: column;
+}
+
+.adp-main-body > .adp-main-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.adp-shelf-header {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-shelf-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-section);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-shelf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: var(--adp-space-1) var(--adp-space-2);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-shelf-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+}
+
+.adp-shelf-scroll:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-shelf-rows {
+  position: relative;
+  width: 100%;
+}
+
+.adp-shelf-row {
+  display: grid;
+  grid-template-columns: 20px 64px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: var(--adp-space-2);
+  box-sizing: border-box;
+  height: 72px;
+  padding: var(--adp-space-1) var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  color: var(--adp-color-text-primary);
+  user-select: none;
+}
+
+.adp-shelf-row:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-shelf-row--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-shelf-row:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-shelf-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+  cursor: pointer;
+}
+
+.adp-shelf-check[aria-checked="true"] {
+  border-color: var(--adp-accent-current);
+  background: var(--adp-accent-current);
+  color: var(--adp-color-text-on-accent);
+}
+
+.adp-shelf-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-shelf-thumb .adp-file-thumbnail {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.adp-shelf-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.adp-shelf-name {
+  overflow: hidden;
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-shelf-origin,
+.adp-shelf-state {
+  overflow: hidden;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-shelf-state {
+  color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-shelf-sensitive {
+  color: var(--adp-color-status-caution);
+}
+
+.adp-shelf-empty {
+  margin: var(--adp-space-4);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-body);
+  text-align: center;
+}
+
+.adp-shelf-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adp-space-2);
+  margin: var(--adp-space-2);
+  padding: var(--adp-space-2);
+  border: 1px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-sm);
+  color: var(--adp-color-status-caution);
+  font-size: var(--adp-font-small);
+}
+
+.adp-shelf-drop {
+  position: absolute;
+  inset: 2px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--adp-space-4);
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-body);
+  text-align: center;
+  pointer-events: none;
+}
+
+.adp-shelf-selection {
+  padding: var(--adp-space-1) var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-subtle);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+}

@@ -15,7 +15,12 @@ export interface TrackJobOptions<T> {
   reasonArea?: JobReasonArea;
   start: (
     onProgress: (progress: OpProgress) => void,
-  ) => Promise<{ cancel: () => Promise<void>; completion: Promise<T> }>;
+  ) => Promise<{
+    cancel: () => Promise<void>;
+    completion: Promise<T>;
+    /** Present when the job has a window of its own (transfers). */
+    open?: () => void;
+  }>;
   outcome: (result: T) => { cancelled: boolean; skipped: SkippedItem[] };
 }
 

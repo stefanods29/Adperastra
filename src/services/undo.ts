@@ -4,8 +4,17 @@
  * actions list can show and run them long after the toast is gone. */
 
 import type { ConflictPolicy } from "./fileops";
+import type { PresetCatalog } from "./conversionPresets";
 
 export type FileAction =
+  /** Replay exact objects from a native rename receipt (Step 09e). */
+  | { type: "bulkRename"; id: string; reverse: boolean }
+  /** Apply a recorded tab/view/UI-state change (Step 09a). */
+  | { type: "uiState"; id: string; reverse: boolean }
+  /** Apply a recorded saved-group catalog change (Step 09b). */
+  | { type: "savedGroups"; id: string; reverse: boolean }
+  /** Restore a previous conversion-preset catalog snapshot (Step 08b). */
+  | { type: "conversionPresetCatalog"; catalog: PresetCatalog }
   /** Replay exact file-transfer effects retained in Rust. */
   | { type: "transfer"; id: string; reverse: boolean }
   /** Move one item to an exact path (same-folder renames included). */
@@ -49,6 +58,11 @@ export class UndoStack {
   /** Entries at indices < cursor can be undone; the rest can be redone. */
   private cursor = 0;
   private nextId = 1;
+  /** Called after a push drops entries (redo history or the oldest entry),
+   * so producers can release bounded history records that the stack no
+   * longer references (Step 09b D9). A failing listener never rejects the
+   * action that was just recorded. */
+  onTrim?: () => void;
   private group: { labelKey: string; labelArgs?: Record<string, string | number>; inputs: UndoEntryInput[] } | null =
     null;
 
@@ -75,6 +89,9 @@ export class UndoStack {
       return;
     }
     // A new action invalidates everything that could have been redone.
+    // Both that truncation and the length bound below drop entries whose
+    // bounded history records must then be released.
+    const dropped = this.list.length > this.cursor || this.cursor + 1 > MAX_ENTRIES;
     this.list.length = this.cursor;
     this.list.push({ ...input, id: this.nextId, at: Date.now() });
     this.nextId += 1;
@@ -82,6 +99,13 @@ export class UndoStack {
       this.list.splice(0, this.list.length - MAX_ENTRIES);
     }
     this.cursor = this.list.length;
+    if (dropped) {
+      try {
+        this.onTrim?.();
+      } catch {
+        // History cleanup must not turn a recorded action into a failure.
+      }
+    }
   }
 
   beginGroup(labelKey: string, labelArgs?: Record<string, string | number>): void {
@@ -148,3 +172,8 @@ export class UndoStack {
     return this.peekRedo()?.id === entry.id;
   }
 }
+
+/** The window's one Undo history: the Explorer's Ctrl+Z/Recent actions
+ * and the App's tab-group entries share it, so every change is undoable
+ * in the order it happened (Step 09b D9). */
+export const appUndoStack = new UndoStack();

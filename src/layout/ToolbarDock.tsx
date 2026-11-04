@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useAccessibilityOptional } from "../accessibility/AccessibilityContext";
 import { createLayoutCommands, type LayoutCommandContext } from "../commands/layoutCommands";
 import { TOOLBAR_MENU, resolveMenu } from "../commands/menus";
 import { isCommandEnabled } from "../commands/registry";
@@ -33,6 +34,7 @@ const HIDE_DELAY_MS = 400;
 
 export default function ToolbarDock({ toolbar, children, contentClassName }: ToolbarDockProps) {
   const { t } = useTranslation();
+  const simpleMode = useAccessibilityOptional()?.settings.simple_mode ?? false;
   const { layout, onLayoutChange } = useLayout();
   const side = layout.toolbar_position;
   const autoHide = layout.toolbar_mode === "autoHide";
@@ -112,7 +114,7 @@ export default function ToolbarDock({ toolbar, children, contentClassName }: Too
       <div className={`adp-dock-content${contentClassName ? ` ${contentClassName}` : ""}`}>{children}</div>
       {menuAt ? (
         <Menu
-          entries={resolveMenu(TOOLBAR_MENU, context, lookup)}
+          entries={resolveMenu(TOOLBAR_MENU, context, lookup, simpleMode)}
           ctx={context}
           lookup={lookup}
           anchor={{ kind: "point", x: menuAt.x, y: menuAt.y }}

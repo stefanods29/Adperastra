@@ -69,6 +69,8 @@
 .adp-jobs-button { position:fixed; right:var(--adp-space-7); bottom:calc(var(--adp-space-7) + 24px); z-index:89; display:inline-flex; align-items:center; gap:var(--adp-space-2); padding:var(--adp-space-2) var(--adp-space-4); background:var(--adp-color-surface-window); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-pill); box-shadow:var(--adp-shadow-card); font-size:var(--adp-font-body); color:var(--adp-color-text-primary); cursor:pointer; }
 .adp-drag-badge { position:fixed; z-index:200; pointer-events:none; padding:var(--adp-space-2) var(--adp-space-4); background:var(--adp-color-text-primary); color:var(--adp-color-surface-window); border-radius:var(--adp-radius-sm); font-size:var(--adp-font-small); box-shadow:var(--adp-shadow-card); }
 .adp-drop-target { outline:2px solid var(--adp-accent-current); outline-offset:-2px; }
+/* Click-pick: every eligible folder is marked while a selection is picked. */
+.adp-pick-target { outline:1px dashed var(--adp-accent-current); outline-offset:-2px; }
 .adp-tooltip-wrap { position:relative; display:inline-flex; }
 .adp-tooltip { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); display:inline-flex; gap:var(--adp-space-3); padding:var(--adp-space-1) var(--adp-space-3); border-radius:var(--adp-radius-sm); background:var(--adp-color-text-primary); color:var(--adp-color-surface-window); font-size:var(--adp-font-small); white-space:nowrap; z-index:60; pointer-events:none; }
 .adp-tooltip-shortcut { opacity:.75; }
@@ -199,6 +201,8 @@ span.adp-col-size { display:flex; }
 .adp-home { display:flex; flex-direction:column; gap:var(--adp-space-5); overflow:auto; }
 .adp-section-heading { display:flex; align-items:center; gap:var(--adp-space-2); border:none; background:transparent; color:var(--adp-color-text-primary); font-size:var(--adp-font-section); font-weight:600; cursor:pointer; padding:0; text-align:left; }
 .adp-quick-grid { display:grid; grid-template-columns:repeat(3, minmax(180px, 1fr)); gap:var(--adp-space-2) var(--adp-space-4); }
+@media (max-width: 1024px) { .adp-quick-grid { grid-template-columns:repeat(2, minmax(180px, 1fr)); } }
+@media (max-width: 640px) { .adp-quick-grid { grid-template-columns:minmax(0, 1fr); } }
 .adp-quick-card { display:flex; align-items:center; gap:var(--adp-space-3); min-height:48px; padding:var(--adp-space-2) var(--adp-space-3); border:none; border-radius:var(--adp-radius-sm); background:transparent; color:var(--adp-color-text-primary); cursor:pointer; text-align:left; }
 .adp-quick-card:hover { background:var(--adp-color-surface-selected); }
 .adp-quick-icon { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:var(--adp-radius-xs); background:var(--adp-accent-light-explorer); color:#DFB22B; flex:none; }

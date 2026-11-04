@@ -38,6 +38,7 @@ fn options(format: CreateFormat, encryption: CreateEncryption) -> CreateOptions 
         },
         encrypt_names: encryption != CreateEncryption::None,
         include_hidden: true,
+        level: 6,
     }
 }
 
@@ -191,6 +192,7 @@ fn zip_aes_and_compatibility_are_explicit_choices() {
             password: Some(SECRET.to_string()),
             encrypt_names: false,
             include_hidden: true,
+            level: 6,
         };
         create(&plan, &options, &spool, &CreateLimits::default()).unwrap();
 
@@ -261,6 +263,7 @@ fn seven_z_encrypts_names_only_when_requested() {
         password: Some(SECRET.to_string()),
         encrypt_names: true,
         include_hidden: true,
+        level: 6,
     };
     create(&plan, &hidden_options, &hidden, &CreateLimits::default()).unwrap();
     let result = list_with_options(
@@ -324,6 +327,7 @@ fn seven_z_uses_configured_kdf_and_dictionary() {
         password: Some(SECRET.to_string()),
         encrypt_names: false,
         include_hidden: true,
+        level: 6,
     };
     create(&plan, &options, &spool, &CreateLimits::default()).unwrap();
 
@@ -440,6 +444,7 @@ fn spool_writer_is_reachable_without_a_password() {
         password: None,
         encrypt_names: false,
         include_hidden: true,
+        level: 6,
     };
     let report = create(&plan, &options, &spool, &CreateLimits::default()).unwrap();
     assert!(report.files_written > 0);

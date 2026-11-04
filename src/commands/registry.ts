@@ -8,6 +8,14 @@ import type { ViewModeId } from "../services/settings";
 
 export type CommandRisk = "read-only" | "change" | "recycle" | "irreversible";
 
+/** Optional tool metadata used by the trusted assistant adapter (Step 17a).
+ * It never changes command availability or grants a capability by itself. */
+export interface CommandAssistantMetadata {
+  tool_id?: string;
+  capability?: string;
+  automatic_allowed?: boolean;
+}
+
 export type LocationKind = "home" | "folder" | "drives" | "gallery" | "network";
 
 /** What is selected (Step 03a): paths in display order plus counts. */
@@ -67,7 +75,13 @@ export interface Command<C = CommandContext> {
   /** Help page slug opened with F1 / "?" for this command. */
   helpSlug: string;
   enabledWhen: (ctx: C) => boolean;
+  /** Reason shown by the palette for a currently disabled command. */
+  disabledReasonKey?: (ctx: C) => string;
   run: (ctx: C, arg?: string) => void;
+  /** Hidden only by Simple mode's presentation filter; never disabled. */
+  advanced?: boolean;
+  /** Trusted static metadata for an explicitly registered assistant tool. */
+  assistant?: CommandAssistantMetadata;
   /** Toggle and radio entries in menus show a check mark when true. */
   checkedWhen?: (ctx: C) => boolean;
   checkKind?: "toggle" | "radio";
@@ -86,6 +100,17 @@ export function isCommandEnabled<C>(command: Command<C>, ctx: C): boolean {
 
 export function isCommandVisible<C>(command: Command<C>, ctx: C): boolean {
   return command.visibleWhen ? command.visibleWhen(ctx) : true;
+}
+
+/** Presentation filter for bars and menus (Step 10f D9). Simple mode hides
+ * only commands marked `advanced`; the palette and shortcuts keep every
+ * registered command reachable, so availability and safety never change. */
+export function isCommandPresented<C>(
+  command: Command<C>,
+  ctx: C,
+  simpleMode: boolean,
+): boolean {
+  return isCommandVisible(command, ctx) && (!simpleMode || command.advanced !== true);
 }
 
 export function commandLabelKey<C>(command: Command<C>, ctx: C): string {

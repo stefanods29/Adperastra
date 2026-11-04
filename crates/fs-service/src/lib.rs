@@ -7,6 +7,7 @@
 
 #[cfg(windows)]
 mod attributes;
+pub mod conflict_policy;
 pub mod details;
 pub mod drafts;
 pub mod folder_views;
@@ -19,6 +20,14 @@ pub mod save;
 pub mod sort;
 pub mod source_stamp;
 pub mod state;
+pub mod theme_data;
+pub mod theme_tokens;
+pub mod transfer_conflicts;
+pub mod transfer_copy;
+pub mod transfer_decisions;
+pub mod transfer_move;
+pub mod transfer_rates;
+pub mod transfer_verify;
 pub mod watch;
 pub mod winlist;
 #[cfg(windows)]
@@ -51,7 +60,8 @@ pub use drafts::{
     MAX_DRAFTS, MAX_DRAFT_BYTES,
 };
 pub use folder_views::{
-    is_view_mode, FolderView, FolderViews, MAX_FOLDER_VIEWS, MAX_FOLDER_VIEW_PATH, VIEW_MODES,
+    is_view_mode, FolderView, FolderViews, FOLDER_VIEWS_SCHEMA, MAX_FOLDER_VIEWS,
+    MAX_FOLDER_VIEW_PATH, VIEW_MODES,
 };
 pub use item::{BackingKind, Item, ItemAttrs, ItemKind};
 pub use list::{
@@ -61,8 +71,9 @@ pub use list::{
 };
 pub use ops::{
     check_conflicts, copy_items, create_item, delete_permanently, move_items, op_error_reason,
-    recycle_items, restore_bin_items, restore_items, unique_destination, CompletedItem, Conflict,
-    ConflictPolicy, CreateKind, OpProgress, OpReport, ReplacedItem, SkippedItem,
+    recycle_items, restore_bin_items, restore_items, transfer_bytes, unique_destination,
+    CompletedItem, Conflict, ConflictPolicy, CreateKind, OpProgress, OpReport, ReplacedItem,
+    SkippedItem, TransferEffect, TransferKind, MAX_TRANSFER_BYTES,
 };
 pub use rename::{move_without_replacing, rename_error_reason, rename_in_place};
 pub use save::{replace_contents, write_new_file, SaveError, SaveExpect, SavedInfo};

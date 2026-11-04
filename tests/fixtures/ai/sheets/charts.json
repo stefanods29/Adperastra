@@ -1,0 +1,27 @@
+{
+  "revision":1,
+  "source":{"range":"A1:C4","headers":true,"rows":[["Name","Value","Other"],["A",2,1],["B",3,2],["C",4,3]]},
+  "cases":[
+    {"id":"h01","en":"Suggest a column chart of Value.","es":"Sugiere columnas de Value.","kind":"column","range":"A1:B4","allowed":true},
+    {"id":"h02","en":"Suggest bars of Value.","es":"Sugiere barras de Value.","kind":"bar","range":"A1:B4","allowed":true},
+    {"id":"h03","en":"Suggest a line through ordered values.","es":"Sugiere una línea con los valores en orden.","kind":"line","range":"A1:B4","allowed":true},
+    {"id":"h04","en":"Suggest an area chart.","es":"Sugiere un gráfico de áreas.","kind":"area","range":"A1:B4","allowed":true},
+    {"id":"h05","en":"Suggest a pie of Value.","es":"Sugiere un gráfico circular de Value.","kind":"pie","range":"A1:B4","allowed":true},
+    {"id":"h06","en":"Suggest numeric scatter.","es":"Sugiere dispersión numérica.","kind":"scatter","range":"B1:C4","allowed":true},
+    {"id":"h07","en":"Use two numeric series as columns.","es":"Usa dos series numéricas como columnas.","kind":"column","range":"A1:C4","allowed":true},
+    {"id":"h08","en":"Use two numeric series as bars.","es":"Usa dos series numéricas como barras.","kind":"bar","range":"A1:C4","allowed":true},
+    {"id":"h09","en":"Preserve row order in two lines.","es":"Conserva el orden de filas en dos líneas.","kind":"line","range":"A1:C4","allowed":true},
+    {"id":"h10","en":"Use two area series.","es":"Usa dos series de áreas.","kind":"area","range":"A1:C4","allowed":true},
+    {"id":"h11","en":"Use the first two data rows.","es":"Usa las primeras dos filas de datos.","kind":"column","range":"A1:B3","allowed":true},
+    {"id":"h12","en":"Use a smaller bar range.","es":"Usa un intervalo menor de barras.","kind":"bar","range":"A1:B3","allowed":true},
+    {"id":"h13","en":"Use a smaller line range.","es":"Usa un intervalo menor de líneas.","kind":"line","range":"A1:B3","allowed":true},
+    {"id":"h14","en":"Use a smaller scatter range.","es":"Usa un intervalo menor de dispersión.","kind":"scatter","range":"B1:C3","allowed":true},
+    {"id":"h15","en":"Try an external workbook source.","es":"Intenta usar otro libro como origen.","kind":"column","range":"[other.xlsx]Sheet1!A1:B4","allowed":false},
+    {"id":"h16","en":"Try a range outside selection.","es":"Intenta un intervalo fuera de la selección.","kind":"line","range":"A1:D4","allowed":false},
+    {"id":"h17","en":"Try rows outside selection.","es":"Intenta filas fuera de la selección.","kind":"bar","range":"A1:B5","allowed":false},
+    {"id":"h18","en":"Try text-only data.","es":"Intenta usar solo texto.","kind":"column","range":"A1:A4","allowed":false},
+    {"id":"h19","en":"Try a header-only range.","es":"Intenta usar solo encabezados.","kind":"line","range":"A1:C1","allowed":false},
+    {"id":"h20","en":"Try an unsupported radar chart.","es":"Intenta un gráfico radial no compatible.","kind":"radar","range":"A1:C4","allowed":false}
+  ],
+  "oracle":{"actual_E21_render_required":true,"lease_required":true,"model_image_allowed":false,"row_order_preserved":true,"unsupported_substitution_allowed":false}
+}

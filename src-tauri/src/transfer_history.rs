@@ -114,6 +114,9 @@ mod tests {
             kind: TransferKind::File,
             source_removed: false,
             destination_created: true,
+            before_source: None,
+            after_destination: None,
+            verified_hash: None,
         }]
     }
 

@@ -1,0 +1,452 @@
+/* Extraction review (Step 17d T4). Every color, radius and spacing value
+ * comes from tokens.css; sizes come from plan/design-spec.md. */
+
+.adp-extraction-review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-4);
+  min-width: 320px;
+  min-height: 0;
+  padding: var(--adp-space-4);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-extraction-tabs {
+  display: none;
+  gap: var(--adp-space-1);
+}
+
+.adp-extraction-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--adp-space-4);
+  min-height: 0;
+}
+
+.adp-extraction-source,
+.adp-extraction-result {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-extraction-source-head,
+.adp-extraction-result-head {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-3);
+  min-height: 40px;
+  padding: 0 var(--adp-space-4);
+  border-bottom: 1px solid var(--adp-color-border-default);
+}
+
+.adp-extraction-source-head h2,
+.adp-extraction-result-head h2 {
+  margin: 0;
+  font-size: var(--adp-font-body);
+  font-weight: 600;
+}
+
+.adp-extraction-source-name {
+  flex: 1;
+  overflow: hidden;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-extraction-source-page {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-source-page .adp-input {
+  width: 72px;
+}
+
+.adp-extraction-source-stage {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+  margin: var(--adp-space-3);
+  overflow: auto;
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-extraction-source-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-extraction-source-anchor {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid var(--adp-accent-current);
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-accent-light-explorer);
+}
+
+.adp-extraction-result-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--adp-space-3);
+}
+
+.adp-extraction-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--adp-space-2);
+}
+
+.adp-extraction-field {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 40px;
+  padding: var(--adp-space-2);
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  font-size: var(--adp-font-body);
+}
+
+.adp-extraction-field:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: 1px;
+}
+
+.adp-extraction-field--selected {
+  border-color: var(--adp-accent-current);
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-extraction-field-label {
+  flex: none;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-field-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-extraction-field-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.adp-extraction-field-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  flex: none;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-field[data-status="uncertain"] .adp-extraction-field-status,
+.adp-extraction-field[data-status="inconsistent"] .adp-extraction-field-status {
+  color: var(--adp-syntax-match);
+}
+
+.adp-extraction-field[data-status="missing"] .adp-extraction-field-status {
+  color: var(--adp-color-text-tertiary);
+}
+
+.adp-extraction-grid-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: var(--adp-space-3);
+}
+
+.adp-extraction-grid-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 32px;
+  margin-bottom: var(--adp-space-1);
+}
+
+.adp-extraction-grid-separator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-grid-separator .adp-input {
+  width: 56px;
+}
+
+.adp-extraction-grid {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-window);
+  outline: none;
+}
+
+.adp-extraction-grid:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-extraction-grid-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  height: 32px;
+  background: var(--adp-color-surface-pane);
+  border-bottom: 1px solid var(--adp-color-border-default);
+}
+
+.adp-extraction-grid-head-cell {
+  flex: 1 1 0;
+  min-width: 96px;
+  overflow: hidden;
+  padding: 0 var(--adp-space-2);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+  font-weight: 600;
+  line-height: 32px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.adp-extraction-grid-head-cell:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-extraction-grid-cell--selected {
+  background: var(--adp-color-surface-selected-row);
+}
+
+.adp-extraction-grid-body {
+  position: relative;
+}
+
+.adp-extraction-grid-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 100%;
+  height: 32px;
+}
+
+.adp-extraction-grid-cell {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 96px;
+  overflow: hidden;
+  padding: 0 var(--adp-space-2);
+  border-bottom: 1px solid var(--adp-color-border-subtle);
+  color: var(--adp-color-text-primary);
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-extraction-grid-cell:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: -2px;
+}
+
+.adp-extraction-grid-cell--uncertain,
+.adp-extraction-grid-cell--inconsistent {
+  box-shadow: inset 3px 0 0 var(--adp-syntax-match);
+}
+
+.adp-extraction-grid-cell--missing {
+  color: var(--adp-color-text-tertiary);
+  font-style: italic;
+}
+
+.adp-extraction-grid-cell--corrected {
+  box-shadow: inset 3px 0 0 var(--adp-accent-current);
+}
+
+.adp-extraction-grid-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0 var(--adp-space-1);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-xs);
+  background: var(--adp-color-surface-window);
+  color: var(--adp-color-text-primary);
+  font: inherit;
+}
+
+.adp-extraction-acknowledge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adp-space-1);
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-subtle);
+}
+
+.adp-extraction-acknowledge-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--adp-space-2);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-result-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  min-height: 48px;
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-top: 1px solid var(--adp-color-border-default);
+}
+
+.adp-extraction-result-footer .adp-btn {
+  height: 32px;
+}
+
+.adp-extraction-blockers {
+  flex: 1;
+  overflow: hidden;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-extraction-format {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-format .adp-input {
+  height: 32px;
+}
+
+.adp-extraction-status {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-2);
+  padding: var(--adp-space-2) var(--adp-space-3);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-status--error {
+  border: 1px solid var(--adp-accent-pdf);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-extraction-warning {
+  margin: var(--adp-space-2) 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-receipt,
+.adp-extraction-table {
+  margin-bottom: var(--adp-space-3);
+}
+
+.adp-extraction-receipt h3 {
+  margin: 0 0 var(--adp-space-2);
+  font-size: var(--adp-font-body);
+  font-weight: 600;
+}
+
+.adp-extraction-table-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adp-space-1);
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+
+.adp-extraction-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--adp-space-3);
+  padding: var(--adp-space-5);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .adp-extraction-tabs {
+    display: flex;
+  }
+
+  .adp-extraction-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adp-extraction-review[data-pane="source"] .adp-extraction-result,
+  .adp-extraction-review[data-pane="result"] .adp-extraction-source {
+    display: none;
+  }
+}
+
+/* The Explorer has no FileTab body to host the review; it opens the same
+   pane as a full-window child instead of inventing a second review UI. */
+.adp-extraction-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: auto;
+  padding: 16px;
+  background: var(--adp-color-surface-window);
+}
+
+.adp-extraction-menu-actions {
+  flex-wrap: wrap;
+  align-items: center;
+}

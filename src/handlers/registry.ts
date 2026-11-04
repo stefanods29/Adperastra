@@ -3,10 +3,11 @@ import type { Handler } from "./types";
 
 /** Score of a handler for a file (Step 07f additive rules):
  * 90 when a specific extension claims a generic text/JSON/octet-stream MIME
- * (the subtitle/log/notebook/book viewers), 80 when the content type is one
- * the handler lists, 50 when only the extension matches, 0 otherwise. A
- * `contentExtensions` extension (`.db`) never scores without the matching
- * content type, so a mislabelled database stays in the user's chosen app. */
+ * (the subtitle, log, notebook, book, Office, media-recipe and timeline
+ * viewers), 80 when the content type is one the handler lists, 50 when only
+ * the extension matches, 0 otherwise. A `contentExtensions` extension
+ * (`.db`) never scores without the matching content type, so a mislabelled
+ * database stays in the user's chosen app. */
 export function handlerScore(handler: Handler, info: FileTypeInfo): number {
   if (
     info.ext !== "" &&

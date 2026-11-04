@@ -95,7 +95,7 @@ let onClose: ReturnType<typeof vi.fn<() => void>>;
 let onOpenHelp: ReturnType<typeof vi.fn<(slug: string) => void>>;
 let trackJob: TrackJob;
 
-function render(inputs: ConversionInput[]) {
+function render(inputs: ConversionInput[], initialConverter?: string) {
   onCompleted = vi.fn();
   onClose = vi.fn();
   onOpenHelp = vi.fn();
@@ -123,6 +123,7 @@ function render(inputs: ConversionInput[]) {
           onClose={onClose}
           onCompleted={onCompleted}
           onOpenHelp={onOpenHelp}
+          initialConverter={initialConverter}
         />
       </ConversionProvider>,
     );
@@ -194,6 +195,32 @@ describe("Quick Convert dialog", () => {
     expect(convert?.getAttribute("type")).toBe("button");
     expect(cancel?.getAttribute("type")).toBe("button");
     expect(container?.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it("converts images to PDF without a native preview after accepting the static losses", async () => {
+    render([{ kind: "file", path: "C:\\Pictures\\one.png" }], "images/pdf");
+    await ready();
+    expect(vi.mocked(previewConversion)).not.toHaveBeenCalled();
+    const convertButton = () =>
+      [...(container?.querySelectorAll("button") ?? [])].find(
+        (button) => button.textContent === "Convert",
+      );
+    expect(convertButton()?.disabled).toBe(true);
+    const accept = container?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    expect(accept).not.toBeNull();
+    act(() => accept?.click());
+    expect(convertButton()?.disabled).toBe(false);
+    await act(async () => {
+      convertButton()?.click();
+      await Promise.resolve();
+    });
+    const request = vi.mocked(startConversion).mock.calls[0][0];
+    expect(request.converter_id).toBe("images/pdf");
+    expect(request.options).toMatchObject({
+      kind: "document",
+      value: { page_size: "source", margin_mm: 20 },
+    });
+    expect(request.accepted_losses).toContain("exif");
   });
 
   it("retries only the failed input, never an item that already finished", async () => {

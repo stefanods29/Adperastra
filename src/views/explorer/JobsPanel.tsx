@@ -20,6 +20,8 @@ export interface JobView {
   skipped: SkippedItem[];
   /** Where `SkippedItem.reason` is translated (defaults to "ops"). */
   reasonArea?: JobReasonArea;
+  /** Shows "Open" and opens the job's own window (the transfer window). */
+  onOpen?: () => void;
   onCancel: () => void;
 }
 
@@ -74,6 +76,15 @@ export default function JobsPanel({ jobs, onDismiss, onClose }: JobsPanelProps) 
           <div key={job.id} className="adp-job-row">
             <div className="adp-job-main">
               <span className="adp-job-label">{t(`jobs.${job.verbKey}`, { count: job.count })}</span>
+              {job.onOpen ? (
+                <button
+                  type="button"
+                  className="adp-btn adp-btn--subtle"
+                  onClick={job.onOpen}
+                >
+                  {t("common.open")}
+                </button>
+              ) : null}
               {job.status === "running" ? (
                 <button type="button" className="adp-btn adp-btn--subtle" onClick={job.onCancel}>
                   {t("common.cancel")}

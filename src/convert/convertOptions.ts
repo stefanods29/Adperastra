@@ -2,15 +2,66 @@ import { parentPathOf } from "../services/explorer";
 import type {
   ConversionInput,
   ConversionReport,
+  ConversionWarningCode,
   ConverterSpec,
   ConvertOptions,
+  DocumentConversionOptions,
   FormatId,
   ImageOptions,
+  MediaConversionOptions,
+  MetadataCategory,
   OptionSpec,
 } from "./types";
 import { defaultImageOptions } from "./types";
 
 /** Pure option helpers for the Quick Convert dialog (Step 08a T5/T6). */
+
+/** Most images one `images/pdf` invocation can combine. Mirrors the native
+ * limit (`conversion_pdf::MAX_COMBINE_IMAGES`, the PDF helper's 256 grants). */
+export const MAX_COMBINE_IMAGES = 256;
+
+/** Source metadata an image loses when it becomes a PDF page: the route
+ * embeds pixels, not a metadata container. */
+const IMAGE_PDF_METADATA_LOSSES: readonly MetadataCategory[] = [
+  "exif",
+  "gps",
+  "camera",
+  "date",
+  "author",
+  "comments",
+  "icc",
+  "xmp",
+  "iptc",
+];
+
+/** Changes the UI must disclose for a route whose native preview is not
+ * available (the combine route has no single-output preview in this round). */
+export interface PreviewAcknowledgements {
+  warnings: ConversionWarningCode[];
+  metadata_lost: MetadataCategory[];
+}
+
+/** The static acknowledgements for a route whose exact native preview is not
+ * available: `images/pdf` and the media engine conversions. Every other
+ * adapter gets its exact list from the native preview. */
+export function staticPreviewChanges(
+  spec: ConverterSpec,
+  inputs: readonly ConversionInput[],
+): PreviewAcknowledgements {
+  // A GIF always quantizes to a palette, so that code is required for every
+  // source; the other GIF warnings depend on the probed source (audio,
+  // alpha and exact frame timing) and are checked again natively before any
+  // output begins. Media has no 08a still preview in this round.
+  if (spec.id === "media/gif") {
+    return { warnings: ["palette_reduction"], metadata_lost: [] };
+  }
+  if (spec.id !== "images/pdf") return { warnings: [], metadata_lost: [] };
+  const animated = inputs.some((input) => formatOfInput(input) === "gif");
+  return {
+    warnings: animated ? ["animation_first_frame"] : [],
+    metadata_lost: [...IMAGE_PDF_METADATA_LOSSES],
+  };
+}
 
 /** The source format named by a file input, or null for a snapshot. */
 export function formatOfInput(input: ConversionInput): FormatId | null {
@@ -31,6 +82,23 @@ export function formatOfInput(input: ConversionInput): FormatId | null {
     tiff: "tiff",
     ico: "ico",
     svg: "svg",
+    // Media formats the 12b engine converters accept. The extension mapping
+    // mirrors `FormatId::from_extension`; an unknown extension still means no
+    // converter is offered.
+    mp4: "mp4",
+    m4v: "mp4",
+    m4a: "mp4",
+    mkv: "mkv",
+    mov: "mov",
+    qt: "mov",
+    webm: "webm",
+    mp3: "mp3",
+    wav: "wav",
+    flac: "flac",
+    ogg: "ogg",
+    oga: "ogg",
+    opus: "opus",
+    aac: "aac",
   };
   return map[extension] ?? null;
 }
@@ -144,12 +212,78 @@ function booleanValue(
   return typeof value === "boolean" ? value : fallback;
 }
 
+/** A positive integer option, or `null` for the option's 0 sentinel. */
+function optionalPositive(
+  values: Readonly<Record<string, boolean | number | string>>,
+  id: string,
+): number | null {
+  const value = values[id];
+  return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : null;
+}
+
+/** The exact `media` option object the 12b engine validates. Codec values
+ * stay `auto` (only the audited build's fixed table is offered), subtitles
+ * off, and speed/volume at their neutral values; the dialog only exposes the
+ * bounded integer options and the metadata switch. */
+export function mediaOptionsFromValues(
+  values: Readonly<Record<string, boolean | number | string>>,
+): MediaConversionOptions {
+  return {
+    start_ms: optionalPositive(values, "start_ms"),
+    end_ms: optionalPositive(values, "end_ms"),
+    width: optionalPositive(values, "width"),
+    height: optionalPositive(values, "height"),
+    video_codec: "auto",
+    audio_codec: "auto",
+    bitrate_kbps: optionalPositive(values, "bitrate_kbps"),
+    sample_rate: optionalPositive(values, "sample_rate"),
+    keep_metadata: values.keep_metadata !== false,
+    burn_subtitles: false,
+    speed: 1,
+    volume: 1,
+  };
+}
+
 /** Build the exact tagged options object for one adapter. */
 export function optionsFromValues(
   spec: ConverterSpec,
   values: Readonly<Record<string, boolean | number | string>>,
 ): ConvertOptions {
+  if (spec.engine_id === "media") {
+    return { kind: "media", value: mediaOptionsFromValues(values) };
+  }
+  if (spec.id === "images/pdf") {
+    return { kind: "document", value: documentOptionsFromValues(spec, values) };
+  }
   return { kind: "image", value: imageOptionsFromValues(spec, values) };
+}
+
+/** The document options the native `images/pdf` route accepts. The route
+ * embeds images, so `include_images` is always true and the text-only
+ * `sanitize`/`encoding` fields stay at their fixed values. */
+export function documentOptionsFromValues(
+  spec: ConverterSpec,
+  values: Readonly<Record<string, boolean | number | string>>,
+): DocumentConversionOptions {
+  const pageOption = spec.options.find((option) => option.id === "page_size");
+  const allowed = pageOption?.choices?.map((choice) => choice.value) ?? [];
+  const pageValue = values.page_size;
+  const pageSize: DocumentConversionOptions["page_size"] =
+    typeof pageValue === "string" && allowed.includes(pageValue)
+      ? (pageValue as DocumentConversionOptions["page_size"])
+      : (pageOption?.default as DocumentConversionOptions["page_size"]) ?? "source";
+  const marginOption = spec.options.find((option) => option.id === "margin_mm");
+  const rawMargin = numericValue(marginOption, 20, values);
+  const minMargin = marginOption?.min ?? 0;
+  const maxMargin = marginOption?.max ?? 50;
+  const margin = Math.min(maxMargin, Math.max(minMargin, Math.round(rawMargin)));
+  return {
+    include_images: true,
+    page_size: pageSize,
+    margin_mm: margin,
+    sanitize: true,
+    encoding: "utf8",
+  };
 }
 
 /** The destination for one input (its containing folder), or "" when the

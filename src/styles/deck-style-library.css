@@ -1,0 +1,309 @@
+/* Step 22b manual style library. Chrome colors are tokens; the card preview
+   uses only the style's own document palette through custom properties. */
+
+.adp-deck-style-library {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  padding: 16px;
+  overflow: auto;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-panel);
+  border-radius: var(--adp-radius-lg);
+  box-shadow: var(--adp-shadow-card);
+  font-family: var(--adp-font-family);
+  font-size: var(--adp-font-body);
+}
+
+.adp-deck-style-library-header,
+.adp-deck-style-details-header,
+.adp-deck-style-import-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adp-deck-style-library-header h2,
+.adp-deck-style-details-header h3,
+.adp-deck-style-import-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: var(--adp-font-section);
+}
+
+.adp-deck-style-library-header button,
+.adp-deck-style-details-header button,
+.adp-deck-style-import-help {
+  min-width: 24px;
+  min-height: 24px;
+  color: var(--adp-color-text-primary);
+  background: transparent;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  cursor: pointer;
+}
+
+.adp-deck-style-library-scope,
+.adp-deck-style-library-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.adp-deck-style-library-scope label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.adp-deck-style-library-tools input[type="search"] {
+  flex: 1;
+  min-width: 140px;
+  padding: 4px 8px;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-deck-style-library-tools button,
+.adp-deck-style-details-actions button,
+.adp-deck-style-review button,
+.adp-deck-style-import-actions button {
+  min-height: 28px;
+  padding: 4px 10px;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-header);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  cursor: pointer;
+}
+
+.adp-deck-style-library button:focus-visible,
+.adp-deck-style-library input:focus-visible,
+.adp-deck-style-import button:focus-visible,
+.adp-deck-style-import input:focus-visible,
+.adp-deck-style-import select:focus-visible,
+.adp-deck-style-card:focus-visible {
+  outline: 2px solid var(--adp-accent-explorer);
+  outline-offset: 2px;
+}
+
+.adp-deck-style-library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 248px);
+  gap: 16px;
+}
+
+.adp-deck-style-card {
+  box-sizing: border-box;
+  width: 248px;
+  height: 180px;
+  padding: 8px;
+  overflow: hidden;
+  background: var(--adp-color-surface-header);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+  cursor: pointer;
+}
+
+.adp-deck-style-card-selected {
+  border: 2px solid var(--adp-accent-explorer);
+}
+
+.adp-deck-style-card-ineligible {
+  cursor: not-allowed;
+}
+
+.adp-deck-style-card-preview {
+  position: relative;
+  box-sizing: border-box;
+  width: 216px;
+  aspect-ratio: 16 / 9;
+  padding: 10px;
+  overflow: hidden;
+  background: var(--adp-style-background);
+  border-radius: var(--adp-radius-xs);
+}
+
+.adp-deck-style-card-preview-title,
+.adp-deck-style-card-preview-body,
+.adp-deck-style-card-preview-accent,
+.adp-deck-style-card-preview-footer {
+  display: block;
+  border-radius: 2px;
+}
+
+.adp-deck-style-card-preview-title {
+  width: 62%;
+  height: 10px;
+  background: var(--adp-style-text);
+}
+
+.adp-deck-style-card-preview-body {
+  width: 80%;
+  height: 5px;
+  margin-top: 8px;
+  background: var(--adp-style-muted);
+}
+
+.adp-deck-style-card-preview-body.short {
+  width: 54%;
+  margin-top: 4px;
+}
+
+.adp-deck-style-card-preview-accent {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 34px;
+  height: 24px;
+  background: var(--adp-style-accent);
+}
+
+.adp-deck-style-card-preview-footer {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  width: 40%;
+  height: 3px;
+  background: var(--adp-style-accent2);
+}
+
+.adp-deck-style-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.adp-deck-style-card-name {
+  overflow: hidden;
+  font-size: var(--adp-font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-deck-style-card-density,
+.adp-deck-style-card-reason,
+.adp-deck-style-library-status {
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-caption);
+}
+
+.adp-deck-style-details,
+.adp-deck-style-review,
+.adp-deck-style-import {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--adp-color-surface-header);
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-md);
+}
+
+.adp-deck-style-details-swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.adp-deck-style-details-swatches span {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--adp-color-border-subtle);
+  border-radius: var(--adp-radius-xs);
+}
+
+.adp-deck-style-details-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: var(--adp-font-small);
+}
+
+.adp-deck-style-details-facts dt {
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-deck-style-details-facts dd {
+  margin: 0;
+}
+
+.adp-deck-style-details-layouts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 8px;
+  margin: 0;
+  padding-left: 16px;
+  font-size: var(--adp-font-small);
+}
+
+.adp-deck-style-details-actions,
+.adp-deck-style-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.adp-deck-style-details-warning,
+.adp-deck-style-library-error,
+.adp-deck-style-import-error {
+  color: var(--adp-color-status-caution);
+}
+
+.adp-deck-style-review ul,
+.adp-deck-style-import-warnings {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.adp-deck-style-import-field,
+.adp-deck-style-import-fonts label,
+.adp-deck-style-import-omit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adp-deck-style-import-field input,
+.adp-deck-style-import-fonts select {
+  padding: 4px 8px;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-deck-style-import-themes label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-block: 4px;
+}
+
+.adp-deck-style-import-swatch {
+  width: 20px;
+  height: 14px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-xs);
+}
+
+@media (max-width: 600px) {
+  .adp-deck-style-library-grid {
+    grid-template-columns: 248px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adp-deck-style-library * {
+    transition: none;
+  }
+}

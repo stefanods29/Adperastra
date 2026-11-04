@@ -172,6 +172,23 @@ export default function ViewsSettings({ explorer, onChange, onOpenHelp }: ViewsS
           onChange={(checked) => onChange({ ...explorer, column_preview: checked })}
         />
       </div>
+      <h4 className="adp-heading">{t("folderCustom.title")}</h4>
+      <div className="adp-setting-row">
+        <Switch
+          label={t("folderCustom.global")}
+          checked={explorer.folder_backgrounds}
+          onChange={(checked) => onChange({ ...explorer, folder_backgrounds: checked })}
+        />
+        <HelpButton onOpenHelp={() => onOpenHelp("folder-backgrounds")} />
+      </div>
+      <div className="adp-setting-row">
+        <Switch
+          label={t("folderCustom.enableColumns")}
+          checked={explorer.column_sets_enabled}
+          onChange={(checked) => onChange({ ...explorer, column_sets_enabled: checked })}
+        />
+        <HelpButton onOpenHelp={() => onOpenHelp("column-sets")} />
+      </div>
     </section>
   );
 }

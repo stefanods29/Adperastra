@@ -5,11 +5,24 @@ pub fn run_preview_job(
     request: ConversionPreviewRequest,
     context: &crate::jobs::JobContext,
 ) -> Result<ConversionPreview, String> {
-    let registry = convert::builtin_registry();
+    let registry = crate::convert::conversion_registry(app);
     let spec = registry
         .get(request.converter_id.as_str())
         .ok_or_else(|| "convert.bad_request".to_string())?
         .spec();
+    if !spec.available {
+        return Err(crate::convert::unavailable_converter_code(&spec).to_string());
+    }
+    // A combine adapter has no single-source preview in this round, and a
+    // media conversion preview is the separate `media_preview_start` sample
+    // (E2). Fail closed before starting a helper that could not answer.
+    if matches!(
+        crate::convert::route_for(spec.id.as_str(), &request.options),
+        Some(crate::convert::ConvertRoute::NativeImagesPdf)
+            | Some(crate::convert::ConvertRoute::EngineMedia)
+    ) {
+        return Err("convert.unsupported".to_string());
+    }
     request
         .validate()
         .map_err(|error| error.code().to_string())?;
@@ -67,6 +80,8 @@ pub fn run_preview_job(
         max_output_bytes: convert::types::MAX_PREVIEW_BYTES as u64,
         input_index: 0,
         source,
+        // Previews never extract archives; no intermediate root is passed.
+        work_root: None,
     };
     // A preview writes nothing; the unfinalized sink drops anything a
     // misbehaving helper might try to begin.

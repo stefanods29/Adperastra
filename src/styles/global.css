@@ -10,6 +10,11 @@ body,
   height: 100%;
 }
 
+/* The IPC isolation frame runs scripts but is never part of the app layout. */
+#__tauri_isolation__ {
+  display: none;
+}
+
 body {
   margin: 0;
   font-family: var(--adp-font-family);

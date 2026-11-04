@@ -1,8 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
 import { displayPath, itemDetails, parentPathOf, renameItem } from "./explorer";
 import { isTauriRuntime } from "./settings";
+import { checkTransferReplay } from "./transferJobs";
 import type { FileAction, UndoEntryInput } from "./undo";
 import { versionsRestore } from "./versions";
+import { replaceConversionPresetCatalog } from "./conversionPresets";
+import { savedGroupHistory } from "./savedGroups";
+import { UiHistoryRegistry } from "./uiHistory";
 
 /** Typed wrapper over the Step 03b file-operation jobs. All disk changes
  * go through here; big operations run as Rust background jobs with
@@ -219,7 +223,25 @@ async function moveToExact(from: string, to: string, confirmSystem?: () => Promi
 /** Execute one undo/redo action and return the report(s) behind it. */
 export async function executeFileAction(action: FileAction, confirmSystem?: () => Promise<boolean>): Promise<void> {
   switch (action.type) {
+    case "bulkRename":
+      // The 09e packet has no native replay transport. Fail closed instead of
+      // advancing history; the coordinator must replace this with its receipt
+      // dispatcher before exposing bulk rename.
+      throw new Error("rename.unsupported");
+    case "uiState":
+      await UiHistoryRegistry.apply(action.id, action.reverse);
+      return;
+    case "savedGroups":
+      await savedGroupHistory.apply(action.id, action.reverse);
+      return;
+    case "conversionPresetCatalog":
+      await replaceConversionPresetCatalog(action.catalog);
+      return;
     case "transfer":
+      // Prove the exact recorded objects before anything is replayed. A copy
+      // Undo, a folder-move Undo or a changed source is refused here with
+      // its stable code, so the history cursor never advances.
+      await checkTransferReplay(action.id, action.reverse);
       await runHistoryJob("transfer", [], { transferId: action.id, reverse: action.reverse }, confirmSystem);
       return;
     case "rename":

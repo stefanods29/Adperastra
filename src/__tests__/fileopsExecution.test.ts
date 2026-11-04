@@ -89,10 +89,14 @@ describe("executing history actions", () => {
   });
 
   it("leaves a declined system job unexecuted", async () => {
-    invokeMock.mockRejectedValue(new Error("ops.system_confirmation_required"));
+    invokeMock.mockImplementation(async (command) => {
+      if (command === "file_op_start") throw new Error("ops.system_confirmation_required");
+      return undefined;
+    });
     await expect(executeFileAction({ type: "transfer", id: "op-original", reverse: true }, async () => false))
       .rejects.toThrow("ops.cancelled");
-    expect(invokeMock).toHaveBeenCalledTimes(1);
+    // Only the replay check and the declined start ran; nothing was retried.
+    expect(invokeMock.mock.calls.filter(([command]) => command === "file_op_start")).toHaveLength(1);
   });
 
   it("sends opaque history IDs rather than a folder's file effects", async () => {
@@ -102,9 +106,11 @@ describe("executing history actions", () => {
     }]);
     invokeMock.mockImplementation(async (command) => command === "file_op_poll" ? poll(report()) : undefined);
     await executeFileAction({ type: "transfer", id: "op-original", reverse: true });
-    expect(invokeMock.mock.calls[0][1]).toMatchObject({ request: { kind: "transfer", sources: [],
+    expect(invokeMock.mock.calls[0]).toEqual(["transfer_replay_check", { transferId: "op-original", reverse: true }]);
+    const start = invokeMock.mock.calls.find(([command]) => command === "file_op_start")!;
+    expect(start[1]).toMatchObject({ request: { kind: "transfer", sources: [],
       transfer_id: "op-original", reverse: true, retained_transfers: ["op-original"] } });
-    expect(invokeMock.mock.calls[0][1]).not.toHaveProperty("request.transfer");
+    expect(start[1]).not.toHaveProperty("request.transfer");
   });
 
   it("retains a just-finished job while an Undo group is still pending", async () => {

@@ -1,5 +1,9 @@
 # Step 13: Accurate read-only Office viewers
 
+Local integration, 2026-11-04. The Writer producer in `office_accurate_source.rs` opens the verified 12b read actor, renders an owned PDF, closes the Office document, and passes bounded PDF bytes to the existing isolated PDF helper. PDF page leases are memory-backed and released with the viewer. The accurate producer receives the existing `OfficeWork` so rendering uses the caller's cancellation token. No verified Office read pack is provisioned yet, so this path remains unavailable in local builds. The pool currently closes its actor after the final document while warm-engine expiry integration remains pending. The owner selected the supplied horse photograph as the app icon on this date.
+
+Coordinator SDK corrections, 2026-11-03: build the replaceable bridge with the official 26.8.2 Windows SDK and C++17. The verified SDK MSI SHA256 is `9aba3a945cacc3155db5396ae9fa1ec24ab2079b0c8d3b8365fd809aa254d4eb` (official download mirrorlist). Use `sheet::XSpreadsheetDocument::getSheets`, query `table::XColumnRowRange` for rows/columns and `text::XPageCursor` for pagination; `XSpreadsheetsSupplier`, `XSheetRows`, `XSheetColumns` and `uno/UNO_QUERY.hxx` are not SDK APIs. Encode OUString names through `rtl::OUStringToOString(..., RTL_TEXTENCODING_UTF8)`. Include windows.h before bcrypt.h with NOMINMAX. Reproducible build: scripts/build-office-read-bridge.ps1. Compilation alone does not activate a signed Office pack or prove confined rendering.
+
 | Field | Value |
 |---|---|
 | State | guide; documentation reviewed; implementation not started |
@@ -13,6 +17,32 @@
 Guide only. Workers write owned code/tests without running them; coordinator performs dependency/build/security/fidelity/speed/package checks. No Office editing engine is chosen here.
 
 ## Goal and exclusions / Read first
+
+Local integration follow-up, 2026-11-04: a verified `office_convert`
+one-shot producer may supply the PDF-backed accurate view when the warm
+`office_read_bridge` producer is unavailable. Both routes use the existing
+12b EngineHost, signed pack lease, confined input/output and 07d PDF helper;
+there is no independently resolved executable or unrestricted process.
+Writer maps the complete PDF to its document section. Impress maps PDF pages
+to slide sections in structural index order only when counts agree exactly;
+a mismatch refuses accurate output rather than displaying the wrong slide.
+The optional native Kit worker uses a root or `bin/libreoffice-kit.exe` entrypoint
+and pack-root `program/program` resources. Its whole signed inventory is revalidated
+before resource access. It supports whole-document PDF rendering only;
+comments, notes, ranges and other targets return Unsupported. This adapter
+does not approve redistribution, install an unsigned pack, or qualify editing.
+
+Local owner-authorized installation uses a separate portable debug build.
+The offline pack preparer pins the exact previously verified upstream
+inventory and font hashes, builds and signs a catalog with a fresh in-memory
+key, verifies the catalog and staged inventory, and activates it in that
+portable profile. The matching public key is pinned at compile time and is
+used only in portable debug mode. Release and normal installed builds keep
+the existing trust key. There is no network catalog source in this build.
+The native Kit launcher uses an owned undisplayed Windows desktop for graphics
+initialization, with AppContainer rights limited to read/write objects,
+create-window/menu and enumerate. It never switches desktops or grants hook,
+journal, switch-desktop or ACL-control rights to the child.
 
 View DOCX/XLSX/PPTX, ODT/ODS/ODP, RTF and legacy DOC/XLS/PPT without modifying them. Provide fast structural/cached previews and accurate engine rendering, sheets/slides/comments/presentation, fonts and chosen-app fallback. Editing is20a/b/21a/22a. Read v1 step13, roadmap v0.3,12b E1-E5,07d E1-E7,09a document/controller/view codecs,08a snapshots, actual handler/openPipeline/ribbon/layout interfaces and calamine0.37 source. No invented docx-preview/SheetJS dependency.
 
@@ -54,13 +84,13 @@ Canonical `src/services/officeViewTypes.ts`, native `src-tauri/src/office_view_t
 | OfficeOutlineNode | id string<=128; title string<=512; section_id; page nullablepositiveinteger; depthu8<=32 |
 | OfficeViewState | section_id string; page1default; zoom finite25..400default100; scroll_top finite0..1e9; mode quick/pages defaultpages |
 | OfficeCell | row/column zero-basedu32; text string<=32767UTF16units; value_kind text/number/date/boolean/error/formula; formula nullabletext; cached bool |
-| OfficeCellPage | section_id; row_start u32; rows OfficeCell[][]<=500; total_rows/columns u32; truncated bool; next_cursor nullableUUID |
+| OfficeCellPage | section_id; row_start u32; column_start u32; rows OfficeCell[][]<=500 rows/<=200 columns each; total_rows/columns u32; column_count u32<=200; truncated bool; next_cursor nullablestring "row:column" (first withheld absolute cell, session/section-bound) |
 
 | Ref | Exact export/signature | Consumers |
 |---|---|---|
 | E1 | services/officeView.ts openOfficeView(input:ConversionInput)->Promise<JobHandle<OfficeSession>> |13 viewer,20a view-now seam; native office_view_open_start(request_id,input) |
 | E2 | same officeViewPage(sessionId:string,sectionId:string,page:number,scale:number)->Promise<JobHandle<OfficePage>> | page1-based,scale0.25..4; native office_view_page_start(request_id,session_id,section_id,page,scale) |
-| E3 | same officeViewSections(sessionId,cursor?:string)->Promise<OfficeSectionPage>; officeViewComments(sessionId,sectionId,cursor?:string)->Promise<OfficeCommentPage>; officeViewCells(sessionId,sectionId,rowStart:number,rowCount:number)->Promise<OfficeCellPage> | native office_view_sections/comments/cells; session-bound cursor invalid across sessions |
+| E3 | same officeViewSections(sessionId,cursor?:string)->Promise<OfficeSectionPage>; officeViewComments(sessionId,sectionId,cursor?:string)->Promise<OfficeCommentPage>; officeViewCells(sessionId,sectionId,rowStart:number,rowCount:number,columnStart?:number,columnCount?:number)->Promise<OfficeCellPage> (columnStart default0, columnCount default<=200) | native office_view_sections/comments/cells; session-bound cursor invalid across sessions; cell cursor section-bound |
 | E4 | same closeOfficeView(sessionId)->Promise<void>; native office_view_close | idempotent close cancels jobs/releases leases, no effect on shared dirty edit controller |
 | E5 | handlers/office/OfficeView.tsx OfficeView(props:HandlerViewProps); VirtualOfficeView(props:VirtualViewProps) | Legacy disk adapter and source-aware view share OfficePresenter, no fabricated FileTypeInfo |
 | E6 | officeViewTypes.ts all types above; OfficeFormat reexport fromengineTypes |20a/b/21a/22a read-only previews; no mutation methods |

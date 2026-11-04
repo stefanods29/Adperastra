@@ -46,6 +46,11 @@ Full20a DeckOperation/DeckTheme/DeckLayout/DeckShape/OfficeController and09a bin
 
 20a already defines the required DeckOperation variants in itscanonicaldeckOperations module: insert_text {slide_id UUID,shape_id UUID,position TextPosition,text<=1Mi scalars}; delete_text {slide_id,shape_id,span TextSpan}; format_text {slide_id,shape_id,span,patch TextFormatPatch}. The live textspanmustbelongtothattextshape. NewlinecreatesaDeckTextParagraphwithauniqueUUID;enginecontrollerownsparagraphIDs. Import these existing20a variants unchanged; do not define another union.
 
+The rendered textbox can supply the additive `deck_text` target from
+`plan/contracts.md`. Use its text and paragraph span for double-click
+editing. Refuse stale spans before sending a transaction and refresh the
+render when the model revision changes.
+
 Canonical `src/office/deck/deckUiTypes.ts`: DeckEditorViewState slide_id UUID|null,selection OfficeSelection deck|null,viewport OfficeViewport,active_ribbon_tab oneoftentabIDsbelow,notes_open booltrue,slides_open booltrue,comments_open boolfalse,snap boolfalse. DeckEditorProps document DocumentHandle,active bool,savedState DeckEditorViewState|null,onStateChange(state)->void,onStatus(FileTabStatus)->void,onOpenHelp(slug)->void,previewOnly boolfalse. DeckCommandContext controller,state,selection,view,openDialog(id DeckDialogId)->void;dialogIDs shape/image/table/chart/layout/theme/transition/animation/notes/comment/pageSetup/export/print/properties/compatibility/present.
 
 | Export | Exact signature and ownership |

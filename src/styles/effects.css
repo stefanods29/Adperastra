@@ -1,0 +1,79 @@
+.adp-timeline-effect {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  min-width: 0;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-panel);
+}
+.adp-timeline-effect header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.adp-timeline-effect h3 { margin: 0; font-size: var(--adp-font-section); }
+.adp-timeline-effect fieldset { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.adp-timeline-effect label { display: grid; gap: 4px; min-width: 0; }
+.adp-timeline-effect input, .adp-timeline-effect textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--adp-color-text-primary);
+  background: var(--adp-color-surface-window);
+  border: 1px solid var(--adp-color-border-input);
+  border-radius: var(--adp-radius-sm);
+  font: inherit;
+}
+.adp-timeline-effect textarea { resize: vertical; min-height: 56px; }
+.adp-timeline-effect nav { display: flex; flex-wrap: wrap; gap: 8px; }
+.adp-timeline-effect output, .adp-timeline-effect [role="alert"] { overflow-wrap: anywhere; }
+.adp-timeline-effect :focus-visible { outline: 2px solid var(--adp-accent-explorer); outline-offset: 2px; }
+.adp-timeline-cue-grid { max-height: 280px; overflow: auto; }
+.adp-timeline-cue-grid [role="row"] { height: 28px; min-width: 0; }
+.adp-timeline-cue-grid .adp-btn { width: 100%; height: 28px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: start; }
+.adp-timeline-export {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.adp-timeline-export-presets {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.adp-timeline-export-presets legend {
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--adp-color-text-secondary);
+  font-size: var(--adp-font-small);
+}
+.adp-timeline-export-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  min-width: 0;
+}
+.adp-timeline-export-preset-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--adp-color-text-primary);
+}
+.adp-timeline-export-summary {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+  min-width: 0;
+}
+.adp-timeline-export-summary dt { color: var(--adp-color-text-secondary); }
+.adp-timeline-export-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--adp-color-text-primary);
+}
+.adp-timeline-export-status {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.adp-timeline-export .adp-dialog-actions { flex-wrap: wrap; }
+.adp-timeline-export :focus-visible { outline: 2px solid var(--adp-accent-explorer); outline-offset: 2px; }

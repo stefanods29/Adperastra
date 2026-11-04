@@ -12,8 +12,8 @@ use fs_service::{new_cancellation_token, CancellationToken, OpProgress, SourceSt
 
 use crate::error::ConvertError;
 use crate::types::{
-    ConversionPreviewData, ConvertOptions, ConverterId, ConverterSpec, OutputDraft, OutputMetadata,
-    PreparedOutput,
+    ConversionPreviewData, ConversionWarningCode, ConvertOptions, ConverterId, ConverterSpec,
+    OutputDraft, OutputMetadata, PreparedOutput,
 };
 
 /// A bounded reader the converter may own. Implemented only for readers the
@@ -21,6 +21,7 @@ use crate::types::{
 pub trait ReadSeek: Read + Seek + Send {}
 impl ReadSeek for std::fs::File {}
 impl ReadSeek for std::io::Cursor<Vec<u8>> {}
+impl ReadSeek for std::io::Cursor<&[u8]> {}
 
 /// One source an adapter may read. The bytes come from a guarded file or an
 /// immutable snapshot; a converter never sees a user path it can reopen.
@@ -135,6 +136,17 @@ pub trait Converter: Send + Sync {
         options: &ConvertOptions,
         context: &mut ConvertContext,
     ) -> Result<ConversionPreviewData, ConvertError>;
+    /// Warnings this exact source/options pair requires before the first
+    /// `sink.begin`. Adapters that can only know after reading the source
+    /// (table safety prefixes, cached formulas, sheet selection) report them
+    /// here; the shared parent preflight merges the list.
+    fn required_warnings(
+        &self,
+        _inputs: &mut [ConvertSource],
+        _options: &ConvertOptions,
+    ) -> Result<Vec<ConversionWarningCode>, ConvertError> {
+        Ok(Vec::new())
+    }
     fn convert(
         &self,
         inputs: &mut [ConvertSource],

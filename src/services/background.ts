@@ -13,7 +13,8 @@ export type BackgroundTaskKind =
   | "folder_sizes"
   | "storage_scan"
   | "version_cleanup"
-  | "pack_download";
+  | "pack_download"
+  | "media_proxy";
 
 export const BACKGROUND_TASKS: readonly BackgroundTaskKind[] = [
   "thumbnails",
@@ -25,11 +26,33 @@ export const BACKGROUND_TASKS: readonly BackgroundTaskKind[] = [
   "storage_scan",
   "version_cleanup",
   "pack_download",
+  "media_proxy",
 ];
 
-export type BackgroundReason = "none" | "disabled" | "idle" | "ac" | "paused";
+/** The Step 12a task rows; 12b adds its own media-proxy row later. */
+export const BACKGROUND_TASK_KINDS: readonly BackgroundTaskKind[] = [
+  "thumbnails",
+  "metadata",
+  "ocr",
+  "filename_index",
+  "content_index",
+  "folder_sizes",
+  "storage_scan",
+  "version_cleanup",
+  "pack_download",
+];
 
-/** Mirrors Rust `background::BackgroundStatus`. */
+export type BackgroundReason =
+  | "none"
+  | "disabled"
+  | "idle"
+  | "ac"
+  | "paused"
+  | "fullscreen"
+  | "quiet_hours"
+  | "user";
+
+/** Mirrors Rust `background::BackgroundStatus` (07a shape unchanged). */
 export interface BackgroundStatus {
   paused: boolean;
   eligible: boolean;
@@ -38,7 +61,25 @@ export interface BackgroundStatus {
   queued: number;
 }
 
-/** Mirrors Rust `background::BackgroundSettings` (schema 12). */
+/** One row of the bounded `background_tasks` list (Step 12a E5). */
+export interface BackgroundTaskStatus {
+  kind: BackgroundTaskKind;
+  enabled: boolean;
+  eligible: boolean;
+  reason: BackgroundReason | null;
+  running: number;
+  queued: number;
+  last_error_code?: string | null;
+}
+
+/** Mirrors Rust `QuietHoursSettings` (schema 37). */
+export interface QuietHoursSettings {
+  enabled: boolean;
+  start_minute: number;
+  end_minute: number;
+}
+
+/** Mirrors Rust `BackgroundSettings` (schema 12; schema 37 adds scheduling). */
 export interface BackgroundSettings {
   enabled: boolean;
   only_idle: boolean;
@@ -46,6 +87,9 @@ export interface BackgroundSettings {
   paused: boolean;
   /** Every known task; missing entries use their default. */
   tasks: Record<BackgroundTaskKind, boolean>;
+  pause_fullscreen: boolean;
+  quiet_hours: QuietHoursSettings;
+  cpu_percent: number;
 }
 
 /** Every preview cache limit Settings offers, in megabytes. */
@@ -72,6 +116,7 @@ export const BACKGROUND_TASK_DEFAULTS: Record<BackgroundTaskKind, boolean> = {
   storage_scan: false,
   version_cleanup: true,
   pack_download: false,
+  media_proxy: false,
 };
 
 export function isBackgroundTaskKind(value: unknown): value is BackgroundTaskKind {
@@ -85,6 +130,18 @@ export async function getBackgroundStatus(): Promise<BackgroundStatus> {
     return { paused: false, eligible: false, reason: "disabled", running: 0, queued: 0 };
   }
   return (await invoke("background_status")) as BackgroundStatus;
+}
+
+/** The bounded per-task list; the single status record above is unchanged. */
+export async function listBackgroundTasks(): Promise<BackgroundTaskStatus[]> {
+  if (!isTauriRuntime()) return [];
+  return (await invoke("background_tasks")) as BackgroundTaskStatus[];
+}
+
+/** The same policy pause authority the title bar and palette use. */
+export async function pauseAllBackground(paused: boolean): Promise<void> {
+  if (!isTauriRuntime()) return;
+  await invoke("background_pause_all", { paused });
 }
 
 const eligibilityListeners = new Set<() => void>();

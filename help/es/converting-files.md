@@ -14,4 +14,8 @@ Selecciona archivos y elige **Convertir en…**. Elige un formato, revisa la vis
 - Los archivos que ya terminaron siguen disponibles si cancelas el resto.
 - Los cambios sin guardar se capturan para exportarlos sin guardar sobre el original.
 
-Consulta también: «La cola de tareas» y «Historial de versiones».
+Las opciones de PDF, documentos, tablas y archivos comprimidos aparecen cuando son compatibles.
+
+Usa **Intervalo de páginas** para elegir páginas PDF y **Hoja** para elegir datos de un libro. Las celdas de texto que podrían actuar como fórmulas necesitan el prefijo de seguridad indicado. Aquí no se evalúan fórmulas.
+
+Consulta también: «La cola de tareas», «Conversión por lotes y ajustes preestablecidos» y «Historial de versiones».

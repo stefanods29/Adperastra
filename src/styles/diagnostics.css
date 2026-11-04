@@ -1,0 +1,182 @@
+/* Diagnostic review (Step 09h T6): left file list and editable text. */
+
+.adp-diagnostics-dialog {
+  width: 960px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+}
+
+.adp-diagnostics-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adp-diagnostics-review {
+  flex: 1;
+  min-width: 240px;
+  margin: 0;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-diagnostics-redact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--adp-color-text-primary);
+}
+
+.adp-diagnostics-error {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-diagnostics-body {
+  display: grid;
+  grid-template-columns: 240px minmax(400px, 1fr);
+  gap: 10px;
+  min-height: 0;
+  margin-top: 10px;
+  max-height: calc(100vh - 240px);
+}
+
+.adp-diagnostics-files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+}
+
+.adp-diagnostics-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--adp-color-border-default);
+}
+
+.adp-diagnostics-file:last-child {
+  border-bottom: none;
+}
+
+.adp-diagnostics-file-select {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px;
+  border: none;
+  border-radius: var(--adp-radius-sm);
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  text-align: start;
+  cursor: pointer;
+}
+
+.adp-diagnostics-file-select:hover {
+  background: var(--adp-color-surface-selected);
+}
+
+.adp-diagnostics-file-select:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: 1px;
+}
+
+.adp-diagnostics-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-diagnostics-file-size {
+  flex: none;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-diagnostics-file-redacted {
+  flex: none;
+  color: var(--adp-color-status-caution);
+  font-size: 8px;
+}
+
+.adp-diagnostics-editor {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 240px;
+  border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-surface-pane);
+}
+
+.adp-diagnostics-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--adp-color-border-default);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-diagnostics-dumps {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.adp-diagnostics-text {
+  flex: 1;
+  min-height: 240px;
+  padding: 8px;
+  border: none;
+  resize: none;
+  background: transparent;
+  color: var(--adp-color-text-primary);
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.adp-diagnostics-text:focus-visible {
+  outline: 2px solid var(--adp-accent-current);
+  outline-offset: 1px;
+}
+
+.adp-diagnostics-dump-note,
+.adp-diagnostics-warning {
+  margin: 8px;
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-diagnostics-warning {
+  padding: 8px 10px;
+  border: 1px solid var(--adp-color-border-default);
+  border-inline-start: 3px solid var(--adp-color-status-caution);
+  border-radius: var(--adp-radius-sm);
+  background: var(--adp-color-status-caution-background);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-diagnostics-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+  .adp-diagnostics-body {
+    grid-template-columns: 1fr;
+  }
+}

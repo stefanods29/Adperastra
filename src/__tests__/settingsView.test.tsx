@@ -57,19 +57,45 @@ const navTitles = () =>
   [...container!.querySelectorAll(".adp-settings-nav-item")].map((item) => item.textContent?.trim());
 
 describe("SettingsView", () => {
-  it("lists the eight sections in order", async () => {
+  it("lists every settings section in order", async () => {
     await renderSettings();
     expect(navTitles()).toEqual([
       "General",
+      "Clipboard history",
       "Appearance",
       "Theme",
+      "Day and night",
+      "Accent colors",
       "Layout",
+      "Customize toolbars",
+      "Edit menus",
+      "Edit Home",
+      "Navigation pane",
+      "Status bar",
+      "Keyboard shortcuts",
       "Views",
+      "Tab options",
+      "Behavior",
+      "Date and size formats",
       "Opening files",
+      "Profiles",
       "Version history",
+      "Recover unsaved work",
+      "Locked folder",
+      "Accessibility",
+      "Shelf",
       "Background work",
+      "Startup",
+      "Check for updates",
+      "Windows integration",
+      "AI search and organizing",
+      "Assistant",
+      "Local AI",
+      "Storage",
+      "Shareable setups",
     ]);
-    expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(8);
+    // 33 nav sections; General also hosts the image-editor block.
+    expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(34);
   });
 
   it("search keeps only the matching sections", async () => {
@@ -82,8 +108,8 @@ describe("SettingsView", () => {
       });
     };
     await type("toolbar");
-    expect(navTitles()).toEqual(["Layout"]);
-    expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(1);
+    expect(navTitles()).toEqual(["Layout", "Customize toolbars"]);
+    expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(2);
     await type("zzz");
     expect(container!.querySelectorAll(".adp-settings-block")).toHaveLength(0);
     expect(container!.textContent).toContain("No settings match your search.");

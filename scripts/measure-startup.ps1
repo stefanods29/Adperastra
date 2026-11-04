@@ -38,13 +38,14 @@ public class PM {
 }
 "@ -ReferencedAssemblies $drawingReferences
 
-$data = Join-Path $env:TEMP "adp-cold-measure"
+$dataBase = Join-Path $env:TEMP ("adp-cold-measure-" + [guid]::NewGuid().ToString("N"))
 $savedData = $env:ADPERASTRA_DATA_DIR
 # PowerShell names ignore case: the list must not be called $runs ($Runs is the parameter).
 $results = @()
 foreach ($run in 1..$Runs) {
+  $data = Join-Path $dataBase "run-$run"
+  New-Item -ItemType Directory -Path $data | Out-Null
   Start-Sleep -Seconds 1
-  Remove-Item "$data\session.json" -ErrorAction SilentlyContinue
   $sessionSeedTime = $null
   if ($SessionFile) {
     if (-not (Test-Path -LiteralPath $SessionFile)) { throw "Session file not found: $SessionFile" }
@@ -83,7 +84,7 @@ $result = @{
   machine = "docs/benchmarks/MACHINE.md"
   step = $Step
   method = "A separate WebView2 profile and process job for each run; first paint = PrintWindow pixel; content ready = session.json written"
-  note = "Run right after a reboot for true cold-cache numbers. First-ever run (creates the WebView2 profile) is a one-time cost and is measured separately."
+  note = "Each run creates a fresh WebView2 profile and includes its one-time setup cost. These are fresh-profile startup measurements, not warm daily-start measurements. Run right after a reboot for true cold-cache numbers."
   runs = $results
 }
 $out = Join-Path $root ("docs\benchmarks\{0}-startup-step{1}.json" -f (Get-Date -Format "yyyy-MM-dd"), $Step)

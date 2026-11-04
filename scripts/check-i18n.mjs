@@ -17,7 +17,28 @@ import { argumentNames, flatten, parse } from "./icu-lite.mjs";
 import { renderPseudoJson } from "./make-pseudo.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const ALLOWLIST = new Set(["Adperastra"]);
+// Invariant names and glyphs: brand/platform names, format acronyms, font
+// names, language endonyms and single-letter formatting glyphs. Everything
+// else a person reads comes from the locale files.
+const ALLOWLIST = new Set([
+  "Adperastra",
+  "×",
+  "English",
+  "Español",
+  "Meta",
+  "SHA-256",
+  "PDF",
+  "PNG",
+  "B",
+  "I",
+  "U",
+  "L",
+  "C",
+  "R",
+  "ms",
+  "Inter Regular",
+  "Inter Bold",
+]);
 const problems = [];
 
 function readText(relPath) {
@@ -96,6 +117,8 @@ const tsxFiles = existsSync(join(root, "src")) ? collectTsx(join(root, "src"), [
 for (const file of tsxFiles) {
   const text = readFileSync(file, "utf8");
   const rel = relative(root, file);
+  // Test files render fixtures and mock translations; R-LANG covers the app UI.
+  if (rel.split(/[\\/]/).includes("__tests__")) continue;
   for (const match of text.matchAll(jsxTextRe)) {
     const candidate = match[1].trim();
     if (!letterRe.test(candidate)) continue;
@@ -108,13 +131,17 @@ for (const file of tsxFiles) {
     // TypeScript signatures between generics ("Readonly<X>, b: string): Record<")
     // start with "," or ")" or contain "):"; JSX text does not.
     if (/^[,)\]]/.test(candidate) || /\)\s*:/.test(candidate)) continue;
+    // JSX text is a literal phrase. Operator-heavy fragments are code that
+    // the angle-bracket regex crossed, not UI text.
+    if (/[`${}()\[\]|&?=]/.test(candidate)) continue;
+    if (/\b\w+\.\w+\b/.test(candidate)) continue;
     if (!letterRe.test(candidate.replace(/\b(null|undefined|true|false)\b/g, ""))) continue;
     if (ALLOWLIST.has(candidate)) continue;
     problems.push(`${rel}:${lineOf(text, match.index)}: hardcoded JSX text "${candidate}" (use t("..."))`);
   }
   for (const match of text.matchAll(attrRe)) {
     const candidate = match[2].trim();
-    if (!letterRe.test(candidate) || ALLOWLIST.has(candidate)) continue;
+    if (candidate.includes("${") || !letterRe.test(candidate) || ALLOWLIST.has(candidate)) continue;
     problems.push(`${rel}:${lineOf(text, match.index)}: hardcoded ${match[1]}="${candidate}" (use t("..."))`);
   }
 }

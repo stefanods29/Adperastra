@@ -41,6 +41,7 @@ describe("default apps", () => {
     expect(new Set(all).size).toBe(all.length);
     expect(groups.map((group) => group.id)).toEqual([
       "image",
+      "image-project",
       "media",
       "font",
       "pdf",
@@ -53,6 +54,11 @@ describe("default apps", () => {
       "markdown",
       "table",
       "json",
+      "office-word",
+      "office-sheet",
+      "office-slide",
+      "media-recipe",
+      "timeline-project",
       "model",
       "raw",
       "codecImage",
@@ -85,10 +91,13 @@ describe("default apps", () => {
     root = createRoot(container);
     await act(async () => root?.render(<OpeningFilesSettings open={open} onChange={onChange} onOpenHelp={() => undefined} />));
     const groupSelects = container.querySelectorAll<HTMLSelectElement>(".adp-defaultapps-head select");
-    expect(groupSelects).toHaveLength(19);
+    expect(groupSelects).toHaveLength(defaultAppGroups().length);
+    // Pick the media group by id rather than position: later viewers are
+    // inserted before it.
+    const mediaIndex = defaultAppGroups().findIndex((group) => group.id === "media");
     await act(async () => {
-      groupSelects[1].value = "windows";
-      groupSelects[1].dispatchEvent(new Event("change", { bubbles: true }));
+      groupSelects[mediaIndex].value = "windows";
+      groupSelects[mediaIndex].dispatchEvent(new Event("change", { bubbles: true }));
     });
     const next = onChange.mock.calls[0][0] as OpenSettings;
     expect(next.open_with.mp4).toBe("windows");

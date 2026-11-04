@@ -1,0 +1,260 @@
+/* Step 22a slide editor. Layout values come from the guide's fixed design:
+   header 40, ribbon tabs 34 + body 112, status 28, strip 196 (160..320),
+   notes 160 (96..320), side panel 240. Colors only through app tokens. */
+
+.adp-deck-editor {
+  display: grid;
+  grid-template-columns: auto minmax(280px, 1fr) auto;
+  min-height: 0;
+  height: 100%;
+  background: var(--adp-color-surface-canvas-doc);
+  color: var(--adp-color-text-primary);
+}
+
+.adp-deck-header {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.adp-deck-header-row {
+  display: flex;
+  align-items: center;
+  gap: var(--adp-space-5);
+  height: 40px;
+  padding: 0 var(--adp-space-8);
+  background: var(--adp-color-surface-header);
+  border-bottom: 1px solid var(--adp-color-border-default);
+  font-size: var(--adp-font-small);
+  color: var(--adp-color-text-secondary);
+}
+
+.adp-deck-saved { display: inline-flex; align-items: center; gap: var(--adp-space-2); }
+.adp-deck-save-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--adp-color-text-tertiary);
+}
+.adp-deck-save-dot--dirty { background: var(--adp-color-status-caution); }
+.adp-deck-title {
+  max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--adp-color-text-primary); font-weight: 600; font-size: var(--adp-font-body);
+}
+.adp-deck-mode { color: var(--adp-color-text-tertiary); }
+.adp-deck-header-spacer { flex: 1 1 auto; }
+
+.adp-deck-strip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--adp-color-surface-sidebar);
+  border-right: 1px solid var(--adp-color-border-panel);
+}
+.adp-deck-strip-head {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 28px; padding: 0 var(--adp-space-3); font-size: var(--adp-font-small);
+}
+.adp-deck-strip-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--adp-space-2); }
+.adp-deck-strip-resize { position: absolute; inset: 0 0 0 auto; width: 4px; cursor: col-resize; }
+
+.adp-deck-thumb {
+  display: flex; align-items: flex-start; gap: var(--adp-space-2);
+  border: 1px solid transparent; border-radius: var(--adp-radius-sm);
+  cursor: pointer;
+}
+.adp-deck-thumb--selected { border-color: var(--adp-accent-powerpoint); }
+.adp-deck-thumb--active { background: var(--adp-color-surface-selected); }
+.adp-deck-thumb--drop { outline: 2px solid var(--adp-accent-powerpoint); }
+.adp-deck-thumb-number {
+  width: 20px; text-align: right; color: var(--adp-color-text-tertiary);
+  font-size: var(--adp-font-caption);
+}
+.adp-deck-thumb-image, .adp-deck-thumb-empty {
+  width: 160px; height: 90px; object-fit: contain; background: var(--adp-color-surface-pane);
+  border: 1px solid var(--adp-color-border-default); border-radius: var(--adp-radius-xs);
+}
+.adp-deck-thumb-hidden {
+  position: absolute; display: inline-flex; gap: 2px; align-items: center;
+  font-size: var(--adp-font-caption); color: var(--adp-color-text-tertiary);
+}
+.adp-deck-strip-head button { min-width: 20px; }
+
+.adp-deck-center {
+  position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0;
+}
+.adp-deck-canvas {
+  position: relative; flex: 1 1 auto; overflow: auto; min-height: 240px;
+  background: var(--adp-color-surface-canvas-media);
+}
+.adp-deck-page {
+  margin: 0 auto; background: var(--adp-color-surface-pane);
+  box-shadow: var(--adp-shadow-page);
+}
+.adp-deck-page-image { display: block; width: 100%; height: 100%; object-fit: contain; }
+.adp-deck-node {
+  position: absolute; border: 1px solid transparent; cursor: move;
+}
+.adp-deck-node--selected { border-color: var(--adp-accent-powerpoint); }
+.adp-deck-resize {
+  position: absolute; right: -4px; bottom: -4px; width: 8px; height: 8px;
+  background: var(--adp-accent-powerpoint); border: 1px solid var(--adp-color-surface-pane);
+}
+.adp-deck-text-editor {
+  position: absolute; z-index: 2; resize: none; padding: 4px;
+  border: 1px solid var(--adp-accent-powerpoint); border-radius: var(--adp-radius-xs);
+  background: var(--adp-color-surface-pane); color: var(--adp-color-text-primary);
+}
+.adp-deck-canvas-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--adp-space-2);
+  padding: var(--adp-space-1) var(--adp-space-3); border-top: 1px solid var(--adp-color-border-panel);
+}
+.adp-deck-zoom { display: inline-flex; align-items: center; gap: var(--adp-space-1); margin-left: auto; }
+.adp-deck-canvas-help {
+  position: absolute; right: 6px; top: 6px; z-index: 3;
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid var(--adp-color-border-default);
+  background: var(--adp-color-surface-pane); color: var(--adp-color-text-primary);
+}
+
+.adp-deck-notes {
+  display: flex; flex-direction: column; min-height: 96px;
+  border-top: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-pane);
+}
+.adp-deck-notes-head {
+  display: flex; align-items: center; gap: var(--adp-space-3);
+  padding: 0 var(--adp-space-3); height: 28px; font-size: var(--adp-font-small);
+}
+.adp-deck-private { color: var(--adp-color-text-tertiary); font-size: var(--adp-font-caption); }
+.adp-deck-notes-text {
+  flex: 1 1 auto; min-height: 0; resize: none; border: 0; padding: var(--adp-space-3);
+  background: var(--adp-color-surface-pane); color: var(--adp-color-text-primary);
+  font: inherit;
+}
+.adp-deck-notes-resize { height: 4px; cursor: row-resize; }
+.adp-deck-notes-help { align-self: flex-end; margin: var(--adp-space-1) var(--adp-space-3); }
+
+.adp-deck-side {
+  width: 240px; min-width: 0; overflow: auto;
+  border-left: 1px solid var(--adp-color-border-panel);
+  background: var(--adp-color-surface-sidebar);
+}
+.adp-deck-shape-tools {
+  display: flex; flex-wrap: wrap; gap: var(--adp-space-1);
+  padding: var(--adp-space-1) var(--adp-space-3);
+  border-bottom: 1px solid var(--adp-color-border-panel);
+}
+
+.adp-deck-dialog, .adp-deck-layout-dialog, .adp-deck-master-dialog,
+.adp-deck-transition-dialog, .adp-deck-animation-dialog, .adp-deck-comments-dialog,
+.adp-deck-export-dialog, .adp-deck-present-dialog {
+  width: 560px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+.adp-deck-dialog-body, .adp-deck-dialog .adp-dialog-body { display: flex; flex-direction: column; gap: var(--adp-space-3); }
+.adp-deck-dialog-footer {
+  display: flex; align-items: center; gap: var(--adp-space-2);
+  padding-top: var(--adp-space-3); border-top: 1px solid var(--adp-color-border-default);
+}
+.adp-deck-field { display: flex; flex-direction: column; gap: var(--adp-space-1); font-size: var(--adp-font-small); }
+.adp-deck-field--size { width: 96px; }
+.adp-deck-grid-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--adp-space-3); }
+.adp-deck-check { display: flex; align-items: center; gap: var(--adp-space-2); font-size: var(--adp-font-small); }
+.adp-deck-hint { color: var(--adp-color-text-tertiary); font-size: var(--adp-font-caption); }
+.adp-deck-error { color: var(--adp-color-status-caution); }
+.adp-deck-sep { width: 1px; height: 20px; background: var(--adp-color-border-default); }
+
+.adp-deck-layout-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(144px, 1fr));
+  gap: var(--adp-space-3); max-height: 320px; overflow: auto;
+}
+.adp-deck-layout-card {
+  display: flex; flex-direction: column; gap: var(--adp-space-1);
+  padding: var(--adp-space-2); border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm); background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary); cursor: pointer; text-align: left;
+}
+.adp-deck-layout-preview {
+  position: relative; display: block; width: 100%;
+  background: var(--adp-color-surface-canvas-doc); border: 1px solid var(--adp-color-border-subtle);
+}
+.adp-deck-layout-placeholder {
+  position: absolute; border: 1px dashed var(--adp-accent-powerpoint);
+  background: var(--adp-accent-light-word);
+}
+.adp-deck-color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--adp-space-2); }
+
+.adp-deck-effect-list { display: flex; gap: var(--adp-space-2); flex-wrap: wrap; }
+.adp-deck-effect {
+  min-width: 96px; padding: var(--adp-space-2); border: 1px solid var(--adp-color-border-default);
+  border-radius: var(--adp-radius-sm); background: var(--adp-color-surface-pane);
+  color: var(--adp-color-text-primary);
+}
+.adp-deck-effect--active { border-color: var(--adp-accent-powerpoint); background: var(--adp-accent-light-word); }
+
+.adp-deck-comments { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--adp-space-3); }
+.adp-deck-comment-list { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow: auto; }
+.adp-deck-comment {
+  display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left;
+  padding: var(--adp-space-2); border: 1px solid transparent; border-radius: var(--adp-radius-sm);
+  background: transparent; color: var(--adp-color-text-primary);
+}
+.adp-deck-comment--active { border-color: var(--adp-accent-powerpoint); background: var(--adp-color-surface-selected); }
+.adp-deck-comment-author { font-weight: 600; font-size: var(--adp-font-small); }
+.adp-deck-comment-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--adp-font-small); }
+.adp-deck-comment-state { color: var(--adp-color-text-tertiary); font-size: var(--adp-font-caption); }
+.adp-deck-comment-detail { display: flex; flex-direction: column; gap: var(--adp-space-2); min-width: 0; }
+.adp-deck-confirm { border: 1px solid var(--adp-color-status-caution); padding: var(--adp-space-2); }
+
+.adp-deck-backstage {
+  position: absolute; inset: 0; z-index: 20; display: grid;
+  grid-template-columns: 240px minmax(320px, 1fr);
+  background: var(--adp-color-surface-window);
+  max-width: calc(100vw - 32px); max-height: calc(100vh - 32px);
+  margin: auto; box-shadow: var(--adp-shadow-card);
+}
+.adp-deck-backstage-nav { display: flex; flex-direction: column; padding: var(--adp-space-3); border-right: 1px solid var(--adp-color-border-panel); }
+.adp-deck-backstage-navitem {
+  text-align: left; padding: var(--adp-space-2) var(--adp-space-3); border: 0; border-radius: var(--adp-radius-sm);
+  background: transparent; color: var(--adp-color-text-primary);
+}
+.adp-deck-backstage-navitem--active { background: var(--adp-color-surface-selected); }
+.adp-deck-backstage-body { padding: var(--adp-space-5); overflow: auto; }
+.adp-deck-backstage-actions { display: flex; flex-direction: column; gap: var(--adp-space-2); max-width: 360px; }
+.adp-deck-properties { display: grid; grid-template-columns: 160px 1fr; gap: var(--adp-space-2); }
+.adp-deck-properties dt { color: var(--adp-color-text-secondary); }
+.adp-deck-properties dd { margin: 0; overflow-wrap: anywhere; }
+.adp-deck-compatibility ul { padding-left: var(--adp-space-5); }
+
+.adp-deck-presenter {
+  position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column;
+  background: var(--adp-color-surface-window); color: var(--adp-color-text-primary);
+}
+.adp-deck-presenter-head {
+  display: flex; align-items: center; gap: var(--adp-space-4);
+  height: 40px; padding: 0 var(--adp-space-4);
+  border-bottom: 1px solid var(--adp-color-border-default);
+}
+.adp-deck-presenter-time { margin-left: auto; font-variant-numeric: tabular-nums; }
+.adp-deck-presenter-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; flex: 1 1 auto; min-height: 0; }
+.adp-deck-presenter-main { display: flex; flex-direction: column; gap: var(--adp-space-3); padding: var(--adp-space-4); }
+.adp-deck-presenter-next { flex: 1 1 auto; min-height: 180px; border: 1px solid var(--adp-color-border-default); background: var(--adp-color-surface-canvas-doc); }
+.adp-deck-presenter-actions { display: flex; flex-wrap: wrap; gap: var(--adp-space-2); }
+.adp-deck-presenter-notes {
+  padding: var(--adp-space-4); border-left: 1px solid var(--adp-color-border-panel);
+  overflow: auto;
+}
+.adp-deck-presenter-notestext { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.adp-deck-fallback, .adp-deck-loading { padding: var(--adp-space-6); }
+.adp-deck-error, .adp-deck-hint { overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .adp-deck-editor { grid-template-columns: minmax(0, 1fr); }
+  .adp-deck-strip, .adp-deck-side {
+    position: absolute; z-index: 15; inset: 0 auto 0 0; width: min(320px, calc(100vw - 32px));
+    box-shadow: var(--adp-shadow-card); background: var(--adp-color-surface-sidebar);
+  }
+  .adp-deck-presenter-body { grid-template-columns: minmax(0, 1fr); }
+  .adp-deck-backstage { grid-template-columns: 200px minmax(280px, 1fr); }
+}

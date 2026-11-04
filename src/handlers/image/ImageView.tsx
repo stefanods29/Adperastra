@@ -6,9 +6,9 @@ import type { Command } from "../../commands/registry";
 import { formatSize } from "../../services/format";
 import Ribbon from "../../ribbon/Ribbon";
 import { useCommandShortcuts } from "../../ribbon/shortcuts";
-import type { RibbonDef } from "../../ribbon/types";
 import ViewerFrame from "../../ribbon/ViewerFrame";
 import type { HandlerViewProps } from "../types";
+import { IMAGE_RIBBON } from "./ribbon";
 import { clampZoom, fitPercent, MAX_ZOOM, MIN_ZOOM, nextZoom } from "./zoom";
 import OcrOverlay from "../../ocr/OcrOverlay";
 import { useOcr } from "../../ocr/useOcr";
@@ -36,45 +36,6 @@ function readSaved(state: unknown): SavedImageState {
   if (value.mode === "manual" && typeof value.percent === "number") return { mode: "manual", percent: clampZoom(value.percent), turns };
   return { mode: "fit", percent: 100, turns };
 }
-
-const RIBBON: RibbonDef = {
-  tabs: [
-    {
-      id: "view",
-      labelKey: "ribbon.view",
-      keyTip: "V",
-      groups: [
-        {
-          id: "zoom",
-          labelKey: "ribbon.zoom",
-          controls: [
-            { type: "button", command: "image.zoomIn", showLabel: false, keyTip: "I" },
-            { type: "button", command: "image.zoomOut", showLabel: false, keyTip: "O" },
-            { type: "toggle", command: "image.fit", keyTip: "F" },
-            { type: "toggle", command: "image.actualSize", keyTip: "A" },
-          ],
-        },
-        {
-          id: "rotate",
-          labelKey: "ribbon.rotate",
-          controls: [
-            { type: "button", command: "image.rotateLeft", keyTip: "L" },
-            { type: "button", command: "image.rotateRight", keyTip: "R" },
-          ],
-        },
-        {
-          id: "text",
-          labelKey: "ocr.title",
-          controls: [
-            { type: "toggle", command: "image.textRecognition", showLabel: false },
-            { type: "button", command: "image.copyAllText", showLabel: false },
-            { type: "button", command: "image.searchText", showLabel: false },
-          ],
-        },
-      ],
-    },
-  ],
-};
 
 /** Image viewer (Steps 04a, 04b): fit to window, zoom with Ctrl+wheel and
  * Ctrl+=/Ctrl+-/Ctrl+0, pan by dragging, rotate the view, checkerboard
@@ -236,7 +197,7 @@ export default function ImageView(props: HandlerViewProps) {
     drag.current = null;
   };
 
-  const ribbon = <Ribbon def={RIBBON} ctx={ctx} commands={commands} accent="image" active={active} />;
+  const ribbon = <Ribbon def={IMAGE_RIBBON} ctx={ctx} commands={commands} accent="image" active={active} handlerId="image" />;
 
   if (codecFallback) {
     return <Suspense fallback={<div className="adp-viewer-message" role="status">{t("preview.loading")}</div>}><CodecImageView {...props} /></Suspense>;

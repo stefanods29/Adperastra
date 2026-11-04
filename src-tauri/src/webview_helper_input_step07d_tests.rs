@@ -134,7 +134,7 @@ fn complete_update_replaces_allowlist_once() {
 
 #[test]
 fn malformed_update_kills_without_partial_registry() {
-    let (mut registry, first) = seeded();
+    let (mut registry, _first) = seeded();
     let before = registry.current()[0].grant_id;
     let mut child = ChildInputState::new();
     let granted = memory_grant(Uuid::new_v4(), 4, false);

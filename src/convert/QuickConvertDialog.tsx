@@ -17,14 +17,17 @@ import { useConversionEnvironment } from "./ConversionContext";
 import ConversionOptions from "./ConversionOptions";
 import ConversionPreview from "./ConversionPreview";
 import {
+  MAX_COMBINE_IMAGES,
   convertersForInputs,
   defaultDestination,
   inputLabel,
   optionsFromValues,
+  staticPreviewChanges,
   utcToday,
   valuesFromSpec,
 } from "./convertOptions";
-import { APP_CONVERTERS } from "./registry";
+import { QUICK_CONVERT_CONVERTERS } from "./registry";
+import type { ConversionPreset } from "../services/conversionPresets";
 import type {
   ConversionDialogProps,
   ConversionInput,
@@ -57,27 +60,52 @@ function outputLabel(spec: ConverterSpec): string {
   return spec.output === "jpeg" ? "JPEG" : spec.output.toUpperCase();
 }
 
+export interface QuickConvertDialogProps extends ConversionDialogProps {
+  /** Step 09e batch actions: start from a saved conversion preset. */
+  initialPreset?: ConversionPreset;
+}
+
+function initialValues(spec: ConverterSpec | null, preset: ConversionPreset | undefined): Record<string, boolean | number | string> {
+  const base = spec ? valuesFromSpec(spec) : {};
+  if (!preset) return base;
+  const saved = preset.options.value as unknown as Record<string, unknown> | undefined;
+  if (!saved) return base;
+  for (const key of Object.keys(base)) {
+    const value = saved[key];
+    if (typeof value === "boolean" || typeof value === "number" || typeof value === "string") base[key] = value;
+  }
+  return base;
+}
+
 export default function QuickConvertDialog({
   inputs,
   onClose,
   onCompleted,
   onOpenHelp,
   initialConverter,
-}: ConversionDialogProps) {
+  initialPreset,
+}: QuickConvertDialogProps) {
   const { t } = useTranslation();
   const environment = useConversionEnvironment() ?? FALLBACK_ENVIRONMENT;
-  const available = useMemo(() => convertersForInputs(APP_CONVERTERS, inputs), [inputs]);
-  const [converterId, setConverterId] = useState(
-    initialConverter && available.some((spec) => spec.id === initialConverter)
-      ? initialConverter
-      : available[0]?.id ?? "",
+  const available = useMemo(
+    () => convertersForInputs(QUICK_CONVERT_CONVERTERS, inputs),
+    [inputs],
   );
+  const requestedConverter = initialPreset?.converter_id ?? initialConverter;
+  const initialSpec = available.find((spec) => spec.id === requestedConverter) ?? available[0] ?? null;
+  const [converterId, setConverterId] = useState(initialSpec?.id ?? "");
   const spec = available.find((candidate) => candidate.id === converterId) ?? available[0] ?? null;
   const [values, setValues] = useState<Record<string, boolean | number | string>>(
-    spec ? valuesFromSpec(spec) : {},
+    () => initialValues(initialSpec, initialPreset),
   );
-  const [metadataKeep, setMetadataKeep] = useState(true);
-  const [destination, setDestination] = useState(() => defaultDestination(inputs));
+  const [metadataKeep, setMetadataKeep] = useState(() => {
+    const saved = initialPreset?.options.value as unknown as Record<string, unknown> | undefined;
+    return saved?.metadata_keep !== false;
+  });
+  const [pattern] = useState(initialPreset?.name_pattern ?? "{stem}.{ext}");
+  const [destination, setDestination] = useState(() =>
+    initialPreset?.destination_mode === "ask" ? "" : defaultDestination(inputs),
+  );
   const [accepted, setAccepted] = useState(false);
   const [replaceNotice, setReplaceNotice] = useState(false);
   const [original, setOriginal] = useState<{ url: string; token: string } | null>(null);
@@ -147,8 +175,10 @@ export default function QuickConvertDialog({
     setAccepted(false);
   }, [spec?.id, values, metadataKeep, preview.state.revision]);
 
-  // The saved defaults apply once, before the user changes anything.
+  // The saved defaults apply once, before the user changes anything; a
+  // batch preset already carries the exact reviewed values.
   useEffect(() => {
+    if (initialPreset) return;
     let active = true;
     void loadSettings().then((saved) => {
       if (!active) return;
@@ -185,14 +215,24 @@ export default function QuickConvertDialog({
     );
   }
 
-  const requiredWarnings = preview.state.preview?.warnings ?? [];
-  const requiredLosses = preview.state.preview?.metadata_lost ?? [];
+  const staticChanges = staticPreviewChanges(spec, inputs);
+  const previewAvailable =
+    preview.state.status === "ready" || preview.state.status === "unsupported";
+  const requiredWarnings =
+    preview.state.preview?.warnings ??
+    (preview.state.status === "unsupported" ? staticChanges.warnings : []);
+  const requiredLosses =
+    preview.state.preview?.metadata_lost ??
+    (preview.state.status === "unsupported" ? staticChanges.metadata_lost : []);
   const needsAcceptance = requiredWarnings.length > 0 || requiredLosses.length > 0;
+  const combineOverLimit =
+    spec.input_mode === "combine" && inputs.length > MAX_COMBINE_IMAGES;
   const running = queue.state.status === "running";
   const canConvert =
     !!destination &&
     !running &&
-    preview.state.status === "ready" &&
+    previewAvailable &&
+    !combineOverLimit &&
     (!needsAcceptance || accepted);
 
   const changeConverter = (id: string) => {
@@ -204,6 +244,7 @@ export default function QuickConvertDialog({
   };
 
   const start = async () => {
+    if (!canConvert) return;
     requestRevision.current += 1;
     await queue.start({
       inputs: [...inputs],
@@ -224,7 +265,7 @@ export default function QuickConvertDialog({
       accepted_losses: accepted ? requiredLosses : [],
       accepted_warning_codes: accepted ? requiredWarnings : [],
       request_revision: requestRevision.current,
-      naming: { pattern: "{stem}.{ext}", date_utc: utcToday(), start_index: 1 },
+      naming: { pattern, date_utc: utcToday(), start_index: 1 },
     });
   };
 
@@ -250,6 +291,11 @@ export default function QuickConvertDialog({
         </select>
         <HelpButton onOpenHelp={() => onOpenHelp(spec.help_slug)} />
       </div>
+      {combineOverLimit ? (
+        <p className="adp-convert-note" role="alert">
+          {t("errors.convert.too_large")}
+        </p>
+      ) : null}
 
       <ConversionPreview
         originalUrl={original?.url ?? null}

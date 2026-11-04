@@ -224,7 +224,7 @@ impl BookBackend {
             if bytes.len() as u64 > crate::extra_view_types::MAX_BOOK_IMAGE_ENCODED_BYTES {
                 return Err("extra_view.too_large".to_string());
             }
-            let cache = self.app.state::<CacheService>();
+            let cache = self.app.state::<Arc<CacheService>>();
             let lease = cache.lease_memory(
                 Arc::new(Zeroizing::new(bytes)),
                 id,
@@ -262,7 +262,7 @@ impl BookBackend {
     }
 
     fn release_page_leases(&mut self) {
-        let cache = self.app.state::<CacheService>();
+        let cache = self.app.state::<Arc<CacheService>>();
         for lease in self.leases.drain(..) {
             let _ = cache.release(&lease);
         }

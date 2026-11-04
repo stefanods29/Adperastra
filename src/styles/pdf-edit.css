@@ -1,0 +1,67 @@
+/* PDF editing surfaces (Step 14a). All colors come from theme tokens; the
+ * only literal colors are document data (annotation swatches are set inline
+ * by the picker, never used for chrome). */
+
+.adp-pdf-edit { display:flex; flex-direction:column; min-width:0; min-height:0; height:100%; background:var(--adp-color-surface-canvas-doc); color:var(--adp-color-text-primary); }
+.adp-pdf-edit:focus-visible { outline:2px solid var(--adp-accent-current); outline-offset:-2px; }
+.adp-pdf-edit-toolbar { display:flex; align-items:center; gap:var(--adp-space-1); min-height:48px; padding:0 var(--adp-space-4); border-bottom:1px solid var(--adp-color-border-default); background:var(--adp-color-surface-chrome); }
+.adp-pdf-edit-toolbar .adp-icon-btn:focus-visible, .adp-pdf-edit-swatch:focus-visible, .adp-pdf-annotation:focus-visible { outline:2px solid var(--adp-accent-current); outline-offset:1px; }
+.adp-pdf-edit-tool--active { background:var(--adp-color-surface-selected-row); border-color:var(--adp-accent-current); }
+.adp-pdf-edit-separator { width:1px; height:24px; margin:0 var(--adp-space-2); background:var(--adp-color-border-default); }
+.adp-pdf-edit-spacer { flex:1; }
+.adp-pdf-edit-swatch { width:18px; height:18px; padding:0; border:2px solid var(--adp-color-border-input); border-radius:var(--adp-radius-round); cursor:pointer; }
+.adp-pdf-edit-swatch--active { border-color:var(--adp-accent-current); box-shadow:0 0 0 2px var(--adp-color-surface-chrome), 0 0 0 4px var(--adp-accent-current); }
+.adp-pdf-edit-body { display:flex; flex:1; min-height:0; }
+.adp-pdf-edit-canvas { position:relative; flex:1; display:flex; align-items:flex-start; justify-content:center; overflow:auto; padding:24px; }
+.adp-pdf-edit-page { position:relative; flex:none; background:var(--adp-color-surface-window); box-shadow:var(--adp-shadow-page); }
+.adp-pdf-edit-page-image { display:block; width:100%; height:100%; user-select:none; }
+.adp-pdf-overlay { position:absolute; inset:0; }
+.adp-pdf-annotation { position:absolute; padding:0; border:1px solid transparent; border-radius:var(--adp-radius-xs); background:transparent; cursor:pointer; }
+.adp-pdf-annotation--highlight { background:var(--adp-color-status-caution-background); }
+.adp-pdf-annotation--ink { border-color:var(--adp-color-text-secondary); }
+.adp-pdf-annotation--text { border-style:dashed; border-color:var(--adp-color-border-input); background:var(--adp-color-surface-window); }
+.adp-pdf-annotation--comment { min-width:18px; min-height:18px; border-color:var(--adp-color-status-caution); background:var(--adp-color-status-caution-background); }
+.adp-pdf-annotation--signature { border-style:dashed; border-color:var(--adp-accent-current); }
+.adp-pdf-annotation--selected { outline:2px solid var(--adp-accent-current); outline-offset:1px; }
+.adp-pdf-annotation-text { display:block; overflow:hidden; padding:2px 4px; color:var(--adp-color-text-primary); font-size:var(--adp-font-small); line-height:1.2; text-align:left; white-space:pre-wrap; }
+.adp-pdf-annotation-strokes { position:absolute; inset:0; pointer-events:none; overflow:visible; }
+.adp-pdf-annotation-strokes polyline { fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; opacity:1; }
+.adp-pdf-edit-stroke { position:absolute; inset:0; pointer-events:none; }
+.adp-pdf-edit-stroke polyline { fill:none; stroke:var(--adp-color-text-primary); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.adp-pdf-edit-popover { position:sticky; top:0; z-index:5; display:flex; flex-direction:column; gap:var(--adp-space-2); width:320px; padding:var(--adp-space-3); border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-md); background:var(--adp-color-surface-window); box-shadow:var(--adp-shadow-card); }
+.adp-pdf-edit-textarea { width:100%; min-height:64px; resize:vertical; font:inherit; }
+.adp-pdf-edit-error { margin:0; padding:var(--adp-space-2) var(--adp-space-4); color:var(--adp-color-status-caution); background:var(--adp-color-status-caution-background); }
+.adp-pdf-edit-note { margin:var(--adp-space-1) 0; color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); }
+.adp-pdf-edit-warning { margin:0 0 var(--adp-space-4); padding:var(--adp-space-2) var(--adp-space-3); border-left:3px solid var(--adp-color-status-caution); background:var(--adp-color-status-caution-background); color:var(--adp-color-text-primary); font-size:var(--adp-font-small); }
+.adp-pdf-edit-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.adp-pdf-comments { width:300px; flex:none; display:flex; flex-direction:column; gap:var(--adp-space-2); padding:var(--adp-space-3); overflow:auto; border-left:1px solid var(--adp-color-border-default); background:var(--adp-color-surface-sidebar); }
+.adp-pdf-comments-header { display:flex; align-items:center; justify-content:space-between; }
+.adp-pdf-comments-title { margin:0; font-size:var(--adp-font-section); font-weight:600; }
+.adp-pdf-comment { padding:12px; border:1px solid var(--adp-color-border-default); border-radius:var(--adp-radius-md); background:var(--adp-color-surface-window); }
+.adp-pdf-comment--selected { border-color:var(--adp-accent-current); }
+.adp-pdf-comment-text { display:block; width:100%; padding:0; border:none; background:transparent; color:var(--adp-color-text-primary); text-align:left; cursor:pointer; }
+.adp-pdf-comment-reply { margin:var(--adp-space-1) 0 0 var(--adp-space-4); color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); }
+.adp-pdf-forms { width:300px; flex:none; padding:var(--adp-space-3); overflow:auto; border-left:1px solid var(--adp-color-border-default); background:var(--adp-color-surface-sidebar); }
+.adp-pdf-edit-forms { display:flex; flex-direction:column; gap:var(--adp-space-3); }
+.adp-pdf-edit-form-row { display:flex; flex-direction:column; gap:var(--adp-space-1); }
+.adp-pdf-edit-form-label { color:var(--adp-color-text-secondary); font-size:var(--adp-font-small); }
+.adp-pdf-edit-check { width:16px; height:16px; accent-color:var(--adp-accent-current); }
+.adp-pdf-edit-select { width:100%; }
+.adp-pdf-signature-dialog { width:640px; height:400px; max-width:calc(100vw - 32px); max-height:calc(100vh - 32px); overflow:auto; }
+.adp-pdf-edit-tabs { display:flex; gap:var(--adp-space-1); margin-bottom:var(--adp-space-3); border-bottom:1px solid var(--adp-color-border-default); }
+.adp-pdf-edit-tab { padding:var(--adp-space-2) var(--adp-space-3); border:none; border-bottom:2px solid transparent; background:transparent; color:var(--adp-color-text-secondary); cursor:pointer; }
+.adp-pdf-edit-tab--active { border-bottom-color:var(--adp-accent-current); color:var(--adp-color-text-primary); }
+.adp-pdf-edit-tab:focus-visible { outline:2px solid var(--adp-accent-current); outline-offset:-2px; }
+.adp-pdf-edit-signature-panel { display:flex; flex-direction:column; gap:var(--adp-space-2); min-height:220px; }
+.adp-pdf-edit-signature-canvas { width:100%; max-width:560px; height:220px; border:1px solid var(--adp-color-border-input); border-radius:var(--adp-radius-md); background:var(--adp-color-surface-window); touch-action:none; }
+.adp-pdf-edit-signature-preview { min-height:48px; padding:var(--adp-space-2); border-bottom:1px solid var(--adp-color-border-default); font-size:24px; }
+.adp-pdf-edit-file { color:var(--adp-color-text-primary); }
+.adp-pdf-pages-dialog { width:720px; max-width:calc(100vw - 32px); max-height:calc(100vh - 32px); }
+.adp-pdf-edit-page-actions { display:flex; flex-wrap:wrap; gap:var(--adp-space-2); margin-bottom:var(--adp-space-3); }
+.adp-pdf-edit-page-list { display:flex; flex-direction:column; gap:var(--adp-space-1); max-height:40vh; margin:0; padding:0; overflow:auto; list-style:none; }
+.adp-pdf-edit-page-row { display:flex; align-items:center; justify-content:space-between; gap:var(--adp-space-3); padding:var(--adp-space-1) var(--adp-space-2); border-bottom:1px solid var(--adp-color-border-subtle); }
+.adp-pdf-edit-page-row label { display:flex; align-items:center; gap:var(--adp-space-2); }
+.adp-pdf-edit-split { display:flex; align-items:flex-end; gap:var(--adp-space-2); margin-top:var(--adp-space-3); }
+.adp-pdf-edit-split label { display:flex; flex-direction:column; gap:var(--adp-space-1); font-size:var(--adp-font-small); }
+.adp-pdf-edit-number { width:80px; }
+.adp-pdf-edit-confirm { margin-top:var(--adp-space-3); padding:var(--adp-space-3); border:1px solid var(--adp-color-status-caution); border-radius:var(--adp-radius-md); background:var(--adp-color-status-caution-background); }
