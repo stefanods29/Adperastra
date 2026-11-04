@@ -1,6 +1,6 @@
 # Step07g integration report
 
-Date: 2026-11-03. Status: implementation integrated locally on codex/integrate-handoffs. Packaged/runtime acceptance remains pending; no main, remote, tag or release change.
+Date: 2026-11-03. Status: implementation integrated locally on integrate-handoffs. Packaged/runtime acceptance remains pending; no main, remote, tag or release change.
 
 ## Implemented
 

@@ -1,6 +1,6 @@
 # Step 07e report — Copy text from images and scans (OCR)
 
-Date: 2026-11-03 (America/Lima). Status: local integration on `codex/integrate-handoffs`;
+Date: 2026-11-03 (America/Lima). Status: local integration on `integrate-handoffs`;
 packaged-app verification is pending. No remote operation, `main` change, release or tag has
 been made.
 

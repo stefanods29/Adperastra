@@ -1,7 +1,7 @@
 # Step 07f report - More previewers 1: e-books, notebooks, email, subtitles, logs and SQLite
 
 Dates: 2026-11-03 (America/Lima). Status: locally integrated and committed on
-`codex/integrate-handoffs`; packaged-app checks, speed runs, screenshots and the owner's
+`integrate-handoffs`; packaged-app checks, speed runs, screenshots and the owner's
 checks are still to do. No remote operation, `main` change, release or tag has been made.
 
 ## How to try it

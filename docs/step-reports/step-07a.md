@@ -1,6 +1,6 @@
 # Step 07a report — Thumbnails, cache and background work
 
-Date: 2026-11-02 (America/Lima). Status: local integration on `codex/integrate-handoffs`; final packaged-app verification is in progress. No remote operation, main change, release or tag has been made.
+Date: 2026-11-02 (America/Lima). Status: local integration on `integrate-handoffs`; final packaged-app verification is in progress. No remote operation, main change, release or tag has been made.
 
 ## How to try it
 

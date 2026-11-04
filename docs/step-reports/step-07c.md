@@ -1,6 +1,6 @@
 # Step 07c report — Photo Gallery
 
-Date: 2026-11-03 (America/Lima). Status: local integration on `codex/integrate-handoffs`;
+Date: 2026-11-03 (America/Lima). Status: local integration on `integrate-handoffs`;
 final packaged-app verification is pending. No remote operation, `main` change, release or tag
 has been made.
 

@@ -1,5 +1,7 @@
 # Status
 
+**Owner decision (2026-11-04):** The owner asked to bring `main` up to date with the full integration branch (renamed from its earlier name to `integrate-handoffs`) and publish `v0.1.0-preview.1` from it, accepting the 7 open Major issues in `KNOWN_ISSUES.md` as disclosed preview limits. This overrides the usual "no Major on main" rule for this merge only.
+
 **Owner release authorization (2026-11-04):** The owner explicitly requests
 the plus button to open independent Home tabs, a complete usage README,
 compilation, pushing the current integration to GitHub and publication of an
@@ -13,7 +15,7 @@ offline Office catalog's public verification key is pinned in
 
 The agent updates this file at the end of every step (AGENTS.md section 4).
 
-**Current step:** `08b` and local handoff integration resumed by owner, 2026-11-03. Branch: codex/integrate-handoffs. The working tree contains the unfinished later-step integration; preserve it and the original handoffs. Owner prioritizes working engine connections, design/lag fixes and window dragging. Provisioning and verification limitations are recorded in docs/integration/provisioning-2026-11-03.md. Basic Office previews are implemented; accurate Office, pack activation, AI generation, speech integration and exact-object replacement must not be claimed complete until their real paths pass checks. No main/remote/publication changes authorized.
+**Current step:** `08b` and local handoff integration resumed by owner, 2026-11-03. Branch: integrate-handoffs. The working tree contains the unfinished later-step integration; preserve it and the original handoffs. Owner prioritizes working engine connections, design/lag fixes and window dragging. Provisioning and verification limitations are recorded in docs/integration/provisioning-2026-11-03.md. Basic Office previews are implemented; accurate Office, pack activation, AI generation, speech integration and exact-object replacement must not be claimed complete until their real paths pass checks. No main/remote/publication changes authorized.
 
 **Last tag:** `v0.0.6-step03b` (local)
 
@@ -163,7 +165,7 @@ Guides for the steps after 05a are written into `plan/steps/` (`plan/EXPANDING.m
 - 2026-11-03: Owner authorizes continuous integration through all remaining steps, separate-step subagents and autonomous implementation choices while unavailable. Start the next available step as an agent finishes; coordinator retains compilation/testing and reports “step <id> implemented.” only after its implementation checks. Preserve source/user data and original handoffs; keep publication/remotes unchanged unless specifically required. Obsolete build cleanup is authorized; attempted deletion of the 12.4 GiB repository target folder was rejected by automatic command approval review, so no deletion occurred.
 
 
-- 2026-11-02: All54 worker handoffs received. Owner now authorizes the coordinator to integrate the parts, fill missing implementations, compile/test/debug/package and install required libraries/development tools. This supersedes the earlier planning-only stopping point. Continue locally in dependency order; preserve the submitted handoffs, keep main/remotes/publication untouched, and retain genuine owner engine/distribution checkpoints. The integration branch is codex/integrate-handoffs; original submissions have a verified external backup recorded in docs/integration/incoming-manifest.json.
+- 2026-11-02: All54 worker handoffs received. Owner now authorizes the coordinator to integrate the parts, fill missing implementations, compile/test/debug/package and install required libraries/development tools. This supersedes the earlier planning-only stopping point. Continue locally in dependency order; preserve the submitted handoffs, keep main/remotes/publication untouched, and retain genuine owner engine/distribution checkpoints. The integration branch is integrate-handoffs; original submissions have a verified external backup recorded in docs/integration/incoming-manifest.json.
 
 - 2026-11-02: Guide-authoring scope now includes all54remainingsteps, including14c,17a-d,20c,21b and full22b. Finish complete guides with exact cross-step APIs and create one prompt per step under plan/prompts/, then stop; do not implement or dispatch coding work. Workers write code/tests without compilation/installation/execution; coordinator handles later verification. The assistant must offer Local AI or API-key mode, with Meta Model API first in the API provider list. API sends require explicit reviewed payload consent and protected native credentials; no automatic cloud fallback. This supersedes the earlier non-AI-only scope while retaining local-only Git/no publication rules.
 

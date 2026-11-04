@@ -1,6 +1,6 @@
 # Step 07b report — Quick preview and rich file info
 
-Date: 2026-11-02 (America/Lima). Status: local integration on `codex/integrate-handoffs`; the
+Date: 2026-11-02 (America/Lima). Status: local integration on `integrate-handoffs`; the
 full gate runs after this report, and packaged-app verification is still pending. No remote
 operation, `main` change, release or tag has been made.
 

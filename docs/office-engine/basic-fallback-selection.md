@@ -11,7 +11,7 @@ The first-party implementation is the retained `ooxml-editor-probe` 0.1.0
 library at `tools/office-edit-preflight`, under Adperastra's MIT license.
 Its range-preservation and Windows evidence and exact source/artifact hashes
 are in `results/ooxml-preservation/`. The checkout is on
-`codex/integrate-handoffs`, based on `fcb3fee`; this integration is not committed
+`integrate-handoffs`, based on `fcb3fee`; this integration is not committed
 or tagged. Changed worker source needs updated evidence before qualification.
 
 The app links this first-party code and runs its own fixed helper flag inside

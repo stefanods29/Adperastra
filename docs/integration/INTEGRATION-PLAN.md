@@ -2,7 +2,7 @@
 
 Authority: owner decision 2026-11-02 (`plan/STATUS.md`). The coordinator integrates the 54
 submitted handoffs, fills missing implementations, and compiles/tests/packages them. Work stays
-local on `codex/integrate-handoffs`; `main`, remotes, tags and publication stay untouched.
+local on `integrate-handoffs`; `main`, remotes, tags and publication stay untouched.
 Original handoffs in `handoff/` are preserved byte for byte.
 
 ## Rules for every batch

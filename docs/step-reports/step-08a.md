@@ -1,6 +1,6 @@
 # Step08a integration report
 
-Date: 2026-11-03. Implementation integrated locally on codex/integrate-handoffs. No remote, main, tag or release changes. Packaged UI acceptance remains pending.
+Date: 2026-11-03. Implementation integrated locally on integrate-handoffs. No remote, main, tag or release changes. Packaged UI acceptance remains pending.
 
 ## Implemented
 
