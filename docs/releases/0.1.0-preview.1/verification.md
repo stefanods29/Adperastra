@@ -34,5 +34,19 @@ runtime (the Office engine imports the MSVC runtime). The existing setup
 launcher does not cover the Office runtime, so this preview is distributed as
 a portable ZIP with official prerequisite links, not an incomplete installer.
 
-Optimized binary, clean-profile runtime and archive verification are pending.
-Artifact identity and publication URLs will be recorded after those checks.
+## Publication (2026-11-04)
+
+Published as a GitHub pre-release at the owner's request:
+https://github.com/stefanods29/Adperastra/releases/tag/v0.1.0-preview.1
+(tag `v0.1.0-preview.1` on commit `23acd8e`; PR #8 was merged by an
+owner-requested admin merge without waiting for the CI check).
+
+- ZIP: `Adperastra-0.1.0-preview.1-windows-x64-portable.zip`, 102,865,075 bytes,
+  SHA-256 `5e092cad63b097ee5cb8937d9f6353b67e230f862a94ad764c0271d8af00f8dd`.
+- App executable SHA-256 `15105e85c5874e51fd9d3b363490716cc00d59aec3765a49e9e73a357b01c064`
+  (optimized release build with `tauri/custom-protocol`).
+- All 755 Office files matched the signed inventory; the extracted archive
+  contained only the allowlisted files and the three pack folders, with no profile,
+  settings, WebView data or keys. The downloaded assets matched SHA256SUMS.txt.
+- Not done: a clean-profile launch test. The owner's own Adperastra was running,
+  and single-instance activation handed the new copy over to it.
